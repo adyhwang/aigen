@@ -1,71 +1,689 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Problem Generator</title>
+    <title>四则运算题目生成器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 850px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .header {
+            background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
+            color: white;
+            padding: 20px;
             text-align: center;
+            position: relative;
         }
-        #problems {
-            margin-top: 20px;
+        
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 2;
         }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .language-switcher {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 3;
+        }
+        
+        .lang-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 6px;
+            color: white;
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .lang-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .settings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f8f9ff;
+            border-radius: 12px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .setting-group {
+            margin-bottom: 12px;
+        }
+        
+        .setting-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 1rem;
+        }
+        
+        .setting-group input, .setting-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            background-color: white;
+        }
+        
+        .setting-group input:focus, .setting-group select:focus {
+            border-color: #4776E6;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(71, 118, 230, 0.15);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: #f0f5ff;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            background-color: white;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #4776E6;
+            cursor: pointer;
+        }
+        
+        .checkbox-item label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #555;
+            cursor: pointer;
+        }
+        
+        .input-group {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+        
+        .input-group input {
+            border: none;
+            flex: 1;
+            padding: 10px;
+            font-size: 1rem;
+        }
+        
+        .input-group button {
+            background: #f0f5ff;
+            border: none;
+            width: 34px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .input-group button:hover {
+            background: #e4ecff;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #3a67d3 0%, #7d45d4 100%);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(90deg, #2c9e5c 0%, #34c971 100%);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: linear-gradient(90deg, #238a4b 0%, #27b060 100%);
+            transform: translateY(-2px);
+        }
+        
+        .result-container {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+            max-height: 450px;
+            overflow-y: auto;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .result-title {
+            text-align: center;
+            font-size: 1.4rem;
+            color: #4776E6;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .problems {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
         .problem {
-            margin-bottom: 10px;
+            padding: 15px;
+            background: linear-gradient(145deg, #f8faff, #ffffff);
+            border-radius: 8px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+            font-size: 1rem;
+            border-left: 3px solid #8E54E9;
+        }
+        
+        .problem .expression {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+        }
+        
+        .problem .expression span {
+            color: #8E54E9;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        
+        .problem .answer {
+            color: #2c9e5c;
+            font-weight: 600;
+            text-align: right;
+            padding-top: 8px;
+            border-top: 1px dashed #c7e8d4;
+            margin-top: 8px;
+            display: none;
+            font-size: 1.2rem;
+        }
+        
+        .problem.show-answer .answer {
+            display: block;
+        }
+        
+        .problem-placeholder {
+            text-align: center;
+            padding: 30px 0;
+            grid-column: 1 / -1;
+        }
+        
+        .placeholder-text {
+            font-size: 1.2rem;
+            color: #777;
+            font-weight: 500;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 0.8rem;
+            color: #666;
+            background: #f8f9ff;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .header p {
+                font-size: 0.9rem;
+            }
+            
+            .problems {
+                grid-template-columns: 1fr;
+            }
+            
+            .settings {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            
+            .problem .expression {
+                font-size: 1.1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Math Problem Generator</h1>
-    <label for="numProblems">Number of Problems:</label>
-    <input type="number" id="numProblems" min="1" max="100" value="5">
-    <br>
-    <label for="operators">Operators:</label>
-    <input type="checkbox" id="add" name="operator" value="+" checked>
-    <label for="add">+</label>
-    <input type="checkbox" id="subtract" name="operator" value="-">
-    <label for="subtract">-</label>
-    <input type="checkbox" id="multiply" name="operator" value="*">
-    <label for="multiply">*</label>
-    <input type="checkbox" id="divide" name="operator" value="/">
-    <label for="divide">/</label>
-    <br>
-    <label for="numDigits">Number of Digits:</label>
-    <input type="number" id="numDigits" min="1" max="5" value="2">
-    <br>
-    <button onclick="generateProblems()">Generate Problems</button>
-    <button onclick="showAnswers()">Show Answers</button>
-    <div id="problems"></div>
-
+    <div class="container">
+        <div class="header">
+            <div class="language-switcher">
+                <button id="langBtn" class="lang-btn">
+                    <i class="fa fa-globe"></i> English
+                </button>
+            </div>
+            
+            <h1 id="title">四则运算题目生成器</h1>
+            <p id="subtitle">自定义生成您需要的数学题目</p>
+        </div>
+        
+        <div class="content">
+            <div class="settings">
+                <div class="setting-group">
+                    <label id="countLabel">题目数量</label>
+                    <div class="input-group">
+                        <input type="number" id="count" min="1" max="100" value="10">
+                        <button onclick="stepUp('count')"><i class="fa fa-plus"></i></button>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <label id="operatorLabel">运算符号</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="add" checked>
+                            <label for="add" id="addLabel">加号(+)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="subtract">
+                            <label for="subtract" id="subtractLabel">减号(-)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="multiply">
+                            <label for="multiply" id="multiplyLabel">乘号(×)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="divide">
+                            <label for="divide" id="divideLabel">除号(÷)</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <label id="numCountLabel">数字数量</label>
+                    <div class="input-group">
+                        <input type="number" id="numCount" min="2" max="5" value="2">
+                        <button onclick="stepUp('numCount')"><i class="fa fa-plus"></i></button>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <label id="digitsLabel">数字位数</label>
+                    <div class="input-group">
+                        <input type="number" id="digits" min="1" max="4" value="3">
+                        <button onclick="stepUp('digits')"><i class="fa fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="buttons">
+                <button id="generateBtn" class="btn btn-primary">
+                    <i class="fas fa-cogs"></i> <span id="generateBtnText">生成题目</span>
+                </button>
+                <button id="showAnswerBtn" class="btn btn-secondary">
+                    <i class="fas fa-lightbulb"></i> <span id="showAnswerBtnText">显示答案</span>
+                </button>
+            </div>
+            
+            <div class="result-container">
+                <div class="result-title" id="resultTitle">题目列表</div>
+                <div class="problems" id="problems">
+                    <div class="problem-placeholder">
+                        <p class="placeholder-text" id="placeholderText">点击"生成题目"按钮开始生成题目</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p id="footerText">© 2023 四则运算题目生成器 | 支持加减乘除运算 | 可自定义题目参数</p>
+        </div>
+    </div>
+    
     <script>
-        function generateProblems() {
-            const numProblems = parseInt(document.getElementById('numProblems').value);
-            const operators = document.querySelectorAll('input[name="operator"]:checked');
-            const operatorValues = Array.from(operators).map(op => op.value);
-            const numDigits = parseInt(document.getElementById('numDigits').value);
-            const problemsContainer = document.getElementById('problems');
-            problemsContainer.innerHTML = '';
-
-            for (let i = 0; i < numProblems; i++) {
-                const num1 = Math.floor(Math.random() * Math.pow(10, numDigits));
-                const num2 = Math.floor(Math.random() * Math.pow(10, numDigits));
-                const operator = operatorValues[Math.floor(Math.random() * operatorValues.length)];
-
-                const problemElement = document.createElement('div');
-                problemElement.className = 'problem';
-                problemElement.innerHTML = `${num1} ${operator} ${num2} = <span class="answer" style="display:none;">${eval(`${num1} ${operator} ${num2}`)}</span>`;
-                problemsContainer.appendChild(problemElement);
+        // 多语言资源
+        const resources = {
+            'zh': {
+                title: '四极运算题目生成器',
+                subtitle: '自定义生成您需要的数学题目',
+                countLabel: '题目数量',
+                operatorLabel: '运算符号',
+                addLabel: '加号(+)',
+                subtractLabel: '减号(-)',
+                multiplyLabel: '乘号(×)',
+                divideLabel: '除号(÷)',
+                numCountLabel: '数字数量',
+                digitsLabel: '数字位数',
+                generateBtnText: '生成题目',
+                showAnswerBtnText: '显示答案',
+                resultTitle: '题目列表',
+                placeholderText: '点击"生成题目"按钮开始生成题目',
+                footerText: '© 2023 四则运算题目生成器 | 支持加减乘除运算 | 可自定义题目参数',
+                langBtn: 'English'
+            },
+            'en': {
+                title: 'Math Problem Generator',
+                subtitle: 'Customize and generate arithmetic problems',
+                countLabel: 'Number of Problems',
+                operatorLabel: 'Operators',
+                addLabel: 'Addition (+)',
+                subtractLabel: 'Subtraction (-)',
+                multiplyLabel: 'Multiplication (×)',
+                divideLabel: 'Division (÷)',
+                numCountLabel: 'Number of Operands',
+                digitsLabel: 'Digits per Number',
+                generateBtnText: 'Generate Problems',
+                showAnswerBtnText: 'Show Answers',
+                resultTitle: 'Problem List',
+                placeholderText: 'Click "Generate Problems" button to start',
+                footerText: '© 2023 Math Problem Generator | Supports + - × ÷ | Customizable parameters',
+                langBtn: '中文'
             }
-        }
+        };
 
-        function showAnswers() {
-            const answers = document.querySelectorAll('.answer');
-            answers.forEach(answer => {
-                answer.style.display = 'inline';
-            });
+        // 当前语言
+        let currentLang = 'zh';
+        
+        // 更新界面语言
+        function updateLanguage() {
+            const lang = resources[currentLang];
+            
+            // 只更新实际存在的元素
+            document.getElementById('title').textContent = lang.title;
+            document.getElementById('subtitle').textContent = lang.subtitle;
+            document.getElementById('countLabel').textContent = lang.countLabel;
+            document.getElementById('operatorLabel').textContent = lang.operatorLabel;
+            document.getElementById('addLabel').textContent = lang.addLabel;
+            document.getElementById('subtractLabel').textContent = lang.subtractLabel;
+            document.getElementById('multiplyLabel').textContent = lang.multiplyLabel;
+            document.getElementById('divideLabel').textContent = lang.divideLabel;
+            document.getElementById('numCountLabel').textContent = lang.numCountLabel;
+            document.getElementById('digitsLabel').textContent = lang.digitsLabel;
+            document.getElementById('generateBtnText').textContent = lang.generateBtnText;
+            document.getElementById('showAnswerBtnText').textContent = lang.showAnswerBtnText;
+            document.getElementById('resultTitle').textContent = lang.resultTitle;
+            document.getElementById('placeholderText').textContent = lang.placeholderText;
+            document.getElementById('footerText').textContent = lang.footerText;
+            
+            // 只更新语言按钮本身，不使用不存在的langText元素
+            document.getElementById('langBtn').innerHTML = `<i class="fa fa-globe"></i> ${lang.langBtn}`;
         }
+        
+        // 语言切换功能
+        document.getElementById('langBtn').addEventListener('click', function() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            updateLanguage();
+        });
+        
+        // 数字输入步进功能
+        function stepUp(id) {
+            const input = document.getElementById(id);
+            input.value = parseInt(input.value) + 1;
+        }
+        
+        // DOM加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateLanguage();
+            
+            const generateBtn = document.getElementById('generateBtn');
+            const showAnswerBtn = document.getElementById('showAnswerBtn');
+            const problemsContainer = document.getElementById('problems');
+            
+            // 生成指定范围的随机整数
+            function getRandomInt(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+            
+            // 获取选择的操作符
+            function getSelectedOperators() {
+                const operators = [];
+                if (document.getElementById('add').checked) operators.push('+');
+                if (document.getElementById('subtract').checked) operators.push('-');
+                if (document.getElementById('multiply').checked) operators.push('×');
+                if (document.getElementById('divide').checked) operators.push('÷');
+                return operators.length > 0 ? operators : ['+']; // 默认加号
+            }
+            
+            // 生成题目
+            function generateProblems() {
+                const count = parseInt(document.getElementById('count').value);
+                const numCount = parseInt(document.getElementById('numCount').value);
+                const digits = parseInt(document.getElementById('digits').value);
+                const operators = getSelectedOperators();
+                
+                // 清空题目容器
+                problemsContainer.innerHTML = '';
+                
+                // 生成每个题目
+                for (let i = 0; i < count; i++) {
+                    const numbers = [];
+                    const expressionOperators = [];
+                    let result;
+                    
+                    // 生成第一个数字
+                    const min = Math.pow(10, digits - 1);
+                    const max = Math.pow(10, digits) - 1;
+                    numbers.push(getRandomInt(min, max));
+                    
+                    for (let j = 1; j < numCount; j++) {
+                        // 随机选择一个运算符
+                        const op = operators[getRandomInt(0, operators.length - 1)];
+                        expressionOperators.push(op);
+                        
+                        // 特殊处理除法，确保结果是整数
+                        if (op === '÷') {
+                            // 找到上一个数字的所有因子
+                            const factors = [];
+                            const lastNum = numbers[numbers.length - 1];
+                            for (let k = 1; k <= Math.sqrt(lastNum); k++) {
+                                if (lastNum % k === 0) {
+                                    factors.push(k);
+                                    if (k !== lastNum / k) {
+                                        factors.push(lastNum / k);
+                                    }
+                                }
+                            }
+                            
+                            // 选择除数，确保在位数范围内
+                            const validFactors = factors.filter(factor => 
+                                factor >= min && factor <= max && factor !== 0 && factor !== 1
+                            );
+                            
+                            if (validFactors.length > 0) {
+                                const divisor = validFactors[getRandomInt(0, validFactors.length - 1)];
+                                numbers.push(divisor);
+                            } else {
+                                // 如果没有合适的除数，使用随机数确保除法结果整数
+                                let divisor;
+                                do {
+                                    divisor = getRandomInt(min, max);
+                                } while (lastNum % divisor !== 0);
+                                numbers.push(divisor);
+                            }
+                        } 
+                        // 处理减法确保结果为正
+                        else if (op === '-') {
+                            let nextNum;
+                            do {
+                                nextNum = getRandomInt(min, max);
+                            } while (numbers[numbers.length - 1] < nextNum);
+                            numbers.push(nextNum);
+                        } 
+                        // 其他运算符（+、×）使用随机数
+                        else {
+                            numbers.push(getRandomInt(min, max));
+                        }
+                    }
+                    
+                    // 计算结果
+                    result = numbers[0];
+                    for (let j = 0; j < expressionOperators.length; j++) {
+                        const num = numbers[j + 1];
+                        switch (expressionOperators[j]) {
+                            case '+':
+                                result += num;
+                                break;
+                            case '-':
+                                result -= num;
+                                break;
+                            case '×':
+                                result *= num;
+                                break;
+                            case '÷':
+                                result /= num;
+                                break;
+                        }
+                    }
+                    
+                    // 创建题目元素
+                    const problemEl = document.createElement('div');
+                    problemEl.className = 'problem';
+                    
+                    // 创建题目表达式
+                    const expressionEl = document.createElement('div');
+                    expressionEl.className = 'expression';
+                    
+                    // 构建题目字符串
+                    let expressionStr = '';
+                    expressionStr += `${numbers[0]} `;
+                    for (let j = 0; j < expressionOperators.length; j++) {
+                        expressionStr += `${expressionOperators[j]} ${numbers[j + 1]} `;
+                    }
+                    expressionStr += `= <span>?</span>`;
+                    
+                    expressionEl.innerHTML = expressionStr;
+                    
+                    // 创建答案元素
+                    const answerEl = document.createElement('div');
+                    answerEl.className = 'answer';
+                    answerEl.textContent = `= ${result}`;
+                    
+                    problemEl.appendChild(expressionEl);
+                    problemEl.appendChild(answerEl);
+                    problemsContainer.appendChild(problemEl);
+                }
+            }
+            
+            // 显示答案
+            function showAnswers() {
+                const problems = document.querySelectorAll('.problem');
+                problems.forEach(problem => {
+                    problem.classList.add('show-answer');
+                });
+            }
+            
+            // 事件监听
+            generateBtn.addEventListener('click', generateProblems);
+            showAnswerBtn.addEventListener('click', showAnswers);
+            
+            // 输入框限制最小值
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    const min = parseInt(this.min) || 1;
+                    const max = parseInt(this.max) || Infinity;
+                    let value = parseInt(this.value);
+                    
+                    if (isNaN(value)) {
+                        this.value = min;
+                    } else if (value < min) {
+                        this.value = min;
+                    } else if (value > max) {
+                        this.value = max;
+                    }
+                });
+            });
+        });
     </script>
 </body>
 </html>
