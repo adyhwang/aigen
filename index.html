@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Problem Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #problems {
+            margin-top: 20px;
+        }
+        .problem {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Math Problem Generator</h1>
+    <label for="numProblems">Number of Problems:</label>
+    <input type="number" id="numProblems" min="1" max="100" value="5">
+    <br>
+    <label for="operators">Operators:</label>
+    <input type="checkbox" id="add" name="operator" value="+" checked>
+    <label for="add">+</label>
+    <input type="checkbox" id="subtract" name="operator" value="-">
+    <label for="subtract">-</label>
+    <input type="checkbox" id="multiply" name="operator" value="*">
+    <label for="multiply">*</label>
+    <input type="checkbox" id="divide" name="operator" value="/">
+    <label for="divide">/</label>
+    <br>
+    <label for="numDigits">Number of Digits:</label>
+    <input type="number" id="numDigits" min="1" max="5" value="2">
+    <br>
+    <button onclick="generateProblems()">Generate Problems</button>
+    <button onclick="showAnswers()">Show Answers</button>
+    <div id="problems"></div>
+
+    <script>
+        function generateProblems() {
+            const numProblems = parseInt(document.getElementById('numProblems').value);
+            const operators = document.querySelectorAll('input[name="operator"]:checked');
+            const operatorValues = Array.from(operators).map(op => op.value);
+            const numDigits = parseInt(document.getElementById('numDigits').value);
+            const problemsContainer = document.getElementById('problems');
+            problemsContainer.innerHTML = '';
+
+            for (let i = 0; i < numProblems; i++) {
+                const num1 = Math.floor(Math.random() * Math.pow(10, numDigits));
+                const num2 = Math.floor(Math.random() * Math.pow(10, numDigits));
+                const operator = operatorValues[Math.floor(Math.random() * operatorValues.length)];
+
+                const problemElement = document.createElement('div');
+                problemElement.className = 'problem';
+                problemElement.innerHTML = `${num1} ${operator} ${num2} = <span class="answer" style="display:none;">${eval(`${num1} ${operator} ${num2}`)}</span>`;
+                problemsContainer.appendChild(problemElement);
+            }
+        }
+
+        function showAnswers() {
+            const answers = document.querySelectorAll('.answer');
+            answers.forEach(answer => {
+                answer.style.display = 'inline';
+            });
+        }
+    </script>
+</body>
+</html>
