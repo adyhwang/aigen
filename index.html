@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小学生四则运算练习</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4efe9 100%);
+            padding: 20px;
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        /* 头部区域 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
+            padding: 15px 30px;
+            border-radius: 12px;
+            color: white;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            margin-bottom: 25px;
+        }
+        
+        .header-title {
+            font-size: 26px;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        
+        .toggle-language {
+            background: rgba(255, 255, 255, 0.25);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+        
+        .toggle-language:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        /* 设置区域 */
+        .settings-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .section-title {
+            margin-bottom: 25px;
+            font-size: 22px;
+            color: #2c3e50;
+            font-weight: bold;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, #3498db, #2c3e50);
+            border-radius: 3px;
+        }
+        
+        .settings-grid {
+            display: grid;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .setting-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .setting-row label {
+            font-weight: 600;
+            /* margin-right: 15px; */
+            color: #444;
+            min-width: 50px;
+        }
+        
+        .setting-row input[type="number"] {
+            width: 100px;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 17px;
+            background: #f8f9fa;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .setting-row input[type="number"]:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+        
+        .operations-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .operations-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            /* gap: 20px; */
+            flex-grow: 1;
+        }
+        
+        .operation-option {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            background: #f0f8ff;
+            padding: 8px 15px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .operation-option:hover {
+            background: #e0f0ff;
+            transform: translateY(-2px);
+        }
+        
+        .operation-option input {
+            margin-right: 8px;
+            transform: scale(1.3);
+            cursor: pointer;
+        }
+        
+        .generate-btn-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .generate-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(52, 152, 219, 0.4);
+        }
+        
+        /* 练习题区域 */
+        .problems-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .problems-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .show-answer-btn {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+        }
+        
+        .show-answer-btn:hover {
+            background: linear-gradient(135deg, #27ae60 0%, #219653 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(39, 174, 96, 0.4);
+        }
+        
+        .problem-list {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .problem {
+            display: flex;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+        }
+        
+        .problem:hover {
+            background-color: #f9f9ff;
+        }
+        
+        .problem:last-child {
+            border-bottom: none;
+        }
+        
+        .problem-index {
+            font-weight: bold;
+            color: #3498db;
+            min-width: 35px;
+            font-size: 18px;
+            /* margin-right: 15px; */
+        }
+        
+        .problem-expression {
+            font-size: 20px;
+            font-weight: bold;
+            min-width: 100px;
+            font-family: 'Courier New', monospace;
+            padding: 0 10px;
+        }
+        
+        .problem-input-container {
+            display: flex;
+            align-items: center;
+            min-width: 50px;
+        }
+        
+        .problem-input {
+            width: 100px;
+            padding: 10px;
+            border: 2px solid #e3e3e3;
+            border-radius: 8px;
+            font-size: 18px;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .problem-input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+        
+        .problem-input-equal {
+            font-size: 24px;
+            margin: 0 12px;
+            color: #555;
+        }
+        
+        .answer-feedback {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            margin-left: 20px;
+            font-size: 18px;
+            /* padding: 6px 14px; */
+            border-radius: 6px;
+            min-width: 150px;
+        }
+        
+        .correct {
+            background-color: rgba(46, 204, 113, 0.15);
+            color: #27ae60;
+        }
+        
+        .incorrect {
+            background-color: rgba(231, 76, 60, 0.15);
+            color: #e74c3c;
+        }
+        
+        .missing {
+            background-color: rgba(52, 152, 219, 0.15);
+            color: #3498db;
+        }
+        
+        .feedback-icon {
+            font-size: 24px;
+            margin-right: 8px;
+        }
+        
+        .result-value {
+            font-weight: bold;
+            margin-left: 6px;
+            font-family: monospace;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 800px) {
+            .header-title {
+                font-size: 22px;
+            }
+            
+            .section-title {
+                font-size: 20px;
+            }
+            
+            .settings-container, .problems-container {
+                padding: 20px 15px;
+            }
+            
+            .problem {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                /* padding: 20px 0; */
+            }
+            
+            .problem-expression {
+                min-width: 100%;
+                font-size: 18px;
+                /* margin: 10px 0; */
+            }
+            
+            .problem-input-container {
+                min-width: 100%;
+                /* margin: 10px 0; */
+            }
+            
+            .answer-feedback {
+                margin-left: 0;
+                margin-top: 10px;
+                width: 100%;
+            }
+            
+            .problems-header {
+                flex-direction: column;
+                /* gap: 15px; */
+            }
+            
+            .show-answer-btn {
+                width: 100%;
+                /* padding: 12px; */
+            }
+        }
+        
+        /* 状态消息 */
+        .status-message {
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            color: #2c3e50;
+            background-color: #e3f2fd;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .expression-example {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部区域 -->
+        <header>
+            <div class="header-title">小学生四则运算练习</div>
+            <button class="toggle-language">EN</button>
+        </header>
+        
+        <!-- 设置区域 -->
+        <section class="settings-container">
+            <h2 class="section-title">题目生成设置</h2>
+            <div class="settings-grid">
+                <div class="setting-row">
+                    <label for="problem-count">题目数量:</label>
+                    <input type="number" id="problem-count" min="1" max="30" value="5">
+                </div>
+                
+                <div class="setting-row">
+                    <label for="operations">运算符号:</label>
+                    <div class="operations-container">
+                        <div class="operations-row">
+                            <label class="operation-option">
+                                <input type="checkbox" name="operation" value="+" checked> + 
+                            </label>
+                            <label class="operation-option">
+                                <input type="checkbox" name="operation" value="-"> - 
+                            </label>
+                            <label class="operation-option">
+                                <input type="checkbox" name="operation" value="×"> × 
+                            </label>
+                            <label class="operation-option">
+                                <input type="checkbox" name="operation" value="÷"> ÷ 
+                            </label>
+                            <label class="operation-option">
+                                <input type="checkbox" name="operation" value="()" id="brackets-checkbox"> ( ) 
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <label for="number-count">数字数量:</label>
+                    <input type="number" id="number-count" min="2" max="6" value="3">
+                </div>
+                
+                <div class="setting-row">
+                    <label for="digit-count">数字位数:</label>
+                    <input type="number" id="digit-count" min="1" max="4" value="2">
+                </div>
+            </div>            
+
+            <div class="generate-btn-container">
+                <button class="generate-btn">
+                    <span>生成练习题</span>
+                </button>
+            </div>
+        </section>
+        
+        <!-- 练习题区域 -->
+        <section class="problems-container">
+            <div class="problems-header">
+                <h2 class="section-title">练习题</h2>
+                <button class="show-answer-btn">显示答案</button>
+            </div>
+            
+            <div class="problem-list" id="problem-list">
+                <!-- 题目将在这里生成 -->
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // 使用math.js表达式计算库
+        const math = {
+            evaluate: (expression) => {
+                try {
+                    // 替换除号为斜杠，乘号为星号
+                    const cleanExpr = expression
+                        .replace(/÷/g, '/')
+                        .replace(/×/g, '*')
+                        .replace(/,/g, '');
+                    
+                    // 使用函数构造器计算表达式
+                    return Function(`return ${cleanExpr}`)();
+                } catch (e) {
+                    console.error('计算表达式错误:', e);
+                    return NaN;
+                }
+            }
+        };
+
+        // 多语言支持
+        const translations = {
+            cn: {
+                title: "小学生四则运算练习",
+                toggleBtn: "EN",
+                settingsTitle: "题目生成设置",
+                problemCount: "题目数量",
+                operations: "运算符号",
+                numberCount: "数字数量",
+                digitCount: "数字位数",
+                generateBtn: "生成练习题",
+                problemsTitle: "练习题",
+                showAnswerBtn: "显示答案",
+                correctFeedback: "✔ 正确",
+                incorrectFeedback: "✘ 错误，正确答案：",
+                missingFeedback: "正确答案："
+            },
+            en: {
+                title: "Elementary Math Practice",
+                toggleBtn: "中",
+                settingsTitle: "Problem Settings",
+                problemCount: "Problem Count",
+                operations: "Operations",
+                numberCount: "Number Count",
+                digitCount: "Digit Count",
+                generateBtn: "Generate Problems",
+                problemsTitle: "Exercises",
+                showAnswerBtn: "Show Answers",
+                correctFeedback: "✔ Correct",
+                incorrectFeedback: "✘ Incorrect, Answer:",
+                missingFeedback: "Correct Answer:"
+            }
+        };
+
+        let currentLanguage = 'cn';
+        let problems = [];
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 添加事件监听器
+            document.querySelector('.toggle-language').addEventListener('click', toggleLanguage);
+            document.querySelector('.generate-btn').addEventListener('click', generateProblems);
+            document.querySelector('.show-answer-btn').addEventListener('click', showAnswers);
+            
+            // 生成初始题目
+            generateProblems();
+        });
+        
+        // 切换语言
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'cn' ? 'en' : 'cn';
+            updateLanguage();
+        }
+        
+        // 更新界面语言
+        function updateLanguage() {
+            const lang = translations[currentLanguage];
+            
+            // 更新界面文本
+            document.querySelector('.header-title').textContent = lang.title;
+            document.querySelector('.toggle-language').textContent = lang.toggleBtn;
+            document.querySelector('.settings-container .section-title').textContent = lang.settingsTitle;
+            document.querySelector('.problems-container .section-title').textContent = lang.problemsTitle;
+            document.querySelector('.generate-btn span').textContent = lang.generateBtn;
+            document.querySelector('.show-answer-btn').textContent = lang.showAnswerBtn;
+            
+            // 更新输入框标签
+            document.querySelector('label[for="problem-count"]').textContent = lang.problemCount + ':';
+            document.querySelector('label[for="number-count"]').textContent = lang.numberCount + ':';
+            document.querySelector('label[for="digit-count"]').textContent = lang.digitCount + ':';
+            document.querySelector('label[for="operations"]').textContent = lang.operations + ':';
+            
+            // 更新答案显示（如果已经显示）
+            if (problems.length > 0) {
+                showAnswers();
+            }
+        }
+        
+        // 生成题目
+        function generateProblems() {
+            const problemCount = parseInt(document.getElementById('problem-count').value) || 5;
+            const numberCount = parseInt(document.getElementById('number-count').value) || 3;
+            const digitCount = parseInt(document.getElementById('digit-count').value) || 2;
+            const useBrackets = document.getElementById('brackets-checkbox').checked;
+            
+            // 获取选中的运算符
+            const selectedOperations = [];
+            document.querySelectorAll('input[name="operation"]:checked').forEach(op => {
+                if (op.value !== "()") {
+                    selectedOperations.push(op.value);
+                }
+            });
+            
+            // 如果没有选择任何运算符，默认使用加法
+            if (selectedOperations.length === 0) {
+                selectedOperations.push('+');
+                document.querySelector('input[value="+"]').checked = true;
+            }
+            
+            problems = [];
+            const problemList = document.getElementById('problem-list');
+            problemList.innerHTML = '';
+            
+            let generatedCount = 0;
+            const maxAttempts = problemCount * 15;
+            
+            // 尝试生成指定数量的题目
+            for (let attempt = 0; generatedCount < problemCount && attempt < maxAttempts; attempt++) {
+                const expression = generateExpression(
+                    numberCount, 
+                    digitCount, 
+                    selectedOperations,
+                    useBrackets
+                );
+                
+                // 确保表达式有效
+                if (!expression) continue;
+                
+                // 计算表达式结果
+                let answer = math.evaluate(expression);
+                
+                // 确保结果是有效的数字且是整数
+                if (isNaN(answer) || !Number.isInteger(answer)) {
+                    continue;
+                }
+                
+                // 确保结果大小合理
+                const absValue = Math.abs(answer);
+                if (absValue > 1000000 || absValue < -1000000) {
+                    continue;
+                }
+                
+                // 保存问题信息
+                problems.push({
+                    expression: expression ,
+                    answer: answer,
+                    userAnswer: null,
+                    isCorrect: false
+                });
+                
+                // 创建问题元素
+                const problemDiv = document.createElement('div');
+                problemDiv.className = 'problem';
+                problemDiv.innerHTML = `
+                    <div class="problem-index">${generatedCount + 1}.</div>
+                    <div class="problem-expression">${expression} =</div>
+                    <div class="problem-input-container">                        
+                        <input type="number" class="problem-input" data-index="${generatedCount}">
+                    </div>
+                    <div class="answer-feedback" id="feedback-${generatedCount}"></div>
+                `;
+                problemList.appendChild(problemDiv);
+                
+                generatedCount++;
+            }
+            
+            // 添加输入事件监听器
+            document.querySelectorAll('.problem-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    const index = parseInt(this.dataset.index);
+                    if (problems[index]) {
+                        problems[index].userAnswer = this.value.trim();
+                    }
+                });
+            });
+            
+            // 提示生成结果
+            if (problems.length === 0) {
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'status-message';
+                errorMsg.textContent = currentLanguage === 'cn' ? 
+                    '无法生成符合条件的题目，请尝试调整设置（如减少数字位数或数量）' : 
+                    'Could not generate valid problems. Please adjust your settings.';
+                problemList.appendChild(errorMsg);
+            }
+        }
+        
+        // 生成表达式
+        function generateExpression(numberCount, digitCount, operations, useBrackets) {
+            try {
+                let parts = [];
+                let expression = '';
+                
+                // 生成所有数字
+                for (let i = 0; i < numberCount; i++) {
+                    const min = Math.pow(10, digitCount - 1);
+                    const max = Math.pow(10, digitCount) - 1;
+                    const num = Math.floor(Math.random() * (max - min + 1)) + min;
+                    parts.push(num.toString());
+                }
+                
+                // 选择运算符
+                for (let i = 0; i < numberCount - 1; i++) {
+                    const opIndex = Math.floor(Math.random() * operations.length);
+                    const operator = operations[opIndex];
+                    
+                    // 除法特殊处理 - 确保整数结果
+                    if (operator === '÷') {
+                        const a = parseInt(parts[i]);
+                        const b = parseInt(parts[i + 1]);
+                        
+                        // 如果被除数为0，跳过或处理
+                        if (b === 0) {
+                            return null;
+                        }
+                        
+                        // 尝试找到能整除的除数
+                        const maxDivisor = Math.min(12, a); // 限制除数大小
+                        if (maxDivisor < 1) {
+                            parts[i + 1] = "1";
+                        } else {
+                            const divisors = [];
+                            for (let j = 1; j <= maxDivisor; j++) {
+                                if (a % j === 0) {
+                                    divisors.push(j);
+                                }
+                            }
+                            
+                            if (divisors.length > 0) {
+                                const randomDivisor = divisors[Math.floor(Math.random() * divisors.length)];
+                                parts[i + 1] = randomDivisor.toString();
+                            } else {
+                                parts[i + 1] = "1";
+                            }
+                        }
+                    }
+                    
+                    // 插入运算符
+                    if (i === numberCount - 2) { // 最后一个运算符
+                        parts[i] += ` ${operator} ${parts[i + 1]}`;
+                        parts.pop();
+                    } else {
+                        parts[i] += ` ${operator} `;
+                    }
+                }
+                
+                // 构建表达式
+                expression = parts.join('');
+                
+                // 添加括号（只在表达式合理时添加）
+                if (useBrackets && numberCount >= 3 && Math.random() < 0.5) {
+                    // 确定要添加括号的位置
+                    const bracketPositions = [];
+                    for (let i = 0; i < numberCount - 1; i++) {
+                        bracketPositions.push(i);
+                    }
+                    
+                    if (bracketPositions.length > 0) {
+                        const pos = bracketPositions[Math.floor(Math.random() * bracketPositions.length)];
+                        expression = expression.split(' ');
+                        // 确保不会包裹单个数字
+                        if (pos > 0 && pos < expression.length - 2) {
+                            expression.splice(pos - 1, 0, '(');
+                            expression.splice(pos + 3, 0, ')');
+                        } else {
+                            // 如果无法合理添加括号，不使用括号
+                            expression = expression.join(' ');
+                        }
+                        expression = expression.join(' ');
+                    }
+                }
+                
+                return expression;
+            } catch (e) {
+                console.error('生成表达式错误:', e);
+                return null;
+            }
+        }
+        
+        // 显示答案
+        function showAnswers() {
+            const lang = translations[currentLanguage];
+            
+            if (problems.length === 0) return;
+            
+            problems.forEach((problem, index) => {
+                const feedbackElement = document.getElementById(`feedback-${index}`);
+                const inputElement = document.querySelector(`.problem-input[data-index="${index}"]`);
+                
+                if (!feedbackElement || !inputElement) return;
+                
+                // 获取用户答案
+                problem.userAnswer = inputElement.value.trim();
+                
+                if (problem.userAnswer === '') {
+                    // 没有填写答案
+                    feedbackElement.innerHTML = `
+                        <span class="feedback-icon">${lang.missingFeedback}</span>
+                        <span class="result-value">${problem.answer}</span>
+                    `;
+                    feedbackElement.className = 'answer-feedback missing';
+                } else {
+                    // 检查答案是否正确
+                    const userAns = parseInt(problem.userAnswer);
+                    problem.isCorrect = userAns === problem.answer;
+                    
+                    if (problem.isCorrect) {
+                        // 答案正确
+                        feedbackElement.innerHTML = `
+                            <span class="feedback-icon">${lang.correctFeedback}</span>
+                        `;
+                        feedbackElement.className = 'answer-feedback correct';
+                    } else {
+                        // 答案错误
+                        feedbackElement.innerHTML = `
+                            <span class="feedback-icon">${lang.incorrectFeedback}</span>
+                            <span class="result-value">${problem.answer}</span>
+                        `;
+                        feedbackElement.className = 'answer-feedback incorrect';
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
