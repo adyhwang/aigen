@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小学生四则运算练习</title>
+    <title>四则运算练习</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -11,6 +11,7 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: manipulation;
         }
         
         body {
@@ -19,6 +20,7 @@
             color: #333;
             min-height: 100vh;
             position: relative;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
         }
         
         .container {
@@ -165,6 +167,8 @@
             display: flex;
             justify-content: center;
             margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 20px;
         }
         
         .generate-btn {
@@ -177,12 +181,10 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 极空间 0 8px 20px rgba(52, 152, 219, 0.3);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
-            max-width: 300px;
-            margin: 0 auto;
         }
         
         .generate-btn:hover {
@@ -190,31 +192,16 @@
             box-shadow: 0 12px 25px rgba(52, 152, 219, 0.4);
         }
         
-        /* 练习题区域 */
-        .problems-container {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 极空间.08);
-        }
-        
-        .problems-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-        
         .show-answer-btn {
             background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
             color: white;
             border: none;
-            padding: 12px 28px;
+            padding: 14px 40px;
             border-radius: 50px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 16px;
+            font-size: 18px;
             box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
         }
         
@@ -222,6 +209,21 @@
             background: linear-gradient(135deg, #27ae60 0%, #219653 100%);
             transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(39, 174, 96, 0.4);
+        }
+        
+        /* 练习题区域 */
+        .problems-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .problems-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
         }
         
         .problem-list {
@@ -248,7 +250,7 @@
         .problem-index {
             font-weight: bold;
             color: #3498db;
-            min-width: 35极空间px;
+            min-width: 35px;
             font-size: 18px;
         }
         
@@ -325,49 +327,7 @@
             font-family: monospace;
         }
         
-        /* 响应式设计 */
-        @media (max-width: 800px) {
-            .header-title {
-                font-size: 22px;
-            }
-            
-            .section-title {
-                font-size: 20px;
-            }
-            
-            .settings-container, .problems-container {
-                padding: 20px 15px;
-            }
-            
-            .problem {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-            
-            .problem-expression {
-                min-width: 100%;
-                font-size: 18px;
-            }
-            
-            .problem-input-container {
-                min-width: 100%;
-            }
-            
-            .answer-feedback {
-                margin-left: 0;
-                margin-top: 10px;
-                width: 100%;
-            }
-            
-            .problems-header {
-                flex-direction: column;
-            }
-            
-            .show-answer-btn {
-                width: 100%;
-            }
-        }
+       
         
         /* 状态消息 */
         .status-message {
@@ -424,7 +384,8 @@
             bottom: 120px;
             right: 30px;
             width: 500px;
-            height: 550px;
+            height: 80vh; 
+            max-height: 90vh; 
             background-color: white;
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
@@ -464,6 +425,7 @@
             background-color: #f8f3e0;
             border-bottom: 1px solid #e0d8bf;
             cursor: move;
+            touch-action: none;
         }
         
         .draft-title {
@@ -488,9 +450,10 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
-        .draft-btn:hover {
+        .draft-btn:hover, .draft-btn:active {
             transform: scale(1.1);
             background-color: #f0f0f0;
         }
@@ -506,7 +469,7 @@
             border: none;
         }
         
-        .draft-close:hover {
+        .draft-close:hover, .draft-close:active {
             background-color: #ff5252;
         }
         
@@ -520,6 +483,7 @@
             position: relative;
             overflow: hidden;
             background-color: #fffcf0;
+            touch-action: none;
         }
         
         #draft-canvas {
@@ -540,6 +504,7 @@
             gap: 15px;
             flex-wrap: wrap;
             justify-content: space-around;
+            touch-action: none;
         }
         
         .tool-group {
@@ -559,6 +524,7 @@
             cursor: pointer;
             transition: all 0.2s;
             font-size: 18px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .tool-btn.active {
@@ -567,8 +533,9 @@
             transform: scale(1.1);
         }
         
-        .tool-btn:hover {
+        .tool-btn:hover, .tool-btn:active {
             transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         
         /* 笔粗细控件 */
@@ -588,11 +555,20 @@
             justify-content: center;
             background: white;
             border: 1px solid #ddd;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .line-width.active {
             border-color: #3498db;
-            background-color: #e3f2极空间fd;
+            background-color: #e3f2fd;
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .line-width:hover, .line-width:active {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         
         .line-width-slim {
@@ -630,15 +606,18 @@
             cursor: pointer;
             transition: transform 0.2s;
             border: 2px solid transparent;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
-        .color-option:hover {
+        .color-option:hover, .color-option:active {
             transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         
         .color-option.active {
             transform: scale(1.2);
             border-color: #666;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
         
         .bg-color-selector {
@@ -654,15 +633,18 @@
             cursor: pointer;
             transition: transform 0.2s;
             border: 2px solid #ccc;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
-        .bg-color-option:hover {
+        .bg-color-option:hover, .bg-color-option:active {
             transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         
         .bg-color-option.active {
             transform: scale(1.2);
             border: 2px solid #333;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
         
         /* 调整大小手柄 */
@@ -675,8 +657,53 @@
             cursor: nwse-resize;
             z-index: 1000;
             background-color: #e0d8bf;
+            border-top-left-radius: 8px;
         }
         
+         /* 响应式调整 */
+         @media (max-width: 800px) {
+            .header-title {
+                font-size: 22px;
+            }
+            
+            .section-title {
+                font-size: 20px;
+            }
+            
+            .settings-container, .problems-container {
+                padding: 20px 15px;
+            }
+            
+            .problem {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .problem-expression {
+                min-width: 100%;
+                font-size: 18px;
+            }
+            
+            .problem-input-container {
+                min-width: 100%;
+            }
+            
+            .answer-feedback {
+                margin-left: 0;
+                margin-top: 10px;
+                width: 100%;
+            }
+            
+            .problems-header {
+                flex-direction: column;
+            }
+            
+            .show-answer-btn {
+                width: 100%;
+            }
+        }
+
         /* 响应式调整 */
         @media (max-width: 600px) {
             .draft-container {
@@ -694,6 +721,22 @@
             .draft-toolbar {
                 justify-content: center;
             }
+            
+            /* 在移动设备上使按钮更容易点击 */
+            .draft-btn, .tool-btn, .color-option, .line-width {
+                min-width: 40px;
+                min-height: 40px;
+            }
+
+            .generate-btn-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .generate-btn, .show-answer-btn {
+                width: 100%;
+                max-width: 300px;
+            }
         }
     </style>
 </head>
@@ -701,7 +744,7 @@
     <div class="container">
         <!-- 头部区域 -->
         <header>
-            <div class="header-title">小学生四则运算练习</div>
+            <div class="header-title">四则运算练习</div>
             <button class="toggle-language">EN</button>
         </header>
         
@@ -752,6 +795,7 @@
                 <button class="generate-btn">
                     <span>生成练习题</span>
                 </button>
+                <button class="show-answer-btn">显示答案</button>
             </div>
         </section>
         
@@ -759,7 +803,6 @@
         <section class="problems-container">
             <div class="problems-header">
                 <h2 class="section-title">练习题</h2>
-                <button class="show-answer-btn">显示答案</极空间button>
             </div>
             
             <div class="problem-list" id="problem-list">
@@ -861,7 +904,7 @@
         // 多语言支持
         const translations = {
             cn: {
-                title: "小学生四则运算练习",
+                title: "四则运算练习",
                 toggleBtn: "EN",
                 settingsTitle: "题目生成设置",
                 problemCount: "题目数量",
@@ -1195,6 +1238,7 @@
             const clearBtn = document.querySelector('.draft-clear');
             const undoBtn = document.querySelector('.draft-undo');
             const resizeHandle = document.querySelector('.resize-handle');
+            const header = document.querySelector('.draft-header');
             
             // 调整canvas大小为容器尺寸
             function resizeCanvas() {
@@ -1250,89 +1294,185 @@
                 lineWidth: 4,
                 eraseWidth: 15,
                 bgColor: '#fffcf0',
-                isResizing: false
+                isResizing: false,
+                isDragging: false
             };
-            
-            // 调整大小和拖拽变量
-            let isDragging = false;
-            let startX, startY, startWidth, startHeight;
-            let startDragX, startDragY;
             
             // 初始化画布
             resizeCanvas();
             drawGrid();
             
-            // 工具按钮事件
-            document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.tool-btn[data-tool]').forEach(b => {
-                        b.classList.remove('active');
-                    });
-                    this.classList.add('active');
-                    draftState.tool = this.dataset.tool;
+            // 工具按钮事件 - 修复触摸问题
+            function addToolEvents() {
+                const toolBtns = document.querySelectorAll('.tool-btn[data-tool]');
+                toolBtns.forEach(btn => {
+                    btn.addEventListener('click', handleToolButton);
+                    btn.addEventListener('touchend', handleToolButton); // 添加触摸结束事件
                 });
-            });
-            
-            // 颜色选择
-            document.querySelectorAll('.color-option').forEach(color => {
-                color.addEventListener('click', function() {
-                    document.querySelectorAll('.color-option').forEach(c => {
-                        c.classList.remove('active');
-                    });
-                    this.classList.add('active');
-                    draftState.color = this.dataset.color;
+                
+                const colorOptions = document.querySelectorAll('.color-option');
+                colorOptions.forEach(option => {
+                    option.addEventListener('click', handleColorButton);
+                    option.addEventListener('touchend', handleColorButton); // 添加触摸结束事件
                 });
-            });
-            
-            // 笔粗细选择
-            document.querySelectorAll('.line-width').forEach(el => {
-                el.addEventListener('click', function() {
-                    document.querySelectorAll('.line-width').forEach(e => {
-                        e.classList.remove('active');
-                    });
-                    this.classList.add('active');
-                    draftState.lineWidth = parseInt(this.dataset.size);
+                
+                const lineWidths = document.querySelectorAll('.line-width');
+                lineWidths.forEach(width => {
+                    width.addEventListener('click', handleWidthButton);
+                    width.addEventListener('touchend', handleWidthButton); // 添加触摸结束事件
                 });
-            });
-            
-            // 背景颜色选择
-            document.querySelectorAll('.bg-color-option').forEach(color => {
-                color.addEventListener('click', function() {
-                    document.querySelectorAll('.bg-color-option').forEach(c => {
-                        c.classList.remove('active');
-                    });
-                    this.classList.add('active');
-                    draftState.b极空间gColor = this.dataset.color;
-                    container.style.backgroundColor = draftState.bgColor;
-                    redraw();
+                
+                const bgColors = document.querySelectorAll('.bg-color-option');
+                bgColors.forEach(bg => {
+                    bg.addEventListener('click', handleBgColorButton);
+                    bg.addEventListener('touchend', handleBgColorButton); // 添加触摸结束事件
                 });
-            });
+            }
             
-            // 清空按钮
-            clearBtn.addEventListener('click', function() {
+            // 工具栏按钮处理函数
+            function handleToolButton(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const tool = this.dataset.tool;
+                document.querySelectorAll('.tool-btn[data-tool]').forEach(b => {
+                    b.classList.remove('active');
+                });
+                this.classList.add('active');
+                draftState.tool = tool;
+                
+                // 添加触觉反馈
+                addTouchFeedback(this);
+            }
+            
+            function handleColorButton(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                document.querySelectorAll('.color-option').forEach(c => {
+                    c.classList.remove('active');
+                });
+                this.classList.add('active');
+                draftState.color = this.dataset.color;
+                
+                // 添加触觉反馈
+                addTouchFeedback(this);
+            }
+            
+            function handleWidthButton(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                document.querySelectorAll('.line-width').forEach(e => {
+                    e.classList.remove('active');
+                });
+                this.classList.add('active');
+                draftState.lineWidth = parseInt(this.dataset.size);
+                
+                // 添加触觉反馈
+                addTouchFeedback(this);
+            }
+            
+            function handleBgColorButton(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                document.querySelectorAll('.bg-color-option').forEach(c => {
+                    c.classList.remove('active');
+                });
+                this.classList.add('active');
+                draftState.bgColor = this.dataset.color;
+                container.style.backgroundColor = draftState.bgColor;
+                redraw();
+                
+                // 添加触觉反馈
+                addTouchFeedback(this);
+            }
+            
+            // 添加触摸反馈
+            function addTouchFeedback(element) {
+                if ('ontouchstart' in window) {
+                    // 为触摸设备添加动画反馈
+                    element.style.transition = 'transform 0.2s';
+                    element.style.transform = 'scale(0.9)';
+                    
+                    setTimeout(() => {
+                        element.style.transform = '';
+                    }, 150);
+                }
+            }
+            
+            // 其他按钮事件
+            clearBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 draftState.paths = [];
                 redraw();
+                addTouchFeedback(this);
             });
             
-            // 撤销按钮
-            undoBtn.addEventListener('click', function() {
+            clearBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                draftState.paths = [];
+                redraw();
+                addTouchFeedback(this);
+            });
+            
+            undoBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 if (draftState.paths.length > 0) {
                     draftState.paths.pop();
                     redraw();
+                    addTouchFeedback(this);
+                }
+            });
+            
+            undoBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (draftState.paths.length > 0) {
+                    draftState.paths.pop();
+                    redraw();
+                    addTouchFeedback(this);
                 }
             });
             
             // 开关按钮
-            toggleBtn.addEventListener('click', function() {
+            toggleBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 draftContainer.classList.toggle('visible');
                 if (draftContainer.classList.contains('visible')) {
                     setTimeout(resizeCanvas, 10);
                 }
+                addTouchFeedback(this);
+            });
+            
+            toggleBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                draftContainer.classList.toggle('visible');
+                if (draftContainer.classList.contains('visible')) {
+                    setTimeout(resizeCanvas, 10);
+                }
+                addTouchFeedback(this);
             });
             
             // 关闭按钮
-            closeBtn.addEventListener('click', function() {
+            closeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 draftContainer.classList.remove('visible');
+                addTouchFeedback(this);
+            });
+            
+            closeBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                draftContainer.classList.remove('visible');
+                addTouchFeedback(this);
             });
             
             // 绘制函数
@@ -1369,18 +1509,35 @@
                 }
             }
             
-            // 画布鼠标事件
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
-            
-            // 开始绘制
-            function startDrawing(e) {
-                draftState.isDrawing = true;
+            // 获取坐标位置
+            function getPosition(e) {
                 const rect = canvas.getBoundingClientRect();
-                draftState.lastX = e.clientX - rect.left;
-                draftState.lastY = e.clientY - rect.top;
+                let clientX, clientY;
+                
+                if (e.type.includes('touch')) {
+                    const touch = e.changedTouches[0] || e.touches[0];
+                    clientX = touch.clientX;
+                    clientY = touch.clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                
+                return {
+                    x: clientX - rect.left,
+                    y: clientY - rect.top
+                };
+            }
+            
+            // 画布事件处理
+            function handleCanvasStart(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const pos = getPosition(e);
+                draftState.isDrawing = true;
+                draftState.lastX = pos.x;
+                draftState.lastY = pos.y;
                 
                 // 开始新的路径
                 draftState.currentPath = [{
@@ -1391,13 +1548,15 @@
                 }];
             }
             
-            // 绘制中
-            function draw(e) {
+            function handleCanvasMove(e) {
                 if (!draftState.isDrawing) return;
                 
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const pos = getPosition(e);
+                const x = pos.x;
+                const y = pos.y;
                 
                 if (draftState.tool === 'eraser') {
                     ctx.globalCompositeOperation = 'destination-out';
@@ -1428,9 +1587,11 @@
                 draftState.lastY = y;
             }
             
-            // 停止绘制
-            function stopDrawing() {
+            function handleCanvasEnd(e) {
                 if (!draftState.isDrawing) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
                 draftState.isDrawing = false;
                 
                 // 将当前路径保存到历史路径
@@ -1440,29 +1601,54 @@
                 draftState.currentPath = [];
             }
             
-            // 窗口大小变化时重新调整canvas
-            window.addEventListener('resize', resizeCanvas);
+            // 添加事件监听器（同时支持鼠标和触摸屏）
+            canvas.addEventListener('mousedown', handleCanvasStart);
+            canvas.addEventListener('mousemove', handleCanvasMove);
+            canvas.addEventListener('mouseup', handleCanvasEnd);
+            canvas.addEventListener('mouseleave', handleCanvasEnd);
+            
+            canvas.addEventListener('touchstart', handleCanvasStart);
+            canvas.addEventListener('touchmove', handleCanvasMove);
+            canvas.addEventListener('touchend', handleCanvasEnd);
+            canvas.addEventListener('touchcancel', handleCanvasEnd);
             
             // 调整大小手柄事件
-            resizeHandle.addEventListener('mousedown', function(e) {
+            resizeHandle.addEventListener('mousedown', handleResizeStart);
+            resizeHandle.addEventListener('touchstart', handleResizeStart, { passive: false });
+            
+            function handleResizeStart(e) {
                 e.preventDefault();
+                e.stopPropagation();
+                
                 draftState.isResizing = true;
                 
-                startX = e.clientX;
-                startY = e.clientY;
+                const isTouch = e.type === 'touchstart';
+                startX = isTouch ? e.touches[0].clientX : e.clientX;
+                startY = isTouch ? e.touches[0].clientY : e.clientY;
+                
                 startWidth = parseInt(document.defaultView.getComputedStyle(draftContainer).width, 10);
                 startHeight = parseInt(document.defaultView.getComputedStyle(draftContainer).height, 10);
                 
-                document.addEventListener('mousemove', handleResize);
+                document.addEventListener('mousemove', handleResizeMove);
                 document.addEventListener('mouseup', stopResize);
-            });
+                
+                document.addEventListener('touchmove', handleResizeMove, { passive: false });
+                document.addEventListener('touchend', stopResize);
+            }
             
-            function handleResize(e) {
+            function handleResizeMove(e) {
                 if (!draftState.isResizing) return;
                 
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const isTouch = e.type.includes('touch');
+                const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+                const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+                
                 // 计算尺寸变化
-                const deltaX = e.clientX - startX;
-                const deltaY = e.clientY - startY;
+                const deltaX = clientX - startX;
+                const deltaY = clientY - startY;
                 
                 // 更新容器尺寸
                 draftContainer.style.width = (startWidth + deltaX) + 'px';
@@ -1474,30 +1660,52 @@
             
             function stopResize() {
                 draftState.isResizing = false;
-                document.removeEventListener('mousemove', handleResize);
+                
+                document.removeEventListener('mousemove', handleResizeMove);
                 document.removeEventListener('mouseup', stopResize);
+                
+                document.removeEventListener('touchmove', handleResizeMove);
+                document.removeEventListener('touchend', stopResize);
             }
             
             // 添加拖拽功能
-            const header = document.querySelector('.draft-header');
+            header.addEventListener('mousedown', handleDragStart);
+            header.addEventListener('touchstart', handleDragStart, { passive: false });
             
-            header.addEventListener('mousedown', function(e) {
+            function handleDragStart(e) {
                 e.preventDefault();
-                isDragging = true;
+                e.stopPropagation();
                 
+                draftState.isDragging = true;
+                
+                const isTouch = e.type === 'touchstart';
                 const rect = draftContainer.getBoundingClientRect();
-                startDragX = e.clientX - rect.left;
-                startDragY = e.clientY - rect.top;
+                startDragX = isTouch ? e.touches[0].clientX : e.clientX;
+                startDragY = isTouch ? e.touches[0].clientY : e.clientY;
                 
-                document.addEventListener('mousemove', handleDrag);
+                startOffsetX = startDragX - rect.left;
+                startOffsetY = startDragY - rect.top;
+                
+                document.addEventListener('mousemove', handleDragMove);
                 document.addEventListener('mouseup', stopDrag);
-            });
-            
-            function handleDrag(e) {
-                if (!isDragging) return;
                 
-                const x = e.clientX - startDragX;
-                const y = e.clientY - startDragY;
+                document.addEventListener('touchmove', handleDragMove, { passive: false });
+                document.addEventListener('touchend', stopDrag);
+            }
+            
+            function handleDragMove(e) {
+                if (!draftState.isDragging) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const isTouch = e.type.includes('touch');
+                const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+                const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+                
+                // 计算新位置
+                const x = clientX - startOffsetX;
+                const y = clientY - startOffsetY;
                 
                 // 限制在窗口范围内
                 const maxX = window.innerWidth - draftContainer.offsetWidth;
@@ -1513,10 +1721,20 @@
             }
             
             function stopDrag() {
-                isDragging = false;
-                document.removeEventListener('mousemove', handleDrag);
+                draftState.isDragging = false;
+                
+                document.removeEventListener('mousemove', handleDragMove);
                 document.removeEventListener('mouseup', stopDrag);
+                
+                document.removeEventListener('touchmove', handleDragMove);
+                document.removeEventListener('touchend', stopDrag);
             }
+            
+            // 添加工具栏事件监听器
+            addToolEvents();
+            
+            // 窗口大小变化时重新调整canvas
+            window.addEventListener('resize', resizeCanvas);
         }
     </script>
 </body>
