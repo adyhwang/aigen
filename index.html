@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小学生四则运算练习</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -17,6 +18,7 @@
             padding: 20px;
             color: #333;
             min-height: 100vh;
+            position: relative;
         }
         
         .container {
@@ -103,9 +105,8 @@
         
         .setting-row label {
             font-weight: 600;
-            /* margin-right: 15px; */
-            color: #444;
             min-width: 50px;
+            color: #444;
         }
         
         .setting-row input[type="number"] {
@@ -136,7 +137,6 @@
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            /* gap: 20px; */
             flex-grow: 1;
         }
         
@@ -177,7 +177,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+            box-shadow: 极空间 0 8px 20px rgba(52, 152, 219, 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -195,7 +195,7 @@
             background: white;
             border-radius: 12px;
             padding: 25px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 极空间.08);
         }
         
         .problems-header {
@@ -248,9 +248,8 @@
         .problem-index {
             font-weight: bold;
             color: #3498db;
-            min-width: 35px;
+            min-width: 35极空间px;
             font-size: 18px;
-            /* margin-right: 15px; */
         }
         
         .problem-expression {
@@ -296,7 +295,6 @@
             align-items: center;
             margin-left: 20px;
             font-size: 18px;
-            /* padding: 6px 14px; */
             border-radius: 6px;
             min-width: 150px;
         }
@@ -345,18 +343,15 @@
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 15px;
-                /* padding: 20px 0; */
             }
             
             .problem-expression {
                 min-width: 100%;
                 font-size: 18px;
-                /* margin: 10px 0; */
             }
             
             .problem-input-container {
                 min-width: 100%;
-                /* margin: 10px 0; */
             }
             
             .answer-feedback {
@@ -367,12 +362,10 @@
             
             .problems-header {
                 flex-direction: column;
-                /* gap: 15px; */
             }
             
             .show-answer-btn {
                 width: 100%;
-                /* padding: 12px; */
             }
         }
         
@@ -394,6 +387,313 @@
             padding: 15px;
             margin: 15px 0;
             border-radius: 4px;
+        }
+        
+        /* 草稿纸悬浮按钮 */
+        .draft-toggle-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f1c40f 0%, #e67e22 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(241, 196, 15, 0.5);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            border: 3px solid white;
+        }
+        
+        .draft-toggle-btn:hover {
+            transform: scale(1.1) rotate(15deg);
+            box-shadow: 0 12px 25px rgba(241, 196, 15, 0.8);
+        }
+        
+        .draft-toggle-btn i {
+            font-size: 32px;
+        }
+        
+        /* 草稿纸容器 */
+        .draft-container {
+            position: fixed;
+            bottom: 120px;
+            right: 30px;
+            width: 500px;
+            height: 550px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 999;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            border: 2px solid #e0d8bf;
+            resize: both;
+            overflow: auto;
+            min-width: 300px;
+            min-height: 200px;
+        }
+        
+        .draft-container.visible {
+            display: flex;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 草稿纸标题和控制按钮 */
+        .draft-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #f8f3e0;
+            border-bottom: 1px solid #e0d8bf;
+            cursor: move;
+        }
+        
+        .draft-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #5d4e3e;
+        }
+        
+        .draft-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .draft-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: white;
+            border: 1px solid #e0d8bf;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .draft-btn:hover {
+            transform: scale(1.1);
+            background-color: #f0f0f0;
+        }
+        
+        .draft-btn i {
+            font-size: 18px;
+            color: #5d4e3e;
+        }
+        
+        .draft-close {
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+        }
+        
+        .draft-close:hover {
+            background-color: #ff5252;
+        }
+        
+        .draft-close i {
+            color: white;
+        }
+        
+        /* 画布区域 */
+        .draft-canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: #fffcf0;
+        }
+        
+        #draft-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+        
+        /* 草稿纸工具栏 */
+        .draft-toolbar {
+            display: flex;
+            padding: 15px;
+            background-color: #f8f3e0;
+            border-top: 1px solid #e0d8bf;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+        
+        .tool-group {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .tool-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 18px;
+        }
+        
+        .tool-btn.active {
+            border-color: #3498db;
+            background-color: #e3f2fd;
+            transform: scale(1.1);
+        }
+        
+        .tool-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        /* 笔粗细控件 */
+        .line-width-selector {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .line-width {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid #ddd;
+        }
+        
+        .line-width.active {
+            border-color: #3498db;
+            background-color: #e3f2极空间fd;
+        }
+        
+        .line-width-slim {
+            width: 16px;
+            height: 16px;
+            background: #333;
+            border-radius: 50%;
+        }
+        
+        .line-width-normal {
+            width: 24px;
+            height: 24px;
+            background: #333;
+            border-radius: 50%;
+        }
+        
+        .line-width-thick {
+            width: 32px;
+            height: 32px;
+            background: #333;
+            border-radius: 50%;
+        }
+        
+        /* 颜色选择器 */
+        .color-selector {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .color-option {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 2px solid transparent;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.active {
+            transform: scale(1.2);
+            border-color: #666;
+        }
+        
+        .bg-color-selector {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .bg-color-option {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 2px solid #ccc;
+        }
+        
+        .bg-color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .bg-color-option.active {
+            transform: scale(1.2);
+            border: 2px solid #333;
+        }
+        
+        /* 调整大小手柄 */
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            cursor: nwse-resize;
+            z-index: 1000;
+            background-color: #e0d8bf;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            .draft-container {
+                width: calc(100% - 40px);
+                right: 20px;
+                left: 20px;
+                margin: 0 auto;
+            }
+            
+            .draft-toggle-btn {
+                right: 20px;
+                bottom: 20px;
+            }
+            
+            .draft-toolbar {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -459,13 +759,83 @@
         <section class="problems-container">
             <div class="problems-header">
                 <h2 class="section-title">练习题</h2>
-                <button class="show-answer-btn">显示答案</button>
+                <button class="show-answer-btn">显示答案</极空间button>
             </div>
             
             <div class="problem-list" id="problem-list">
                 <!-- 题目将在这里生成 -->
+                <div class="status-message">
+                    请点击上方"生成练习题"按钮生成题目
+                </div>
             </div>
         </section>
+    </div>
+    
+    <!-- 草稿纸悬浮按钮 -->
+    <div class="draft-toggle-btn">
+        <i class="fas fa-pencil-alt"></i>
+    </div>
+    
+    <!-- 草稿纸容器 -->
+    <div class="draft-container">
+        <div class="draft-header">
+            <div class="draft-title">草稿纸</div>
+            <div class="draft-controls">
+                <div class="draft-btn draft-undo" title="撤销">
+                    <i class="fas fa-undo"></i>
+                </div>
+                <div class="draft-btn draft-clear" title="清空">
+                    <i class="fas fa-trash"></i>
+                </div>
+                <div class="draft-btn draft-close" title="关闭">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="draft-canvas-container">
+            <canvas id="draft-canvas"></canvas>
+        </div>
+        
+        <div class="draft-toolbar">
+            <div class="tool-group">
+                <div class="tool-btn tool-pen active" data-tool="pen" title="铅笔">
+                    <i class="fas fa-pencil-alt"></i>
+                </div>
+                <div class="tool-btn tool-eraser" data-tool="eraser" title="橡皮擦">
+                    <i class="fas fa-eraser"></i>
+                </div>
+            </div>
+            
+            <div class="line-width-selector" title="笔的粗细">
+                <div class="line-width" data-size="2">
+                    <div class="line-width-slim"></div>
+                </div>
+                <div class="line-width active" data-size="4">
+                    <div class="line-width-normal"></div>
+                </div>
+                <div class="line-width" data-size="6">
+                    <div class="line-width-thick"></div>
+                </div>
+            </div>
+            
+            <div class="color-selector" title="笔的颜色">
+                <div class="color-option active" data-color="#000" style="background-color: #000;"></div>
+                <div class="color-option" data-color="#e74c3c" style="background-color: #e74c3c;"></div>
+                <div class="color-option" data-color="#3498db" style="background-color: #3498db;"></div>
+                <div class="color-option" data-color="#27ae60" style="background-color: #27ae60;"></div>
+            </div>
+            
+            <div class="bg-color-selector" title="背景颜色">
+                <div class="bg-color-option active" data-color="#fffcf0" style="background-color: #fffcf0;"></div>
+                <div class="bg-color-option" data-color="#fff" style="background-color: #fff;"></div>
+                <div class="bg-color-option" data-color="#f0f8ff" style="background-color: #f0f8ff;"></div>
+                <div class="bg-color-option" data-color="#ffe6e6" style="background-color: #ffe6e6;"></div>
+            </div>
+        </div>
+        
+        <!-- 调整大小手柄 -->
+        <div class="resize-handle"></div>
     </div>
 
     <script>
@@ -503,7 +873,10 @@
                 showAnswerBtn: "显示答案",
                 correctFeedback: "✔ 正确",
                 incorrectFeedback: "✘ 错误，正确答案：",
-                missingFeedback: "正确答案："
+                missingFeedback: "正确答案：",
+                draftTitle: "草稿纸",
+                clearBtn: "清空",
+                undoBtn: "撤销"
             },
             en: {
                 title: "Elementary Math Practice",
@@ -518,7 +891,10 @@
                 showAnswerBtn: "Show Answers",
                 correctFeedback: "✔ Correct",
                 incorrectFeedback: "✘ Incorrect, Answer:",
-                missingFeedback: "Correct Answer:"
+                missingFeedback: "Correct Answer:",
+                draftTitle: "Draft Pad",
+                clearBtn: "Clear",
+                undoBtn: "Undo"
             }
         };
 
@@ -534,6 +910,9 @@
             
             // 生成初始题目
             generateProblems();
+            
+            // 初始化草稿纸
+            initDraftPad();
         });
         
         // 切换语言
@@ -559,6 +938,9 @@
             document.querySelector('label[for="number-count"]').textContent = lang.numberCount + ':';
             document.querySelector('label[for="digit-count"]').textContent = lang.digitCount + ':';
             document.querySelector('label[for="operations"]').textContent = lang.operations + ':';
+            
+            // 更新草稿纸
+            document.querySelector('.draft-title').textContent = lang.draftTitle;
             
             // 更新答案显示（如果已经显示）
             if (problems.length > 0) {
@@ -800,6 +1182,341 @@
                     }
                 }
             });
+        }
+        
+        // 草稿纸功能
+        function initDraftPad() {
+            const canvas = document.getElementById('draft-canvas');
+            const ctx = canvas.getContext('2d');
+            const container = document.querySelector('.draft-canvas-container');
+            const toggleBtn = document.querySelector('.draft-toggle-btn');
+            const draftContainer = document.querySelector('.draft-container');
+            const closeBtn = document.querySelector('.draft-close');
+            const clearBtn = document.querySelector('.draft-clear');
+            const undoBtn = document.querySelector('.draft-undo');
+            const resizeHandle = document.querySelector('.resize-handle');
+            
+            // 调整canvas大小为容器尺寸
+            function resizeCanvas() {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                // 设置画布样式
+                ctx.fillStyle = draftState.bgColor;
+                ctx.fillRect(0, 0, width, height);
+                
+                // 重新绘制内容和网格
+                redraw();
+            }
+            
+            // 绘制网格背景
+            function drawGrid() {
+                const gridSize = 20;
+                const width = canvas.width;
+                const height = canvas.height;
+                
+                ctx.strokeStyle = '#e8e0c8';
+                ctx.lineWidth = 0.5;
+                
+                // 水平线
+                for (let y = 0; y < height; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(width, y);
+                    ctx.stroke();
+                }
+                
+                // 垂直线
+                for (let x = 0; x < width; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, height);
+                    ctx.stroke();
+                }
+            }
+            
+            // 草稿纸状态
+            const draftState = {
+                isDrawing: false,
+                lastX: 0,
+                lastY: 0,
+                paths: [],
+                currentPath: [],
+                tool: 'pen',
+                color: '#000',
+                lineWidth: 4,
+                eraseWidth: 15,
+                bgColor: '#fffcf0',
+                isResizing: false
+            };
+            
+            // 调整大小和拖拽变量
+            let isDragging = false;
+            let startX, startY, startWidth, startHeight;
+            let startDragX, startDragY;
+            
+            // 初始化画布
+            resizeCanvas();
+            drawGrid();
+            
+            // 工具按钮事件
+            document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.tool-btn[data-tool]').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    draftState.tool = this.dataset.tool;
+                });
+            });
+            
+            // 颜色选择
+            document.querySelectorAll('.color-option').forEach(color => {
+                color.addEventListener('click', function() {
+                    document.querySelectorAll('.color-option').forEach(c => {
+                        c.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    draftState.color = this.dataset.color;
+                });
+            });
+            
+            // 笔粗细选择
+            document.querySelectorAll('.line-width').forEach(el => {
+                el.addEventListener('click', function() {
+                    document.querySelectorAll('.line-width').forEach(e => {
+                        e.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    draftState.lineWidth = parseInt(this.dataset.size);
+                });
+            });
+            
+            // 背景颜色选择
+            document.querySelectorAll('.bg-color-option').forEach(color => {
+                color.addEventListener('click', function() {
+                    document.querySelectorAll('.bg-color-option').forEach(c => {
+                        c.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    draftState.b极空间gColor = this.dataset.color;
+                    container.style.backgroundColor = draftState.bgColor;
+                    redraw();
+                });
+            });
+            
+            // 清空按钮
+            clearBtn.addEventListener('click', function() {
+                draftState.paths = [];
+                redraw();
+            });
+            
+            // 撤销按钮
+            undoBtn.addEventListener('click', function() {
+                if (draftState.paths.length > 0) {
+                    draftState.paths.pop();
+                    redraw();
+                }
+            });
+            
+            // 开关按钮
+            toggleBtn.addEventListener('click', function() {
+                draftContainer.classList.toggle('visible');
+                if (draftContainer.classList.contains('visible')) {
+                    setTimeout(resizeCanvas, 10);
+                }
+            });
+            
+            // 关闭按钮
+            closeBtn.addEventListener('click', function() {
+                draftContainer.classList.remove('visible');
+            });
+            
+            // 绘制函数
+            function redraw() {
+                // 清除画布
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 设置背景
+                ctx.fillStyle = draftState.bgColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制网格
+                if (draftState.bgColor === '#fffcf0' || draftState.bgColor === '#fff') {
+                    drawGrid();
+                }
+                
+                // 重新绘制所有路径
+                for (const path of draftState.paths) {
+                    if (path.length < 2) continue;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(path[0].x, path[0].y);
+                    
+                    for (let i = 1; i < path.length; i++) {
+                        const point = path[i];
+                        ctx.lineTo(point.x, point.y);
+                    }
+                    
+                    ctx.strokeStyle = path[0].color;
+                    ctx.lineWidth = path[0].lineWidth;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.stroke();
+                }
+            }
+            
+            // 画布鼠标事件
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // 开始绘制
+            function startDrawing(e) {
+                draftState.isDrawing = true;
+                const rect = canvas.getBoundingClientRect();
+                draftState.lastX = e.clientX - rect.left;
+                draftState.lastY = e.clientY - rect.top;
+                
+                // 开始新的路径
+                draftState.currentPath = [{
+                    x: draftState.lastX,
+                    y: draftState.lastY,
+                    color: draftState.color,
+                    lineWidth: draftState.tool === 'eraser' ? draftState.eraseWidth : draftState.lineWidth
+                }];
+            }
+            
+            // 绘制中
+            function draw(e) {
+                if (!draftState.isDrawing) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                if (draftState.tool === 'eraser') {
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.beginPath();
+                    ctx.arc(x, y, draftState.eraseWidth/2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.beginPath();
+                    ctx.moveTo(draftState.lastX, draftState.lastY);
+                    ctx.lineTo(x, y);
+                    ctx.strokeStyle = draftState.color;
+                    ctx.lineWidth = draftState.lineWidth;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.stroke();
+                }
+                
+                // 添加到当前路径
+                draftState.currentPath.push({
+                    x: x,
+                    y: y,
+                    color: draftState.color,
+                    lineWidth: draftState.tool === 'eraser' ? draftState.eraseWidth : draftState.lineWidth
+                });
+                
+                draftState.lastX = x;
+                draftState.lastY = y;
+            }
+            
+            // 停止绘制
+            function stopDrawing() {
+                if (!draftState.isDrawing) return;
+                draftState.isDrawing = false;
+                
+                // 将当前路径保存到历史路径
+                if (draftState.currentPath.length > 1) {
+                    draftState.paths.push(draftState.currentPath);
+                }
+                draftState.currentPath = [];
+            }
+            
+            // 窗口大小变化时重新调整canvas
+            window.addEventListener('resize', resizeCanvas);
+            
+            // 调整大小手柄事件
+            resizeHandle.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                draftState.isResizing = true;
+                
+                startX = e.clientX;
+                startY = e.clientY;
+                startWidth = parseInt(document.defaultView.getComputedStyle(draftContainer).width, 10);
+                startHeight = parseInt(document.defaultView.getComputedStyle(draftContainer).height, 10);
+                
+                document.addEventListener('mousemove', handleResize);
+                document.addEventListener('mouseup', stopResize);
+            });
+            
+            function handleResize(e) {
+                if (!draftState.isResizing) return;
+                
+                // 计算尺寸变化
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                
+                // 更新容器尺寸
+                draftContainer.style.width = (startWidth + deltaX) + 'px';
+                draftContainer.style.height = (startHeight + deltaY) + 'px';
+                
+                // 重新调整画布大小
+                resizeCanvas();
+            }
+            
+            function stopResize() {
+                draftState.isResizing = false;
+                document.removeEventListener('mousemove', handleResize);
+                document.removeEventListener('mouseup', stopResize);
+            }
+            
+            // 添加拖拽功能
+            const header = document.querySelector('.draft-header');
+            
+            header.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                isDragging = true;
+                
+                const rect = draftContainer.getBoundingClientRect();
+                startDragX = e.clientX - rect.left;
+                startDragY = e.clientY - rect.top;
+                
+                document.addEventListener('mousemove', handleDrag);
+                document.addEventListener('mouseup', stopDrag);
+            });
+            
+            function handleDrag(e) {
+                if (!isDragging) return;
+                
+                const x = e.clientX - startDragX;
+                const y = e.clientY - startDragY;
+                
+                // 限制在窗口范围内
+                const maxX = window.innerWidth - draftContainer.offsetWidth;
+                const maxY = window.innerHeight - draftContainer.offsetHeight;
+                
+                const left = Math.max(0, Math.min(maxX, x));
+                const top = Math.max(0, Math.min(maxY, y));
+                
+                draftContainer.style.left = left + 'px';
+                draftContainer.style.top = top + 'px';
+                draftContainer.style.right = 'auto';
+                draftContainer.style.bottom = 'auto';
+            }
+            
+            function stopDrag() {
+                isDragging = false;
+                document.removeEventListener('mousemove', handleDrag);
+                document.removeEventListener('mouseup', stopDrag);
+            }
         }
     </script>
 </body>
