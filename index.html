@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>四则运算练习</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -22,6 +22,7 @@
             min-height: 100vh;
             position: relative;
             -webkit-tap-highlight-color: rgba(0,0,0,0);
+            transition: all 0.3s ease;
         }
         
         .container {
@@ -48,7 +49,12 @@
             text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
         }
         
-        .toggle-language {
+        .header-controls {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .toggle-language, .fullscreen-btn {
             background: rgba(255, 255, 255, 0.25);
             border: none;
             padding: 8px 20px;
@@ -58,9 +64,12 @@
             font-weight: 600;
             transition: all 0.3s ease;
             font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
-        .toggle-language:hover {
+        .toggle-language:hover, .fullscreen-btn:hover {
             background: rgba(255, 255, 255, 0.4);
             transform: translateY(-2px);
         }
@@ -182,7 +191,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+            box-shadow:  0 8px 20px rgba(52, 152, 219, 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -194,7 +203,7 @@
         }
         
         .show-answer-btn {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            background: linear-gradient(135deg, #2ecc71  0%, #27ae60 100%);
             color: white;
             border: none;
             padding: 14px 40px;
@@ -418,35 +427,6 @@
         }
         
         .draft-toggle-btn i {
-            font-size: 32px;
-        }
-        
-        /* 全屏按钮悬浮 */
-        .fullscreen-toggle-btn {
-            position: fixed;
-            bottom: 30px;
-            left: 30px;
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(155, 89, 182, 0.5);
-            z-index: 1000;
-            transition: all 0.3s ease;
-            border: 3px solid white;
-        }
-        
-        .fullscreen-toggle-btn:hover {
-            transform: scale(1.1) rotate(15deg);
-            box-shadow: 0 12px 25px rgba(155, 89, 182, 0.8);
-        }
-        
-        .fullscreen-toggle-btn i {
             font-size: 32px;
         }
         
@@ -746,11 +726,6 @@
                 bottom: 20px;
             }
             
-            .fullscreen-toggle-btn {
-                left: 20px;
-                bottom: 20px;
-            }
-            
             .draft-toolbar {
                 justify-content: center;
             }
@@ -788,34 +763,50 @@
             display: block;
         }
 
-        /* 全屏模式下的样式 */
-        body:fullscreen {
+        /* 全屏样式调整 */
+        :fullscreen, ::-webkit-full-screen, ::-moz-full-screen, :-ms-fullscreen {
             background: #e4efe9;
             padding: 20px;
+            overflow: auto;
         }
         
-        body:-ms-fullscreen {
-            background: #e4efe9;
-            padding: 20px;
+        .fullscreen-enabled .draft-toggle-btn, .fullscreen-enabled .draft-container {
+            z-index: 10000;
         }
         
-        body:-webkit-full-screen {
-            background: #e4efe9;
-            padding: 20px;
-        }
-        
-        body:-moz-full-screen {
-            background: #e4efe9;
-            padding: 20px;
+        /* 方向锁定提示 */
+        .orientation-notice {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #e67e22;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            z-index: 9999;
+            display: none;
         }
     </style>
 </head>
 <body>
+    <!-- 方向锁定提示 -->
+    <div class="orientation-notice" id="orientation-notice">
+        请保持竖屏方向以获得最佳体验
+    </div>
+    
     <div class="container">
         <!-- 头部区域 -->
         <header>
             <div class="header-title">小学生四则运算练习</div>
-            <button class="toggle-language">EN</button>
+            <div class="header-controls">
+                <button class="fullscreen-btn" id="fullscreen-btn">
+                    <i class="fas fa-expand"></i>
+                    <span>全屏</span>
+                </button>
+                <button class="toggle-language">EN</button>
+            </div>
         </header>
         
         <!-- 设置区域 -->
@@ -888,11 +879,6 @@
     <!-- 草稿纸悬浮按钮 -->
     <div class="draft-toggle-btn">
         <i class="fas fa-pencil-alt"></i>
-    </div>
-    
-    <!-- 全屏按钮 -->
-    <div class="fullscreen-toggle-btn" id="fullscreen-btn">
-        <i class="fas fa-expand"></i>
     </div>
     
     <!-- 草稿纸容器 -->
@@ -998,7 +984,9 @@
                 missingFeedback: "正确答案：",
                 draftTitle: "草稿纸",
                 clearBtn: "清空",
-                undoBtn: "撤销"
+                undoBtn: "撤销",
+                fullscreen: "全屏",
+                exitFullscreen: "退出全屏"
             },
             en: {
                 title: "Elementary Math Practice",
@@ -1016,15 +1004,17 @@
                 missingFeedback: "Correct Answer:",
                 draftTitle: "Draft Pad",
                 clearBtn: "Clear",
-                undoBtn: "Undo"
+                undoBtn: "Undo",
+                fullscreen: "Fullscreen",
+                exitFullscreen: "Exit Fullscreen"
             }
         };
 
         let currentLanguage = 'cn';
         let problems = [];
         let isDraftOpen = false;
-        let longPressTimer = null; // 长按定时器
-        let isFullscreen = false;  // 是否全屏状态
+        let isFullscreen = false;
+        let isLandscape = false;
         
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -1032,12 +1022,26 @@
             document.querySelector('.toggle-language').addEventListener('click', toggleLanguage);
             document.querySelector('.generate-btn').addEventListener('click', generateProblems);
             document.querySelector('.show-answer-btn').addEventListener('click', showAnswers);
-            
-            // 全屏按钮事件监听
             document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
             
-            // 屏蔽右键和触摸长按
-            setupContextMenuPrevention();
+            // 屏蔽右键菜单
+            document.addEventListener('contextmenu', (e) => {
+                if (e.target.closest('.draft-container') || e.target.closest('.problem-input')) {
+                    return;
+                }
+                e.preventDefault();
+            });
+            
+            // 屏蔽长按菜单
+            document.addEventListener('touchstart', (e) => {
+                if (e.target.tagName === 'INPUT') return;
+                e.preventDefault();
+            }, { passive: false });
+            
+            // 监听屏幕方向变化
+            screen.orientation?.addEventListener('change', handleOrientationChange);
+            window.addEventListener('resize', checkOrientation);
+            checkOrientation();
             
             // 生成初始题目
             generateProblems();
@@ -1046,96 +1050,21 @@
             initDraftPad();
         });
         
-        // 切换全屏功能
-        function toggleFullscreen() {
-            const fullscreenBtn = document.getElementById('fullscreen-btn');
-            const icon = fullscreenBtn.querySelector('i');
+        // 检查屏幕方向
+        function checkOrientation() {
+            isLandscape = window.innerWidth > window.innerHeight;
+            const orientationNotice = document.getElementById('orientation-notice');
             
-            if (!document.fullscreenElement) {
-                // 进入全屏
-                if (document.documentElement.requestFullscreen) {
-                    document.documentElement.requestFullscreen();
-                } else if (document.documentElement.mozRequestFullScreen) {
-                    document.documentElement.mozRequestFullScreen();
-                } else if (document.documentElement.webkitRequestFullscreen) {
-                    document.documentElement.webkitRequestFullscreen();
-                } else if (document.documentElement.msRequestFullscreen) {
-                    document.documentElement.msRequestFullscreen();
-                }
-                
-                icon.className = "fas fa-compress";
-                fullscreenBtn.style.background = "linear-gradient(135deg, #3498db 0%, #2c3e50 100%)";
-                isFullscreen = true;
+            if (isFullscreen && isLandscape) {
+                orientationNotice.style.display = 'block';
             } else {
-                // 退出全屏
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
-                
-                icon.className = "fas fa-expand";
-                fullscreenBtn.style.background = "linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)";
-                isFullscreen = false;
+                orientationNotice.style.display = 'none';
             }
         }
         
-        // 屏蔽右键菜单和长按菜单
-        function setupContextMenuPrevention() {
-            // 全局禁止右键菜单
-            document.addEventListener('contextmenu', function(e) {
-                // 允许在草稿纸中打开菜单
-                if (e.target.closest('.draft-container') || e.target.closest('.draft-toggle-btn')) {
-                    return;
-                }
-                
-                // 允许在问题输入框中打开菜单
-                if (e.target.classList.contains('problem-input')) {
-                    return;
-                }
-                
-                e.preventDefault();
-            });
-            
-            // 全局禁止文本选择（除输入框外）
-            document.addEventListener('selectstart', function(e) {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                    return;
-                }
-                
-                if (e.target.classList.contains('problem-input')) {
-                    return;
-                }
-                
-                e.preventDefault();
-            });
-            
-            // 屏蔽移动端长按菜单
-            let touchTimer = null;
-            
-            document.addEventListener('touchstart', function(e) {
-                // 如果是在草稿纸内，不做限制
-                if (e.target.closest('.draft-container') || e.target.closest('.draft-toggle-btn')) {
-                    return;
-                }
-                
-                // 如果是输入框，则不做限制
-                if (e.target.classList.contains('problem-input')) {
-                    return;
-                }
-                
-                touchTimer = setTimeout(function() {
-                    e.preventDefault();
-                }, 800); // 800毫秒内按住即触发
-            });
-            
-            document.addEventListener('touchend', function() {
-                clearTimeout(touchTimer);
-            });
+        // 处理方向变化
+        function handleOrientationChange() {
+            checkOrientation();
         }
         
         // 切换语言
@@ -1165,9 +1094,72 @@
             // 更新草稿纸
             document.querySelector('.draft-title').textContent = lang.draftTitle;
             
+            // 更新全屏按钮
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const icon = fullscreenBtn.querySelector('i');
+            const label = fullscreenBtn.querySelector('span');
+            label.textContent = isFullscreen ? lang.exitFullscreen : lang.fullscreen;
+            
             // 更新答案显示（如果已经显示）
             if (problems.length > 0) {
                 showAnswers();
+            }
+        }
+        
+        // 切换全屏
+        function toggleFullscreen() {
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const icon = fullscreenBtn.querySelector('i');
+            const lang = translations[currentLanguage];
+            
+            if (!document.fullscreenElement) {
+                // 进入全屏
+                document.documentElement.requestFullscreen().then(() => {
+                    isFullscreen = true;
+                    document.body.classList.add('fullscreen-enabled');
+                    
+                    icon.className = "fas fa-compress";
+                    fullscreenBtn.querySelector('span').textContent = lang.exitFullscreen;
+                    
+                    // 尝试锁定方向为竖屏
+                    tryLockOrientation();
+                    checkOrientation();
+                }).catch(err => {
+                    console.error('进入全屏失败:', err);
+                });
+            } else {
+                // 退出全屏
+                document.exitFullscreen().then(() => {
+                    isFullscreen = false;
+                    document.body.classList.remove('fullscreen-enabled');
+                    
+                    icon.className = "fas fa-expand";
+                    fullscreenBtn.querySelector('span').textContent = lang.fullscreen;
+                    
+                    // 恢复默认方向
+                    unlockOrientation();
+                    checkOrientation();
+                }).catch(err => {
+                    console.error('退出全屏失败:', err);
+                });
+            }
+        }
+        
+        // 尝试锁定方向为竖屏
+        function tryLockOrientation() {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('portrait').then(() => {
+                    console.log('已锁定为竖屏');
+                }).catch(error => {
+                    console.log('屏幕方向锁定失败:', error);
+                });
+            }
+        }
+        
+        // 解除方向锁定
+        function unlockOrientation() {
+            if (screen.orientation && screen.orientation.unlock) {
+                screen.orientation.unlock();
             }
         }
         
@@ -1596,7 +1588,7 @@
                 e.preventDefault();
                 e.stopPropagation();
                 draftState.paths = [];
-                reddraw();
+                redraw();
                 addTouchFeedback(this);
             });
             
