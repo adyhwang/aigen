@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小学生四则运算练习</title>
+    <title>四则运算练习</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -12,6 +12,7 @@
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             touch-action: manipulation;
+            user-select: none; /* 禁止用户选择文本 */
         }
         
         body {
@@ -420,6 +421,35 @@
             font-size: 32px;
         }
         
+        /* 全屏按钮悬浮 */
+        .fullscreen-toggle-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(155, 89, 182, 0.5);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            border: 3px solid white;
+        }
+        
+        .fullscreen-toggle-btn:hover {
+            transform: scale(1.1) rotate(15deg);
+            box-shadow: 0 12px 25px rgba(155, 89, 182, 0.8);
+        }
+        
+        .fullscreen-toggle-btn i {
+            font-size: 32px;
+        }
+        
         /* 草稿纸容器 */
         .draft-container {
             position: fixed;
@@ -716,6 +746,11 @@
                 bottom: 20px;
             }
             
+            .fullscreen-toggle-btn {
+                left: 20px;
+                bottom: 20px;
+            }
+            
             .draft-toolbar {
                 justify-content: center;
             }
@@ -751,6 +786,27 @@
         
         .draft-backdrop.active {
             display: block;
+        }
+
+        /* 全屏模式下的样式 */
+        body:fullscreen {
+            background: #e4efe9;
+            padding: 20px;
+        }
+        
+        body:-ms-fullscreen {
+            background: #e4efe9;
+            padding: 20px;
+        }
+        
+        body:-webkit-full-screen {
+            background: #e4efe9;
+            padding: 20px;
+        }
+        
+        body:-moz-full-screen {
+            background: #e4efe9;
+            padding: 20px;
         }
     </style>
 </head>
@@ -832,6 +888,11 @@
     <!-- 草稿纸悬浮按钮 -->
     <div class="draft-toggle-btn">
         <i class="fas fa-pencil-alt"></i>
+    </div>
+    
+    <!-- 全屏按钮 -->
+    <div class="fullscreen-toggle-btn" id="fullscreen-btn">
+        <i class="fas fa-expand"></i>
     </div>
     
     <!-- 草稿纸容器 -->
@@ -922,7 +983,7 @@
         // 多语言支持
         const translations = {
             cn: {
-                title: "小学生四则运算练习",
+                title: "四则运算练习",
                 toggleBtn: "EN",
                 settingsTitle: "题目生成设置",
                 problemCount: "题目数量",
@@ -962,6 +1023,8 @@
         let currentLanguage = 'cn';
         let problems = [];
         let isDraftOpen = false;
+        let longPressTimer = null; // 长按定时器
+        let isFullscreen = false;  // 是否全屏状态
         
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -970,12 +1033,110 @@
             document.querySelector('.generate-btn').addEventListener('click', generateProblems);
             document.querySelector('.show-answer-btn').addEventListener('click', showAnswers);
             
+            // 全屏按钮事件监听
+            document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
+            
+            // 屏蔽右键和触摸长按
+            setupContextMenuPrevention();
+            
             // 生成初始题目
             generateProblems();
             
             // 初始化草稿纸
             initDraftPad();
         });
+        
+        // 切换全屏功能
+        function toggleFullscreen() {
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const icon = fullscreenBtn.querySelector('i');
+            
+            if (!document.fullscreenElement) {
+                // 进入全屏
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.mozRequestFullScreen) {
+                    document.documentElement.mozRequestFullScreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                }
+                
+                icon.className = "fas fa-compress";
+                fullscreenBtn.style.background = "linear-gradient(135deg, #3498db 0%, #2c3e50 100%)";
+                isFullscreen = true;
+            } else {
+                // 退出全屏
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                
+                icon.className = "fas fa-expand";
+                fullscreenBtn.style.background = "linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)";
+                isFullscreen = false;
+            }
+        }
+        
+        // 屏蔽右键菜单和长按菜单
+        function setupContextMenuPrevention() {
+            // 全局禁止右键菜单
+            document.addEventListener('contextmenu', function(e) {
+                // 允许在草稿纸中打开菜单
+                if (e.target.closest('.draft-container') || e.target.closest('.draft-toggle-btn')) {
+                    return;
+                }
+                
+                // 允许在问题输入框中打开菜单
+                if (e.target.classList.contains('problem-input')) {
+                    return;
+                }
+                
+                e.preventDefault();
+            });
+            
+            // 全局禁止文本选择（除输入框外）
+            document.addEventListener('selectstart', function(e) {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+                
+                if (e.target.classList.contains('problem-input')) {
+                    return;
+                }
+                
+                e.preventDefault();
+            });
+            
+            // 屏蔽移动端长按菜单
+            let touchTimer = null;
+            
+            document.addEventListener('touchstart', function(e) {
+                // 如果是在草稿纸内，不做限制
+                if (e.target.closest('.draft-container') || e.target.closest('.draft-toggle-btn')) {
+                    return;
+                }
+                
+                // 如果是输入框，则不做限制
+                if (e.target.classList.contains('problem-input')) {
+                    return;
+                }
+                
+                touchTimer = setTimeout(function() {
+                    e.preventDefault();
+                }, 800); // 800毫秒内按住即触发
+            });
+            
+            document.addEventListener('touchend', function() {
+                clearTimeout(touchTimer);
+            });
+        }
         
         // 切换语言
         function toggleLanguage() {
@@ -1435,7 +1596,7 @@
                 e.preventDefault();
                 e.stopPropagation();
                 draftState.paths = [];
-                redraw();
+                reddraw();
                 addTouchFeedback(this);
             });
             
