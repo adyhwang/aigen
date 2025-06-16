@@ -240,7 +240,6 @@
         .problem-list {
             overflow-y: auto;
             padding-right: 10px;
-            /* max-height: 60vh; */
         }
         
         .problem {
@@ -295,7 +294,7 @@
             border-color: #3498db;
             box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
             outline: none;
-        }
+}
         
         .problem-input-equal {
             font-size: 24px;
@@ -339,50 +338,7 @@
             font-family: monospace;
         }
         
-        /* 响应式设计 */
-        @media (max-width: 800px) {
-            .header-title {
-                font-size: 22px;
-            }
-            
-            .section-title {
-                font-size: 20px;
-            }
-            
-            .settings-container, .problems-container {
-                padding: 20px 15px;
-            }
-            
-            .problem {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-            
-            .problem-expression {
-                min-width: 100%;
-                font-size: 18px;
-            }
-            
-            .problem-input-container {
-                min-width: 100%;
-            }
-            
-            .answer-feedback {
-                margin-left: 0;
-                margin-top: 10px;
-                width: 100%;
-            }
-            
-            .problems-header {
-                flex-direction: column;
-            }
-            
-            .show-answer-btn {
-                width: 100%;
-            }
-        }
-        
+       
         /* 状态消息 */
         .status-message {
             padding: 12px;
@@ -478,6 +434,7 @@
             padding: 15px 20px;
             background-color: #f8f3e0;
             border-bottom: 1px solid #e0d8bf;
+            cursor: move;
         }
         
         .draft-title {
@@ -700,17 +657,93 @@
         /* 调整大小手柄 */
         .resize-handle {
             position: absolute;
-            bottom: 0;
-            right: 0;
+            top: 0;
+            left: 0;
             width: 20px;
             height: 20px;
             cursor: nwse-resize;
             z-index: 1000;
             background-color: #e0d8bf;
-            border-top-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }        
+        
+        /* 草稿纸关闭区域 */
+        .draft-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: 998;
+            display: none;
         }
         
-        /* 响应式调整 */
+        .draft-backdrop.active {
+            display: block;
+        }
+
+        /* 全屏样式调整 */
+        :fullscreen, ::-webkit-full-screen, ::-moz-full-screen, :-ms-fullscreen {
+            background: #e4efe9;
+            padding: 20px;
+            overflow: auto;
+        }
+        
+        .fullscreen-enabled .draft-toggle-btn, .fullscreen-enabled .draft-container {
+            z-index: 10000;
+        }
+        
+        /* 调试提示 */
+        .debug-hint {
+            background-color: #ffe0c0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+         /* 响应式设计 */
+         @media (max-width: 800px) {
+            .header-title {
+                font-size: 22px;
+            }
+            
+            .section-title {
+                font-size: 20px;
+            }
+            
+            .settings-container, .problems-container {
+                padding: 20px 15px;
+            }
+            
+            .problem {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .problem-expression {
+                min-width: 100%;
+                font-size: 18px;
+            }
+            
+            .problem-input-container {
+                min-width: 100%;
+            }
+            
+            .answer-feedback {
+                margin-left: 0;
+                margin-top: 10px;
+                width: 100%;
+            }
+            
+            .problems-header {
+                flex-direction: column;
+            }
+            
+        }
+        
         @media (max-width: 600px) {
             .draft-container {
                 width: calc(100% - 40px);
@@ -743,69 +776,13 @@
                 max-width: 300px;
             }
         }
-        
-        /* 草稿纸关闭区域 */
-        .draft-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            z-index: 998;
-            display: none;
-        }
-        
-        .draft-backdrop.active {
-            display: block;
-        }
-
-        /* 全屏样式调整 */
-        :fullscreen, ::-webkit-full-screen, ::-moz-full-screen, :-ms-fullscreen {
-            background: #e4efe9;
-            padding: 20px;
-            overflow: auto;
-        }
-        
-        .fullscreen-enabled .draft-toggle-btn, .fullscreen-enabled .draft-container {
-            z-index: 10000;
-        }
-        
-        /* 方向锁定提示 */
-        .orientation-notice {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: #e67e22;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-weight: bold;
-            z-index: 9999;
-            display: none;
-        }
-
-        /* 调试提示 */
-        .debug-hint {
-            background-color: #ffe0c0;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 15px;
-            font-size: 14px;
-        }
     </style>
 </head>
 <body>
-    <!-- 方向锁定提示 -->
-    <div class="orientation-notice" id="orientation-notice">
-        请保持竖屏方向以获得最佳体验
-    </div>
-    
     <div class="container">
         <!-- 头部区域 -->
         <header>
-            <div class="header-title">小学生四则运算练习</div>
+            <div class="header-title">四则运算练习</div>
             <div class="header-controls">
                 <button class="fullscreen-btn" id="fullscreen-btn">
                     <i class="fas fa-expand"></i>
@@ -821,7 +798,7 @@
             <div class="settings-grid">
                 <div class="setting-row">
                     <label for="problem-count">题目数量:</label>
-                    <input type="number" id="problem-count" min="1" max="30" value="5">
+                    <input type="number" id="problem-count" min="1" max="50" value="5">
                 </div>
                 
                 <div class="setting-row">
@@ -890,6 +867,8 @@
     <!-- 草稿纸容器 -->
     <div class="draft-container">
         <div class="draft-header">
+            <!-- 调整大小手柄 -->
+            <div class="resize-handle"></div>
             <div class="draft-title">草稿纸</div>
             <div class="draft-controls">
                 <div class="draft-btn draft-undo" title="撤销">
@@ -944,9 +923,6 @@
                 <div class="bg-color-option" data-color="#ffe6e6" style="background-color: #ffe6e6;"></div>
             </div>
         </div>
-        
-        <!-- 调整大小手柄 -->
-        <div class="resize-handle"></div>
     </div>
     
     <!-- 草稿纸关闭背景区域 -->
@@ -1020,7 +996,6 @@
         let problems = [];
         let isDraftOpen = false;
         let isFullscreen = false;
-        let isLandscape = false;
         
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -1038,34 +1013,12 @@
                 e.preventDefault();
             });
             
-            // 监听屏幕方向变化
-            screen.orientation?.addEventListener('change', handleOrientationChange);
-            window.addEventListener('resize', checkOrientation);
-            checkOrientation();
-            
             // 生成初始题目
             generateProblems();
             
             // 初始化草稿纸
             initDraftPad();
         });
-        
-        // 检查屏幕方向
-        function checkOrientation() {
-            isLandscape = window.innerWidth > window.innerHeight;
-            const orientationNotice = document.getElementById('orientation-notice');
-            
-            if (isFullscreen && isLandscape) {
-                orientationNotice.style.display = 'block';
-            } else {
-                orientationNotice.style.display = 'none';
-            }
-        }
-        
-        // 处理方向变化
-        function handleOrientationChange() {
-            checkOrientation();
-        }
         
         // 切换语言
         function toggleLanguage() {
@@ -1120,10 +1073,6 @@
                     
                     icon.className = "fas fa-compress";
                     fullscreenBtn.querySelector('span').textContent = lang.exitFullscreen;
-                    
-                    // 尝试锁定方向为竖屏
-                    tryLockOrientation();
-                    checkOrientation();
                 }).catch(err => {
                     console.error('进入全屏失败:', err);
                 });
@@ -1135,31 +1084,9 @@
                     
                     icon.className = "fas fa-expand";
                     fullscreenBtn.querySelector('span').textContent = lang.fullscreen;
-                    
-                    // 恢复默认方向
-                    unlockOrientation();
-                    checkOrientation();
                 }).catch(err => {
                     console.error('退出全屏失败:', err);
                 });
-            }
-        }
-        
-        // 尝试锁定方向为竖屏
-        function tryLockOrientation() {
-            if (screen.orientation && screen.orientation.lock) {
-                screen.orientation.lock('portrait').then(() => {
-                    console.log('已锁定为竖屏');
-                }).catch(error => {
-                    console.log('屏幕方向锁定失败:', error);
-                });
-            }
-        }
-        
-        // 解除方向锁定
-        function unlockOrientation() {
-            if (screen.orientation && screen.orientation.unlock) {
-                screen.orientation.unlock();
             }
         }
         
@@ -1410,6 +1337,15 @@
             const clearBtn = document.querySelector('.draft-clear');
             const undoBtn = document.querySelector('.draft-undo');
             const backdrop = document.getElementById('draft-backdrop');
+            const draftHeader = document.querySelector('.draft-header');
+            const resizeHandle = document.querySelector('.resize-handle');
+            
+            // 拖拽状态变量
+            let isDragging = false;
+            let isResizing = false;
+            let dragStartX, dragStartY;
+            let initialLeft, initialTop;
+            let initialWidth, initialHeight;
             
             // 调整canvas大小为容器尺寸
             function resizeCanvas() {
@@ -1470,6 +1406,139 @@
             // 初始化画布
             resizeCanvas();
             drawGrid();
+            
+            // 拖拽功能
+            function startDrag(e) {
+                e.preventDefault();
+                isDragging = true;
+                draftContainer.style.userSelect = "none";
+                
+                // 获取草稿纸的位置和大小
+                const rect = draftContainer.getBoundingClientRect();
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                
+                if (e.type === 'touchstart') {
+                    const touch = e.touches[0];
+                    dragStartX = touch.clientX;
+                    dragStartY = touch.clientY;
+                } else {
+                    dragStartX = e.clientX;
+                    dragStartY = e.clientY;
+                }
+                
+                document.addEventListener('mousemove', dragMove);
+                document.addEventListener('touchmove', dragMove, { passive: false });
+                document.addEventListener('mouseup', stopDrag);
+                document.addEventListener('touchend', stopDrag);
+            }
+            
+            function dragMove(e) {
+                if (!isDragging) return;
+                
+                e.preventDefault();
+                
+                let clientX, clientY;
+                if (e.type === 'touchmove') {
+                    if (e.touches.length === 0) return;
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                
+                const deltaX = clientX - dragStartX;
+                const deltaY = clientY - dragStartY;
+                
+                const newLeft = initialLeft + deltaX;
+                const newTop = initialTop + deltaY;
+                
+                draftContainer.style.left = `${newLeft}px`;
+                draftContainer.style.top = `${newTop}px`;
+                draftContainer.style.right = 'auto';
+                draftContainer.style.bottom = 'auto';
+            }
+            
+            function stopDrag() {
+                isDragging = false;
+                document.removeEventListener('mousemove', dragMove);
+                document.removeEventListener('touchmove', dragMove);
+                document.removeEventListener('mouseup', stopDrag);
+                document.removeEventListener('touchend', stopDrag);
+                draftContainer.style.userSelect = "";
+            }
+            
+            // 调整大小功能
+            function startResize(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                isResizing = true;
+                
+                const rect = draftContainer.getBoundingClientRect();
+                initialWidth = rect.width;
+                initialHeight = rect.height;
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                
+                if (e.type === 'touchstart') {
+                    const touch = e.touches[0];
+                    dragStartX = touch.clientX;
+                    dragStartY = touch.clientY;
+                } else {
+                    dragStartX = e.clientX;
+                    dragStartY = e.clientY;
+                }
+                
+                document.addEventListener('mousemove', resizeMove);
+                document.addEventListener('touchmove', resizeMove, { passive: false });
+                document.addEventListener('mouseup', stopResize);
+                document.addEventListener('touchend', stopResize);
+            }
+            
+            function resizeMove(e) {
+                if (!isResizing) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                let clientX, clientY;
+                if (e.type === 'touchmove') {
+                    if (e.touches.length === 0) return;
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                
+                const deltaX = clientX - dragStartX;
+                const deltaY = clientY - dragStartY;
+                
+                const newWidth = Math.max(300, initialWidth - deltaX);
+                const newHeight = Math.max(200, initialHeight - deltaY);
+                
+                draftContainer.style.width = `${newWidth}px`;
+                draftContainer.style.height = `${newHeight}px`;
+                
+                resizeCanvas();
+            }
+            
+            function stopResize() {
+                isResizing = false;
+                document.removeEventListener('mousemove', resizeMove);
+                document.removeEventListener('touchmove', resizeMove);
+                document.removeEventListener('mouseup', stopResize);
+                document.removeEventListener('touchend', stopResize);
+            }
+            
+            // 添加拖拽和调整大小事件
+            draftHeader.addEventListener('mousedown', startDrag);
+            draftHeader.addEventListener('touchstart', startDrag, { passive: false });
+            
+            resizeHandle.addEventListener('mousedown', startResize);
+            resizeHandle.addEventListener('touchstart', startResize, { passive: false });
             
             // 工具按钮事件
             function addToolEvents() {
