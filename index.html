@@ -143,7 +143,7 @@
                 <!-- 数字位数 -->
                 <div class="flex items-center">
                     <label for="digit-length" class="w-28 md:w-36 text-gray-700" id="label-digit-length">数字位数:</label>
-                    <input type="number" id="digit-length" min="1" max="5" value="3" 
+                    <input type="number" id="digit-length" min="1" max="3" value="2" 
                         class="border border-gray-300 rounded-md px-3 py-2 w-20 focus:outline-none focus:ring-2 focus:ring-primary/50">
                 </div>
                 
@@ -582,80 +582,372 @@
             return selected.length > 0 ? selected : ['integer']; // 默认整数
         }
 
-        // 生成表达式字符串和答案位置信息
-        function generateExpressionWithAnswerPosition(numNumbers, operators, digitLength, numberTypes, useBrackets, answerPosition) {
-            // 生成数字
-            const numbers = [];
-            for (let i = 0; i < numNumbers; i++) {
-                const isDecimal = numberTypes.includes('decimal') && 
-                                 (numberTypes.length === 1 || Math.random() > 0.5);
-                numbers.push(generateRandomNumber(digitLength, isDecimal));
+        // 生成带括号的表达式
+        function generateExpressionWithBrackets(numbers, ops) {
+            // 确保有足够的数字来添加有意义的括号
+            if (numbers.length < 3) {
+                // 数字太少，无法形成有意义的括号表达式
+                let expr = '';
+                for (let i = 0; i < numbers.length; i++) {
+                    expr += numbers[i];
+                    if (i < ops.length) {
+                        expr += ops[i];
+                    }
+                }
+                return expr;
             }
             
-            // 生成运算符
-            const ops = [];
-            for (let i = 0; i < numNumbers - 1; i++) {
-                const opIndex = Math.floor(Math.random() * operators.length);
-                ops.push(operators[opIndex]);
-            }
+            // 选择括号的起始和结束位置，确保至少包含两个数字和一个运算符
+            const minLength = 2; // 至少包含两个数字和一个运算符
+            const maxStart = numbers.length - minLength - 1;
+            const start = Math.floor(Math.random() * (maxStart + 1));
+            const maxEnd = numbers.length - 1;
+            const end = Math.floor(Math.random() * (maxEnd - (start + minLength) + 1)) + start + minLength;
             
-            // 构建基础表达式
-            let fullExpression = '';
+            // 构建带括号的表达式
+            let expr = '';
             for (let i = 0; i < numbers.length; i++) {
-                fullExpression += numbers[i];
+                // 在起始位置添加左括号
+                if (i === start) {
+                    expr += '(';
+                }
+                
+                expr += numbers[i];
+                
+                // 在结束位置添加右括号
+                if (i === end) {
+                    expr += ')';
+                }
+                
+                // 添加运算符（如果不是最后一个数字）
                 if (i < ops.length) {
-                    fullExpression += ops[i];
+                    expr += ops[i];
                 }
             }
             
-            // 随机添加括号（如果启用且数字数量足够）
-            let expressionWithBrackets = fullExpression;
-            if (useBrackets && numNumbers > 2 && Math.random() > 0.5) {
-                const start = Math.floor(Math.random() * (numNumbers - 1));
-                let end = Math.floor(Math.random() * (numNumbers - start - 1)) + start + 1;
+            return expr;
+        }
+
+        // ------------ 表达式解析和计算系统 ------------
+
+        // 运算符优先级
+        const OPERATOR_PRECEDENCE = {
+            '+': 1,
+            '-': 1,
+            '×': 2,
+            '÷': 2
+        };
+
+        // 将中缀表达式转换为后缀表达式(逆波兰表示法)
+        function infixToPostfix(expression) {
+            const outputQueue = [];
+            const operatorStack = [];
+            let currentNumber = '';
+            let isDecimal = false;
+            
+            // 处理表达式中的每个字符
+            for (let i = 0; i < expression.length; i++) {
+                const char = expression[i];
                 
-                // 确保括号有意义
-                if (end - start >= 1) {
-                    let part1 = '';
-                    for (let i = 0; i < numbers.length; i++) {
-                        if (i === start) part1 += '(';
-                        part1 += numbers[i];
-                        if (i < ops.length) part1 += ops[i];
-                        if (i === end) part1 += ')';
+                // 如果是数字或小数点，构建当前数字
+                if (!isNaN(parseFloat(char)) || (char === '.' && !isDecimal)) {
+                    currentNumber += char;
+                    if (char === '.') isDecimal = true;
+                } else {
+                    // 如果正在构建数字，将其添加到输出队列
+                    if (currentNumber !== '') {
+                        outputQueue.push(parseFloat(currentNumber));
+                        currentNumber = '';
+                        isDecimal = false;
                     }
-                    expressionWithBrackets = part1;
+                    
+                    // 处理运算符和括号
+                    if (char === '(') {
+                        operatorStack.push(char);
+                    } else if (char === ')') {
+                        // 弹出直到遇到左括号
+                        while (operatorStack.length > 0 && operatorStack[operatorStack.length - 1] !== '(') {
+                            outputQueue.push(operatorStack.pop());
+                        }
+                        operatorStack.pop(); // 弹出左括号，不添加到输出队列
+                    } else if (OPERATOR_PRECEDENCE[char] !== undefined) {
+                        // 处理运算符，按照优先级弹出
+                        while (operatorStack.length > 0 && 
+                               operatorStack[operatorStack.length - 1] !== '(' && 
+                               OPERATOR_PRECEDENCE[operatorStack[operatorStack.length - 1]] >= OPERATOR_PRECEDENCE[char]) {
+                            outputQueue.push(operatorStack.pop());
+                        }
+                        operatorStack.push(char);
+                    }
                 }
             }
             
-            // 计算完整表达式的结果
-            const fullResult = calculateExpression(fullExpression);
+            // 添加最后一个数字
+            if (currentNumber !== '') {
+                outputQueue.push(parseFloat(currentNumber));
+            }
             
-            // 处理左侧答案位置：提取第一个数字作为答案
+            // 弹出所有剩余的运算符
+            while (operatorStack.length > 0) {
+                outputQueue.push(operatorStack.pop());
+            }
+            
+            return outputQueue;
+        }
+
+        // 计算后缀表达式
+        function calculatePostfix(postfix) {
+            const stack = [];
+            
+            for (const token of postfix) {
+                // 如果是数字，压入栈
+                if (typeof token === 'number') {
+                    stack.push(token);
+                } else {
+                    // 如果是运算符，弹出两个数字进行计算
+                    if (stack.length < 2) {
+                        console.error('无效的表达式');
+                        return null;
+                    }
+                    
+                    const b = stack.pop();
+                    const a = stack.pop();
+                    let result;
+                    
+                    switch (token) {
+                        case '+':
+                            result = a + b;
+                            break;
+                        case '-':
+                            result = a - b;
+                            break;
+                        case '×':
+                            result = a * b;
+                            break;
+                        case '÷':
+                            if (b === 0) {
+                                console.error('除数不能为零');
+                                return null;
+                            }
+                            result = a / b;
+                            break;
+                        default:
+                            console.error('未知运算符:', token);
+                            return null;
+                    }
+                    
+                    stack.push(result);
+                }
+            }
+            
+            // 栈中应该只剩下一个结果
+            if (stack.length !== 1) {
+                console.error('表达式计算错误');
+                return null;
+            }
+            
+            return stack[0];
+        }
+
+        // 计算表达式的主函数
+        function calculateExpression(expression) {
+            try {
+                // 转换为后缀表达式
+                const postfix = infixToPostfix(expression);
+                if (!postfix || postfix.length === 0) {
+                    console.error('无法解析表达式:', expression);
+                    return null;
+                }
+                
+                // 计算后缀表达式
+                let result = calculatePostfix(postfix);
+                if (result === null) {
+                    console.error('表达式计算失败:', expression);
+                    return null;
+                }
+                
+                // 处理浮点数精度问题
+                if (Math.abs(result) > 0.000001 && Math.abs(result - Math.round(result)) < 0.000001) {
+                    result = Math.round(result);
+                } else {
+                    // 保留6位小数，避免过多小数位
+                    result = Number(result.toFixed(6));
+                }
+                
+                return result;
+            } catch (e) {
+                console.error('计算表达式错误:', e, '表达式:', expression);
+                return null;
+            }
+        }
+
+        // 生成表达式字符串和答案位置信息 - 重点修复左侧答案位置
+        function generateExpressionWithAnswerPosition(numNumbers, operators, digitLength, numberTypes, useBrackets, answerPosition) {
+            // 对于左侧答案位置，我们需要特殊处理以确保答案正确
             if (answerPosition === 'left') {
-                // 第一个数字是答案
-                const answerNumber = numbers[0];
+                // 确保至少有2个数字
+                if (numNumbers < 2) numNumbers = 2;
                 
-                // 创建缺少第一个数字的表达式
-                let expressionWithoutFirstNumber = '';
-                for (let i = 1; i < numbers.length; i++) {
-                    // 添加前一个运算符
-                    if (i > 1) {
-                        expressionWithoutFirstNumber += ops[i-2];
-                    } else {
-                        // 对于第一个位置，添加第一个运算符
-                        expressionWithoutFirstNumber += ops[0];
-                    }
-                    expressionWithoutFirstNumber += numbers[i];
+                // 生成除了第一个数字外的其他数字
+                const otherNumbers = [];
+                for (let i = 0; i < numNumbers - 1; i++) {
+                    const isDecimal = numberTypes.includes('decimal') && 
+                                     (numberTypes.length === 1 || Math.random() > 0.5);
+                    otherNumbers.push(generateRandomNumber(digitLength, isDecimal));
                 }
+                
+                // 生成运算符
+                const ops = [];
+                for (let i = 0; i < numNumbers - 2; i++) { // 少一个运算符
+                    const opIndex = Math.floor(Math.random() * operators.length);
+                    let op = operators[opIndex];
+                    
+                    // 特殊处理除法避免除零
+                    if (op === '÷' && otherNumbers[i + 1] === 0) {
+                        // 更换为乘法
+                        op = '×';
+                    }
+                    
+                    ops.push(op);
+                }
+                
+                // 生成第一个运算符（连接未知数字和第一个已知数字）
+                let firstOp;
+                do {
+                    const opIndex = Math.floor(Math.random() * operators.length);
+                    firstOp = operators[opIndex];
+                } while (firstOp === '÷'); // 避免第一个运算符为除法，使计算更直观
+                
+                // 构建右侧表达式（不含第一个数字）
+                let rightExpression = '';
+                for (let i = 0; i < otherNumbers.length; i++) {
+                    rightExpression += otherNumbers[i];
+                    if (i < ops.length) {
+                        rightExpression += ops[i];
+                    }
+                }
+                
+                // 计算右侧表达式的结果
+                const rightResult = calculateExpression(rightExpression);
+                if (rightResult === null) return null;
+                
+                // 生成最终结果（将作为等号右边的值）
+                const finalResult = generateRandomNumber(digitLength, 
+                    numberTypes.includes('decimal') && (numberTypes.length === 1 || Math.random() > 0.5));
+                
+                // 根据第一个运算符计算左侧未知数（答案）
+                let leftNumber; // 这将是左侧的答案
+                switch (firstOp) {
+                    case '+':
+                        leftNumber = finalResult - rightResult;
+                        break;
+                    case '-':
+                        leftNumber = finalResult + rightResult;
+                        break;
+                    case '×':
+                        // 确保不会除以零
+                        if (rightResult === 0) return null;
+                        leftNumber = finalResult / rightResult;
+                        break;
+                    default: // 默认为加法
+                        leftNumber = finalResult - rightResult;
+                        firstOp = '+';
+                }
+                
+                // 确保左侧数字是有效数字
+                if (isNaN(leftNumber) || !isFinite(leftNumber)) return null;
+                
+                // 格式化左侧数字
+                leftNumber = Number(leftNumber.toFixed(6));
+                
+                // 构建完整表达式用于验证
+                const fullExpression = `${leftNumber}${firstOp}${rightExpression}`;
+                const fullExpressionResult = calculateExpression(fullExpression);
+                
+                // 验证完整表达式结果是否与我们预期的finalResult一致
+                if (fullExpressionResult === null || Math.abs(fullExpressionResult - finalResult) > 0.001) {
+                    return null;
+                }
+                
+                // 构建显示表达式（不含左侧数字）
+                const displayExpression = `${firstOp}${rightExpression}`;
                 
                 return {
-                    originalExpression: expressionWithBrackets,
-                    displayExpression: expressionWithoutFirstNumber,
-                    result: answerNumber,
-                    fullResult: fullResult // 用于验证表达式是否正确
+                    originalExpression: fullExpression,
+                    displayExpression: displayExpression,
+                    result: leftNumber, // 左侧的答案
+                    fullResult: finalResult // 等号右侧的结果
                 };
             } else {
                 // 右侧答案位置：正常表达式，结果为答案
+                // 生成数字
+                const numbers = [];
+                for (let i = 0; i < numNumbers; i++) {
+                    const isDecimal = numberTypes.includes('decimal') && 
+                                     (numberTypes.length === 1 || Math.random() > 0.5);
+                    numbers.push(generateRandomNumber(digitLength, isDecimal));
+                }
+                
+                // 生成运算符
+                const ops = [];
+                for (let i = 0; i < numNumbers - 1; i++) {
+                    // 对于减法和除法，确保结果不会为负数或导致除零错误
+                    let op;
+                    let valid = false;
+                    
+                    while (!valid) {
+                        const opIndex = Math.floor(Math.random() * operators.length);
+                        op = operators[opIndex];
+                        
+                        // 特殊处理减法和除法
+                        if (op === '-' || op === '÷') {
+                            const num1 = numbers[i];
+                            const num2 = numbers[i + 1];
+                            
+                            // 减法确保结果非负，除法确保被除数大于除数且除数不为0
+                            if ((op === '-' && num1 < num2) || 
+                                (op === '÷' && (num1 < num2 || num2 === 0))) {
+                                // 交换数字位置使运算结果有效
+                                [numbers[i], numbers[i + 1]] = [numbers[i + 1], numbers[i]];
+                            }
+                            
+                            // 再次检查除法是否有效
+                            if (op === '÷' && numbers[i + 1] === 0) {
+                                valid = false;
+                            } else {
+                                valid = true;
+                            }
+                        } else {
+                            valid = true;
+                        }
+                    }
+                    
+                    ops.push(op);
+                }
+                
+                // 构建基础表达式或带括号的表达式
+                let expressionWithBrackets;
+                if (useBrackets && Math.random() > 0.5) {
+                    expressionWithBrackets = generateExpressionWithBrackets(numbers, ops);
+                } else {
+                    // 构建基础表达式
+                    expressionWithBrackets = '';
+                    for (let i = 0; i < numbers.length; i++) {
+                        expressionWithBrackets += numbers[i];
+                        if (i < ops.length) {
+                            expressionWithBrackets += ops[i];
+                        }
+                    }
+                }
+                
+                // 计算完整表达式的结果
+                const fullResult = calculateExpression(expressionWithBrackets);
+                
+                // 验证计算结果
+                if (fullResult === null || isNaN(fullResult) || !isFinite(fullResult)) {
+                    return null;
+                }
+                
                 return {
                     originalExpression: expressionWithBrackets,
                     displayExpression: expressionWithBrackets,
@@ -665,36 +957,13 @@
             }
         }
 
-        // 计算表达式结果（处理×和÷）
-        function calculateExpression(expression) {
-            // 将×替换为*，÷替换为/以适应eval
-            const validExpr = expression.replace(/×/g, '*').replace(/÷/g, '/');
-            
-            try {
-                // 使用eval计算结果，处理浮点数精度问题
-                let result = eval(validExpr);
-                
-                // 四舍五入到合理的精度
-                if (Math.abs(result) > 0.000001 && Math.abs(result - Math.round(result)) < 0.000001) {
-                    result = Math.round(result);
-                } else {
-                    result = Number(result.toFixed(6));
-                }
-                
-                return result;
-            } catch (e) {
-                console.error('计算表达式错误:', e);
-                return null;
-            }
-        }
-
         // 生成题目
         function generateQuestions() {
             blurAllInputs(); // 生成题目时移除焦点
             
             const numQuestions = parseInt(elements.numQuestions.value) || 5;
             const numNumbers = parseInt(elements.numNumbers.value) || 2;
-            const digitLength = parseInt(elements.digitLength.value) || 3;
+            const digitLength = parseInt(elements.digitLength.value) || 2;
             const operators = getSelectedOperators();
             const answerPositions = getSelectedAnswerPositions();
             const numberTypes = getSelectedNumberTypes();
@@ -718,16 +987,29 @@
                 // 随机选择答案位置
                 const answerPosition = answerPositions[Math.floor(Math.random() * answerPositions.length)];
                 
-                // 生成表达式和答案信息
-                let exprData = generateExpressionWithAnswerPosition(
-                    numNumbers, validOperators, digitLength, numberTypes, useBrackets, answerPosition
-                );
+                // 生成表达式和答案信息，确保计算结果有效
+                let exprData = null;
+                let attempts = 0;
+                const maxAttempts = 30; // 最多尝试30次生成有效表达式
                 
-                // 如果计算失败，重新生成
-                while (exprData.result === null || isNaN(exprData.result) || !isFinite(exprData.result)) {
-                    exprData = generateExpressionWithAnswerPosition(
+                while (!exprData && attempts < maxAttempts) {
+                    const tempData = generateExpressionWithAnswerPosition(
                         numNumbers, validOperators, digitLength, numberTypes, useBrackets, answerPosition
                     );
+                    
+                    // 验证结果是否有效
+                    if (tempData && tempData.fullResult !== null && !isNaN(tempData.fullResult) && isFinite(tempData.fullResult)) {
+                        exprData = tempData;
+                    }
+                    
+                    attempts++;
+                }
+                
+                // 如果多次尝试后仍无法生成有效表达式，显示错误
+                if (!exprData) {
+                    console.error("无法生成有效的表达式，请尝试调整设置");
+                    alert("无法生成有效的表达式，请尝试调整设置");
+                    return;
                 }
                 
                 // 创建题目元素
@@ -743,7 +1025,7 @@
                     equationHtml = `${exprData.displayExpression} = <input type="number" step="any" class="equation-input" data-index="${i}">`;
                 } else {
                     // 答案在左侧：[输入框] 表达式 = 结果
-                    equationHtml = `<input type="number" step="any" class="equation-input" data-index="${i}"> ${exprData.displayExpression} = ${exprData.fullResult}`;
+                    equationHtml = `<input type="number" step="any" class="equation-input" data-index="${i}"> ${exprData.displayExpression} = ${formatNumber(exprData.fullResult)}`;
                 }
                 
                 equationElement.innerHTML = equationHtml + '<span class="result-icon"></span>';
@@ -780,7 +1062,7 @@
                     resultIcon.className = 'result-icon text-gray-600';
                 } else {
                     // 检查答案是否正确（考虑浮点数精度）
-                    const isCorrect = Math.abs(userAnswer - correctAnswer) < 0.0001;
+                    const isCorrect = Math.abs(userAnswer - correctAnswer) < 0.001;
                     
                     if (isCorrect) {
                         resultIcon.innerHTML = '✔';
@@ -795,7 +1077,15 @@
 
         // 格式化数字（移除不必要的.0）
         function formatNumber(num) {
-            return num % 1 === 0 ? num.toFixed(0) : num;
+            // 处理整数显示
+            if (Number.isInteger(num)) {
+                return num.toString();
+            }
+            
+            // 处理小数，最多显示4位小数
+            const fixed = num.toFixed(4);
+            // 移除末尾的0和可能的小数点
+            return fixed.replace(/\.?0+$/, '');
         }
 
         // 切换草稿纸显示/隐藏
