@@ -71,6 +71,13 @@
             .notepad-btn-mobile {
                 @apply md:p-2 p-3; /* 移动端增大按钮尺寸 */
             }
+            .rule-highlight {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
         }
     </style>
 </head>
@@ -140,10 +147,10 @@
                         class="border border-gray-300 rounded-md px-3 py-2 w-20 focus:outline-none focus:ring-2 focus:ring-primary/50">
                 </div>
                 
-                <!-- 数字位数 -->
+                <!-- 数字最大位数 -->
                 <div class="flex items-center">
-                    <label for="digit-length" class="w-28 md:w-36 text-gray-700" id="label-digit-length">数字位数:</label>
-                    <input type="number" id="digit-length" min="1" max="3" value="2" 
+                    <label for="max-digit-length" class="w-28 md:w-36 text-gray-700" id="label-max-digit-length">数字最大位数:</label>
+                    <input type="number" id="max-digit-length" min="1" max="3" value="2" 
                         class="border border-gray-300 rounded-md px-3 py-2 w-20 focus:outline-none focus:ring-2 focus:ring-primary/50">
                 </div>
                 
@@ -193,7 +200,16 @@
         
         <!-- 练习题区域 -->
         <section class="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-16">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4" id="exercises-title">练习题</h2>
+            <!-- 练习题标题和规则提示 -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-3">
+                <h2 class="text-xl font-semibold text-gray-800" id="exercises-title">练习题</h2>
+                
+                <!-- 运算规则提示区 -->
+                <div class="rules-container text-sm md:text-base text-gray-600 bg-blue-50 p-3 rounded-lg max-w-md w-full">
+                    <p id="current-rule" class="rule-highlight"></p>
+                </div>
+            </div>
+            
             <div id="questions-container" class="space-y-2 min-h-[100px]">
                 <!-- 题目将在这里动态生成 -->
                 <div class="text-gray-500 italic" id="no-questions-message">点击上方"生成题目"按钮开始练习</div>
@@ -261,7 +277,26 @@
             // 记录当前绘制的路径
             currentPath: [],
             // 防止重复保存的标志
-            isSavingState: false
+            isSavingState: false,
+            // 运算规则相关
+            currentRuleIndex: 0,
+            ruleInterval: null
+        };
+
+        // 多语言四则运算规则
+        const arithmeticRules = {
+            zh: [
+                "1、加法、减法、乘法和除法统称四则运算。",
+                "2、在没有括号的算式里，如果只有加、减法或者只有乘、除法，都要从左往右按顺序计算。",
+                "3、在没有括号的算式里，既有乘、除法又有加、减法的，要先算乘除法，再算加减法。",
+                "4、算式有括号，要先算括号里面的，再算括号外面的；大、中、小括号的计算顺序为小→中→大。括号里面的计算顺序遵循以上1、2、3条的计算顺序。"
+            ],
+            en: [
+                "1. Addition, subtraction, multiplication, and division are collectively called the four arithmetic operations.",
+                "2. In an expression without parentheses, if there are only addition and subtraction, or only multiplication and division, calculate from left to right in order.",
+                "3. In an expression without parentheses, if there are both multiplication/division and addition/subtraction, calculate multiplication and division first, then addition and subtraction.",
+                "4. If an expression has parentheses, calculate the inside of the parentheses first, then the outside; the order of calculation for large, medium, and small parentheses is small → medium → large. The calculation order inside the parentheses follows rules 1, 2, and 3 above."
+            ]
         };
 
         // DOM元素引用
@@ -276,7 +311,7 @@
             numQuestions: document.getElementById('num-questions'),
             operators: document.querySelectorAll('input[name="operators"]'),
             numNumbers: document.getElementById('num-numbers'),
-            digitLength: document.getElementById('digit-length'),
+            maxDigitLength: document.getElementById('max-digit-length'),
             answerPositions: document.querySelectorAll('input[name="answer-position"]'),
             numberTypes: document.querySelectorAll('input[name="number-type"]'),
             generateBtn: document.getElementById('generate-btn'),
@@ -285,6 +320,7 @@
             exercisesTitle: document.getElementById('exercises-title'),
             questionsContainer: document.getElementById('questions-container'),
             noQuestionsMessage: document.getElementById('no-questions-message'),
+            currentRule: document.getElementById('current-rule'),
             
             // 悬浮按钮
             showAnswersBtn: document.getElementById('show-answers-btn'),
@@ -309,7 +345,7 @@
             labelOperators: document.getElementById('label-operators'),
             labelBrackets: document.getElementById('label-brackets'),
             labelNumNumbers: document.getElementById('label-num-numbers'),
-            labelDigitLength: document.getElementById('label-digit-length'),
+            labelMaxDigitLength: document.getElementById('label-max-digit-length'),
             labelAnswerPosition: document.getElementById('label-answer-position'),
             labelLeft: document.getElementById('label-left'),
             labelRight: document.getElementById('label-right'),
@@ -328,7 +364,7 @@
                 labelOperators: '运算符号:',
                 labelBrackets: '括号',
                 labelNumNumbers: '数字数量:',
-                labelDigitLength: '数字位数:',
+                labelMaxDigitLength: '数字最大位数:',
                 labelAnswerPosition: '答案位置:',
                 labelLeft: '左',
                 labelRight: '右',
@@ -347,7 +383,7 @@
                 labelOperators: 'Operators:',
                 labelBrackets: 'Brackets',
                 labelNumNumbers: 'Number count:',
-                labelDigitLength: 'Digit length:',
+                labelMaxDigitLength: 'Max digit length:',
                 labelAnswerPosition: 'Answer position:',
                 labelLeft: 'Left',
                 labelRight: 'Right',
@@ -371,6 +407,34 @@
             
             // 初始化历史记录
             saveState();
+            
+            // 初始化运算规则显示和切换
+            initRulesDisplay();
+        }
+
+        // 初始化运算规则显示和切换
+        function initRulesDisplay() {
+            // 显示第一条规则
+            showCurrentRule();
+            
+            // 设置定时器，每10秒切换一条规则
+            state.ruleInterval = setInterval(() => {
+                state.currentRuleIndex = (state.currentRuleIndex + 1) % arithmeticRules[state.language].length;
+                showCurrentRule();
+            }, 10000); // 10秒
+        }
+
+        // 显示当前规则
+        function showCurrentRule() {
+            // 移除高亮类以重置动画
+            elements.currentRule.classList.remove('rule-highlight');
+            
+            // 强制重排
+            void elements.currentRule.offsetWidth;
+            
+            // 更新规则文本并添加高亮动画
+            elements.currentRule.textContent = arithmeticRules[state.language][state.currentRuleIndex];
+            elements.currentRule.classList.add('rule-highlight');
         }
 
         // 移除所有输入元素的焦点
@@ -507,6 +571,9 @@
             state.language = state.language === 'zh' ? 'en' : 'zh';
             elements.langToggle.textContent = state.language === 'zh' ? 'EN' : '中';
             updateTranslations();
+            
+            // 语言切换时更新当前显示的规则
+            showCurrentRule();
         }
 
         // 更新翻译
@@ -518,7 +585,7 @@
             elements.labelOperators.textContent = translations[lang].labelOperators;
             elements.labelBrackets.textContent = translations[lang].labelBrackets;
             elements.labelNumNumbers.textContent = translations[lang].labelNumNumbers;
-            elements.labelDigitLength.textContent = translations[lang].labelDigitLength;
+            elements.labelMaxDigitLength.textContent = translations[lang].labelMaxDigitLength;
             elements.labelAnswerPosition.textContent = translations[lang].labelAnswerPosition;
             elements.labelLeft.textContent = translations[lang].labelLeft;
             elements.labelRight.textContent = translations[lang].labelRight;
@@ -531,15 +598,19 @@
             elements.notepadTitle.textContent = translations[lang].notepadTitle;
         }
 
-        // 生成随机数
-        function generateRandomNumber(digitLength, isDecimal) {
-            const min = 10 **(digitLength - 1);
-            const max = (10** digitLength) - 1;
+        // 生成随机数 - 改进为不超过最大位数
+        function generateRandomNumber(maxDigitLength, isDecimal) {
+            // 对于最大位数n，生成1到10^n - 1之间的随机数
+            // 这样可以确保数字位数不超过maxDigitLength
+            const max = (10 **maxDigitLength) - 1;
+            let number = Math.random() * max;
             
-            let number = Math.random() * (max - min) + min;
+            // 确保至少是1位数
+            if (number < 1) number = 1;
             
             // 如果是小数，保留1-2位小数
             if (isDecimal) {
+                // 只保留1或2位小数，确保是有限小数
                 number = Number(number.toFixed(Math.floor(Math.random() * 2) + 1));
             } else {
                 number = Math.floor(number);
@@ -547,6 +618,37 @@
             
             // 确保不会出现0
             return number === 0 ? 1 : number;
+        }
+
+        // 检查一个数是否为有限小数
+        function isFiniteDecimal(num) {
+            // 整数是有限小数的特殊情况
+            if (Number.isInteger(num)) return true;
+            
+            // 将数字转换为字符串
+            const numStr = num.toString();
+            
+            // 检查是否包含小数点
+            if (!numStr.includes('.')) return true;
+            
+            // 分离整数部分和小数部分
+            const decimalPart = numStr.split('.')[1];
+            
+            // 限制小数位数最多为4位
+            if (decimalPart.length > 4) return false;
+            
+            // 检查是否为有限小数（简化检查：不包含循环小数表示）
+            return !decimalPart.includes('(') && !decimalPart.includes(')');
+        }
+
+        // 计算最大公约数
+        function gcd(a, b) {
+            a = Math.abs(a);
+            b = Math.abs(b);
+            while (b) {
+                [a, b] = [b, a % b];
+            }
+            return a;
         }
 
         // 获取选中的运算符
@@ -729,6 +831,26 @@
                                 console.error('除数不能为零');
                                 return null;
                             }
+                            // 检查除法是否会产生有限小数
+                            // 转换为分数形式检查
+                            const numerator = a;
+                            const denominator = b;
+                            
+                            // 简化分数
+                            const commonDivisor = gcd(numerator, denominator);
+                            const simplifiedDenominator = denominator / commonDivisor;
+                            
+                            // 检查简化后的分母是否只包含2和5的因数（有限小数条件）
+                            let temp = simplifiedDenominator;
+                            while (temp % 2 === 0) temp /= 2;
+                            while (temp % 5 === 0) temp /= 5;
+                            
+                            if (temp !== 1) {
+                                // 会产生无限循环小数，返回null
+                                console.log('除法会产生无限小数，拒绝计算');
+                                return null;
+                            }
+                            
                             result = a / b;
                             break;
                         default:
@@ -766,12 +888,18 @@
                     return null;
                 }
                 
+                // 检查结果是否为有限小数
+                if (!isFiniteDecimal(result)) {
+                    console.log('结果是无限小数，拒绝使用:', result);
+                    return null;
+                }
+                
                 // 处理浮点数精度问题
                 if (Math.abs(result) > 0.000001 && Math.abs(result - Math.round(result)) < 0.000001) {
                     result = Math.round(result);
                 } else {
-                    // 保留6位小数，避免过多小数位
-                    result = Number(result.toFixed(6));
+                    // 保留4位小数，避免过多小数位
+                    result = Number(result.toFixed(4));
                 }
                 
                 return result;
@@ -781,9 +909,9 @@
             }
         }
 
-        // 生成表达式字符串和答案位置信息 - 重点修复左侧答案位置
-        function generateExpressionWithAnswerPosition(numNumbers, operators, digitLength, numberTypes, useBrackets, answerPosition) {
-            // 对于左侧答案位置，我们需要特殊处理以确保答案正确
+        // 生成表达式字符串和答案位置信息
+        function generateExpressionWithAnswerPosition(numNumbers, operators, maxDigitLength, numberTypes, useBrackets, answerPosition) {
+            // 对于左侧答案位置
             if (answerPosition === 'left') {
                 // 确保至少有2个数字
                 if (numNumbers < 2) numNumbers = 2;
@@ -791,9 +919,10 @@
                 // 生成除了第一个数字外的其他数字
                 const otherNumbers = [];
                 for (let i = 0; i < numNumbers - 1; i++) {
+                    // 减少小数概率：只有20%的概率生成小数
                     const isDecimal = numberTypes.includes('decimal') && 
-                                     (numberTypes.length === 1 || Math.random() > 0.5);
-                    otherNumbers.push(generateRandomNumber(digitLength, isDecimal));
+                                     (numberTypes.length === 1 || Math.random() < 0.2);
+                    otherNumbers.push(generateRandomNumber(maxDigitLength, isDecimal));
                 }
                 
                 // 生成运算符
@@ -802,10 +931,28 @@
                     const opIndex = Math.floor(Math.random() * operators.length);
                     let op = operators[opIndex];
                     
-                    // 特殊处理除法避免除零
-                    if (op === '÷' && otherNumbers[i + 1] === 0) {
-                        // 更换为乘法
-                        op = '×';
+                    // 特殊处理除法避免除零和无限小数
+                    if (op === '÷') {
+                        // 检查是否会产生无限小数
+                        const a = otherNumbers[i];
+                        const b = otherNumbers[i + 1];
+                        
+                        // 确保除数不为0
+                        if (b === 0) {
+                            op = '×'; // 更换为乘法
+                        } else {
+                            // 检查是否会产生无限小数
+                            const g = gcd(a, b);
+                            let den = b / g;
+                            
+                            // 简化分母
+                            while (den % 2 === 0) den /= 2;
+                            while (den % 5 === 0) den /= 5;
+                            
+                            if (den !== 1) {
+                                op = '×'; // 会产生无限小数，更换为乘法
+                            }
+                        }
                     }
                     
                     ops.push(op);
@@ -832,8 +979,10 @@
                 if (rightResult === null) return null;
                 
                 // 生成最终结果（将作为等号右边的值）
-                const finalResult = generateRandomNumber(digitLength, 
-                    numberTypes.includes('decimal') && (numberTypes.length === 1 || Math.random() > 0.5));
+                // 减少小数概率：只有20%的概率生成小数
+                const isFinalResultDecimal = numberTypes.includes('decimal') && 
+                                           (numberTypes.length === 1 || Math.random() < 0.2);
+                const finalResult = generateRandomNumber(maxDigitLength, isFinalResultDecimal);
                 
                 // 根据第一个运算符计算左侧未知数（答案）
                 let leftNumber; // 这将是左侧的答案
@@ -854,11 +1003,13 @@
                         firstOp = '+';
                 }
                 
-                // 确保左侧数字是有效数字
-                if (isNaN(leftNumber) || !isFinite(leftNumber)) return null;
+                // 确保左侧数字是有效数字且是有限小数
+                if (isNaN(leftNumber) || !isFinite(leftNumber) || !isFiniteDecimal(leftNumber)) {
+                    return null;
+                }
                 
                 // 格式化左侧数字
-                leftNumber = Number(leftNumber.toFixed(6));
+                leftNumber = Number(leftNumber.toFixed(4));
                 
                 // 构建完整表达式用于验证
                 const fullExpression = `${leftNumber}${firstOp}${rightExpression}`;
@@ -883,9 +1034,10 @@
                 // 生成数字
                 const numbers = [];
                 for (let i = 0; i < numNumbers; i++) {
+                    // 减少小数概率：只有20%的概率生成小数
                     const isDecimal = numberTypes.includes('decimal') && 
-                                     (numberTypes.length === 1 || Math.random() > 0.5);
-                    numbers.push(generateRandomNumber(digitLength, isDecimal));
+                                     (numberTypes.length === 1 || Math.random() < 0.2);
+                    numbers.push(generateRandomNumber(maxDigitLength, isDecimal));
                 }
                 
                 // 生成运算符
@@ -904,16 +1056,35 @@
                             const num1 = numbers[i];
                             const num2 = numbers[i + 1];
                             
-                            // 减法确保结果非负，除法确保被除数大于除数且除数不为0
-                            if ((op === '-' && num1 < num2) || 
-                                (op === '÷' && (num1 < num2 || num2 === 0))) {
+                            // 减法确保结果非负
+                            if (op === '-' && num1 < num2) {
                                 // 交换数字位置使运算结果有效
                                 [numbers[i], numbers[i + 1]] = [numbers[i + 1], numbers[i]];
                             }
                             
-                            // 再次检查除法是否有效
-                            if (op === '÷' && numbers[i + 1] === 0) {
-                                valid = false;
+                            // 除法特殊处理：确保不会产生无限小数
+                            if (op === '÷') {
+                                // 确保除数不为0
+                                if (num2 === 0) {
+                                    valid = false;
+                                    continue;
+                                }
+                                
+                                // 确保被除数大于除数
+                                if (num1 < num2) {
+                                    [numbers[i], numbers[i + 1]] = [numbers[i + 1], numbers[i]];
+                                }
+                                
+                                // 检查是否会产生无限小数
+                                const g = gcd(numbers[i], numbers[i + 1]);
+                                let den = numbers[i + 1] / g;
+                                
+                                // 简化分母
+                                while (den % 2 === 0) den /= 2;
+                                while (den % 5 === 0) den /= 5;
+                                
+                                // 如果简化后的分母不是1，则会产生无限小数
+                                valid = den === 1;
                             } else {
                                 valid = true;
                             }
@@ -943,8 +1114,8 @@
                 // 计算完整表达式的结果
                 const fullResult = calculateExpression(expressionWithBrackets);
                 
-                // 验证计算结果
-                if (fullResult === null || isNaN(fullResult) || !isFinite(fullResult)) {
+                // 验证计算结果是有限小数
+                if (fullResult === null || isNaN(fullResult) || !isFinite(fullResult) || !isFiniteDecimal(fullResult)) {
                     return null;
                 }
                 
@@ -963,7 +1134,7 @@
             
             const numQuestions = parseInt(elements.numQuestions.value) || 5;
             const numNumbers = parseInt(elements.numNumbers.value) || 2;
-            const digitLength = parseInt(elements.digitLength.value) || 2;
+            const maxDigitLength = parseInt(elements.maxDigitLength.value) || 2;
             const operators = getSelectedOperators();
             const answerPositions = getSelectedAnswerPositions();
             const numberTypes = getSelectedNumberTypes();
@@ -972,7 +1143,11 @@
             // 确保至少选择了一个运算符（不包括括号）
             const hasValidOperator = operators.some(op => op !== '()');
             if (!hasValidOperator) {
-                alert('请至少选择一个运算符（+、-、×、÷）');
+                // 多语言提示
+                const message = state.language === 'zh' ? 
+                    '请至少选择一个运算符（+、-、×、÷）' : 
+                    'Please select at least one operator (+, -, ×, ÷)';
+                alert(message);
                 return;
             }
             
@@ -990,11 +1165,11 @@
                 // 生成表达式和答案信息，确保计算结果有效
                 let exprData = null;
                 let attempts = 0;
-                const maxAttempts = 30; // 最多尝试30次生成有效表达式
+                const maxAttempts = 50; // 增加尝试次数，因为我们添加了更多限制
                 
                 while (!exprData && attempts < maxAttempts) {
                     const tempData = generateExpressionWithAnswerPosition(
-                        numNumbers, validOperators, digitLength, numberTypes, useBrackets, answerPosition
+                        numNumbers, validOperators, maxDigitLength, numberTypes, useBrackets, answerPosition
                     );
                     
                     // 验证结果是否有效
@@ -1008,7 +1183,11 @@
                 // 如果多次尝试后仍无法生成有效表达式，显示错误
                 if (!exprData) {
                     console.error("无法生成有效的表达式，请尝试调整设置");
-                    alert("无法生成有效的表达式，请尝试调整设置");
+                    // 多语言提示
+                    const message = state.language === 'zh' ? 
+                        '无法生成有效的表达式，请尝试调整设置或减少限制条件' : 
+                        'Unable to generate valid expressions, please try adjusting settings or reducing constraints';
+                    alert(message);
                     return;
                 }
                 
@@ -1022,7 +1201,7 @@
                 
                 if (answerPosition === 'right') {
                     // 答案在右侧：表达式 = [输入框]
-                    equationHtml = `${exprData.displayExpression} = <input type="number" step="any" class="equation-input" data-index="${i}">`;
+                    equationHtml = `${exprData.displayExpression}  = <input type="number" step="any" class="equation-input" data-index="${i}">`;
                 } else {
                     // 答案在左侧：[输入框] 表达式 = 结果
                     equationHtml = `<input type="number" step="any" class="equation-input" data-index="${i}"> ${exprData.displayExpression} = ${formatNumber(exprData.fullResult)}`;
@@ -1651,3 +1830,4 @@
     </script>
 </body>
 </html>
+    
