@@ -373,6 +373,27 @@
             saveState();
         }
 
+        // 新增：移除所有输入元素的焦点
+        function blurAllInputs() {
+            // 模糊所有输入框
+            const inputs = document.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                input.blur();
+            });
+            
+            // 在移动端，创建一个临时输入框并立即模糊它，强制隐藏键盘
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                const tempInput = document.createElement('input');
+                tempInput.style.position = 'absolute';
+                tempInput.style.opacity = '0';
+                tempInput.style.pointerEvents = 'none';
+                document.body.appendChild(tempInput);
+                tempInput.focus();
+                tempInput.blur();
+                document.body.removeChild(tempInput);
+            }
+        }
+
         // 设置事件监听器
         function setupEventListeners() {
             // 全屏按钮
@@ -403,15 +424,21 @@
                 showAnswers();
             });
             
-            // 草稿纸按钮
-            elements.notepadBtn.addEventListener('click', toggleNotepad);
+            // 草稿纸按钮 - 点击时移除所有输入框焦点
+            elements.notepadBtn.addEventListener('click', () => {
+                blurAllInputs();
+                toggleNotepad();
+            });
             elements.notepadBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                blurAllInputs();
                 toggleNotepad();
             });
             
-            // 关闭草稿纸按钮
-            elements.closeNotepadBtn.addEventListener('click', toggleNotepad);
+            // 关闭草稿纸按钮 - 点击时移除所有输入框焦点
+            elements.closeNotepadBtn.addEventListener('click', () => {
+                toggleNotepad();
+            });
             elements.closeNotepadBtn.addEventListener('touchstart', (e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -441,6 +468,14 @@
                 redo();
             });
             
+            // 为草稿纸背景添加点击事件，点击时移除焦点
+            elements.notepad.addEventListener('click', (e) => {
+                // 如果点击的是背景遮罩，移除所有焦点
+                if (e.target === elements.notepad) {
+                    blurAllInputs();
+                }
+            });
+            
             // 初始化拖拽功能
             initDragAndResize();
             
@@ -450,6 +485,8 @@
 
         // 切换全屏
         function toggleFullscreen() {
+            blurAllInputs(); // 全屏切换时移除焦点
+            
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
                     console.error(`无法进入全屏模式: ${err.message}`);
@@ -465,6 +502,8 @@
 
         // 切换语言
         function toggleLanguage() {
+            blurAllInputs(); // 语言切换时移除焦点
+            
             state.language = state.language === 'zh' ? 'en' : 'zh';
             elements.langToggle.textContent = state.language === 'zh' ? 'EN' : '中';
             updateTranslations();
@@ -620,6 +659,8 @@
 
         // 生成题目
         function generateQuestions() {
+            blurAllInputs(); // 生成题目时移除焦点
+            
             const numQuestions = parseInt(elements.numQuestions.value) || 5;
             const numNumbers = parseInt(elements.numNumbers.value) || 2;
             const digitLength = parseInt(elements.digitLength.value) || 3;
@@ -694,6 +735,8 @@
 
         // 显示答案
         function showAnswers() {
+            blurAllInputs(); // 显示答案时移除焦点
+            
             if (state.equations.length === 0) return;
             
             const inputs = document.querySelectorAll('.equation-input');
@@ -736,6 +779,11 @@
             // 如果显示草稿纸，调整画布大小
             if (!elements.notepad.classList.contains('hidden')) {
                 resizeCanvas();
+                // 给草稿纸容器设置焦点，防止其他元素获取焦点
+                elements.notepadContainer.setAttribute('tabindex', '-1');
+                elements.notepadContainer.focus();
+            } else {
+                elements.notepadContainer.removeAttribute('tabindex');
             }
         }
 
@@ -902,7 +950,7 @@
             saveState();
         }
 
-        // 保存当前状态到历史记录 - 改进版
+        // 保存当前状态到历史记录
         function saveState() {
             // 防止重复保存
             if (state.isSavingState) return;
@@ -944,7 +992,7 @@
             }, 100); // 短暂延迟防止快速连续保存
         }
 
-        // 撤销操作 - 改进版
+        // 撤销操作
         function undo() {
             if (state.historyIndex > 0) {
                 state.historyIndex--;
@@ -952,7 +1000,7 @@
             }
         }
 
-        // 重做操作 - 改进版
+        // 重做操作
         function redo() {
             if (state.historyIndex < state.history.length - 1) {
                 state.historyIndex++;
@@ -960,7 +1008,7 @@
             }
         }
 
-        // 恢复指定状态 - 改进版
+        // 恢复指定状态
         function restoreState() {
             const canvas = elements.drawingCanvas;
             const ctx = canvas.getContext('2d');
