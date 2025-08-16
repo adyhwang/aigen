@@ -108,7 +108,7 @@
             @keyframes targetHintPulse {
                 0%, 100% { 
                     opacity: 0.8;
-                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
                 }
                 50% { 
                     opacity: 1;
@@ -228,8 +228,33 @@
         
         /* 目标形状提示样式 */
         .target-block.hint {
-            opacity: 0.9;
-            border: 2px solid white;
+            opacity: 0.9; /* 提高提示时目标形状的不透明度，确保覆盖方块 */
+            border: 2px solid rgba(255, 255, 255, 0.7);
+        }
+        
+        /* 明确设置z-index层级关系 */
+        #target-grid {
+            z-index: 1;
+        }
+        
+        .target-block {
+            z-index: 2; /* 目标形状基础层级（在方块之下） */
+        }
+        
+        .target-block.hint-active {
+            z-index: 40; /* 提示时目标形状层级（在所有方块之上） */
+        }
+        
+        .tetris-piece {
+            z-index: 10; /* 方块始终在目标形状之上（非提示状态） */
+        }
+        
+        .tetris-piece.z-20 {
+            z-index: 20; /* 拖拽时层级更高 */
+        }
+        
+        .tetris-piece.z-30 {
+            z-index: 30; /* 提示时方块层级（仍在提示目标形状之下） */
         }
     </style>
     
@@ -274,7 +299,7 @@
                     <div id="left-grid" class="p-0 grid grid-cols-9 gap-0 piece-container"></div>
                 </div>
                 
-                <!-- 中间目标图形区 - 固定比例宽度 -->
+                <!-- 中间目标图形区 - 固定比例宽度，高度减少2行 -->
                 <div class="center-container grid-container relative" id="target-container">
                     <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">目标图形</div>
                     <div id="target-grid" class="p-0 grid grid-cols-16 gap-0 relative piece-container"></div>
@@ -292,7 +317,7 @@
                 </div>
             </main>
             
-            <!-- 底部控制按钮区 - 响应式大小 -->
+            <!-- 底部控制按钮区 - 响应式大小，移除了保存按钮 -->
             <footer class="w-full flex flex-wrap justify-center gap-2 mb-1">
                 <button id="reset-btn" class="btn-game text-sm md:text-base">
                     <i class="fa fa-refresh"></i>
@@ -310,14 +335,6 @@
                     <i class="fa fa-arrow-right"></i>
                     <span>下一关</span>
                 </button>
-                <button id="save-btn" class="btn-game text-sm md:text-base">
-                    <i class="fa fa-save"></i>
-                    <span>保存</span>
-                </button>
-                <div id="save-status" class="hidden items-center gap-2 text-game-accent text-sm">
-                    <i class="fa fa-check"></i>
-                    <span>已保存</span>
-                </div>
             </footer>
         </div>
     </div>
@@ -359,9 +376,10 @@
             const centerBasedSize = targetSpace.width / 16;  // 中间16列
             
             // 计算基于各容器高度的最大可能网格大小
+            // 中间目标区域高度减少2行，从16行变为14行
             const leftHeightBased = leftSpace.height / 10;  // 左侧10行
             const rightHeightBased = rightSpace.height / 10; // 右侧10行
-            const centerHeightBased = targetSpace.height / 16;  // 中间16行
+            const centerHeightBased = targetSpace.height / 14;  // 中间14行（减少了2行）
             
             // 取所有可能值中的最小值作为基础网格大小
             const baseSize = Math.min(
@@ -518,8 +536,6 @@
         const resetBtn = document.getElementById('reset-btn');
         const hintBtn = document.getElementById('hint-btn');
         const nextBtn = document.getElementById('next-btn');
-        const saveBtn = document.getElementById('save-btn');
-        const saveStatus = document.getElementById('save-status');
         const successMessage = document.getElementById('success-message');
         const targetContainer = document.getElementById('target-container');
         const fullscreenBtn = document.getElementById('fullscreen-btn');
@@ -531,9 +547,9 @@
             // 创建网格背景
             createGridBackground(leftGrid, 9, 10);
             createGridBackground(rightGrid, 8, 10);
-            createGridBackground(targetGrid, 16, 16);
+            createGridBackground(targetGrid, 16, 14); // 中间目标区域高度减少2行，从16行变为14行
             
-            // 加载保存的进度
+            // 加载保存的进度（仅保留难度和关卡信息）
             loadGameProgress();
             
             // 创建所有方块
@@ -631,7 +647,7 @@
             
             createGridBackground(leftGrid, 9, 10);
             createGridBackground(rightGrid, 8, 10);
-            createGridBackground(targetGrid, 16, 16);
+            createGridBackground(targetGrid, 16, 14); // 中间目标区域高度减少2行
             
             // 重新渲染所有方块，并根据新的网格大小调整位置
             gameState.pieces.forEach(piece => {
@@ -726,6 +742,11 @@
             pieceEl.dataset.id = piece.id;
             pieceEl.dataset.type = piece.type;
             
+            // 如果提示激活，设置方块层级为30（在提示目标形状之下）
+            if (gameState.hintActive) {
+                pieceEl.classList.add('z-30');
+            }
+            
             // 获取当前旋转状态的形状
             const shape = shapes[piece.type][piece.rotation];
             
@@ -765,10 +786,10 @@
             const container = piece.container === 'left' ? leftGrid : 
                              piece.container === 'right' ? rightGrid : targetGrid;
             
-            // 获取容器尺寸（列数）
+            // 获取容器尺寸（列数和行数）
             const cols = piece.container === 'left' ? 9 : 
                         piece.container === 'right' ? 8 : 16;
-            const rows = piece.container === 'left' || piece.container === 'right' ? 10 : 16;
+            const rows = piece.container === 'left' || piece.container === 'right' ? 10 : 14; // 中间目标区域14行
             
             // 获取方块形状和尺寸
             const shape = shapes[piece.type][piece.rotation];
@@ -871,7 +892,7 @@
             gameState.dragOffset.x = e.clientX - rect.left;
             gameState.dragOffset.y = e.clientY - rect.top;
             
-            // 提升拖拽元素层级
+            // 提升拖拽元素层级，但仍低于提示目标形状
             piece.element.classList.add('z-20', 'scale-110', 'shadow-tetris-hover');
             
             // 添加移动和结束事件监听
@@ -979,10 +1000,10 @@
             const maxDc = Math.max(...shape.map(([_, dc]) => dc));
             const maxDr = Math.max(...shape.map(([dr, _]) => dr));
             
-            // 获取容器尺寸（列数）
+            // 获取容器尺寸（列数和行数）
             const cols = piece.container === 'left' ? 9 : 
                         piece.container === 'right' ? 8 : 16;
-            const rows = piece.container === 'left' || piece.container === 'right' ? 10 : 16;
+            const rows = piece.container === 'left' || piece.container === 'right' ? 10 : 14; // 中间目标区域14行
             
             // 计算最大允许位置
             const maxCol = cols - maxDc - 1;
@@ -1004,8 +1025,13 @@
             const piece = gameState.draggedPiece;
             const gridSize = gameState.gridSize;
             
-            // 恢复样式
+            // 恢复样式，但保持z-index高于目标形状（非提示状态）
             piece.element.classList.remove('z-20', 'scale-110', 'shadow-tetris-hover');
+            
+            // 如果提示激活，确保方块保持在z-30层级
+            if (gameState.hintActive) {
+                piece.element.classList.add('z-30');
+            }
             
             // 确保最终位置精确对齐网格
             piece.element.style.left = `${piece.col * gridSize}px`;
@@ -1098,7 +1124,7 @@
             clearHint();
         }
 
-        // 生成目标形状
+        // 生成目标形状 - 从第二行和第二列开始生成
         function generateTargetShape() {
             // 基于选中的方块生成一个相连的形状
             const targetBlocks = new Set();
@@ -1109,25 +1135,48 @@
             let placed = false;
             let attempts = 0;
             
+            // 中间目标区域现在是16列x14行
+            const targetCols = 16;
+            const targetRows = 14;
+            
+            // 目标形状的边界限制：
+            // 1. 从第二行（索引1）和第二列（索引1）开始生成
+            // 2. 不要出现在最左列（0）和最右列（15）
+            // 3. 不要出现在最上行（0）和最下行（13）
+            const minCol = 1;       // 从第二列开始（索引1）
+            const maxCol = targetCols - 2;  // 避开最右列
+            const minRow = 1;       // 从第二行开始（索引1）
+            const maxRow = targetRows - 2;  // 避开最下行
+            
             while (!placed && attempts < 100) {
                 attempts++;
                 targetBlocks.clear();
                 gameState.targetShapeColors.clear();
                 
-                // 第一个方块放在中心附近
+                // 第一个方块从第二行和第二列开始放置
                 const firstPiece = usedPieces[0];
                 const firstRotation = Math.floor(Math.random() * 4);
-                const startRow = 7; // 16x16网格的中心附近
-                const startCol = 7;
+                const startRow = Math.floor(Math.random() * (maxRow - minRow + 1)) + minRow; // 随机行，但在允许范围内
+                const startCol = Math.floor(Math.random() * (maxCol - minCol + 1)) + minCol; // 随机列，但在允许范围内
                 
                 // 获取第一个方块的形状
                 const shape = shapes[firstPiece.type][firstRotation];
+                let firstPieceValid = true;
+                
                 shape.forEach(([dr, dc]) => {
                     const r = startRow + dr;
                     const c = startCol + dc;
+                    
+                    // 检查是否超出边界限制
+                    if (r < minRow || r > maxRow || c < minCol || c > maxCol) {
+                        firstPieceValid = false;
+                    }
+                    
                     targetBlocks.add(`${r},${c}`);
                     gameState.targetShapeColors.set(`${r},${c}`, firstPiece.color);
                 });
+                
+                if (!firstPieceValid) continue;
                 
                 // 放置剩余方块
                 let allPlaced = true;
@@ -1159,8 +1208,8 @@
                             const r = baseRow + sr;
                             const c = baseCol + sc;
                             
-                            // 检查是否超出边界
-                            if (r < 0 || r >= 16 || c < 0 || c >= 16) {
+                            // 检查是否超出边界限制
+                            if (r < minRow || r > maxRow || c < minCol || c > maxCol) {
                                 canPlace = false;
                             }
                             
@@ -1222,19 +1271,20 @@
                 const blockId = `${row},${col}`;
                 const block = document.createElement('div');
                 
-                // 默认使用目标颜色
-                let bgClass = 'bg-game-target';
+                // 基础样式
+                let classes = 'tetris-block absolute target-block';
                 
-                // 如果是提示模式，使用实际颜色
-                if (gameState.hintActive && gameState.targetShapeColors.has(blockId)) {
+                // 根据是否提示状态设置不同的样式
+                if (gameState.hintActive) {
+                    // 提示状态：使用实际颜色，提高不透明度，添加高亮效果和置顶层级
                     const color = gameState.targetShapeColors.get(blockId);
-                    bgClass = `bg-${color}`;
-                    
-                    // 添加提示动画和样式
-                    block.classList.add('hint', 'target-hint-pulse');
+                    classes += ` bg-${color} opacity-95 hint target-hint-pulse hint-active`;
+                } else {
+                    // 非提示状态：使用目标颜色，降低不透明度，层级在方块之下
+                    classes += ' bg-game-target opacity-70';
                 }
                 
-                block.className = `tetris-block ${bgClass} absolute opacity-70 target-block`;
+                block.className = classes;
                 block.style.width = `${gridSize}px`;
                 block.style.height = `${gridSize}px`;
                 block.style.left = `${col * gridSize + targetPaddingLeft}px`;
@@ -1295,7 +1345,7 @@
             // 更新显示
             levelDisplay.textContent = gameState.level;
             
-            // 保存进度
+            // 保存进度（仅保存难度和关卡信息）
             saveGameProgress();
         }
 
@@ -1316,16 +1366,21 @@
         // 清除提示
         function clearHint() {
             if (gameState.hintActive) {
-                // 清除所有提示样式
-                document.querySelectorAll('.tetris-piece').forEach(el => {
-                    el.classList.remove('shadow-hint', 'pulse-animation', 'scale-110', 'z-30');
-                });
-                
                 // 重置提示状态
                 gameState.hintActive = false;
                 gameState.hintedPieces = [];
                 
-                // 重新渲染目标形状以移除颜色提示
+                // 重置方块样式和层级
+                document.querySelectorAll('.tetris-piece').forEach(el => {
+                    el.classList.remove('shadow-hint', 'pulse-animation', 'scale-110', 'z-30', 'opacity-70');
+                    
+                    // 恢复方块原始不透明度
+                    el.querySelectorAll('.tetris-block').forEach(block => {
+                        block.style.opacity = '1';
+                    });
+                });
+                
+                // 重新渲染目标形状以恢复原始样式和层级
                 renderTargetShape();
                 
                 // 清除计时器
@@ -1338,9 +1393,9 @@
 
         // 更新剩余提示方块
         function updateHintForRemainingPieces(remainingPieces) {
-            // 清除所有提示样式
+            // 重置所有方块样式
             document.querySelectorAll('.tetris-piece').forEach(el => {
-                el.classList.remove('shadow-hint', 'pulse-animation', 'scale-110', 'z-30');
+                el.classList.remove('shadow-hint', 'pulse-animation', 'scale-110');
             });
             
             // 更新提示的方块列表
@@ -1350,21 +1405,12 @@
             remainingPieces.forEach(piece => {
                 const pieceEl = document.querySelector(`.tetris-piece[data-id="${piece.id}"]`);
                 if (pieceEl) {
-                    pieceEl.classList.add('shadow-hint', 'pulse-animation', 'scale-110', 'z-30');
+                    pieceEl.classList.add('shadow-hint', 'pulse-animation', 'scale-110');
                 }
             });
-            
-            // 重置计时器
-            if (gameState.hintTimer) {
-                clearTimeout(gameState.hintTimer);
-            }
-            
-            gameState.hintTimer = setTimeout(() => {
-                clearHint();
-            }, 5000);
         }
 
-        // 显示提示 - 直接修改目标形状，显示颜色信息
+        // 显示提示 - 目标形状置顶并覆盖方块颜色
         function showHint() {
             // 如果已有提示，先清除
             clearHint();
@@ -1395,22 +1441,29 @@
                 return; // 没有可用方块，不显示提示
             }
             
-            // 直接修改目标形状，显示颜色提示
-            renderTargetShape();
+            // 更新提示的方块列表
+            gameState.hintedPieces = unusedPieces;
             
-            // 高亮显示对应的方块
+            // 为提示方块添加样式
             unusedPieces.forEach(piece => {
-                gameState.hintedPieces.push(piece);
                 const pieceEl = document.querySelector(`.tetris-piece[data-id="${piece.id}"]`);
                 if (pieceEl) {
-                    pieceEl.classList.add('shadow-hint', 'pulse-animation', 'scale-110', 'z-30');
+                    pieceEl.classList.add('shadow-hint', 'pulse-animation', 'scale-110');
                 }
             });
             
-            // 5秒后移除提示
+            // 重新渲染所有方块，确保它们在提示目标形状之下
+            gameState.pieces.forEach(piece => {
+                renderPiece(piece);
+            });
+            
+            // 重新渲染目标形状，使其置顶并显示真实颜色
+            renderTargetShape();
+            
+            // 2.5秒后移除提示
             gameState.hintTimer = setTimeout(() => {
                 clearHint();
-            }, 5000);
+            }, 2500);
         }
 
         // 下一关
@@ -1426,7 +1479,7 @@
             saveGameProgress();
         }
 
-        // 保存游戏进度
+        // 保存游戏进度（仅保存难度和关卡信息）
         function saveGameProgress() {
             const progress = {
                 difficulty: gameState.difficulty,
@@ -1434,15 +1487,6 @@
             };
             
             localStorage.setItem('tetrisPuzzleProgress', JSON.stringify(progress));
-            
-            // 显示保存成功提示
-            saveStatus.classList.remove('hidden');
-            saveStatus.classList.add('flex');
-            
-            setTimeout(() => {
-                saveStatus.classList.remove('flex');
-                saveStatus.classList.add('hidden');
-            }, 2000);
         }
 
         // 加载游戏进度
@@ -1482,9 +1526,6 @@
             
             // 下一关按钮
             nextBtn.addEventListener('click', nextLevel);
-            
-            // 保存按钮
-            saveBtn.addEventListener('click', saveGameProgress);
             
             // 点击目标区域空白处取消选择
             targetGrid.addEventListener('click', () => {
