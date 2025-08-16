@@ -256,6 +256,11 @@
         .tetris-piece.z-30 {
             z-index: 30; /* 提示时方块层级（仍在提示目标形状之下） */
         }
+        
+        /* 过关通知设置最高层级 */
+        #success-message {
+            z-index: 100;
+        }
     </style>
     
     <!-- 引入字体 -->
@@ -286,7 +291,11 @@
                     </div>
                     <div class="flex items-center gap-1.5">
                         <i class="fa fa-map-signs text-game-accent text-sm"></i>
-                        <span class="text-sm">关卡: <span id="level-display" class="font-bold">1</span>/100</span>
+                        <span class="text-sm">关卡: <span id="level-display" class="font-bold">1</span>/<span id="total-levels" class="font-medium">60</span></span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa fa-cubes text-game-accent text-sm"></i>
+                        <span class="text-sm">方块: <span id="pieces-count" class="font-bold">2</span>个</span>
                     </div>
                 </div>
             </header>
@@ -303,8 +312,8 @@
                 <div class="center-container grid-container relative" id="target-container">
                     <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">目标图形</div>
                     <div id="target-grid" class="p-0 grid grid-cols-16 gap-0 relative piece-container"></div>
-                    <!-- 通关提示覆盖层 -->
-                    <div id="success-message" class="absolute inset-0 bg-game-bg/80 flex flex-col items-center justify-center gap-4 rounded-xl opacity-0 pointer-events-none transition-opacity duration-500">
+                    <!-- 通关提示覆盖层 - 确保最高层级 -->
+                    <div id="success-message" class="absolute inset-0 bg-game-bg/80 flex flex-col items-center justify-center gap-4 rounded-xl opacity-0 pointer-events-none transition-opacity duration-500 z-100">
                         <div class="text-4xl font-bold text-game-accent success-animation">通关!</div>
                         <p class="text-lg">太棒了，准备好挑战下一关了吗？</p>
                     </div>
@@ -317,7 +326,7 @@
                 </div>
             </main>
             
-            <!-- 底部控制按钮区 - 响应式大小，移除了保存按钮 -->
+            <!-- 底部控制按钮区 - 响应式大小 -->
             <footer class="w-full flex flex-wrap justify-center gap-2 mb-1">
                 <button id="reset-btn" class="btn-game text-sm md:text-base">
                     <i class="fa fa-refresh"></i>
@@ -420,8 +429,10 @@
         const gameState = {
             difficulty: 'easy',
             level: 1,
+            totalLevels: 60, // 默认简单难度总关卡数
             pieces: [], // 所有方块
             usedPieceIds: [], // 当前关卡使用的方块ID
+            pieceCount: 2, // 当前关卡需要的方块数量
             targetShape: [], // 目标形状
             targetShapeColors: new Map(), // 目标形状每个位置的颜色
             isDragging: false,
@@ -533,6 +544,8 @@
         const targetGrid = document.getElementById('target-grid');
         const difficultySelect = document.getElementById('difficulty');
         const levelDisplay = document.getElementById('level-display');
+        const totalLevelsDisplay = document.getElementById('total-levels');
+        const piecesCountDisplay = document.getElementById('pieces-count');
         const resetBtn = document.getElementById('reset-btn');
         const hintBtn = document.getElementById('hint-btn');
         const nextBtn = document.getElementById('next-btn');
@@ -549,7 +562,7 @@
             createGridBackground(rightGrid, 8, 10);
             createGridBackground(targetGrid, 16, 14); // 中间目标区域高度减少2行，从16行变为14行
             
-            // 加载保存的进度（仅保留难度和关卡信息）
+            // 加载保存的进度
             loadGameProgress();
             
             // 创建所有方块
@@ -1065,30 +1078,57 @@
             document.removeEventListener('mouseleave', stopDrag);
         }
 
+        // 根据难度和当前关卡计算所需方块数量
+        function calculatePieceCount() {
+            let minPieces, maxPieces, totalLevels;
+            
+            // 根据难度设置参数
+            switch(gameState.difficulty) {
+                case 'easy':
+                    minPieces = 2;
+                    maxPieces = 4;
+                    totalLevels = 60;
+                    break;
+                case 'medium':
+                    minPieces = 5;
+                    maxPieces = 8;
+                    totalLevels = 80;
+                    break;
+                case 'hard':
+                    minPieces = 9;
+                    maxPieces = 14;
+                    totalLevels = 100;
+                    break;
+            }
+            
+            // 更新总关卡数
+            gameState.totalLevels = totalLevels;
+            totalLevelsDisplay.textContent = totalLevels;
+            
+            // 计算关卡进度比例 (0-1)
+            const progress = (gameState.level - 1) / (totalLevels - 1);
+            
+            // 计算基于进度的方块数量（渐进式增加）
+            const pieceCount = Math.round(minPieces + progress * (maxPieces - minPieces));
+            
+            // 确保不超出范围
+            return Math.max(minPieces, Math.min(pieceCount, maxPieces));
+        }
+
         // 生成关卡
         function generateLevel() {
             // 清空目标区域
             clearTargetArea();
             
-            // 根据难度确定方块数量
-            let pieceCount;
-            switch(gameState.difficulty) {
-                case 'easy':
-                    pieceCount = Math.floor(Math.random() * 4) + 2; // 2-5个
-                    break;
-                case 'medium':
-                    pieceCount = Math.floor(Math.random() * 3) + 6; // 6-8个
-                    break;
-                case 'hard':
-                    pieceCount = Math.floor(Math.random() * 6) + 9; // 9-14个
-                    break;
-            }
+            // 根据难度和当前关卡计算方块数量
+            gameState.pieceCount = calculatePieceCount();
+            piecesCountDisplay.textContent = gameState.pieceCount;
             
             // 随机选择方块
             const allPieceIds = Array.from({length: 14}, (_, i) => i + 1);
             gameState.usedPieceIds = [];
             
-            while (gameState.usedPieceIds.length < pieceCount) {
+            while (gameState.usedPieceIds.length < gameState.pieceCount) {
                 const randomId = allPieceIds[Math.floor(Math.random() * allPieceIds.length)];
                 if (!gameState.usedPieceIds.includes(randomId)) {
                     gameState.usedPieceIds.push(randomId);
@@ -1331,21 +1371,21 @@
 
         // 完成关卡
         function completeLevel() {
-            // 显示成功消息
+            // 显示成功消息（已设置最高z-index）
             successMessage.classList.remove('opacity-0', 'pointer-events-none');
             
-            // 更新关卡
-            if (gameState.level < 100) {
+            // 更新关卡，不超过当前难度的最大关卡数
+            if (gameState.level < gameState.totalLevels) {
                 gameState.level++;
             } else {
+                // 如果达到当前难度的最大关卡数，循环回到第一关
                 gameState.level = 1;
-                // 可以在这里添加难度提升逻辑
             }
             
             // 更新显示
             levelDisplay.textContent = gameState.level;
             
-            // 保存进度（仅保存难度和关卡信息）
+            // 保存进度
             saveGameProgress();
         }
 
@@ -1468,7 +1508,7 @@
 
         // 下一关
         function nextLevel() {
-            if (gameState.level < 100) {
+            if (gameState.level < gameState.totalLevels) {
                 gameState.level++;
             } else {
                 gameState.level = 1;
@@ -1479,7 +1519,7 @@
             saveGameProgress();
         }
 
-        // 保存游戏进度（仅保存难度和关卡信息）
+        // 保存游戏进度
         function saveGameProgress() {
             const progress = {
                 difficulty: gameState.difficulty,
@@ -1502,6 +1542,21 @@
                 difficultySelect.value = gameState.difficulty;
                 levelDisplay.textContent = gameState.level;
             }
+            
+            // 根据难度设置总关卡数
+            switch(gameState.difficulty) {
+                case 'easy':
+                    gameState.totalLevels = 60;
+                    break;
+                case 'medium':
+                    gameState.totalLevels = 80;
+                    break;
+                case 'hard':
+                    gameState.totalLevels = 100;
+                    break;
+            }
+            
+            totalLevelsDisplay.textContent = gameState.totalLevels;
         }
 
         // 添加事件监听器
@@ -1509,6 +1564,21 @@
             // 难度选择变化
             difficultySelect.addEventListener('change', () => {
                 gameState.difficulty = difficultySelect.value;
+                
+                // 根据新难度设置总关卡数和重置当前关卡
+                switch(gameState.difficulty) {
+                    case 'easy':
+                        gameState.totalLevels = 60;
+                        break;
+                    case 'medium':
+                        gameState.totalLevels = 80;
+                        break;
+                    case 'hard':
+                        gameState.totalLevels = 100;
+                        break;
+                }
+                
+                totalLevelsDisplay.textContent = gameState.totalLevels;
                 gameState.level = 1;
                 levelDisplay.textContent = gameState.level;
                 generateLevel();
