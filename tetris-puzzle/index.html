@@ -84,7 +84,12 @@
         }
         
         .side-container { width: 20vw; min-width: 0; }
-        .center-container { width: 40vw; min-width: 0; }
+        .center-container { 
+            /* 移除固定宽度，让中间容器根据内容自适应 */
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
         
         * { touch-action: manipulation; }
         .grid-container { max-width: 100%; max-height: 100%; }
@@ -154,7 +159,7 @@
 
 <body class="bg-game-bg text-game-text font-sans">
     <div class="game-wrapper">
-        <div class="w-full max-w-7xl mx-auto flex flex-col items-center h-full">
+        <div class="w-full max-w-7xl mx-auto mx-auto-auto flex flex flex-col items-center h-full">
             <header class="w-full mb-3 flex flex-col md:flex-row justify-between items-center gap-2">
                 <div class="flex items-center gap-2">
                     <div class="tetris-block bg-tetris-l"></div>
@@ -189,12 +194,14 @@
                     <div id="left-grid" class="p-0 grid grid-cols-9 gap-0 piece-container"></div>
                 </div>
                 
-                <div class="center-container grid-container relative" id="target-container">
-                    <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">目标图形</div>
-                    <div id="target-grid" class="p-0 grid grid-cols-16 gap-0 relative piece-container"></div>
-                    <div id="success-message" class="absolute inset-0 bg-game-bg/80 flex flex-col items-center justify-center gap-4 rounded-xl opacity-0 pointer-events-none transition-opacity duration-500 z-100">
-                        <div class="text-4xl font-bold text-game-accent success-animation">通关!</div>
-                        <p class="text-lg">太棒了，准备好挑战下一关了吗？</p>
+                <div class="center-container" id="center-wrapper">
+                    <div class="grid-container" id="target-container">
+                        <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">目标图形</div>
+                        <div id="target-grid" class="p-0 grid grid-cols-16 gap-0 relative piece-container"></div>
+                        <div id="success-message" class="absolute inset-0 bg-game-bg/80 flex flex flex-col-col items-center justify-center gap-4 rounded-xl-xl opacity-0 pointer-events-events-none transition-opacity duration-500 z-100">
+                            <div class="text-4xl font-bold text-game-accent success-animation">通关!</div>
+                            <p class="text-lg">太棒了，准备好挑战下一关了吗？</p>
+                        </div>
                     </div>
                 </div>
                 
@@ -204,7 +211,7 @@
                 </div>
             </main>
             
-            <footer class="w-full flex flex-wrap justify-center gap-2 mb-1">
+            <footer class="w-full flex flex-wrap justify justify-center gap-2 mb-1">
                 <button id="reset-btn" class="btn-game text-sm md:text-base">
                     <i class="fa fa-refresh"></i>
                     <span>重置</span>
@@ -383,6 +390,8 @@
         const leftGrid = document.getElementById('left-grid');
         const rightGrid = document.getElementById('right-grid');
         const targetGrid = document.getElementById('target-grid');
+        const targetContainer = document.getElementById('target-container');
+        const centerWrapper = document.getElementById('center-wrapper');
         const difficultySelect = document.getElementById('difficulty');
         const levelDisplay = document.getElementById('level-display');
         const totalLevelsDisplay = document.getElementById('total-levels');
@@ -401,6 +410,9 @@
             createGridBackground(rightGrid, 8, 10);
             createGridBackground(targetGrid, 16, 14);
             
+            // 确保中间容器大小与网格一致
+            updateContainerSizes();
+            
             loadGameProgress();
             createAllPieces();
             generateLevel();
@@ -413,6 +425,39 @@
             document.addEventListener('msfullscreenchange', handleFullscreenChange);
             
             setTimeout(handleResize, 100);
+        }
+
+        // 更新所有容器大小以匹配内部网格
+        function updateContainerSizes() {
+            const gridSize = gameState.gridSize;
+            
+            // 更新左侧容器
+            const leftWidth = 9 * gridSize;
+            const leftHeight = 10 * gridSize + getTitleHeight(leftGrid);
+            document.getElementById('left-container').style.width = `${leftWidth}px`;
+            document.getElementById('left-container').style.height = `${leftHeight}px`;
+            
+            // 更新右侧容器
+            const rightWidth = 8 * gridSize;
+            const rightHeight = 10 * gridSize + getTitleHeight(rightGrid);
+            document.getElementById('right-container').style.width = `${rightWidth}px`;
+            document.getElementById('right-container').style.height = `${rightHeight}px`;
+            
+            // 更新中间目标容器 - 确保大小精确匹配网格
+            const targetWidth = 16 * gridSize;
+            const targetHeight = 14 * gridSize + getTitleHeight(targetGrid);
+            targetContainer.style.width = `${targetWidth}px`;
+            targetContainer.style.height = `${targetHeight}px`;
+            
+            // 让中间包装器适应内容大小
+            centerWrapper.style.width = `${targetWidth}px`;
+        }
+        
+        // 获取标题栏高度
+        function getTitleHeight(gridElement) {
+            const container = gridElement.parentElement;
+            const title = container.querySelector('div:first-child');
+            return title ? title.offsetHeight : 0;
         }
 
         // 处理全屏状态变化
@@ -466,6 +511,9 @@
             createGridBackground(leftGrid, 9, 10);
             createGridBackground(rightGrid, 8, 10);
             createGridBackground(targetGrid, 16, 14);
+            
+            // 关键修改：更新容器大小以匹配新的网格大小
+            updateContainerSizes();
             
             gameState.pieces.forEach(piece => {
                 piece.col = Math.round(piece.col * scaleRatio);
