@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>俄罗斯方块拼图 | 经典益智游戏</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
     <!-- Tailwind 配置 -->
     <script>
@@ -41,7 +41,8 @@
                         'tetris-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
                         'highlight': '0 0 15px rgba(255, 255, 255, 0.5), 0 0 5px rgba(255, 255, 255, 0.8)',
                         'pulse': '0 0 10px rgba(187, 134, 252, 0.7), 0 0 20px rgba(187, 134, 252, 0.5)',
-                        'hint': '0 0 15px rgba(0, 255, 255, 0.8), 0 0 5px rgba(0, 255, 255, 0.8)'
+                        'hint': '0 0 15px rgba(255, 255, 255, 0.8), 0 0 5px rgba(255, 255, 255, 0.8)',
+                        'target-hint': '0 0 8px rgba(255, 255, 255, 0.8)'
                     }
                 }
             }
@@ -93,12 +94,25 @@
             }
             @keyframes hintPulse {
                 0%, 100% { 
-                    opacity: 0.6;
+                    opacity: 0.7;
                     box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
                 }
                 50% { 
                     opacity: 1;
                     box-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
+                }
+            }
+            .target-hint-pulse {
+                animation: targetHintPulse 1.2s infinite;
+            }
+            @keyframes targetHintPulse {
+                0%, 100% { 
+                    opacity: 0.8;
+                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+                }
+                50% { 
+                    opacity: 1;
+                    box-shadow: 0 0 15px rgba(255, 255, 255, 0.9);
                 }
             }
             .success-animation {
@@ -211,6 +225,12 @@
         .fullscreen-btn {
             @apply bg-game-accent/30 hover:bg-game-accent/50;
         }
+        
+        /* 目标形状提示样式 */
+        .target-block.hint {
+            opacity: 0.9;
+            border: 2px solid white;
+        }
     </style>
     
     <!-- 引入字体 -->
@@ -263,8 +283,6 @@
                         <div class="text-4xl font-bold text-game-accent success-animation">通关!</div>
                         <p class="text-lg">太棒了，准备好挑战下一关了吗？</p>
                     </div>
-                    <!-- 提示方块容器 - 确保与目标网格使用相同的定位上下文 -->
-                    <div id="hint-container" class="absolute inset-0 pointer-events-none" style="left: 0; top: 0;"></div>
                 </div>
                 
                 <!-- 右侧方块区 - 固定比例宽度 -->
@@ -387,6 +405,7 @@
             pieces: [], // 所有方块
             usedPieceIds: [], // 当前关卡使用的方块ID
             targetShape: [], // 目标形状
+            targetShapeColors: new Map(), // 目标形状每个位置的颜色
             isDragging: false,
             draggedPiece: null,
             dragOffset: { x: 0, y: 0 },
@@ -502,7 +521,6 @@
         const saveBtn = document.getElementById('save-btn');
         const saveStatus = document.getElementById('save-status');
         const successMessage = document.getElementById('success-message');
-        const hintContainer = document.getElementById('hint-container');
         const targetContainer = document.getElementById('target-container');
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         const fullscreenIcon = fullscreenBtn.querySelector('i');
@@ -625,11 +643,6 @@
             
             // 重新渲染目标形状
             renderTargetShape();
-            
-            // 如果有活跃的提示，重新渲染提示
-            if (gameState.hintActive) {
-                showHint();
-            }
         }
 
         // 清空网格
@@ -1010,6 +1023,9 @@
                 
                 if (remainingHints.length === 0) {
                     clearHint();
+                } else {
+                    // 更新提示，只显示剩余未放置的方块
+                    updateHintForRemainingPieces(remainingHints);
                 }
             }
             
@@ -1070,6 +1086,7 @@
             
             // 清空目标形状
             gameState.targetShape = [];
+            gameState.targetShapeColors.clear();
             document.querySelectorAll('#target-grid .target-block').forEach(block => {
                 block.remove();
             });
@@ -1086,6 +1103,7 @@
             // 基于选中的方块生成一个相连的形状
             const targetBlocks = new Set();
             const usedPieces = gameState.pieces.filter(p => gameState.usedPieceIds.includes(p.id));
+            gameState.targetShapeColors.clear();
             
             // 随机放置每个方块，确保相连
             let placed = false;
@@ -1094,25 +1112,29 @@
             while (!placed && attempts < 100) {
                 attempts++;
                 targetBlocks.clear();
+                gameState.targetShapeColors.clear();
                 
                 // 第一个方块放在中心附近
                 const firstPiece = usedPieces[0];
+                const firstRotation = Math.floor(Math.random() * 4);
                 const startRow = 7; // 16x16网格的中心附近
                 const startCol = 7;
                 
                 // 获取第一个方块的形状
-                const shape = shapes[firstPiece.type][0]; // 使用0度旋转
+                const shape = shapes[firstPiece.type][firstRotation];
                 shape.forEach(([dr, dc]) => {
                     const r = startRow + dr;
                     const c = startCol + dc;
                     targetBlocks.add(`${r},${c}`);
+                    gameState.targetShapeColors.set(`${r},${c}`, firstPiece.color);
                 });
                 
                 // 放置剩余方块
                 let allPlaced = true;
                 for (let i = 1; i < usedPieces.length; i++) {
                     const piece = usedPieces[i];
-                    const shape = shapes[piece.type][0];
+                    const rotation = Math.floor(Math.random() * 4);
+                    const shape = shapes[piece.type][rotation];
                     let placedPiece = false;
                     
                     // 尝试在已放置的方块附近放置新方块
@@ -1152,7 +1174,10 @@
                         
                         // 如果可以放置，添加到目标形状
                         if (canPlace) {
-                            newBlocks.forEach(block => targetBlocks.add(block));
+                            newBlocks.forEach(block => {
+                                targetBlocks.add(block);
+                                gameState.targetShapeColors.set(block, piece.color);
+                            });
                             placedPiece = true;
                             break;
                         }
@@ -1187,16 +1212,34 @@
             
             const gridSize = gameState.gridSize;
             
+            // 获取目标网格容器的样式，特别是内边距
+            const targetGridStyle = window.getComputedStyle(targetGrid);
+            const targetPaddingTop = parseFloat(targetGridStyle.paddingTop);
+            const targetPaddingLeft = parseFloat(targetGridStyle.paddingLeft);
+            
             // 创建新的目标块
             gameState.targetShape.forEach(({ row, col }) => {
+                const blockId = `${row},${col}`;
                 const block = document.createElement('div');
-                block.className = 'tetris-block bg-game-target absolute opacity-70';
+                
+                // 默认使用目标颜色
+                let bgClass = 'bg-game-target';
+                
+                // 如果是提示模式，使用实际颜色
+                if (gameState.hintActive && gameState.targetShapeColors.has(blockId)) {
+                    const color = gameState.targetShapeColors.get(blockId);
+                    bgClass = `bg-${color}`;
+                    
+                    // 添加提示动画和样式
+                    block.classList.add('hint', 'target-hint-pulse');
+                }
+                
+                block.className = `tetris-block ${bgClass} absolute opacity-70 target-block`;
                 block.style.width = `${gridSize}px`;
                 block.style.height = `${gridSize}px`;
-                block.style.left = `${col * gridSize}px`;
-                block.style.top = `${row * gridSize}px`;
+                block.style.left = `${col * gridSize + targetPaddingLeft}px`;
+                block.style.top = `${row * gridSize + targetPaddingTop}px`;
                 block.style.boxSizing = 'border-box'; // 确保边框包含在尺寸内
-                block.classList.add('target-block');
                 targetGrid.appendChild(block);
             });
         }
@@ -1278,23 +1321,50 @@
                     el.classList.remove('shadow-hint', 'pulse-animation', 'scale-110', 'z-30');
                 });
                 
-                // 清除提示方块
-                while (hintContainer.firstChild) {
-                    hintContainer.removeChild(hintContainer.firstChild);
-                }
+                // 重置提示状态
+                gameState.hintActive = false;
+                gameState.hintedPieces = [];
+                
+                // 重新渲染目标形状以移除颜色提示
+                renderTargetShape();
                 
                 // 清除计时器
                 if (gameState.hintTimer) {
                     clearTimeout(gameState.hintTimer);
                     gameState.hintTimer = null;
                 }
-                
-                gameState.hintActive = false;
-                gameState.hintedPieces = [];
             }
         }
 
-        // 显示提示 - 确保与目标图形完全重合
+        // 更新剩余提示方块
+        function updateHintForRemainingPieces(remainingPieces) {
+            // 清除所有提示样式
+            document.querySelectorAll('.tetris-piece').forEach(el => {
+                el.classList.remove('shadow-hint', 'pulse-animation', 'scale-110', 'z-30');
+            });
+            
+            // 更新提示的方块列表
+            gameState.hintedPieces = remainingPieces;
+            
+            // 为剩余方块添加提示样式
+            remainingPieces.forEach(piece => {
+                const pieceEl = document.querySelector(`.tetris-piece[data-id="${piece.id}"]`);
+                if (pieceEl) {
+                    pieceEl.classList.add('shadow-hint', 'pulse-animation', 'scale-110', 'z-30');
+                }
+            });
+            
+            // 重置计时器
+            if (gameState.hintTimer) {
+                clearTimeout(gameState.hintTimer);
+            }
+            
+            gameState.hintTimer = setTimeout(() => {
+                clearHint();
+            }, 5000);
+        }
+
+        // 显示提示 - 直接修改目标形状，显示颜色信息
         function showHint() {
             // 如果已有提示，先清除
             clearHint();
@@ -1325,125 +1395,15 @@
                 return; // 没有可用方块，不显示提示
             }
             
-            // 获取目标形状中尚未填充的块
-            const targetBlocks = new Set(gameState.targetShape.map(({ row, col }) => `${row},${col}`));
-            const emptyTargetBlocks = new Set();
+            // 直接修改目标形状，显示颜色提示
+            renderTargetShape();
             
-            targetBlocks.forEach(block => {
-                if (!placedBlocks.has(block)) {
-                    emptyTargetBlocks.add(block);
-                }
-            });
-            
-            // 已经匹配的方块占用的目标位置
-            const matchedTargetBlocks = new Set();
-            
-            // 先将空目标块转换为数组以便处理
-            const emptyBlocksArray = Array.from(emptyTargetBlocks).map(block => {
-                const [row, col] = block.split(',').map(Number);
-                return { row, col };
-            });
-            
-            // 获取网格大小和目标网格的位置信息
-            const gridSize = gameState.gridSize;
-            
-            // 获取目标网格容器的样式，特别是内边距
-            const targetGridStyle = window.getComputedStyle(targetGrid);
-            const targetPaddingTop = parseFloat(targetGridStyle.paddingTop);
-            const targetPaddingLeft = parseFloat(targetGridStyle.paddingLeft);
-            
-            // 为每个未使用的方块寻找匹配位置
+            // 高亮显示对应的方块
             unusedPieces.forEach(piece => {
-                // 尝试所有旋转状态
-                for (let rotation = 0; rotation < 4; rotation++) {
-                    const shape = shapes[piece.type][rotation];
-                    const shapeSize = shape.length;
-                    
-                    // 跳过形状大小与剩余空块不匹配的情况
-                    if (shapeSize > emptyTargetBlocks.size) continue;
-                    
-                    // 为形状中的每个块找到匹配的空目标块
-                    for (let i = 0; i < shape.length; i++) {
-                        // 尝试以形状中的每个块作为参考点
-                        const [refDr, refDc] = shape[i];
-                        
-                        // 遍历所有空目标块作为参考位置
-                        for (const emptyBlock of emptyBlocksArray) {
-                            // 计算放置位置
-                            const baseRow = emptyBlock.row - refDr;
-                            const baseCol = emptyBlock.col - refDc;
-                            
-                            // 检查这个位置和旋转状态是否适合
-                            let allFit = true;
-                            const pieceBlocks = [];
-                            
-                            shape.forEach(([dr, dc]) => {
-                                const r = baseRow + dr;
-                                const c = baseCol + dc;
-                                const blockId = `${r},${c}`;
-                                pieceBlocks.push(blockId);
-                                
-                                // 检查是否超出边界或已被占用
-                                if (r < 0 || r >= 16 || c < 0 || c >= 16 || 
-                                    placedBlocks.has(blockId) ||
-                                    matchedTargetBlocks.has(blockId)) {
-                                    allFit = false;
-                                }
-                            });
-                            
-                            // 检查是否所有方块都适合目标形状的空位置
-                            if (allFit) {
-                                let allInTarget = true;
-                                pieceBlocks.forEach(block => {
-                                    if (!emptyTargetBlocks.has(block)) {
-                                        allInTarget = false;
-                                    }
-                                });
-                                
-                                if (allInTarget) {
-                                    // 找到匹配的位置，记录这个方块及其位置和旋转
-                                    gameState.hintedPieces.push({ 
-                                        ...piece, 
-                                        rotation,
-                                        targetRow: baseRow,
-                                        targetCol: baseCol
-                                    });
-                                    
-                                    // 在目标区域显示提示方块，使用实际方块颜色
-                                    shape.forEach(([dr, dc]) => {
-                                        const r = baseRow + dr;
-                                        const c = baseCol + dc;
-                                        
-                                        const hintBlock = document.createElement('div');
-                                        hintBlock.className = `hint-block hint-pulse bg-${piece.color} opacity-70`;
-                                        // 确保提示方块大小与目标方块完全一致
-                                        hintBlock.style.width = `${gridSize}px`;
-                                        hintBlock.style.height = `${gridSize}px`;
-                                        // 精确计算位置，考虑目标网格的内边距
-                                        hintBlock.style.left = `${c * gridSize + targetPaddingLeft}px`;
-                                        hintBlock.style.top = `${r * gridSize + targetPaddingTop}px`;
-                                        hintBlock.style.boxSizing = 'border-box';
-                                        
-                                        hintContainer.appendChild(hintBlock);
-                                        matchedTargetBlocks.add(`${r},${c}`);
-                                    });
-                                    
-                                    // 高亮显示对应的方块
-                                    const pieceEl = document.querySelector(`.tetris-piece[data-id="${piece.id}"]`);
-                                    if (pieceEl) {
-                                        pieceEl.classList.add('shadow-hint', 'pulse-animation', 'scale-110', 'z-30');
-                                    }
-                                    
-                                    // 找到一个匹配位置后就停止检查该方块的其他位置
-                                    return true;
-                                }
-                            }
-                        }
-                        // 找到匹配后跳出循环
-                        if (gameState.hintedPieces.some(hp => hp.id === piece.id)) break;
-                    }
-                    // 找到匹配后跳出循环
-                    if (gameState.hintedPieces.some(hp => hp.id === piece.id)) break;
+                gameState.hintedPieces.push(piece);
+                const pieceEl = document.querySelector(`.tetris-piece[data-id="${piece.id}"]`);
+                if (pieceEl) {
+                    pieceEl.classList.add('shadow-hint', 'pulse-animation', 'scale-110', 'z-30');
                 }
             });
             
