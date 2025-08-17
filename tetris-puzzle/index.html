@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>俄罗斯方块拼图 | 经典益智游戏</title>
+    <title>俄罗斯方块方块拼图 | 经典益智游戏</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
@@ -50,6 +50,7 @@
             .hint-pulse { animation: hintPulse 1.2s infinite; }
             .target-hint-pulse { animation: targetHintPulse 1.2s infinite; }
             .success-animation { animation: success 0.5s ease-in-out; }
+            .rotate-device { animation: rotate 1.5s ease-in-out infinite alternate; }
         }
     </style>
     
@@ -109,6 +110,7 @@
         .fullscreen-active { background-color: #000; }
         .fullscreen-active .game-wrapper { padding: 0; }
         .fullscreen-btn { @apply bg-game-accent/30 hover:bg-game-accent/50; }
+        .rotate-btn { @apply bg-game-panel/80 hover:bg-game-panel; }
         
         .target-block.hint {
             opacity: 0.9;
@@ -143,6 +145,11 @@
             50% { transform: scale(1.1); }
         }
         
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(90deg); }
+        }
+        
         .custom-select {
             background-color: #1E1E1E;
             color: #FFFFFF;
@@ -166,12 +173,20 @@
             .side-container {
                 width: 25vw;
             }
+            
+            .header-info {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .header-info > div {
+                margin: 0 4px 4px 0;
+            }
         }
     </style>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-
 <body class="bg-game-bg text-game-text font-sans">
     <div class="game-wrapper">
         <div class="w-full max-w-7xl mx-auto flex flex-col items-center h-full">
@@ -183,7 +198,7 @@
                     <h1 class="text-[clamp(1rem,5vw,1.8rem)] font-bold tracking-tight">俄罗斯方块拼图</h1>
                 </div>
                 
-                <div class="bg-game-panel px-3 py-1.5 rounded-lg shadow-md flex items-center gap-4">
+                <div class="bg-game-panel px-3 py-1.5 rounded-lg shadow-md flex header-info items-center gap-4">
                     <div class="flex items-center gap-1.5">
                         <i class="fa fa-signal text-game-accent text-sm"></i>
                         <select id="difficulty" class="custom-select px-2 py-1 text-sm bg-game-panel text-game-text">
@@ -200,6 +215,10 @@
                         <i class="fa fa-cubes text-game-accent text-sm"></i>
                         <span class="text-sm">方块: <span id="pieces-count" class="font-bold">2</span>个</span>
                     </div>
+                    <button id="hint-btn" class="btn-game bg-game-accent/20 hover:bg-game-accent/30 text-xs md:text-sm px-2 py-1">
+                        <i class="fa fa-lightbulb-o"></i>
+                        <span>提示</span>
+                    </button>
                 </div>
             </header>
             
@@ -231,9 +250,9 @@
                     <i class="fa fa-refresh"></i>
                     <span>重置</span>
                 </button>
-                <button id="hint-btn" class="btn-game bg-game-accent/20 hover:bg-game-accent/30 text-sm md:text-base">
-                    <i class="fa fa-lightbulb-o"></i>
-                    <span>提示</span>
+                <button id="rotate-btn" class="btn-game rotate-btn text-sm md:text-base">
+                    <i class="fa fa-rotate-right rotate-device"></i>
+                    <span>旋转屏幕</span>
                 </button>
                 <button id="fullscreen-btn" class="btn-game fullscreen-btn text-sm md:text-base">
                     <i class="fa fa-expand"></i>
@@ -248,34 +267,25 @@
     </div>
 
     <script>
-        // 计算网格大小 - 改进版，确保等比缩放且在屏幕内显示
+        // 计算网格大小
         function calculateGridSize() {
-            // 获取窗口可用尺寸
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
             
-            // 计算标题和按钮区域大致高度
-            const headerFooterHeight = 120; // 预留的头部和底部高度
+            const headerFooterHeight = 120;
             const availableHeight = windowHeight - headerFooterHeight;
             
-            // 计算基于宽度的最大可能网格尺寸
-            // 总宽度 = 左网格(9列) + 中网格(16列) + 右网格(8列) + 间距
             const totalColumns = 9 + 16 + 8;
-            const gaps = 40; // 预估的间距总和
+            const gaps = 40;
             const widthBasedSize = (windowWidth - gaps) / totalColumns;
             
-            // 计算基于高度的最大可能网格尺寸
-            // 中网格高度为14行 + 标题高度
-            const heightBasedSize = availableHeight / 16; // 14行 + 2行标题空间
+            const heightBasedSize = availableHeight / 16;
             
-            // 确定基础网格尺寸，取宽度和高度限制中的较小值
             let gridSize = Math.floor(Math.min(widthBasedSize, heightBasedSize));
             
-            // 设置最大网格尺寸限制，防止在大屏幕上过大
             const maxGridSize = 30;
             gridSize = Math.min(gridSize, maxGridSize);
             
-            // 设置最小网格尺寸限制，防止在小屏幕上过小
             const minGridSize = 8;
             return Math.max(gridSize, minGridSize);
         }
@@ -300,7 +310,8 @@
             lastTouchTime: 0,
             touchCount: 0,
             touchTimeout: null,
-            isFullscreen: false
+            isFullscreen: false,
+            isLandscape: window.innerWidth > window.innerHeight
         };
 
         // 方块定义
@@ -393,6 +404,8 @@
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         const fullscreenIcon = fullscreenBtn.querySelector('i');
         const fullscreenText = fullscreenBtn.querySelector('span');
+        const rotateBtn = document.getElementById('rotate-btn');
+        const rotateIcon = rotateBtn.querySelector('i');
 
         // 初始化游戏
         function initGame() {
@@ -400,7 +413,6 @@
             createGridBackground(rightGrid, 8, 10);
             createGridBackground(targetGrid, 16, 14);
             
-            // 确保容器大小与网格一致
             updateContainerSizes();
             
             loadGameProgress();
@@ -408,7 +420,6 @@
             generateLevel();
             addEventListeners();
             
-            // 使用resizeObserver监听窗口变化，实现更平滑的响应式调整
             const resizeObserver = new ResizeObserver(entries => {
                 handleResize();
             });
@@ -426,7 +437,6 @@
         function updateContainerSizes() {
             const gridSize = gameState.gridSize;
             
-            // 获取标题高度
             const leftTitleHeight = getTitleHeight(leftGrid);
             const rightTitleHeight = getTitleHeight(rightGrid);
             const targetTitleHeight = getTitleHeight(targetGrid);
@@ -498,12 +508,55 @@
             }
         }
 
+        // 切换屏幕方向
+        function toggleScreenOrientation() {
+            // 尝试旋转屏幕（在支持的设备上）
+            if (screen.orientation) {
+                if (gameState.isLandscape) {
+                    screen.orientation.lock('portrait-primary').catch(err => {
+                        console.log('无法锁定为竖屏:', err);
+                        showOrientationMessage('请手动旋转设备至竖屏模式');
+                    });
+                } else {
+                    screen.orientation.lock('landscape-primary').catch(err => {
+                        console.log('无法锁定为横屏:', err);
+                        showOrientationMessage('请手动旋转设备至横屏模式');
+                    });
+                }
+                gameState.isLandscape = !gameState.isLandscape;
+            } else {
+                // 不支持orientation API的设备
+                gameState.isLandscape = !gameState.isLandscape;
+                handleResize();
+                showOrientationMessage(gameState.isLandscape ? 
+                    '已切换为横屏布局，请旋转设备' : 
+                    '已切换为竖屏布局，请旋转设备');
+            }
+        }
+
+        // 显示方向切换提示
+        function showOrientationMessage(message) {
+            // 创建临时提示元素
+            const msgEl = document.createElement('div');
+            msgEl.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-game-accent/90 text-white px-4 py-2 rounded-lg z-500';
+            msgEl.textContent = message;
+            document.body.appendChild(msgEl);
+            
+            // 3秒后移除提示
+            setTimeout(() => {
+                msgEl.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+                setTimeout(() => msgEl.remove(), 500);
+            }, 3000);
+        }
+
         // 处理窗口大小变化
         function handleResize() {
+            // 更新屏幕方向状态
+            gameState.isLandscape = window.innerWidth > window.innerHeight;
+            
             const oldSize = gameState.gridSize;
             gameState.gridSize = calculateGridSize();
             
-            // 只有当网格大小有显著变化时才重新渲染，避免不必要的重绘
             if (Math.abs(gameState.gridSize - oldSize) > 0) {
                 const scaleRatio = gameState.gridSize / oldSize;
                 
@@ -515,7 +568,6 @@
                 createGridBackground(rightGrid, 8, 10);
                 createGridBackground(targetGrid, 16, 14);
                 
-                // 更新容器大小以匹配新的网格大小
                 updateContainerSizes();
                 
                 gameState.pieces.forEach(piece => {
@@ -1229,6 +1281,7 @@
             hintBtn.addEventListener('click', showHint);
             fullscreenBtn.addEventListener('click', toggleFullscreen);
             nextBtn.addEventListener('click', nextLevel);
+            rotateBtn.addEventListener('click', toggleScreenOrientation);
             
             targetGrid.addEventListener('click', () => {
                 if (gameState.isDragging) stopDrag();
