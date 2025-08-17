@@ -157,30 +157,56 @@
             box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.2);
         }
 
-        /* 确保在小屏幕上适当缩小 */
-        @media (max-width: 768px) {
+        /* 竖屏布局 - 宽度小于高度时 */
+        @media (max-aspect-ratio: 1/1) {
             .game-main-area {
-                gap: min(1vw, 8px);
+                flex-direction: column;
+                gap: min(2vh, 15px);
+                justify-content: center;
+                padding: 5px 0;
             }
             
             .side-container {
-                width: 25vw;
+                width: 80vw;
+                max-width: none;
+                max-height: 25vh;
+                flex: 0 0 auto;
+            }
+            
+            .center-container {
+                max-width: 90vw;
+                flex: 1 1 auto;
+                width: 100%;
+                max-height: 40vh;
             }
             
             .header-content {
                 flex-direction: column;
                 gap: 8px;
                 padding-bottom: 8px;
+                width: 100%;
             }
             
             .header-controls, .header-buttons {
                 width: 100%;
                 justify-content: center;
+                flex-wrap: wrap;
             }
             
             .btn-game {
                 padding: 1px 6px;
                 font-size: 12px;
+            }
+        }
+
+        /* 小屏幕横屏优化 */
+        @media (max-width: 768px) and (min-aspect-ratio: 1/1) {
+            .game-main-area {
+                gap: min(1vw, 8px);
+            }
+            
+            .side-container {
+                width: 25vw;
             }
         }
     </style>
@@ -191,7 +217,7 @@
 <body class="bg-game-bg text-game-text font-sans">
     <div class="game-wrapper">
         <div class="w-full max-w-7xl mx-auto flex flex-col items-center h-full">
-            <!-- 合并后的顶部区域 - 包含标题、信息和所有按钮 -->
+            <!-- 顶部区域 - 包含标题、信息和所有按钮 -->
             <header class="w-full mb-3">
                 <div class="header-content flex flex-col md:flex-row items-center justify-center gap-4 px-2">
                     <!-- 标题区域 -->
@@ -222,7 +248,7 @@
                         </div>
                     </div>
                     
-                    <!-- 按钮区域 (原底部按钮移至此处) -->
+                    <!-- 按钮区域 -->
                     <div class="header-buttons flex flex-wrap justify-center gap-2">
                         <button id="reset-btn" class="btn-game text-sm md:text-base">
                             <i class="fa fa-refresh"></i>
@@ -244,17 +270,17 @@
                 </div>
             </header>
             
-            <!-- 游戏主区域 -->
+            <!-- 游戏主区域 - 竖屏时为垂直布局 -->
             <main class="game-main-area flex-1 w-full">
                 <div class="side-container grid-container" id="left-container">
-                    <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">左侧方块</div>
+                    <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">上方方块</div>
                     <div id="left-grid" class="p-0 grid grid-cols-9 gap-0 piece-container"></div>
                 </div>
                 
                 <div class="center-container" id="center-wrapper">
-                    <div class="grid-container" id="target-container">
+                    <div class="grid-container h-full" id="target-container">
                         <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">目标图形</div>
-                        <div id="target-grid" class="p-0 grid grid-cols-16 gap-0 relative piece-container"></div>
+                        <div id="target-grid" class="p-0 grid grid-cols-16 gap-0 relative piece-container h-[calc(100%-32px)]"></div>
                         <div id="success-message" class="absolute inset-0 bg-game-bg/80 flex flex-col items-center justify-center gap-4 rounded-xl opacity-0 pointer-events-none transition-opacity duration-500 z-100">
                             <div class="text-4xl font-bold text-game-accent success-animation">通关!</div>
                             <p class="text-lg">太棒了，准备好挑战下一关了吗？</p>
@@ -263,44 +289,58 @@
                 </div>
                 
                 <div class="side-container grid-container" id="right-container">
-                    <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">右侧方块</div>
+                    <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">下方方块</div>
                     <div id="right-grid" class="p-0 grid grid-cols-8 gap-0 piece-container"></div>
                 </div>
             </main>
-            
-            <!-- 底部区域已移除，按钮已合并到顶部 -->
         </div>
     </div>
 
     <script>
-        // 计算网格大小 - 确保等比缩放且在屏幕内显示
+        // 计算网格大小 - 考虑屏幕方向的响应式调整
         function calculateGridSize() {
             // 获取窗口可用尺寸
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
+            const isPortrait = windowWidth < windowHeight;
             
-            // 计算标题区域大致高度（包含合并的按钮）
-            const headerHeight = 100; // 调整为合并后的头部高度
+            // 计算标题区域大致高度
+            const headerHeight = 120;
             const availableHeight = windowHeight - headerHeight;
             
-            // 计算基于宽度的最大可能网格尺寸
-            // 总宽度 = 左网格(9列) + 中网格(16列) + 右网格(8列) + 间距
-            const totalColumns = 9 + 16 + 8;
-            const gaps = 40; // 预估的间距总和
-            const widthBasedSize = (windowWidth - gaps) / totalColumns;
+            let gridSize;
             
-            // 计算基于高度的最大可能网格尺寸
-            // 中网格高度为14行 + 标题高度
-            const heightBasedSize = availableHeight / 16; // 14行 + 2行标题空间
+            if (isPortrait) {
+                // 竖屏布局计算
+                // 总高度分配：上方方块(25%) + 目标区(40%) + 下方方块(25%) + 间距(10%)
+                const verticalSpace = availableHeight * 0.9; // 扣除10%间距
+                const targetHeight = verticalSpace * 0.4;
+                
+                // 基于目标区高度计算
+                const heightBasedSize = targetHeight / 16; // 14行 + 2行标题空间
+                
+                // 基于宽度计算
+                const widthBasedSize = (windowWidth * 0.8) / 16; // 目标区占宽度的80%
+                
+                gridSize = Math.floor(Math.min(widthBasedSize, heightBasedSize));
+            } else {
+                // 横屏布局计算
+                // 总宽度 = 左网格(9列) + 中网格(16列) + 右网格(8列) + 间距
+                const totalColumns = 9 + 16 + 8;
+                const gaps = 40; // 预估的间距总和
+                const widthBasedSize = (windowWidth - gaps) / totalColumns;
+                
+                // 基于高度的最大可能网格尺寸
+                const heightBasedSize = availableHeight / 16; // 14行 + 2行标题空间
+                
+                gridSize = Math.floor(Math.min(widthBasedSize, heightBasedSize));
+            }
             
-            // 确定基础网格尺寸，取宽度和高度限制中的较小值
-            let gridSize = Math.floor(Math.min(widthBasedSize, heightBasedSize));
-            
-            // 设置最大网格尺寸限制，防止在大屏幕上过大
+            // 设置最大网格尺寸限制
             const maxGridSize = 30;
             gridSize = Math.min(gridSize, maxGridSize);
             
-            // 设置最小网格尺寸限制，防止在小屏幕上过小
+            // 设置最小网格尺寸限制
             const minGridSize = 8;
             return Math.max(gridSize, minGridSize);
         }
@@ -325,7 +365,8 @@
             lastTouchTime: 0,
             touchCount: 0,
             touchTimeout: null,
-            isFullscreen: false
+            isFullscreen: false,
+            isPortrait: window.innerWidth < window.innerHeight
         };
 
         // 方块定义
@@ -418,6 +459,8 @@
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         const fullscreenIcon = fullscreenBtn.querySelector('i');
         const fullscreenText = fullscreenBtn.querySelector('span');
+        const leftContainerTitle = document.querySelector('#left-container div:first-child');
+        const rightContainerTitle = document.querySelector('#right-container div:first-child');
 
         // 初始化游戏
         function initGame() {
@@ -450,32 +493,33 @@
         // 更新所有容器大小以匹配内部网格
         function updateContainerSizes() {
             const gridSize = gameState.gridSize;
+            const isPortrait = gameState.isPortrait;
             
             // 获取标题高度
             const leftTitleHeight = getTitleHeight(leftGrid);
             const rightTitleHeight = getTitleHeight(rightGrid);
             const targetTitleHeight = getTitleHeight(targetGrid);
             
-            // 更新左侧容器
-            const leftWidth = 9 * gridSize;
-            const leftHeight = 10 * gridSize + leftTitleHeight;
-            document.getElementById('left-container').style.width = `${leftWidth}px`;
-            document.getElementById('left-container').style.height = `${leftHeight}px`;
+            // 更新左侧/上方容器
+            const leftWidth = isPortrait ? 9 * gridSize * 0.9 : 9 * gridSize;
+            const leftHeight = isPortrait ? 10 * gridSize : 10 * gridSize + leftTitleHeight;
+            document.getElementById('left-container').style.width = isPortrait ? '80vw' : `${leftWidth}px`;
+            document.getElementById('left-container').style.height = `${leftHeight + leftTitleHeight}px`;
             
-            // 更新右侧容器
-            const rightWidth = 8 * gridSize;
-            const rightHeight = 10 * gridSize + rightTitleHeight;
-            document.getElementById('right-container').style.width = `${rightWidth}px`;
-            document.getElementById('right-container').style.height = `${rightHeight}px`;
+            // 更新右侧/下方容器
+            const rightWidth = isPortrait ? 8 * gridSize * 1.1 : 8 * gridSize;
+            const rightHeight = isPortrait ? 10 * gridSize : 10 * gridSize + rightTitleHeight;
+            document.getElementById('right-container').style.width = isPortrait ? '80vw' : `${rightWidth}px`;
+            document.getElementById('right-container').style.height = `${rightHeight + rightTitleHeight}px`;
             
             // 更新中间目标容器
-            const targetWidth = 16 * gridSize;
-            const targetHeight = 14 * gridSize + targetTitleHeight;
-            targetContainer.style.width = `${targetWidth}px`;
-            targetContainer.style.height = `${targetHeight}px`;
+            const targetWidth = isPortrait ? 16 * gridSize : 16 * gridSize;
+            const targetHeight = isPortrait ? 14 * gridSize : 14 * gridSize + targetTitleHeight;
+            targetContainer.style.width = isPortrait ? '90vw' : `${targetWidth}px`;
+            targetContainer.style.height = `${targetHeight + targetTitleHeight}px`;
             
             // 让中间包装器适应内容大小
-            centerWrapper.style.width = `${targetWidth}px`;
+            centerWrapper.style.width = isPortrait ? '90vw' : `${targetWidth}px`;
         }
         
         // 获取标题栏高度
@@ -526,11 +570,25 @@
         // 处理窗口大小变化
         function handleResize() {
             const oldSize = gameState.gridSize;
+            const oldOrientation = gameState.isPortrait;
+            
+            // 更新屏幕方向状态
+            gameState.isPortrait = window.innerWidth < window.innerHeight;
+            
+            // 更新容器标题
+            if (gameState.isPortrait) {
+                leftContainerTitle.textContent = "上方方块";
+                rightContainerTitle.textContent = "下方方块";
+            } else {
+                leftContainerTitle.textContent = "左侧方块";
+                rightContainerTitle.textContent = "右侧方块";
+            }
+            
             gameState.gridSize = calculateGridSize();
             
-            // 只有当网格大小有显著变化时才重新渲染，避免不必要的重绘
-            if (Math.abs(gameState.gridSize - oldSize) > 0) {
-                const scaleRatio = gameState.gridSize / oldSize;
+            // 只有当网格大小或方向有变化时才重新渲染
+            if (Math.abs(gameState.gridSize - oldSize) > 0 || gameState.isPortrait !== oldOrientation) {
+                const scaleRatio = gameState.gridSize / oldSize || 1;
                 
                 clearGrid(leftGrid);
                 clearGrid(rightGrid);
@@ -761,6 +819,7 @@
             
             const piece = gameState.draggedPiece;
             const gridSize = gameState.gridSize;
+            const isPortrait = gameState.isPortrait;
             
             const currentContainer = piece.container === 'left' ? leftGrid : 
                                     piece.container === 'right' ? rightGrid : targetGrid;
@@ -788,19 +847,24 @@
                 col = Math.round(x / gridSize);
                 row = Math.round(y / gridSize);
             } else if (!isOverTarget && piece.container === 'target') {
-                const leftRect = leftGrid.getBoundingClientRect();
-                const rightRect = rightGrid.getBoundingClientRect();
+                // 根据屏幕方向判断哪个是上方/左侧和下方/右侧容器
+                const topOrLeftRect = leftGrid.getBoundingClientRect();
+                const bottomOrRightRect = rightGrid.getBoundingClientRect();
                 
-                const distToLeft = Math.hypot(e.clientX - leftRect.left, e.clientY - leftRect.top);
-                const distToRight = Math.hypot(e.clientX - rightRect.left, e.clientY - rightRect.top);
-                
-                const newContainer = distToLeft < distToRight ? 'left' : 'right';
+                let newContainer;
+                if (isPortrait) {
+                    // 竖屏模式 - 判断是上方还是下方
+                    newContainer = e.clientY < window.innerHeight / 2 ? 'left' : 'right';
+                } else {
+                    // 横屏模式 - 判断是左侧还是右侧
+                    newContainer = e.clientX < window.innerWidth / 2 ? 'left' : 'right';
+                }
                 
                 piece.element.remove();
                 piece.container = newContainer;
                 (newContainer === 'left' ? leftGrid : rightGrid).appendChild(piece.element);
                 
-                const newContainerRect = newContainer === 'left' ? leftRect : rightRect;
+                const newContainerRect = newContainer === 'left' ? topOrLeftRect : bottomOrRightRect;
                 x = e.clientX - newContainerRect.left - gameState.dragOffset.x;
                 y = e.clientY - newContainerRect.top - gameState.dragOffset.y;
                 col = Math.round(x / gridSize);
