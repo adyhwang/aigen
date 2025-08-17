@@ -2,12 +2,9 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="x5-orientation" content="landscape">
-    <meta name="x5-fullscreen" content="true">
-    <meta name="screen-orientation" content="landscape">
-    <meta name="full-screen" content="yes">
-    <title>俄罗斯罗斯方块拼图 | 经典益智游戏</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="theme-color" content="#121212">
+    <title>俄罗斯方块拼图 | 经典益智游戏</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
@@ -47,42 +44,70 @@
             .grid-cell { @apply border border-game-grid/30; }
             .tetris-piece { @apply transition-all duration-150 cursor-move select-none; touch-action: none; }
             .tetris-block { @apply shadow-md transition-all duration-150; }
-            .btn-game { @apply bg-game-panel hover:bg-game-panel/80 text-game-text py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md flex items-center gap-2; }
+            .btn-game { @apply bg-game-panel hover:bg-game-panel/80 text-game-text py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md flex items-center justify-center gap-2 min-h-[48px] min-w-[48px]; }
             .grid-container { @apply bg-game-panel rounded-xl shadow-lg overflow-hidden relative; }
             .piece-container { @apply relative overflow-hidden; }
             .pulse-animation { animation: pulse 1.2s infinite; }
             .hint-pulse { animation: hintPulse 1.2s infinite; }
             .target-hint-pulse { animation: targetHintPulse 1.2s infinite; }
             .success-animation { animation: success 0.5s ease-in-out; }
-            .icon-btn { @apply flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 transform hover:scale-110 active:scale-95; }
-            .rotate-device { animation: rotate 2s ease-in-out infinite; }
+            .icon-btn { @apply flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 transform hover:scale-110 active:scale-95; }
         }
     </style>
     
     <style>
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        html, body { 
+            height: 100%; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            -webkit-overflow-scrolling: touch;
+        }
         
         .game-wrapper {
             width: 100vw;
             height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             padding: 10px;
             box-sizing: border-box;
             overflow: hidden;
         }
         
+        .game-header {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        
         .game-main-area {
             display: flex;
             width: 100%;
             flex: 1;
-            gap: min(2vw, 15px);
+            gap: min(2vw, 10px);
             min-height: 0;
             justify-content: center;
             align-items: center;
             box-sizing: border-box;
+            overflow: hidden;
+        }
+        
+        .game-footer {
+            width: 100%;
+            padding: 8px 0;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .button-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 400px;
         }
         
         .side-container, .center-container, 
@@ -94,16 +119,25 @@
             width: 20vw; 
             min-width: 0;
             max-width: 250px;
+            flex-shrink: 1;
         }
         .center-container { 
             min-width: 0;
             display: flex;
             flex-direction: column;
             max-width: 60vw;
+            flex-shrink: 1;
         }
         
-        * { touch-action: manipulation; }
-        .grid-container { max-width: 100%; max-height: 100%; }
+        * { 
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+        }
+        
+        .grid-container { 
+            max-width: 100%; 
+            max-height: 100%; 
+        }
         
         .hint-block {
             position: absolute;
@@ -128,38 +162,6 @@
         .tetris-piece.z-20 { z-index: 20; }
         .tetris-piece.z-30 { z-index: 30; }
         #success-message { z-index: 100; }
-        
-        /* 横屏提示遮罩 */
-        #rotation-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.9);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        
-        #rotation-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-        
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            50% { transform: rotate(90deg); }
-            100% { transform: rotate(0deg); }
-        }
         
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 10px rgba(187, 134, 252, 0.5); }
@@ -186,6 +188,8 @@
             color: #FFFFFF;
             border: 1px solid rgba(187, 134, 252, 0.5);
             border-radius: 4px;
+            min-height: 32px;
+            padding: 4px 8px;
         }
         
         .custom-select option { background-color: #1E1E1E; color: #FFFFFF; }
@@ -195,35 +199,53 @@
             box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.2);
         }
 
-        /* 竖屏适配优化 */
-        @media (max-aspect-ratio: 1/1) {
+        /* 移动设备优化 */
+        @media (max-width: 768px) {
+            .game-wrapper {
+                padding: 5px;
+            }
+            
             .game-main-area {
-                flex-direction: column;
-                gap: 10px;
-                overflow-y: auto;
-                padding: 10px 0;
+                gap: min(1vw, 5px);
             }
             
             .side-container {
-                width: 90vw;
-                max-width: none;
-                height: auto;
+                width: 25vw;
             }
             
-            .center-container {
-                max-width: 90vw;
+            .btn-game {
+                padding: 12px;
+                min-height: 52px;
+                min-width: 52px;
             }
             
-            #left-grid, #right-grid {
-                height: 220px;
+            .game-header {
+                margin-bottom: 5px;
+            }
+            
+            .game-footer {
+                padding: 5px 0;
+            }
+            
+            .button-container {
+                gap: 8px;
             }
         }
-
-        /* 横屏样式优化 */
-        @media (min-aspect-ratio: 1/1) {
-            .side-container {
-                width: 20vw;
-                max-width: 250px;
+        
+        /* 针对Edge安卓版的特殊优化 */
+        @supports (-ms-ime-align: auto) {
+            .btn-game {
+                display: -ms-flexbox;
+                display: flex;
+                -ms-flex-align: center;
+                align-items: center;
+                -ms-flex-pack: center;
+                justify-content: center;
+            }
+            
+            .game-footer {
+                position: relative;
+                z-index: 50;
             }
         }
     </style>
@@ -232,20 +254,9 @@
 </head>
 
 <body class="bg-game-bg text-game-text font-sans">
-    <!-- 横屏提示遮罩 -->
-    <div id="rotation-overlay">
-        <i class="fa fa-mobile text-6xl mb-4 rotate-device" style="transform-origin: center;"></i>
-        <h2 class="text-2xl font-bold mb-2">请旋转屏幕</h2>
-        <p class="mb-4">为获得最佳游戏体验，请将手机横过来</p>
-        <p class="text-sm text-gray-300">提示：从屏幕顶部下拉，打开"自动旋转"开关</p>
-        <button id="rotation-close" class="mt-4 bg-game-accent/30 hover:bg-game-accent/50 text-white py-2 px-6 rounded-full transition-all">
-            继续使用竖屏
-        </button>
-    </div>
-
     <div class="game-wrapper">
         <div class="w-full max-w-7xl mx-auto flex flex-col items-center h-full">
-            <header class="w-full mb-3 flex flex-col md:flex-row justify-between items-center gap-2">
+            <header class="game-header w-full flex flex-col md:flex-row justify-between items-center gap-2">
                 <div class="flex items-center gap-2">
                     <div class="tetris-block bg-tetris-l"></div>
                     <div class="tetris-block bg-tetris-j"></div>
@@ -253,7 +264,7 @@
                     <h1 class="text-[clamp(1rem,5vw,1.8rem)] font-bold tracking-tight">俄罗斯方块拼图</h1>
                 </div>
                 
-                <div class="bg-game-panel px-3 py-1.5 rounded-lg shadow-md flex items-center gap-4">
+                <div class="bg-game-panel px-3 py-2 rounded-lg shadow-md flex items-center gap-4">
                     <div class="flex items-center gap-1.5">
                         <i class="fa fa-signal text-game-accent text-sm"></i>
                         <select id="difficulty" class="custom-select px-2 py-1 text-sm bg-game-panel text-game-text">
@@ -299,85 +310,56 @@
                 </div>
             </main>
             
-            <footer class="w-full flex flex-wrap justify-center gap-2 mb-1">
-                <button id="reset-btn" class="btn-game text-sm md:text-base">
-                    <i class="fa fa-refresh"></i>
-                    <span>重置</span>
-                </button>
-                <button id="fullscreen-btn" class="btn-game fullscreen-btn text-sm md:text-base">
-                    <i class="fa fa-expand"></i>
-                    <span>全屏</span>
-                </button>
-                <button id="next-btn" class="btn-game bg-game-accent hover:bg-game-accent/80 text-sm md:text-base">
-                    <i class="fa fa-arrow-right"></i>
-                    <span>下一关</span>
-                </button>
+            <footer class="game-footer">
+                <div class="button-container">
+                    <button id="reset-btn" class="btn-game text-sm md:text-base flex-1">
+                        <i class="fa fa-refresh"></i>
+                        <span>重置</span>
+                    </button>
+                    <button id="fullscreen-btn" class="btn-game fullscreen-btn text-sm md:text-base flex-1">
+                        <i class="fa fa-expand"></i>
+                        <span>全屏</span>
+                    </button>
+                    <button id="next-btn" class="btn-game bg-game-accent hover:bg-game-accent/80 text-sm md:text-base flex-1">
+                        <i class="fa fa-arrow-right"></i>
+                        <span>下一关</span>
+                    </button>
+                </div>
             </footer>
         </div>
     </div>
 
     <script>
-        // 微信浏览器检测
-        const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
-        // 横屏提示遮罩
-        const rotationOverlay = document.getElementById('rotation-overlay');
-        const rotationCloseBtn = document.getElementById('rotation-close');
-        
-        // 检查屏幕方向并显示提示
-        function checkOrientation() {
-            const isLandscape = window.innerWidth > window.innerHeight;
-            
-            if (!isLandscape && isWeChat) {
-                rotationOverlay.classList.add('active');
-            } else {
-                rotationOverlay.classList.remove('active');
-                handleResize(); // 调整游戏布局
-            }
-        }
-        
-        // 关闭横屏提示
-        rotationCloseBtn.addEventListener('click', () => {
-            rotationOverlay.classList.remove('active');
-        });
-        
-        // 初始化时检查方向
-        window.addEventListener('load', checkOrientation);
-        // 窗口大小变化时检查方向
-        window.addEventListener('resize', checkOrientation);
-
         // 计算网格大小 - 改进版，确保等比缩放且在屏幕内显示
         function calculateGridSize() {
             // 获取窗口可用尺寸
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
-            const isLandscape = windowWidth > windowHeight;
             
             // 计算标题和按钮区域大致高度
-            const headerFooterHeight = isLandscape ? 120 : 160;
+            const headerFooterHeight = window.innerWidth < 768 ? 180 : 140;
             const availableHeight = windowHeight - headerFooterHeight;
             
-            // 根据横竖屏使用不同的计算方式
-            if (isLandscape) {
-                // 横屏计算方式
-                const totalColumns = 9 + 16 + 8;
-                const gaps = 40;
-                const widthBasedSize = (windowWidth - gaps) / totalColumns;
-                const heightBasedSize = availableHeight / 16;
-                let gridSize = Math.floor(Math.min(widthBasedSize, heightBasedSize));
-                
-                const maxGridSize = 30;
-                const minGridSize = 8;
-                return Math.max(minGridSize, Math.min(gridSize, maxGridSize));
-            } else {
-                // 竖屏计算方式 - 更紧凑的布局
-                const widthBasedSize = (windowWidth - 40) / 16; // 基于中间区域宽度
-                const heightBasedSize = (availableHeight * 0.8) / 28; // 总高度分配给上下区域
-                let gridSize = Math.floor(Math.min(widthBasedSize, heightBasedSize));
-                
-                const maxGridSize = 25;
-                const minGridSize = 6;
-                return Math.max(minGridSize, Math.min(gridSize, maxGridSize));
-            }
+            // 计算基于宽度的最大可能网格尺寸
+            // 总宽度 = 左网格(9列) + 中网格(16列) + 右网格(8列) + 间距
+            const totalColumns = 9 + 16 + 8;
+            const gaps = window.innerWidth < 768 ? 20 : 40;
+            const widthBasedSize = (windowWidth - gaps) / totalColumns;
+            
+            // 计算基于高度的最大可能网格尺寸
+            // 中网格高度为14行 + 标题高度
+            const heightBasedSize = availableHeight / 16; // 14行 + 2行标题空间
+            
+            // 确定基础网格尺寸，取宽度和高度限制中的较小值
+            let gridSize = Math.floor(Math.min(widthBasedSize, heightBasedSize));
+            
+            // 设置最大网格尺寸限制，防止在大屏幕上过大
+            const maxGridSize = 30;
+            gridSize = Math.min(gridSize, maxGridSize);
+            
+            // 设置最小网格尺寸限制，防止在小屏幕上过小
+            const minGridSize = 8;
+            return Math.max(gridSize, minGridSize);
         }
 
         // 游戏状态
@@ -493,6 +475,7 @@
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         const fullscreenIcon = fullscreenBtn.querySelector('i');
         const fullscreenText = fullscreenBtn.querySelector('span');
+        const buttonContainer = document.querySelector('.button-container');
 
         // 初始化游戏
         function initGame() {
@@ -508,9 +491,13 @@
             generateLevel();
             addEventListeners();
             
+            // 确保按钮在移动设备上可见
+            ensureButtonsVisible();
+            
             // 使用resizeObserver监听窗口变化，实现更平滑的响应式调整
             const resizeObserver = new ResizeObserver(entries => {
                 handleResize();
+                ensureButtonsVisible();
             });
             resizeObserver.observe(document.body);
             
@@ -519,58 +506,53 @@
             document.addEventListener('mozfullscreenchange', handleFullscreenChange);
             document.addEventListener('msfullscreenchange', handleFullscreenChange);
             
-            // 微信环境下尝试调用X5内核API进入横屏
-            if (isWeChat && typeof WeixinJSBridge !== 'undefined') {
-                try {
-                    WeixinJSBridge.invoke('setScreenOrientation', {
-                        'orientation': 'landscape'
-                    }, function(res) {
-                        // 回调处理
-                    });
-                } catch (e) {
-                    console.log('微信横屏API调用失败:', e);
-                }
+            setTimeout(() => {
+                handleResize();
+                ensureButtonsVisible();
+            }, 100);
+        }
+
+        // 确保底部按钮可见
+        function ensureButtonsVisible() {
+            if (window.innerWidth < 768) {
+                // 移动设备上强制设置按钮容器的位置和可见性
+                const footer = document.querySelector('.game-footer');
+                footer.style.position = 'relative';
+                footer.style.zIndex = '50';
+                footer.style.opacity = '1';
+                footer.style.pointerEvents = 'auto';
+                
+                // 增加按钮大小以提高可点击性
+                const buttons = document.querySelectorAll('.btn-game');
+                buttons.forEach(btn => {
+                    btn.style.minHeight = '52px';
+                    btn.style.minWidth = '52px';
+                });
             }
-            
-            setTimeout(handleResize, 100);
         }
 
         // 更新所有容器大小以匹配内部网格
         function updateContainerSizes() {
             const gridSize = gameState.gridSize;
-            const isLandscape = window.innerWidth > window.innerHeight;
             
             // 获取标题高度
             const leftTitleHeight = getTitleHeight(leftGrid);
             const rightTitleHeight = getTitleHeight(rightGrid);
             const targetTitleHeight = getTitleHeight(targetGrid);
             
-            // 横屏和竖屏使用不同的布局
-            if (isLandscape) {
-                // 横屏布局
-                const leftWidth = 9 * gridSize;
-                const leftHeight = 10 * gridSize + leftTitleHeight;
-                document.getElementById('left-container').style.width = `${leftWidth}px`;
-                document.getElementById('left-container').style.height = `${leftHeight}px`;
-                
-                const rightWidth = 8 * gridSize;
-                const rightHeight = 10 * gridSize + rightTitleHeight;
-                document.getElementById('right-container').style.width = `${rightWidth}px`;
-                document.getElementById('right-container').style.height = `${rightHeight}px`;
-            } else {
-                // 竖屏布局 - 宽度适应屏幕
-                const leftWidth = Math.min(9 * gridSize, window.innerWidth - 40);
-                const leftHeight = 8 * gridSize + leftTitleHeight;
-                document.getElementById('left-container').style.width = `${leftWidth}px`;
-                document.getElementById('left-container').style.height = `${leftHeight}px`;
-                
-                const rightWidth = Math.min(8 * gridSize, window.innerWidth - 40);
-                const rightHeight = 8 * gridSize + rightTitleHeight;
-                document.getElementById('right-container').style.width = `${rightWidth}px`;
-                document.getElementById('right-container').style.height = `${rightHeight}px`;
-            }
+            // 更新左侧容器
+            const leftWidth = 9 * gridSize;
+            const leftHeight = 10 * gridSize + leftTitleHeight;
+            document.getElementById('left-container').style.width = `${leftWidth}px`;
+            document.getElementById('left-container').style.height = `${leftHeight}px`;
             
-            // 中间目标容器
+            // 更新右侧容器
+            const rightWidth = 8 * gridSize;
+            const rightHeight = 10 * gridSize + rightTitleHeight;
+            document.getElementById('right-container').style.width = `${rightWidth}px`;
+            document.getElementById('right-container').style.height = `${rightHeight}px`;
+            
+            // 更新中间目标容器
             const targetWidth = 16 * gridSize;
             const targetHeight = 14 * gridSize + targetTitleHeight;
             targetContainer.style.width = `${targetWidth}px`;
@@ -605,6 +587,7 @@
             }
             
             handleResize();
+            ensureButtonsVisible();
         }
 
         // 切换全屏模式
@@ -618,18 +601,10 @@
                 } else if (docEl.msRequestFullscreen) {
                     docEl.msRequestFullscreen().catch(err => console.error(`进入全屏失败: ${err.message}`));
                 }
-                // 微信X5内核全屏
-                else if (isWeChat && typeof WeixinJSBridge !== 'undefined') {
-                    WeixinJSBridge.invoke('requestFullScreen', {}, function() {});
-                }
             } else {
                 if (document.exitFullscreen) document.exitFullscreen();
                 else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
                 else if (document.msExitFullscreen) document.msExitFullscreen();
-                // 微信X5内核退出全屏
-                else if (isWeChat && typeof WeixinJSBridge !== 'undefined') {
-                    WeixinJSBridge.invoke('exitFullScreen', {}, function() {});
-                }
             }
         }
 
@@ -1364,6 +1339,27 @@
             hintBtn.addEventListener('click', showHint);
             fullscreenBtn.addEventListener('click', toggleFullscreen);
             nextBtn.addEventListener('click', nextLevel);
+            
+            // 为移动设备添加触摸支持
+            resetBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                resetPieces();
+            }, { passive: false });
+            
+            fullscreenBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                toggleFullscreen();
+            }, { passive: false });
+            
+            nextBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                nextLevel();
+            }, { passive: false });
+            
+            hintBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                showHint();
+            }, { passive: false });
             
             targetGrid.addEventListener('click', () => {
                 if (gameState.isDragging) stopDrag();
