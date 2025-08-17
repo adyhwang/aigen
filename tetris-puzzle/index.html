@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>俄罗斯方块拼图 | 经典益智游戏</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalablealable=no">
+    <title>俄罗斯罗斯方块拼图 | 经典益智游戏</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
@@ -313,6 +313,13 @@
     </div>
 
     <script>
+        // 定义各难度级别总关卡数
+        const DIFFICULTY_LEVELS = {
+            easy: 30,
+            medium: 80,
+            hard: 100
+        };
+        
         // 计算网格大小 - 考虑屏幕方向的响应式调整
         function calculateGridSize() {
             // 获取窗口可用尺寸
@@ -364,7 +371,7 @@
         const gameState = {
             difficulty: 'easy',
             level: 1,
-            totalLevels: 30,
+            totalLevels: DIFFICULTY_LEVELS.easy,
             pieces: [],
             usedPieceIds: [],
             pieceCount: 2,
@@ -957,20 +964,18 @@
 
         // 计算方块数量
         function calculatePieceCount() {
-            let minPieces, maxPieces, totalLevels;
+            let minPieces, maxPieces;
             
             switch(gameState.difficulty) {
                 case 'easy':
-                    minPieces = 2; maxPieces = 4; totalLevels = 30; break;
+                    minPieces = 2; maxPieces = 4; break;
                 case 'medium':
-                    minPieces = 5; maxPieces = 8; totalLevels = 80; break;
+                    minPieces = 5; maxPieces = 8; break;
                 case 'hard':
-                    minPieces = 9; maxPieces = 14; totalLevels = 100; break;
+                    minPieces = 9; maxPieces = 14; break;
             }
             
-            gameState.totalLevels = totalLevels;
-            totalLevelsDisplay.textContent = totalLevels;
-            
+            const totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
             const progress = (gameState.level - 1) / (totalLevels - 1);
             const pieceCount = Math.round(minPieces + progress * (maxPieces - minPieces));
             
@@ -1186,14 +1191,66 @@
         function completeLevel() {
             successMessage.classList.remove('opacity-0', 'pointer-events-none');
             
-            if (gameState.level < gameState.totalLevels) {
-                gameState.level++;
+            // 完成关卡时也应用相同的难度递进逻辑
+            handleLevelProgression();
+            saveGameProgress();
+        }
+
+        // 处理关卡递进逻辑
+        function handleLevelProgression() {
+            const currentDifficulty = gameState.difficulty;
+            const currentLevel = gameState.level;
+            const totalLevels = DIFFICULTY_LEVELS[currentDifficulty];
+            
+            // 检查是否是当前难度的最后一关
+            if (currentLevel >= totalLevels) {
+                // 根据当前难度决定下一步
+                switch(currentDifficulty) {
+                    case 'easy':
+                        // 简单难度最后一关，切换到一般难度第一关
+                        gameState.difficulty = 'medium';
+                        gameState.level = 1;
+                        difficultySelect.value = 'medium';
+                        showDifficultyChangeMessage('简单', '一般');
+                        break;
+                    case 'medium':
+                        // 一般难度最后一关，切换到困难难度第一关
+                        gameState.difficulty = 'hard';
+                        gameState.level = 1;
+                        difficultySelect.value = 'hard';
+                        showDifficultyChangeMessage('一般', '困难');
+                        break;
+                    case 'hard':
+                        // 困难难度最后一关，保持在最后一关
+                        gameState.level = totalLevels;
+                        showMessage('恭喜您已完成所有难度！将继续挑战困难难度最后一关。');
+                        break;
+                }
             } else {
-                gameState.level = 1;
+                // 不是最后一关，直接进入下一关
+                gameState.level++;
             }
             
+            // 更新显示
+            gameState.totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
             levelDisplay.textContent = gameState.level;
-            saveGameProgress();
+            totalLevelsDisplay.textContent = gameState.totalLevels;
+        }
+
+        // 显示难度变化消息
+        function showDifficultyChangeMessage(from, to) {
+            // 修改成功消息内容
+            const title = successMessage.querySelector('div:first-child');
+            const message = successMessage.querySelector('p');
+            
+            title.textContent = `恭喜进入${to}难度！`;
+            message.textContent = `您已完成所有${from}难度关卡，准备好迎接更高挑战了吗？`;
+        }
+
+        // 显示自定义消息
+        function showMessage(text) {
+            const message = successMessage.querySelector('p');
+            message.textContent = text;
         }
 
         // 重置方块
@@ -1282,16 +1339,18 @@
             gameState.hintTimer = setTimeout(clearHint, 2500);
         }
 
-        // 下一关
+        // 下一关 - 实现难度递进逻辑
         function nextLevel() {
-            if (gameState.level < gameState.totalLevels) {
-                gameState.level++;
-            } else {
-                gameState.level = 1;
-            }
+            // 隐藏成功消息（如果显示）
+            successMessage.classList.add('opacity-0', 'pointer-events-none');
             
-            levelDisplay.textContent = gameState.level;
+            // 处理关卡递进
+            handleLevelProgression();
+            
+            // 生成新关卡
             generateLevel();
+            
+            // 保存进度
             saveGameProgress();
         }
 
@@ -1318,12 +1377,7 @@
                 levelDisplay.textContent = gameState.level;
             }
             
-            switch(gameState.difficulty) {
-                case 'easy': gameState.totalLevels = 30; break;
-                case 'medium': gameState.totalLevels = 80; break;
-                case 'hard': gameState.totalLevels = 100; break;
-            }
-            
+            gameState.totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
             totalLevelsDisplay.textContent = gameState.totalLevels;
         }
 
@@ -1331,13 +1385,7 @@
         function addEventListeners() {
             difficultySelect.addEventListener('change', () => {
                 gameState.difficulty = difficultySelect.value;
-                
-                switch(gameState.difficulty) {
-                    case 'easy': gameState.totalLevels = 30; break;
-                    case 'medium': gameState.totalLevels = 80; break;
-                    case 'hard': gameState.totalLevels = 100; break;
-                }
-                
+                gameState.totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
                 totalLevelsDisplay.textContent = gameState.totalLevels;
                 gameState.level = 1;
                 levelDisplay.textContent = gameState.level;
