@@ -54,7 +54,7 @@
     </style>
     
     <style>
-        html, body { height: 100%; margin: 0; padding: 0; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
         
         .game-wrapper {
             width: 100vw;
@@ -72,10 +72,11 @@
             display: flex;
             width: 100%;
             flex: 1;
-            gap: 2vw;
+            gap: min(2vw, 15px);
             min-height: 0;
             justify-content: center;
             align-items: center;
+            box-sizing: border-box;
         }
         
         .side-container, .center-container, 
@@ -83,12 +84,16 @@
             box-sizing: border-box;
         }
         
-        .side-container { width: 20vw; min-width: 0; }
+        .side-container { 
+            width: 20vw; 
+            min-width: 0;
+            max-width: 250px;
+        }
         .center-container { 
-            /* 移除固定宽度，让中间容器根据内容自适应 */
             min-width: 0;
             display: flex;
             flex-direction: column;
+            max-width: 60vw;
         }
         
         * { touch-action: manipulation; }
@@ -134,9 +139,8 @@
         }
         
         @keyframes success {
-            0% { transform: scale(1); }
+            0%, 100% { transform: scale(1); }
             50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
         }
         
         .custom-select {
@@ -152,6 +156,17 @@
             border-color: #BB86FC;
             box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.2);
         }
+
+        /* 确保在小屏幕上适当缩小 */
+        @media (max-width: 768px) {
+            .game-main-area {
+                gap: min(1vw, 8px);
+            }
+            
+            .side-container {
+                width: 25vw;
+            }
+        }
     </style>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -159,7 +174,7 @@
 
 <body class="bg-game-bg text-game-text font-sans">
     <div class="game-wrapper">
-        <div class="w-full max-w-7xl mx-auto mx-auto-auto flex flex flex-col items-center h-full">
+        <div class="w-full max-w-7xl mx-auto flex flex-col items-center h-full">
             <header class="w-full mb-3 flex flex-col md:flex-row justify-between items-center gap-2">
                 <div class="flex items-center gap-2">
                     <div class="tetris-block bg-tetris-l"></div>
@@ -198,7 +213,7 @@
                     <div class="grid-container" id="target-container">
                         <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">目标图形</div>
                         <div id="target-grid" class="p-0 grid grid-cols-16 gap-0 relative piece-container"></div>
-                        <div id="success-message" class="absolute inset-0 bg-game-bg/80 flex flex flex-col-col items-center justify-center gap-4 rounded-xl-xl opacity-0 pointer-events-events-none transition-opacity duration-500 z-100">
+                        <div id="success-message" class="absolute inset-0 bg-game-bg/80 flex flex-col items-center justify-center gap-4 rounded-xl opacity-0 pointer-events-none transition-opacity duration-500 z-100">
                             <div class="text-4xl font-bold text-game-accent success-animation">通关!</div>
                             <p class="text-lg">太棒了，准备好挑战下一关了吗？</p>
                         </div>
@@ -211,7 +226,7 @@
                 </div>
             </main>
             
-            <footer class="w-full flex flex-wrap justify justify-center gap-2 mb-1">
+            <footer class="w-full flex flex-wrap justify-center gap-2 mb-1">
                 <button id="reset-btn" class="btn-game text-sm md:text-base">
                     <i class="fa fa-refresh"></i>
                     <span>重置</span>
@@ -233,61 +248,36 @@
     </div>
 
     <script>
-        // 计算网格大小
+        // 计算网格大小 - 改进版，确保等比缩放且在屏幕内显示
         function calculateGridSize() {
-            const containers = {
-                left: document.getElementById('left-container'),
-                right: document.getElementById('right-container'),
-                target: document.getElementById('target-container')
-            };
+            // 获取窗口可用尺寸
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
             
-            if (!containers.left || !containers.right || !containers.target) return 10;
+            // 计算标题和按钮区域大致高度
+            const headerFooterHeight = 120; // 预留的头部和底部高度
+            const availableHeight = windowHeight - headerFooterHeight;
             
-            const getAvailableSpace = (container) => {
-                const style = window.getComputedStyle(container);
-                const paddingTop = parseFloat(style.paddingTop);
-                const paddingBottom = parseFloat(style.paddingBottom);
-                const titleHeight = container.querySelector('div:first-child').offsetHeight;
-                const totalVerticalPadding = paddingTop + paddingBottom + titleHeight;
-                
-                return {
-                    width: container.offsetWidth,
-                    height: container.offsetHeight - totalVerticalPadding
-                };
-            };
+            // 计算基于宽度的最大可能网格尺寸
+            // 总宽度 = 左网格(9列) + 中网格(16列) + 右网格(8列) + 间距
+            const totalColumns = 9 + 16 + 8;
+            const gaps = 40; // 预估的间距总和
+            const widthBasedSize = (windowWidth - gaps) / totalColumns;
             
-            const spaces = {
-                left: getAvailableSpace(containers.left),
-                right: getAvailableSpace(containers.right),
-                target: getAvailableSpace(containers.target)
-            };
+            // 计算基于高度的最大可能网格尺寸
+            // 中网格高度为14行 + 标题高度
+            const heightBasedSize = availableHeight / 16; // 14行 + 2行标题空间
             
-            const leftBasedSize = spaces.left.width / 9;
-            const rightBasedSize = spaces.right.width / 8;
-            const centerBasedSize = spaces.target.width / 16;
+            // 确定基础网格尺寸，取宽度和高度限制中的较小值
+            let gridSize = Math.floor(Math.min(widthBasedSize, heightBasedSize));
             
-            const leftHeightBased = spaces.left.height / 10;
-            const rightHeightBased = spaces.right.height / 10;
-            const centerHeightBased = spaces.target.height / 14;
+            // 设置最大网格尺寸限制，防止在大屏幕上过大
+            const maxGridSize = 30;
+            gridSize = Math.min(gridSize, maxGridSize);
             
-            let gridSize = Math.floor(Math.min(
-                leftBasedSize, rightBasedSize, centerBasedSize,
-                leftHeightBased, rightHeightBased, centerHeightBased
-            ));
-            
-            const adjustForPerfectFit = (containerWidth, cols, currentSize) => {
-                const idealSize = containerWidth / cols;
-                const roundedUp = Math.ceil(idealSize);
-                const roundedDown = Math.floor(idealSize);
-                return Math.abs(roundedUp - idealSize) < Math.abs(roundedDown - idealSize) ? roundedUp : roundedDown;
-            };
-            
-            const leftAdjusted = adjustForPerfectFit(spaces.left.width, 9, gridSize);
-            const rightAdjusted = adjustForPerfectFit(spaces.right.width, 8, gridSize);
-            const centerAdjusted = adjustForPerfectFit(spaces.target.width, 16, gridSize);
-            
-            gridSize = Math.min(leftAdjusted, rightAdjusted, centerAdjusted);
-            return Math.max(gridSize, 10);
+            // 设置最小网格尺寸限制，防止在小屏幕上过小
+            const minGridSize = 8;
+            return Math.max(gridSize, minGridSize);
         }
 
         // 游戏状态
@@ -410,7 +400,7 @@
             createGridBackground(rightGrid, 8, 10);
             createGridBackground(targetGrid, 16, 14);
             
-            // 确保中间容器大小与网格一致
+            // 确保容器大小与网格一致
             updateContainerSizes();
             
             loadGameProgress();
@@ -418,7 +408,12 @@
             generateLevel();
             addEventListeners();
             
-            window.addEventListener('resize', handleResize);
+            // 使用resizeObserver监听窗口变化，实现更平滑的响应式调整
+            const resizeObserver = new ResizeObserver(entries => {
+                handleResize();
+            });
+            resizeObserver.observe(document.body);
+            
             document.addEventListener('fullscreenchange', handleFullscreenChange);
             document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
             document.addEventListener('mozfullscreenchange', handleFullscreenChange);
@@ -431,21 +426,26 @@
         function updateContainerSizes() {
             const gridSize = gameState.gridSize;
             
+            // 获取标题高度
+            const leftTitleHeight = getTitleHeight(leftGrid);
+            const rightTitleHeight = getTitleHeight(rightGrid);
+            const targetTitleHeight = getTitleHeight(targetGrid);
+            
             // 更新左侧容器
             const leftWidth = 9 * gridSize;
-            const leftHeight = 10 * gridSize + getTitleHeight(leftGrid);
+            const leftHeight = 10 * gridSize + leftTitleHeight;
             document.getElementById('left-container').style.width = `${leftWidth}px`;
             document.getElementById('left-container').style.height = `${leftHeight}px`;
             
             // 更新右侧容器
             const rightWidth = 8 * gridSize;
-            const rightHeight = 10 * gridSize + getTitleHeight(rightGrid);
+            const rightHeight = 10 * gridSize + rightTitleHeight;
             document.getElementById('right-container').style.width = `${rightWidth}px`;
             document.getElementById('right-container').style.height = `${rightHeight}px`;
             
-            // 更新中间目标容器 - 确保大小精确匹配网格
+            // 更新中间目标容器
             const targetWidth = 16 * gridSize;
-            const targetHeight = 14 * gridSize + getTitleHeight(targetGrid);
+            const targetHeight = 14 * gridSize + targetTitleHeight;
             targetContainer.style.width = `${targetWidth}px`;
             targetContainer.style.height = `${targetHeight}px`;
             
@@ -502,26 +502,30 @@
         function handleResize() {
             const oldSize = gameState.gridSize;
             gameState.gridSize = calculateGridSize();
-            const scaleRatio = gameState.gridSize / oldSize;
             
-            clearGrid(leftGrid);
-            clearGrid(rightGrid);
-            clearGrid(targetGrid);
-            
-            createGridBackground(leftGrid, 9, 10);
-            createGridBackground(rightGrid, 8, 10);
-            createGridBackground(targetGrid, 16, 14);
-            
-            // 关键修改：更新容器大小以匹配新的网格大小
-            updateContainerSizes();
-            
-            gameState.pieces.forEach(piece => {
-                piece.col = Math.round(piece.col * scaleRatio);
-                piece.row = Math.round(piece.row * scaleRatio);
-                renderPiece(piece);
-            });
-            
-            renderTargetShape();
+            // 只有当网格大小有显著变化时才重新渲染，避免不必要的重绘
+            if (Math.abs(gameState.gridSize - oldSize) > 0) {
+                const scaleRatio = gameState.gridSize / oldSize;
+                
+                clearGrid(leftGrid);
+                clearGrid(rightGrid);
+                clearGrid(targetGrid);
+                
+                createGridBackground(leftGrid, 9, 10);
+                createGridBackground(rightGrid, 8, 10);
+                createGridBackground(targetGrid, 16, 14);
+                
+                // 更新容器大小以匹配新的网格大小
+                updateContainerSizes();
+                
+                gameState.pieces.forEach(piece => {
+                    piece.col = Math.round(piece.col * scaleRatio);
+                    piece.row = Math.round(piece.row * scaleRatio);
+                    renderPiece(piece);
+                });
+                
+                renderTargetShape();
+            }
         }
 
         // 清空网格
