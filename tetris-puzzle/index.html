@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>俄罗斯方块拼图 | 经典益智游戏</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    
+
     <script>
         tailwind.config = {
             theme: {
@@ -20,6 +21,12 @@
                             i: '#66CCFF',      // I形改为淡蓝色
                             t: '#AF52DE',      // T形保持紫色
                             o: '#FFCC00'       // O形保持黄色
+                        },
+                        newtetris: {
+                            y: '#FFCC00',      // 黄色
+                            g: '#34C759',      // 绿色
+                            b: '#0066CC',      // 蓝色
+                            r: '#FF3B30'       // 红色
                         },
                         game: {
                             bg: '#121212', panel: '#1E1E1E', grid: '#2D2D2D',
@@ -41,7 +48,7 @@
             }
         }
     </script>
-    
+
     <style type="text/tailwindcss">
         @layer utilities {
             .content-auto { content-visibility: auto; }
@@ -57,10 +64,16 @@
             .success-animation { animation: success 0.5s ease-in-out; }
         }
     </style>
-    
+
     <style>
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
-        
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
         .game-wrapper {
             width: 100vw;
             height: 100vh;
@@ -72,7 +85,14 @@
             box-sizing: border-box;
             overflow: hidden;
         }
-        
+
+        .game-header {
+            width: 100%;
+            z-index: 50;
+            /* 确保头部在游戏区域上方 */
+            margin-bottom: 10px;
+        }
+
         .game-main-area {
             display: flex;
             width: 100%;
@@ -83,27 +103,38 @@
             align-items: center;
             box-sizing: border-box;
         }
-        
-        .side-container, .center-container, 
-        #left-grid, #right-grid, #target-grid, .grid-container {
+
+        .side-container,
+        .center-container,
+        #left-grid,
+        #right-grid,
+        #target-grid,
+        .grid-container {
             box-sizing: border-box;
         }
-        
-        .side-container { 
-            width: 20vw; 
+
+        .side-container {
+            width: 20vw;
             min-width: 0;
             max-width: 250px;
         }
-        .center-container { 
+
+        .center-container {
             min-width: 0;
             display: flex;
             flex-direction: column;
             max-width: 60vw;
         }
-        
-        * { touch-action: manipulation; }
-        .grid-container { max-width: 100%; max-height: 100%; }
-        
+
+        * {
+            touch-action: manipulation;
+        }
+
+        .grid-container {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
         .hint-block {
             position: absolute;
             z-index: 10;
@@ -111,51 +142,119 @@
             box-sizing: border-box;
         }
 
-        .fullscreen-active { background-color: #000; }
-        .fullscreen-active .game-wrapper { padding: 0; }
-        .fullscreen-btn { @apply bg-game-accent/30 hover:bg-game-accent/50; }
-        
+        .fullscreen-active {
+            background-color: #000;
+        }
+
+        .fullscreen-active .game-wrapper {
+            padding: 0;
+        }
+
+        .fullscreen-btn {
+            @apply bg-game-accent/30 hover:bg-game-accent/50;
+        }
+
         .target-block.hint {
             opacity: 0.9;
             border: 2px solid rgba(255, 255, 255, 0.7);
         }
-        
-        #target-grid { z-index: 1; }
-        .target-block { z-index: 2; }
-        .target-block.hint-active { z-index: 40; }
-        .tetris-piece { z-index: 10; }
-        .tetris-piece.z-20 { z-index: 20; }
-        .tetris-piece.z-30 { z-index: 30; }
-        #success-message { z-index: 100; }
-        
+
+        #target-grid {
+            z-index: 1;
+        }
+
+        .target-block {
+            z-index: 2;
+        }
+
+        .target-block.hint-active {
+            z-index: 40;
+        }
+
+        .tetris-piece {
+            z-index: 10;
+        }
+
+        .tetris-piece.z-20 {
+            z-index: 20;
+        }
+
+        .tetris-piece.z-30 {
+            z-index: 30;
+        }
+
+        #success-message {
+            z-index: 100;
+        }
+
         @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 10px rgba(187, 134, 252, 0.5); }
-            50% { opacity: 0.8; transform: scale(1.05); box-shadow: 0 0 20px rgba(187, 134, 252, 0.8); }
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+                box-shadow: 0 0 10px rgba(187, 134, 252, 0.5);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05);
+                box-shadow: 0 0 20px rgba(187, 134, 252, 0.8);
+            }
         }
-        
+
         @keyframes hintPulse {
-            0%, 100% { opacity: 0.7; box-shadow: 0 0 10px rgba(255, 255, 255, 0.6); }
-            50% { opacity: 1; box-shadow: 0 0 20px rgba(255, 255, 255, 0.9); }
+
+            0%,
+            100% {
+                opacity: 0.7;
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+            }
+
+            50% {
+                opacity: 1;
+                box-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
+            }
         }
-        
+
         @keyframes targetHintPulse {
-            0%, 100% { opacity: 0.8; box-shadow: 0 0 8px rgba(255, 255, 255, 0.8); }
-            50% { opacity: 1; box-shadow: 0 0 15px rgba(255, 255, 255, 0.9); }
+
+            0%,
+            100% {
+                opacity: 0.8;
+                box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+            }
+
+            50% {
+                opacity: 1;
+                box-shadow: 0 0 15px rgba(255, 255, 255, 0.9);
+            }
         }
-        
+
         @keyframes success {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
         }
-        
+
         .custom-select {
             background-color: #1E1E1E;
             color: #FFFFFF;
             border: 1px solid rgba(187, 134, 252, 0.5);
             border-radius: 4px;
         }
-        
-        .custom-select option { background-color: #1E1E1E; color: #FFFFFF; }
+
+        .custom-select option {
+            background-color: #1E1E1E;
+            color: #FFFFFF;
+        }
+
         .custom-select:focus {
             outline: none;
             border-color: #BB86FC;
@@ -173,16 +272,17 @@
                 max-width: 100%;
                 margin: 0 auto;
             }
-            
+
             .side-container {
                 width: auto;
                 max-width: none;
-                max-height: 25vh;
+                max-height: 30vh;
+                /* 适当增加竖屏模式下的高度 */
                 flex: 0 0 auto;
                 margin-left: auto;
                 margin-right: auto;
             }
-            
+
             .center-container {
                 max-width: 100%;
                 flex: 1 1 auto;
@@ -191,27 +291,30 @@
                 margin-left: auto;
                 margin-right: auto;
             }
-            
+
             .header-content {
                 flex-direction: column;
                 gap: 8px;
                 padding-bottom: 8px;
                 width: 100%;
             }
-            
-            .header-controls, .header-buttons {
+
+            .header-controls,
+            .header-buttons {
                 width: 100%;
                 justify-content: center;
                 flex-wrap: wrap;
             }
-            
+
             .btn-game {
                 padding: 1px 6px;
                 font-size: 12px;
             }
-            
+
             /* 确保网格容器不超出内部网格宽度并水平居中 */
-            #left-container, #right-container, #target-container {
+            #left-container,
+            #right-container,
+            #target-container {
                 width: auto !important;
                 max-width: 100% !important;
                 margin-left: auto !important;
@@ -225,13 +328,13 @@
             .game-main-area {
                 gap: min(1vw, 8px);
             }
-            
+
             .side-container {
                 width: 25vw;
             }
         }
     </style>
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
@@ -239,7 +342,7 @@
     <div class="game-wrapper">
         <div class="w-full max-w-7xl mx-auto flex flex-col items-center h-full">
             <!-- 顶部区域 - 包含标题、信息和所有按钮 -->
-            <header class="w-full mb-3">
+            <div class="game-header w-full mb-3">
                 <div class="header-content flex flex-col md:flex-row items-center justify-center gap-4 px-2">
                     <!-- 标题区域 -->
                     <div class="flex items-center gap-2">
@@ -248,12 +351,20 @@
                         <div class="tetris-block bg-tetris-s"></div>
                         <h1 class="text-[clamp(1rem,5vw,1.8rem)] font-bold tracking-tight">俄罗斯方块拼图</h1>
                     </div>
-                    
+
                     <!-- 游戏信息控制区域 -->
                     <div class="header-controls bg-game-panel px-3 py-1.5 rounded-lg shadow-md flex items-center gap-4">
                         <div class="flex items-center gap-1.5">
+                            <i class="fa fa-cube text-game-accent text-sm"></i>
+                            <select id="game-mode" class="custom-select px-2 py-1 text-sm bg-game-panel text-game-text">
+                                <option value="classic">经典方块</option>
+                                <option value="new">新方块</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-1.5">
                             <i class="fa fa-signal text-game-accent text-sm"></i>
-                            <select id="difficulty" class="custom-select px-2 py-1 text-sm bg-game-panel text-game-text">
+                            <select id="difficulty"
+                                class="custom-select px-2 py-1 text-sm bg-game-panel text-game-text">
                                 <option value="easy">简单</option>
                                 <option value="medium">一般</option>
                                 <option value="hard">困难</option>
@@ -261,21 +372,23 @@
                         </div>
                         <div class="flex items-center gap-1.5">
                             <i class="fa fa-map-signs text-game-accent text-sm"></i>
-                            <span class="text-sm">关卡: <span id="level-display" class="font-bold">1</span>/<span id="total-levels" class="font-medium">30</span></span>
+                            <span class="text-sm">关卡: <span id="level-display" class="font-bold">1</span>/<span
+                                    id="total-levels" class="font-medium">30</span></span>
                         </div>
                         <div class="flex items-center gap-1.5">
                             <i class="fa fa-cubes text-game-accent text-sm"></i>
                             <span class="text-sm">方块: <span id="pieces-count" class="font-bold">2</span>个</span>
                         </div>
                     </div>
-                    
+
                     <!-- 按钮区域 -->
                     <div class="header-buttons flex flex-wrap justify-center gap-2">
                         <button id="reset-btn" class="btn-game text-sm md:text-base">
                             <i class="fa fa-refresh"></i>
                             <span>重置</span>
                         </button>
-                        <button id="hint-btn" class="btn-game bg-game-accent/20 hover:bg-game-accent/30 text-sm md:text-base">
+                        <button id="hint-btn"
+                            class="btn-game bg-game-accent/20 hover:bg-game-accent/30 text-sm md:text-base">
                             <i class="fa fa-lightbulb-o"></i>
                             <span>提示</span>
                         </button>
@@ -283,34 +396,43 @@
                             <i class="fa fa-expand"></i>
                             <span>全屏</span>
                         </button>
-                        <button id="next-btn" class="btn-game bg-game-accent hover:bg-game-accent/80 text-sm md:text-base">
+                        <button id="next-btn"
+                            class="btn-game bg-game-accent hover:bg-game-accent/80 text-sm md:text-base">
                             <i class="fa fa-arrow-right"></i>
                             <span>下一关</span>
                         </button>
                     </div>
                 </div>
-            </header>
-            
+            </div>
+
             <!-- 游戏主区域 - 竖屏时为垂直布局 -->
             <main class="game-main-area flex-1 w-full">
                 <div class="side-container grid-container" id="left-container">
-                    <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">上方方块</div>
+                    <div
+                        class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">
+                        左侧方块</div>
                     <div id="left-grid" class="p-0 grid grid-cols-9 gap-0 piece-container"></div>
                 </div>
-                
+
                 <div class="center-container" id="center-wrapper">
                     <div class="grid-container h-full" id="target-container">
-                        <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">目标图形</div>
-                        <div id="target-grid" class="p-0 grid grid-cols-16 gap-0 relative piece-container h-[calc(100%-32px)]"></div>
-                        <div id="success-message" class="absolute inset-0 bg-game-bg/80 flex flex-col items-center justify-center gap-4 rounded-xl opacity-0 pointer-events-none transition-opacity duration-500 z-100">
+                        <div
+                            class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">
+                            目标图形</div>
+                        <div id="target-grid"
+                            class="p-0 grid grid-cols-16 gap-0 relative piece-container h-[calc(100%-32px)]"></div>
+                        <div id="success-message"
+                            class="absolute inset-0 bg-game-bg/80 flex flex-col items-center justify-center gap-4 rounded-xl opacity-0 pointer-events-none transition-opacity duration-500 z-100">
                             <div class="text-4xl font-bold text-game-accent success-animation">通关!</div>
                             <p class="text-lg">太棒了，准备好挑战下一关了吗？</p>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="side-container grid-container" id="right-container">
-                    <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">下方方块</div>
+                    <div
+                        class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">
+                        右侧方块</div>
                     <div id="right-grid" class="p-0 grid grid-cols-8 gap-0 piece-container"></div>
                 </div>
             </main>
@@ -324,30 +446,31 @@
             medium: 80,
             hard: 100
         };
-        
+
         // 计算网格大小 - 考虑屏幕方向的响应式调整
         function calculateGridSize() {
             // 获取窗口可用尺寸
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
             const isPortrait = windowWidth < windowHeight;
-            
-            // 计算标题区域大致高度
-            const headerHeight = 120;
-            const availableHeight = windowHeight - headerHeight;
-            
+
+            // 计算标题区域高度，确保按钮区域有足够空间
+            const header = document.querySelector('.game-header');
+            const headerHeight = header ? header.offsetHeight : 120;
+            const availableHeight = windowHeight - headerHeight - 10; // 额外留出10px间隙
+
             let gridSize;
-            
+
             if (isPortrait) {
                 // 竖屏布局计算 - 确保容器宽度不超过网格宽度
                 const availableWidth = windowWidth - 20; // 减去边距
                 const maxWidthBasedSize = availableWidth / 16; // 基于目标区16列计算
-                
-                // 总高度分配：上方方块(25%) + 目标区(40%) + 下方方块(25%) + 间距(10%)
-                const verticalSpace = availableHeight * 0.9; // 扣除10%间距
+
+                // 总高度分配：上方方块(30%) + 目标区(40%) + 下方方块(30%) 
+                const verticalSpace = availableHeight;
                 const targetHeight = verticalSpace * 0.4;
                 const heightBasedSize = targetHeight / 16; // 14行 + 2行标题空间
-                
+
                 // 取较小值确保能完整显示
                 gridSize = Math.floor(Math.min(maxWidthBasedSize, heightBasedSize));
             } else {
@@ -356,17 +479,17 @@
                 const totalColumns = 9 + 16 + 8;
                 const gaps = 40; // 预估的间距总和
                 const widthBasedSize = (windowWidth - gaps) / totalColumns;
-                
-                // 基于高度的最大可能网格尺寸
+
+                // 基于高度的最大可能网格尺寸（左右盒子高度增加到14行）
                 const heightBasedSize = availableHeight / 16; // 14行 + 2行标题空间
-                
+
                 gridSize = Math.floor(Math.min(widthBasedSize, heightBasedSize));
             }
-            
+
             // 设置最大网格尺寸限制
             const maxGridSize = 30;
             gridSize = Math.min(gridSize, maxGridSize);
-            
+
             // 设置最小网格尺寸限制
             const minGridSize = 8;
             return Math.max(gridSize, minGridSize);
@@ -374,6 +497,7 @@
 
         // 游戏状态
         const gameState = {
+            mode: 'classic', // 游戏模式，默认为经典方块
             difficulty: 'easy',
             level: 1,
             totalLevels: DIFFICULTY_LEVELS.easy,
@@ -396,8 +520,8 @@
             isPortrait: window.innerWidth < window.innerHeight
         };
 
-        // 方块定义
-        const pieceDefinitions = {
+        // 经典方块定义
+        const classicPieceDefinitions = {
             1: { type: 'l', color: 'tetris-l', rotation: 0, container: 'left' },
             2: { type: 'j', color: 'tetris-j', rotation: 0, container: 'left' },
             3: { type: 'z', color: 'tetris-z', rotation: 0, container: 'left' },
@@ -414,8 +538,28 @@
             14: { type: 'i', color: 'tetris-i', rotation: 0, container: 'right' }
         };
 
-        // 方块形状定义
-        const shapes = {
+        // 新方块定义
+        const newPieceDefinitions = {
+            1: { type: 'y0', color: 'newtetris-y', rotation: 0, container: 'left' },
+            2: { type: 'y1', color: 'newtetris-y', rotation: 0, container: 'left' },
+            3: { type: 'y3', color: 'newtetris-y', rotation: 0, container: 'left' },
+            4: { type: 'y4', color: 'newtetris-y', rotation: 0, container: 'left' },
+            5: { type: 'g1', color: 'newtetris-g', rotation: 0, container: 'left' },
+            6: { type: 'g2', color: 'newtetris-g', rotation: 0, container: 'left' },
+            7: { type: 'g3', color: 'newtetris-g', rotation: 0, container: 'left' },
+            8: { type: 'g4', color: 'newtetris-g', rotation: 0, container: 'left' },
+            9: { type: 'b1', color: 'newtetris-b', rotation: 0, container: 'right' },
+            10: { type: 'b2', color: 'newtetris-b', rotation: 0, container: 'right' },
+            11: { type: 'b3', color: 'newtetris-b', rotation: 0, container: 'right' },
+            12: { type: 'b4', color: 'newtetris-b', rotation: 0, container: 'right' },
+            13: { type: 'r1', color: 'newtetris-r', rotation: 0, container: 'right' },
+            14: { type: 'r2', color: 'newtetris-r', rotation: 0, container: 'right' },
+            15: { type: 'r3', color: 'newtetris-r', rotation: 0, container: 'right' },
+            16: { type: 'r4', color: 'newtetris-r', rotation: 0, container: 'right' }
+        };
+
+        // 经典方块形状定义
+        const classicShapes = {
             l: [
                 [[0, 0], [1, 0], [2, 0], [2, 1]],
                 [[1, 0], [1, 1], [1, 2], [0, 2]],
@@ -460,13 +604,143 @@
             ]
         };
 
-        // 初始位置定义
-        const initialPositions = {
-            1: { row: 0, col: 0 }, 2: { row: 0, col: 5 }, 3: { row: 3, col: 0 },
-            4: { row: 3, col: 5 }, 5: { row: 5, col: 0 }, 6: { row: 5, col: 5 },
-            7: { row: 8, col: 2 }, 8: { row: 0, col: 0 }, 9: { row: 0, col: 4 },
-            10: { row: 3, col: 0 }, 11: { row: 3, col: 4 }, 12: { row: 5, col: 0 },
-            13: { row: 5, col: 4 }, 14: { row: 8, col: 1 }
+        // 新方块形状定义（修正版，基于4×4网格整体旋转）
+        const newShapes = {
+            // 黄色方块
+            y0: [
+                [[0, 0], [0, 1], [0, 2], [0, 3]], // 旋转90度
+                [[0, 3], [1, 3], [2, 3], [3, 3]], // 旋转180度
+                [[3, 0], [3, 1], [3, 2], [3, 3]],  // 旋转270度
+                [[0, 0], [1, 0], [2, 0], [3, 0]] // 原始
+            ],
+            y1: [
+                [[0, 1], [0, 2], [1, 0], [1, 1], [2, 1], [2, 2]], // 原始
+                [[1, 3], [2, 3], [0, 2], [1, 2], [1, 1], [2, 1]], // 旋转90度
+                [[3, 2], [3, 1], [2, 3], [2, 2], [1, 2], [1, 1]], // 旋转180度
+                [[2, 0], [1, 0], [3, 1], [2, 1], [2, 2], [1, 2]]  // 旋转270度
+            ],
+            y3: [
+                [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]], // 原始
+                [[1, 3], [0, 2], [1, 2], [2, 2], [1, 1]], // 旋转90度
+                [[3, 2], [2, 3], [2, 2], [2, 1], [1, 2]], // 旋转180度
+                [[2, 0], [3, 1], [2, 1], [1, 1], [2, 2]]  // 旋转270度
+            ],
+            y4: [
+                [[0, 3], [0, 2], [1, 2], [0, 1], [1, 1], [1, 0]], // 旋转90度
+                [[3, 3], [2, 3], [2, 2], [1, 3], [1, 2], [0, 2]], // 旋转180度
+                [[3, 0], [3, 1], [2, 1], [3, 2], [2, 2], [2, 3]],  // 旋转270度
+                [[0, 0], [1, 0], [1, 1], [2, 0], [2, 1], [3, 1]] // 原始
+            ],
+
+            // 绿色方块
+            g1: [
+                [[0, 0], [1, 0], [1, 1], [1, 2], [2, 0]], // 原始
+                [[0, 3], [0, 2], [1, 2], [2, 2], [0, 1]], // 旋转90度
+                [[3, 3], [2, 3], [2, 2], [2, 1], [1, 3]], // 旋转180度
+                [[3, 0], [3, 1], [2, 1], [1, 1], [3, 2]]  // 旋转270度
+            ],
+            g2: [
+                [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1]], // 原始
+                [[0, 3], [1, 3], [2, 3], [0, 2], [1, 2]], // 旋转90度
+                [[3, 3], [3, 2], [3, 1], [2, 3], [2, 2]], // 旋转180度
+                [[3, 0], [2, 0], [1, 0], [3, 1], [2, 1]]  // 旋转270度
+            ],
+            g3: [
+                [[0, 2], [1, 1], [1, 2], [2, 0], [2, 1]], // 原始
+                [[2, 3], [1, 2], [2, 2], [0, 1], [1, 1]], // 旋转90度
+                [[3, 1], [2, 2], [2, 1], [1, 3], [1, 2]], // 旋转180度
+                [[1, 0], [2, 1], [1, 1], [3, 2], [2, 2]]  // 旋转270度
+            ],
+            g4: [
+                [[0, 3], [1, 3], [1, 2], [1, 1], [0, 0], [1, 0]], // 旋转90度
+                [[3, 3], [3, 2], [2, 2], [1, 2], [0, 3], [0, 2]], // 旋转180度
+                [[3, 0], [2, 0], [2, 1], [2, 2], [3, 3], [2, 3]],  // 旋转270度
+                [[0, 0], [0, 1], [1, 1], [2, 1], [3, 0], [3, 1]] // 原始
+            ],
+
+            // 蓝色方块
+            b1: [
+                [[1, 3], [0, 2], [1, 2], [0, 1], [1, 1], [1, 0]], // 旋转90度
+                [[3, 2], [2, 3], [2, 2], [1, 3], [1, 2], [0, 2]], // 旋转180度
+                [[2, 0], [3, 1], [2, 1], [3, 2], [2, 2], [2, 3]],  // 旋转270度
+                [[0, 1], [1, 0], [1, 1], [2, 0], [2, 1], [3, 1]] // 原始
+            ],
+            b2: [
+                [[0, 3], [1, 3], [2, 3], [0, 2], [0, 1]], // 旋转90度
+                [[3, 3], [3, 2], [3, 1], [2, 3], [1, 3]], // 旋转180度
+                [[3, 0], [2, 0], [1, 0], [3, 1], [3, 2]], // 旋转270度
+                [[0, 0], [0, 1], [0, 2], [1, 0], [2, 0]] // 原始
+            ],
+            b3: [
+                [[0, 1], [1, 0], [1, 1], [1, 2], [1, 3], [2, 1]], // 原始
+                [[1, 3], [0, 2], [1, 2], [2, 2], [3, 2], [1, 1]], // 旋转90度
+                [[3, 2], [2, 3], [2, 2], [2, 1], [2, 0], [1, 2]], // 旋转180度
+                [[2, 0], [3, 1], [2, 1], [1, 1], [0, 1], [2, 2]]  // 旋转270度
+            ],
+            b4: [
+                [[0, 1], [0, 2], [1, 0], [1, 1]], // 原始
+                [[1, 3], [2, 3], [0, 2], [1, 2]], // 旋转90度
+                [[3, 2], [3, 1], [2, 3], [2, 2]], // 旋转180度
+                [[2, 0], [1, 0], [3, 1], [2, 1]]  // 旋转270度
+            ],
+
+            // 红色方块
+            r1: [
+                [[0, 3], [1, 3], [1, 2], [1, 1], [1, 0]], // 旋转90度
+                [[3, 3], [3, 2], [2, 2], [1, 2], [0, 2]], // 旋转180度
+                [[3, 0], [2, 0], [2, 1], [2, 2], [2, 3]],  // 旋转270度
+                [[0, 0], [0, 1], [1, 1], [2, 1], [3, 1]] // 原始
+            ],
+            r2: [
+                [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [2, 0]], // 原始
+                [[0, 3], [1, 3], [2, 3], [0, 2], [1, 2], [0, 1]], // 旋转90度
+                [[3, 3], [3, 2], [3, 1], [2, 3], [2, 2], [1, 3]], // 旋转180度
+                [[3, 0], [2, 0], [1, 0], [3, 1], [2, 1], [3, 2]]  // 旋转270度
+            ],
+            r3: [
+                [[3, 3], [3, 2], [2, 3], [2, 2], [2, 1], [1, 2]], // 旋转180度
+                [[3, 0], [2, 0], [3, 1], [2, 1], [1, 1], [2, 2]],  // 旋转270度
+                [[0, 0], [0, 1], [1, 0], [1, 1], [1, 2], [2, 1]], // 原始
+                [[0, 3], [1, 3], [0, 2], [1, 2], [2, 2], [1, 1]] // 旋转90度
+            ],
+            r4: [
+                [[0, 3], [1, 3], [1, 2], [0, 1], [1, 1]], // 旋转90度
+                [[3, 3], [3, 2], [2, 2], [1, 3], [1, 2]], // 旋转180度
+                [[3, 0], [2, 0], [2, 1], [3, 2], [2, 2]],  // 旋转270度
+                [[0, 0], [0, 1], [1, 1], [2, 0], [2, 1]] // 原始
+            ]
+        };
+
+        // 经典方块初始位置定义
+        const classicInitialPositions = {
+            1: { row: 0, col: 0 }, 2: { row: 0, col: 5 }, 3: { row: 4, col: 0 },
+            4: { row: 4, col: 5 }, 5: { row: 8, col: 0 }, 6: { row: 8, col: 5 },
+            7: { row: 11, col: 2 }, 8: { row: 0, col: 0 }, 9: { row: 0, col: 4 },
+            10: { row: 4, col: 0 }, 11: { row: 4, col: 4 }, 12: { row: 8, col: 0 },
+            13: { row: 8, col: 4 }, 14: { row: 11, col: 1 }
+        };
+
+        // 新方块初始位置定义（确保不重叠且不超出网格）
+        const newInitialPositions = {
+            // 左侧容器：黄色和绿色方块
+            1: { row: 0, col: 0 },   // y0
+            2: { row: 2, col: 0 },   // y1
+            3: { row: 0, col: 5 },   // y3
+            4: { row: 4, col: 4 },   // y4
+            5: { row: 6, col: 0 },   // g1
+            6: { row: 10, col: 0 },  // g2
+            7: { row: 6, col: 5 },   // g3
+            8: { row: 10, col: 6 },  // g4
+
+            // 右侧容器：蓝色和红色方块
+            9: { row: 1, col: 0 },   // b1
+            10: { row: 4, col: 5 }, // b2
+            11: { row: 0, col: 6 },  // b3
+            12: { row: 4, col: 0 },   // b4
+            13: { row: 6, col: 0 },  // r1
+            14: { row: 9, col: 0 }, // r2
+            15: { row: 5, col: 5 },  // r3
+            16: { row: 10, col: 4 }  // r4
         };
 
         // DOM 元素
@@ -475,6 +749,7 @@
         const targetGrid = document.getElementById('target-grid');
         const targetContainer = document.getElementById('target-container');
         const centerWrapper = document.getElementById('center-wrapper');
+        const gameModeSelect = document.getElementById('game-mode'); // 游戏模式选择
         const difficultySelect = document.getElementById('difficulty');
         const levelDisplay = document.getElementById('level-display');
         const totalLevelsDisplay = document.getElementById('total-levels');
@@ -491,29 +766,30 @@
 
         // 初始化游戏
         function initGame() {
-            createGridBackground(leftGrid, 9, 10);
-            createGridBackground(rightGrid, 8, 10);
+            // 创建网格时将左右网格行数改为14
+            createGridBackground(leftGrid, 9, 14);
+            createGridBackground(rightGrid, 8, 14);
             createGridBackground(targetGrid, 16, 14);
-            
+
             // 确保容器大小与网格一致
             updateContainerSizes();
-            
+
             loadGameProgress();
             createAllPieces();
             generateLevel();
             addEventListeners();
-            
+
             // 使用resizeObserver监听窗口变化，实现更平滑的响应式调整
             const resizeObserver = new ResizeObserver(entries => {
                 handleResize();
             });
             resizeObserver.observe(document.body);
-            
+
             document.addEventListener('fullscreenchange', handleFullscreenChange);
             document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
             document.addEventListener('mozfullscreenchange', handleFullscreenChange);
             document.addEventListener('msfullscreenchange', handleFullscreenChange);
-            
+
             setTimeout(handleResize, 100);
         }
 
@@ -521,39 +797,39 @@
         function updateContainerSizes() {
             const gridSize = gameState.gridSize;
             const isPortrait = gameState.isPortrait;
-            
+
             // 获取标题高度
             const leftTitleHeight = getTitleHeight(leftGrid);
             const rightTitleHeight = getTitleHeight(rightGrid);
             const targetTitleHeight = getTitleHeight(targetGrid);
-            
+
             // 计算网格实际宽度
             const leftGridWidth = 9 * gridSize;
             const rightGridWidth = 8 * gridSize;
             const targetGridWidth = 16 * gridSize;
-            
-            // 更新左侧/上方容器 - 确保宽度不超过网格宽度
-            const leftHeight = 10 * gridSize + leftTitleHeight;
+
+            // 更新左侧/上方容器 - 高度增加到14行
+            const leftHeight = 14 * gridSize + leftTitleHeight;
             document.getElementById('left-container').style.width = `${leftGridWidth}px`;
             document.getElementById('left-container').style.maxWidth = `${leftGridWidth}px`;
             document.getElementById('left-container').style.height = `${leftHeight}px`;
-            
-            // 更新右侧/下方容器 - 确保宽度不超过网格宽度
-            const rightHeight = 10 * gridSize + rightTitleHeight;
+
+            // 更新右侧/下方容器 - 高度增加到14行
+            const rightHeight = 14 * gridSize + rightTitleHeight;
             document.getElementById('right-container').style.width = `${rightGridWidth}px`;
             document.getElementById('right-container').style.maxWidth = `${rightGridWidth}px`;
             document.getElementById('right-container').style.height = `${rightHeight}px`;
-            
-            // 更新中间目标容器 - 确保宽度不超过网格宽度
+
+            // 更新中间目标容器
             const targetHeight = 14 * gridSize + targetTitleHeight;
             targetContainer.style.width = `${targetGridWidth}px`;
             targetContainer.style.maxWidth = `${targetGridWidth}px`;
             targetContainer.style.height = `${targetHeight}px`;
-            
+
             // 让中间包装器适应内容大小
             centerWrapper.style.width = `${targetGridWidth}px`;
             centerWrapper.style.maxWidth = `${targetGridWidth}px`;
-            
+
             // 竖屏时确保所有容器水平居中
             if (isPortrait) {
                 document.getElementById('left-container').style.marginLeft = 'auto';
@@ -564,7 +840,7 @@
                 targetContainer.style.marginRight = 'auto';
             }
         }
-        
+
         // 获取标题栏高度
         function getTitleHeight(gridElement) {
             const container = gridElement.parentElement;
@@ -575,10 +851,10 @@
         // 处理全屏状态变化
         function handleFullscreenChange() {
             gameState.isFullscreen = !!document.fullscreenElement ||
-                                    !!document.webkitFullscreenElement ||
-                                    !!document.mozFullScreenElement ||
-                                    !!document.msFullscreenElement;
-            
+                !!document.webkitFullscreenElement ||
+                !!document.mozFullScreenElement ||
+                !!document.msFullscreenElement;
+
             if (gameState.isFullscreen) {
                 fullscreenIcon.className = 'fa fa-compress';
                 fullscreenText.textContent = '退出全屏';
@@ -588,7 +864,7 @@
                 fullscreenText.textContent = '全屏';
                 document.body.classList.remove('fullscreen-active');
             }
-            
+
             handleResize();
         }
 
@@ -614,10 +890,10 @@
         function handleResize() {
             const oldSize = gameState.gridSize;
             const oldOrientation = gameState.isPortrait;
-            
+
             // 更新屏幕方向状态
             gameState.isPortrait = window.innerWidth < window.innerHeight;
-            
+
             // 更新容器标题
             if (gameState.isPortrait) {
                 leftContainerTitle.textContent = "上方方块";
@@ -626,30 +902,31 @@
                 leftContainerTitle.textContent = "左侧方块";
                 rightContainerTitle.textContent = "右侧方块";
             }
-            
+
             gameState.gridSize = calculateGridSize();
-            
+
             // 只有当网格大小或方向有变化时才重新渲染
             if (Math.abs(gameState.gridSize - oldSize) > 0 || gameState.isPortrait !== oldOrientation) {
                 const scaleRatio = gameState.gridSize / oldSize || 1;
-                
+
                 clearGrid(leftGrid);
                 clearGrid(rightGrid);
                 clearGrid(targetGrid);
-                
-                createGridBackground(leftGrid, 9, 10);
-                createGridBackground(rightGrid, 8, 10);
+
+                // 重新创建网格时使用14行
+                createGridBackground(leftGrid, 9, 14);
+                createGridBackground(rightGrid, 8, 14);
                 createGridBackground(targetGrid, 16, 14);
-                
+
                 // 更新容器大小以匹配新的网格大小
                 updateContainerSizes();
-                
+
                 gameState.pieces.forEach(piece => {
                     piece.col = Math.round(piece.col * scaleRatio);
                     piece.row = Math.round(piece.row * scaleRatio);
                     renderPiece(piece);
                 });
-                
+
                 renderTargetShape();
             }
         }
@@ -664,12 +941,12 @@
             const gridSize = gameState.gridSize;
             const containerWidth = cols * gridSize;
             const containerHeight = rows * gridSize;
-            
+
             container.style.gridTemplateColumns = `repeat(${cols}, ${gridSize}px)`;
             container.style.width = `${containerWidth}px`;
             container.style.height = `${containerHeight}px`;
             container.style.position = 'relative';
-            
+
             for (let row = 0; row < rows; row++) {
                 for (let col = 0; col < cols; col++) {
                     const cell = document.createElement('div');
@@ -687,18 +964,24 @@
         // 创建所有方块
         function createAllPieces() {
             gameState.pieces = [];
-            for (let id = 1; id <= 14; id++) {
-                const piece = createPiece(id);
+
+            // 根据当前游戏模式选择不同的方块定义
+            const definitions = gameState.mode === 'classic' ? classicPieceDefinitions : newPieceDefinitions;
+            const positions = gameState.mode === 'classic' ? classicInitialPositions : newInitialPositions;
+
+            const ids = Object.keys(definitions).map(Number);
+            for (const id of ids) {
+                const piece = createPiece(id, definitions, positions);
                 gameState.pieces.push(piece);
                 renderPiece(piece);
             }
         }
 
         // 创建单个方块
-        function createPiece(id) {
-            const def = pieceDefinitions[id];
-            const pos = initialPositions[id];
-            
+        function createPiece(id, definitions, positions) {
+            const def = definitions[id];
+            const pos = positions[id];
+
             return {
                 id,
                 type: def.type,
@@ -717,19 +1000,21 @@
         // 渲染方块
         function renderPiece(piece) {
             if (piece.element) piece.element.remove();
-            
+
             const gridSize = gameState.gridSize;
             const pieceEl = document.createElement('div');
             pieceEl.className = 'tetris-piece absolute';
             pieceEl.dataset.id = piece.id;
             pieceEl.dataset.type = piece.type;
-            
+
             if (gameState.hintActive) pieceEl.classList.add('z-30');
-            
+
+            // 根据当前游戏模式选择不同的形状定义
+            const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
             const shape = shapes[piece.type][piece.rotation];
             pieceEl.style.left = `${piece.col * gridSize}px`;
             pieceEl.style.top = `${piece.row * gridSize}px`;
-            
+
             shape.forEach(([dr, dc]) => {
                 const block = document.createElement('div');
                 block.className = `tetris-block bg-${piece.color} absolute`;
@@ -740,37 +1025,40 @@
                 block.style.boxSizing = 'border-box';
                 pieceEl.appendChild(block);
             });
-            
-            const container = piece.container === 'left' ? leftGrid : 
-                             piece.container === 'right' ? rightGrid : targetGrid;
+
+            const container = piece.container === 'left' ? leftGrid :
+                piece.container === 'right' ? rightGrid : targetGrid;
             container.appendChild(pieceEl);
             piece.element = pieceEl;
-            
+
             addPieceEvents(piece);
             constrainPieceToContainer(piece);
         }
 
-        // 确保方块保持在容器内
+        // 确保方块保持在容器内（更新为适应14行高度）
         function constrainPieceToContainer(piece) {
             if (!piece.element) return;
-            
-            const container = piece.container === 'left' ? leftGrid : 
-                             piece.container === 'right' ? rightGrid : targetGrid;
-            
-            const cols = piece.container === 'left' ? 9 : 
-                        piece.container === 'right' ? 8 : 16;
-            const rows = piece.container === 'left' || piece.container === 'right' ? 10 : 14;
-            
+
+            const container = piece.container === 'left' ? leftGrid :
+                piece.container === 'right' ? rightGrid : targetGrid;
+
+            // 左右容器行数改为14
+            const cols = piece.container === 'left' ? 9 :
+                piece.container === 'right' ? 8 : 16;
+            const rows = piece.container === 'left' || piece.container === 'right' ? 14 : 14;
+
+            // 根据当前游戏模式选择不同的形状定义
+            const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
             const shape = shapes[piece.type][piece.rotation];
             const maxDr = Math.max(...shape.map(([dr, _]) => dr));
             const maxDc = Math.max(...shape.map(([_, dc]) => dc));
-            
+
             const maxCol = cols - maxDc - 1;
             const maxRow = rows - maxDr - 1;
-            
+
             piece.col = Math.max(0, Math.min(piece.col, maxCol));
             piece.row = Math.max(0, Math.min(piece.row, maxRow));
-            
+
             piece.element.style.left = `${piece.col * gameState.gridSize}px`;
             piece.element.style.top = `${piece.row * gameState.gridSize}px`;
         }
@@ -778,18 +1066,18 @@
         // 为方块添加事件
         function addPieceEvents(piece) {
             const el = piece.element;
-            
+
             el.addEventListener('dblclick', (e) => {
                 e.stopPropagation();
                 rotatePiece(piece);
             });
-            
+
             el.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                
+
                 const now = Date.now();
                 const timeSinceLastTouch = now - gameState.lastTouchTime;
-                
+
                 if (timeSinceLastTouch < 300 && timeSinceLastTouch > 0) {
                     rotatePiece(piece);
                     gameState.touchCount = 0;
@@ -798,14 +1086,14 @@
                     const touch = e.touches[0];
                     startDrag(piece, touch);
                     gameState.touchCount++;
-                    
+
                     if (gameState.touchTimeout) clearTimeout(gameState.touchTimeout);
                     gameState.touchTimeout = setTimeout(() => gameState.touchCount = 0, 300);
                 }
-                
+
                 gameState.lastTouchTime = now;
             }, { passive: false });
-            
+
             el.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
                 startDrag(piece, e);
@@ -816,8 +1104,12 @@
         function rotatePiece(piece) {
             const oldRow = piece.row;
             const oldCol = piece.col;
-            
-            piece.rotation = (piece.rotation + 1) % 4;
+
+            // 根据当前游戏模式选择不同的形状定义获取旋转数量
+            const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
+            const rotationCount = shapes[piece.type].length;
+
+            piece.rotation = (piece.rotation + 1) % rotationCount;
             renderPiece(piece);
             constrainPieceToContainer(piece);
         }
@@ -826,17 +1118,17 @@
         function startDrag(piece, e) {
             gameState.isDragging = true;
             gameState.draggedPiece = piece;
-            
+
             const rect = piece.element.getBoundingClientRect();
             gameState.dragOffset.x = e.clientX - rect.left;
             gameState.dragOffset.y = e.clientY - rect.top;
-            
+
             piece.element.classList.add('z-20', 'scale-110', 'shadow-tetris-hover');
-            
+
             document.addEventListener('mousemove', dragMove);
             document.addEventListener('mouseup', stopDrag);
             document.addEventListener('mouseleave', stopDrag);
-            
+
             document.addEventListener('touchmove', touchDragMove, { passive: false });
             document.addEventListener('touchend', touchStopDrag);
             document.addEventListener('touchcancel', touchStopDrag);
@@ -859,32 +1151,32 @@
         // 拖拽移动
         function dragMove(e) {
             if (!gameState.isDragging || !gameState.draggedPiece) return;
-            
+
             const piece = gameState.draggedPiece;
             const gridSize = gameState.gridSize;
             const isPortrait = gameState.isPortrait;
-            
-            const currentContainer = piece.container === 'left' ? leftGrid : 
-                                    piece.container === 'right' ? rightGrid : targetGrid;
+
+            const currentContainer = piece.container === 'left' ? leftGrid :
+                piece.container === 'right' ? rightGrid : targetGrid;
             const currentContainerRect = currentContainer.getBoundingClientRect();
-            
+
             let x = e.clientX - currentContainerRect.left - gameState.dragOffset.x;
             let y = e.clientY - currentContainerRect.top - gameState.dragOffset.y;
-            
+
             let col = Math.round(x / gridSize);
             let row = Math.round(y / gridSize);
-            
+
             const targetRect = targetGrid.getBoundingClientRect();
-            const isOverTarget = e.clientX >= targetRect.left && 
-                                e.clientX <= targetRect.right && 
-                                e.clientY >= targetRect.top && 
-                                e.clientY <= targetRect.bottom;
-            
+            const isOverTarget = e.clientX >= targetRect.left &&
+                e.clientX <= targetRect.right &&
+                e.clientY >= targetRect.top &&
+                e.clientY <= targetRect.bottom;
+
             if (isOverTarget && piece.container !== 'target') {
                 piece.element.remove();
                 piece.container = 'target';
                 targetGrid.appendChild(piece.element);
-                
+
                 x = e.clientX - targetRect.left - gameState.dragOffset.x;
                 y = e.clientY - targetRect.top - gameState.dragOffset.y;
                 col = Math.round(x / gridSize);
@@ -893,7 +1185,7 @@
                 // 根据屏幕方向判断哪个是上方/左侧和下方/右侧容器
                 const topOrLeftRect = leftGrid.getBoundingClientRect();
                 const bottomOrRightRect = rightGrid.getBoundingClientRect();
-                
+
                 let newContainer;
                 if (isPortrait) {
                     // 竖屏模式 - 判断是上方还是下方
@@ -902,32 +1194,35 @@
                     // 横屏模式 - 判断是左侧还是右侧
                     newContainer = e.clientX < window.innerWidth / 2 ? 'left' : 'right';
                 }
-                
+
                 piece.element.remove();
                 piece.container = newContainer;
                 (newContainer === 'left' ? leftGrid : rightGrid).appendChild(piece.element);
-                
+
                 const newContainerRect = newContainer === 'left' ? topOrLeftRect : bottomOrRightRect;
                 x = e.clientX - newContainerRect.left - gameState.dragOffset.x;
                 y = e.clientY - newContainerRect.top - gameState.dragOffset.y;
                 col = Math.round(x / gridSize);
                 row = Math.round(y / gridSize);
             }
-            
+
+            // 根据当前游戏模式选择不同的形状定义
+            const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
             const shape = shapes[piece.type][piece.rotation];
             const maxDc = Math.max(...shape.map(([_, dc]) => dc));
             const maxDr = Math.max(...shape.map(([dr, _]) => dr));
-            
-            const cols = piece.container === 'left' ? 9 : 
-                        piece.container === 'right' ? 8 : 16;
-            const rows = piece.container === 'left' || piece.container === 'right' ? 10 : 14;
-            
+
+            // 左右容器行数改为14
+            const cols = piece.container === 'left' ? 9 :
+                piece.container === 'right' ? 8 : 16;
+            const rows = piece.container === 'left' || piece.container === 'right' ? 14 : 14;
+
             const maxCol = cols - maxDc - 1;
             const maxRow = rows - maxDr - 1;
-            
+
             piece.col = Math.max(0, Math.min(col, maxCol));
             piece.row = Math.max(0, Math.min(row, maxRow));
-            
+
             piece.element.style.left = `${piece.col * gridSize}px`;
             piece.element.style.top = `${piece.row * gridSize}px`;
         }
@@ -935,33 +1230,33 @@
         // 停止拖拽
         function stopDrag() {
             if (!gameState.isDragging || !gameState.draggedPiece) return;
-            
+
             const piece = gameState.draggedPiece;
             const gridSize = gameState.gridSize;
-            
+
             piece.element.classList.remove('z-20', 'scale-110', 'shadow-tetris-hover');
             if (gameState.hintActive) piece.element.classList.add('z-30');
-            
+
             piece.element.style.left = `${piece.col * gridSize}px`;
             piece.element.style.top = `${piece.row * gridSize}px`;
-            
+
             checkLevelCompletion();
-            
+
             if (gameState.hintActive && gameState.hintedPieces.some(hp => hp.id === piece.id)) {
-                const remainingHints = gameState.hintedPieces.filter(hp => 
+                const remainingHints = gameState.hintedPieces.filter(hp =>
                     !gameState.pieces.some(p => p.id === hp.id && p.container === 'target')
                 );
-                
+
                 if (remainingHints.length === 0) {
                     clearHint();
                 } else {
                     updateHintForRemainingPieces(remainingHints);
                 }
             }
-            
+
             gameState.isDragging = false;
             gameState.draggedPiece = null;
-            
+
             document.removeEventListener('mousemove', dragMove);
             document.removeEventListener('mouseup', stopDrag);
             document.removeEventListener('mouseleave', stopDrag);
@@ -970,40 +1265,42 @@
         // 计算方块数量
         function calculatePieceCount() {
             let minPieces, maxPieces;
-            
-            switch(gameState.difficulty) {
+
+            switch (gameState.difficulty) {
                 case 'easy':
                     minPieces = 2; maxPieces = 4; break;
                 case 'medium':
                     minPieces = 5; maxPieces = 8; break;
                 case 'hard':
-                    minPieces = 9; maxPieces = 14; break;
+                    minPieces = 9; maxPieces = gameState.mode === 'classic' ? 14 : 16; break;
             }
-            
+
             const totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
             const progress = (gameState.level - 1) / (totalLevels - 1);
             const pieceCount = Math.round(minPieces + progress * (maxPieces - minPieces));
-            
+
             return Math.max(minPieces, Math.min(pieceCount, maxPieces));
         }
 
         // 生成关卡
         function generateLevel() {
             clearTargetArea();
-            
+
             gameState.pieceCount = calculatePieceCount();
             piecesCountDisplay.textContent = gameState.pieceCount;
-            
-            const allPieceIds = Array.from({length: 14}, (_, i) => i + 1);
+
+            // 根据当前游戏模式选择不同的方块总数
+            const totalPieces = gameState.mode === 'classic' ? 14 : 16;
+            const allPieceIds = Array.from({ length: totalPieces }, (_, i) => i + 1);
             gameState.usedPieceIds = [];
-            
+
             while (gameState.usedPieceIds.length < gameState.pieceCount) {
                 const randomId = allPieceIds[Math.floor(Math.random() * allPieceIds.length)];
                 if (!gameState.usedPieceIds.includes(randomId)) {
                     gameState.usedPieceIds.push(randomId);
                 }
             }
-            
+
             generateTargetShape();
         }
 
@@ -1016,11 +1313,11 @@
                 piece.rotation = 0;
                 renderPiece(piece);
             });
-            
+
             gameState.targetShape = [];
             gameState.targetShapeColors.clear();
             document.querySelectorAll('#target-grid .target-block').forEach(block => block.remove());
-            
+
             successMessage.classList.add('opacity-0', 'pointer-events-none');
             clearHint();
         }
@@ -1030,79 +1327,81 @@
             const targetBlocks = new Set();
             const usedPieces = gameState.pieces.filter(p => gameState.usedPieceIds.includes(p.id));
             gameState.targetShapeColors.clear();
-            
+
             let placed = false;
             let attempts = 0;
-            
+
             const targetCols = 16;
             const targetRows = 14;
             const minCol = 1;
             const maxCol = targetCols - 2;
             const minRow = 1;
             const maxRow = targetRows - 2;
-            
+
             while (!placed && attempts < 100) {
                 attempts++;
                 targetBlocks.clear();
                 gameState.targetShapeColors.clear();
-                
+
                 const firstPiece = usedPieces[0];
-                const firstRotation = Math.floor(Math.random() * 4);
+                const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
+                const rotationCount = shapes[firstPiece.type].length;
+                const firstRotation = Math.floor(Math.random() * rotationCount);
                 const startRow = Math.floor(Math.random() * (maxRow - minRow + 1)) + minRow;
                 const startCol = Math.floor(Math.random() * (maxCol - minCol + 1)) + minCol;
-                
+
                 const shape = shapes[firstPiece.type][firstRotation];
                 let firstPieceValid = true;
-                
+
                 shape.forEach(([dr, dc]) => {
                     const r = startRow + dr;
                     const c = startCol + dc;
-                    
+
                     if (r < minRow || r > maxRow || c < minCol || c > maxCol) {
                         firstPieceValid = false;
                     }
-                    
+
                     targetBlocks.add(`${r},${c}`);
                     gameState.targetShapeColors.set(`${r},${c}`, firstPiece.color);
                 });
-                
+
                 if (!firstPieceValid) continue;
-                
+
                 let allPlaced = true;
                 for (let i = 1; i < usedPieces.length; i++) {
                     const piece = usedPieces[i];
-                    const rotation = Math.floor(Math.random() * 4);
+                    const rotation = Math.floor(Math.random() * shapes[piece.type].length);
                     const shape = shapes[piece.type][rotation];
                     let placedPiece = false;
-                    
+
                     for (let attempt = 0; attempt < 50; attempt++) {
                         const existingBlocks = Array.from(targetBlocks);
                         const [refRow, refCol] = existingBlocks[Math.floor(Math.random() * existingBlocks.length)].split(',').map(Number);
-                        
+
                         const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
                         const [dr, dc] = directions[Math.floor(Math.random() * directions.length)];
-                        
+
                         const baseRow = refRow + dr;
                         const baseCol = refCol + dc;
-                        
+
                         let canPlace = true;
                         const newBlocks = [];
-                        
+
                         shape.forEach(([sr, sc]) => {
                             const r = baseRow + sr;
                             const c = baseCol + sc;
-                            
+
                             if (r < minRow || r > maxRow || c < minCol || c > maxCol) {
                                 canPlace = false;
                             }
-                            
+
                             if (targetBlocks.has(`${r},${c}`)) {
                                 canPlace = false;
                             }
-                            
+
                             newBlocks.push(`${r},${c}`);
                         });
-                        
+
                         if (canPlace) {
                             newBlocks.forEach(block => {
                                 targetBlocks.add(block);
@@ -1112,48 +1411,48 @@
                             break;
                         }
                     }
-                    
+
                     if (!placedPiece) {
                         allPlaced = false;
                         break;
                     }
                 }
-                
+
                 if (allPlaced) {
                     placed = true;
                 }
             }
-            
+
             gameState.targetShape = Array.from(targetBlocks).map(block => {
                 const [r, c] = block.split(',').map(Number);
                 return { row: r, col: c };
             });
-            
+
             renderTargetShape();
         }
 
         // 渲染目标形状
         function renderTargetShape() {
             document.querySelectorAll('#target-grid .target-block').forEach(block => block.remove());
-            
+
             const gridSize = gameState.gridSize;
             const targetGridStyle = window.getComputedStyle(targetGrid);
             const targetPaddingTop = parseFloat(targetGridStyle.paddingTop);
             const targetPaddingLeft = parseFloat(targetGridStyle.paddingLeft);
-            
+
             gameState.targetShape.forEach(({ row, col }) => {
                 const blockId = `${row},${col}`;
                 const block = document.createElement('div');
-                
+
                 let classes = 'tetris-block absolute target-block';
-                
+
                 if (gameState.hintActive) {
                     const color = gameState.targetShapeColors.get(blockId);
                     classes += ` bg-${color} opacity-95 hint target-hint-pulse hint-active`;
                 } else {
                     classes += ' bg-game-target opacity-70';
                 }
-                
+
                 block.className = classes;
                 block.style.width = `${gridSize}px`;
                 block.style.height = `${gridSize}px`;
@@ -1167,9 +1466,11 @@
         // 检查关卡完成情况
         function checkLevelCompletion() {
             const placedBlocks = new Set();
-            
+
             gameState.pieces.forEach(piece => {
                 if (piece.container === 'target') {
+                    // 根据当前游戏模式选择不同的形状定义
+                    const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
                     const shape = shapes[piece.type][piece.rotation];
                     shape.forEach(([dr, dc]) => {
                         const r = piece.row + dr;
@@ -1178,16 +1479,16 @@
                     });
                 }
             });
-            
+
             const targetBlocks = new Set(gameState.targetShape.map(({ row, col }) => `${row},${col}`));
-            
+
             if (placedBlocks.size === targetBlocks.size) {
                 let isComplete = true;
-                
+
                 placedBlocks.forEach(block => {
                     if (!targetBlocks.has(block)) isComplete = false;
                 });
-                
+
                 if (isComplete) completeLevel();
             }
         }
@@ -1195,7 +1496,7 @@
         // 完成关卡
         function completeLevel() {
             successMessage.classList.remove('opacity-0', 'pointer-events-none');
-            
+
             // 完成关卡时也应用相同的难度递进逻辑
             handleLevelProgression();
             saveGameProgress();
@@ -1206,11 +1507,11 @@
             const currentDifficulty = gameState.difficulty;
             const currentLevel = gameState.level;
             const totalLevels = DIFFICULTY_LEVELS[currentDifficulty];
-            
+
             // 检查是否是当前难度的最后一关
             if (currentLevel >= totalLevels) {
                 // 根据当前难度决定下一步
-                switch(currentDifficulty) {
+                switch (currentDifficulty) {
                     case 'easy':
                         // 简单难度最后一关，切换到一般难度第一关
                         gameState.difficulty = 'medium';
@@ -1235,7 +1536,7 @@
                 // 不是最后一关，直接进入下一关
                 gameState.level++;
             }
-            
+
             // 更新显示
             gameState.totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
             levelDisplay.textContent = gameState.level;
@@ -1247,7 +1548,7 @@
             // 修改成功消息内容
             const title = successMessage.querySelector('div:first-child');
             const message = successMessage.querySelector('p');
-            
+
             title.textContent = `恭喜进入${to}难度！`;
             message.textContent = `您已完成所有${from}难度关卡，准备好迎接更高挑战了吗？`;
         }
@@ -1266,7 +1567,7 @@
                 piece.container = piece.originalContainer;
                 renderPiece(piece);
             });
-            
+
             clearHint();
         }
 
@@ -1275,16 +1576,16 @@
             if (gameState.hintActive) {
                 gameState.hintActive = false;
                 gameState.hintedPieces = [];
-                
+
                 document.querySelectorAll('.tetris-piece').forEach(el => {
                     el.classList.remove('shadow-hint', 'pulse-animation', 'scale-110', 'z-30', 'opacity-70');
                     el.querySelectorAll('.tetris-block').forEach(block => {
                         block.style.opacity = '1';
                     });
                 });
-                
+
                 renderTargetShape();
-                
+
                 if (gameState.hintTimer) {
                     clearTimeout(gameState.hintTimer);
                     gameState.hintTimer = null;
@@ -1297,9 +1598,9 @@
             document.querySelectorAll('.tetris-piece').forEach(el => {
                 el.classList.remove('shadow-hint', 'pulse-animation', 'scale-110');
             });
-            
+
             gameState.hintedPieces = remainingPieces;
-            
+
             remainingPieces.forEach(piece => {
                 const pieceEl = document.querySelector(`.tetris-piece[data-id="${piece.id}"]`);
                 if (pieceEl) pieceEl.classList.add('shadow-hint', 'pulse-animation', 'scale-110');
@@ -1309,14 +1610,16 @@
         // 显示提示
         function showHint() {
             clearHint();
-            
+
             gameState.hintActive = true;
             gameState.hintedPieces = [];
-            
+
             const placedPieces = gameState.pieces.filter(p => p.container === 'target');
             const placedBlocks = new Set();
-            
+
             placedPieces.forEach(piece => {
+                // 根据当前游戏模式选择不同的形状定义
+                const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
                 const shape = shapes[piece.type][piece.rotation];
                 shape.forEach(([dr, dc]) => {
                     const r = piece.row + dr;
@@ -1324,23 +1627,23 @@
                     placedBlocks.add(`${r},${c}`);
                 });
             });
-            
-            const unusedPieces = gameState.pieces.filter(p => 
+
+            const unusedPieces = gameState.pieces.filter(p =>
                 gameState.usedPieceIds.includes(p.id) && p.container !== 'target'
             );
-            
+
             if (unusedPieces.length === 0) return;
-            
+
             gameState.hintedPieces = unusedPieces;
-            
+
             unusedPieces.forEach(piece => {
                 const pieceEl = document.querySelector(`.tetris-piece[data-id="${piece.id}"]`);
                 if (pieceEl) pieceEl.classList.add('shadow-hint', 'pulse-animation', 'scale-110');
             });
-            
+
             gameState.pieces.forEach(piece => renderPiece(piece));
             renderTargetShape();
-            
+
             gameState.hintTimer = setTimeout(clearHint, 2500);
         }
 
@@ -1348,46 +1651,78 @@
         function nextLevel() {
             // 隐藏成功消息（如果显示）
             successMessage.classList.add('opacity-0', 'pointer-events-none');
-            
+
             // 处理关卡递进
             handleLevelProgression();
-            
+
             // 生成新关卡
             generateLevel();
-            
+
             // 保存进度
+            saveGameProgress();
+        }
+
+        // 切换游戏模式
+        function switchGameMode(mode) {
+            gameState.mode = mode;
+
+            // 清除旧方块
+            clearGrid(leftGrid);
+            clearGrid(rightGrid);
+            clearGrid(targetGrid);
+
+            // 重新创建网格
+            createGridBackground(leftGrid, 9, 14);
+            createGridBackground(rightGrid, 8, 14);
+            createGridBackground(targetGrid, 16, 14);
+
+            // 创建新模式的方块
+            createAllPieces();
+
+            // 重新生成关卡
+            generateLevel();
+
+            // 保存游戏进度（包括当前模式）
             saveGameProgress();
         }
 
         // 保存游戏进度
         function saveGameProgress() {
             const progress = {
+                mode: gameState.mode, // 保存当前游戏模式
                 difficulty: gameState.difficulty,
                 level: gameState.level
             };
-            
+
             localStorage.setItem('tetrisPuzzleProgress', JSON.stringify(progress));
         }
 
         // 加载游戏进度
         function loadGameProgress() {
             const savedProgress = localStorage.getItem('tetrisPuzzleProgress');
-            
+
             if (savedProgress) {
                 const progress = JSON.parse(savedProgress);
+                gameState.mode = progress.mode || 'classic'; // 加载游戏模式
                 gameState.difficulty = progress.difficulty || 'easy';
                 gameState.level = progress.level || 1;
-                
+
+                gameModeSelect.value = gameState.mode; // 设置游戏模式选择框
                 difficultySelect.value = gameState.difficulty;
                 levelDisplay.textContent = gameState.level;
             }
-            
+
             gameState.totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
             totalLevelsDisplay.textContent = gameState.totalLevels;
         }
 
         // 添加事件监听器
         function addEventListeners() {
+            // 游戏模式切换事件
+            gameModeSelect.addEventListener('change', () => {
+                switchGameMode(gameModeSelect.value);
+            });
+
             difficultySelect.addEventListener('change', () => {
                 gameState.difficulty = difficultySelect.value;
                 gameState.totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
@@ -1397,18 +1732,18 @@
                 generateLevel();
                 saveGameProgress();
             });
-            
+
             resetBtn.addEventListener('click', resetPieces);
             hintBtn.addEventListener('click', showHint);
             fullscreenBtn.addEventListener('click', toggleFullscreen);
             nextBtn.addEventListener('click', nextLevel);
-            
+
             targetGrid.addEventListener('click', () => {
                 if (gameState.isDragging) stopDrag();
             });
-            
+
             document.addEventListener('dragstart', (e) => e.preventDefault());
-            
+
             document.addEventListener('touchmove', (e) => {
                 if (gameState.isDragging) e.preventDefault();
             }, { passive: false });
@@ -1418,5 +1753,5 @@
         window.addEventListener('DOMContentLoaded', initGame);
     </script>
 </body>
+
 </html>
-    
