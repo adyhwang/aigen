@@ -2,8 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <meta name="theme-color" content="#121212">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>俄罗斯方块拼图 | 经典益智游戏</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
@@ -44,70 +43,40 @@
             .grid-cell { @apply border border-game-grid/30; }
             .tetris-piece { @apply transition-all duration-150 cursor-move select-none; touch-action: none; }
             .tetris-block { @apply shadow-md transition-all duration-150; }
-            .btn-game { @apply bg-game-panel hover:bg-game-panel/80 text-game-text py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md flex items-center justify-center gap-2 min-h-[48px] min-w-[48px]; }
+            .btn-game { @apply bg-game-panel hover:bg-game-panel/80 text-game-text py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md flex items-center gap-2; }
             .grid-container { @apply bg-game-panel rounded-xl shadow-lg overflow-hidden relative; }
             .piece-container { @apply relative overflow-hidden; }
             .pulse-animation { animation: pulse 1.2s infinite; }
             .hint-pulse { animation: hintPulse 1.2s infinite; }
             .target-hint-pulse { animation: targetHintPulse 1.2s infinite; }
             .success-animation { animation: success 0.5s ease-in-out; }
-            .icon-btn { @apply flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 transform hover:scale-110 active:scale-95; }
         }
     </style>
     
     <style>
-        html, body { 
-            height: 100%; 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-            -webkit-overflow-scrolling: touch;
-        }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
         
         .game-wrapper {
             width: 100vw;
             height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
+            justify-content: center;
             align-items: center;
             padding: 10px;
             box-sizing: border-box;
             overflow: hidden;
         }
         
-        .game-header {
-            width: 100%;
-            margin-bottom: 8px;
-        }
-        
         .game-main-area {
             display: flex;
             width: 100%;
             flex: 1;
-            gap: min(2vw, 10px);
+            gap: min(2vw, 15px);
             min-height: 0;
             justify-content: center;
             align-items: center;
             box-sizing: border-box;
-            overflow: hidden;
-        }
-        
-        .game-footer {
-            width: 100%;
-            padding: 8px 0;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: center;
-        }
-        
-        .button-container {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: 100%;
-            max-width: 400px;
         }
         
         .side-container, .center-container, 
@@ -119,25 +88,16 @@
             width: 20vw; 
             min-width: 0;
             max-width: 250px;
-            flex-shrink: 1;
         }
         .center-container { 
             min-width: 0;
             display: flex;
             flex-direction: column;
             max-width: 60vw;
-            flex-shrink: 1;
         }
         
-        * { 
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: rgba(0,0,0,0);
-        }
-        
-        .grid-container { 
-            max-width: 100%; 
-            max-height: 100%; 
-        }
+        * { touch-action: manipulation; }
+        .grid-container { max-width: 100%; max-height: 100%; }
         
         .hint-block {
             position: absolute;
@@ -188,8 +148,6 @@
             color: #FFFFFF;
             border: 1px solid rgba(187, 134, 252, 0.5);
             border-radius: 4px;
-            min-height: 32px;
-            padding: 4px 8px;
         }
         
         .custom-select option { background-color: #1E1E1E; color: #FFFFFF; }
@@ -199,53 +157,30 @@
             box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.2);
         }
 
-        /* 移动设备优化 */
+        /* 确保在小屏幕上适当缩小 */
         @media (max-width: 768px) {
-            .game-wrapper {
-                padding: 5px;
-            }
-            
             .game-main-area {
-                gap: min(1vw, 5px);
+                gap: min(1vw, 8px);
             }
             
             .side-container {
                 width: 25vw;
             }
             
-            .btn-game {
-                padding: 12px;
-                min-height: 52px;
-                min-width: 52px;
-            }
-            
-            .game-header {
-                margin-bottom: 5px;
-            }
-            
-            .game-footer {
-                padding: 5px 0;
-            }
-            
-            .button-container {
+            .header-content {
+                flex-direction: column;
                 gap: 8px;
+                padding-bottom: 8px;
             }
-        }
-        
-        /* 针对Edge安卓版的特殊优化 */
-        @supports (-ms-ime-align: auto) {
-            .btn-game {
-                display: -ms-flexbox;
-                display: flex;
-                -ms-flex-align: center;
-                align-items: center;
-                -ms-flex-pack: center;
+            
+            .header-controls, .header-buttons {
+                width: 100%;
                 justify-content: center;
             }
             
-            .game-footer {
-                position: relative;
-                z-index: 50;
+            .btn-game {
+                padding: 1px 6px;
+                font-size: 12px;
             }
         }
     </style>
@@ -256,38 +191,61 @@
 <body class="bg-game-bg text-game-text font-sans">
     <div class="game-wrapper">
         <div class="w-full max-w-7xl mx-auto flex flex-col items-center h-full">
-            <header class="game-header w-full flex flex-col md:flex-row justify-between items-center gap-2">
-                <div class="flex items-center gap-2">
-                    <div class="tetris-block bg-tetris-l"></div>
-                    <div class="tetris-block bg-tetris-j"></div>
-                    <div class="tetris-block bg-tetris-s"></div>
-                    <h1 class="text-[clamp(1rem,5vw,1.8rem)] font-bold tracking-tight">俄罗斯方块拼图</h1>
-                </div>
-                
-                <div class="bg-game-panel px-3 py-2 rounded-lg shadow-md flex items-center gap-4">
-                    <div class="flex items-center gap-1.5">
-                        <i class="fa fa-signal text-game-accent text-sm"></i>
-                        <select id="difficulty" class="custom-select px-2 py-1 text-sm bg-game-panel text-game-text">
-                            <option value="easy">简单</option>
-                            <option value="medium">一般</option>
-                            <option value="hard">困难</option>
-                        </select>
+            <!-- 合并后的顶部区域 - 包含标题、信息和所有按钮 -->
+            <header class="w-full mb-3">
+                <div class="header-content flex flex-col md:flex-row items-center justify-center gap-4 px-2">
+                    <!-- 标题区域 -->
+                    <div class="flex items-center gap-2">
+                        <div class="tetris-block bg-tetris-l"></div>
+                        <div class="tetris-block bg-tetris-j"></div>
+                        <div class="tetris-block bg-tetris-s"></div>
+                        <h1 class="text-[clamp(1rem,5vw,1.8rem)] font-bold tracking-tight">俄罗斯方块拼图</h1>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <i class="fa fa-map-signs text-game-accent text-sm"></i>
-                        <span class="text-sm">关卡: <span id="level-display" class="font-bold">1</span>/<span id="total-levels" class="font-medium">30</span></span>
+                    
+                    <!-- 游戏信息控制区域 -->
+                    <div class="header-controls bg-game-panel px-3 py-1.5 rounded-lg shadow-md flex items-center gap-4">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa fa-signal text-game-accent text-sm"></i>
+                            <select id="difficulty" class="custom-select px-2 py-1 text-sm bg-game-panel text-game-text">
+                                <option value="easy">简单</option>
+                                <option value="medium">一般</option>
+                                <option value="hard">困难</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa fa-map-signs text-game-accent text-sm"></i>
+                            <span class="text-sm">关卡: <span id="level-display" class="font-bold">1</span>/<span id="total-levels" class="font-medium">30</span></span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa fa-cubes text-game-accent text-sm"></i>
+                            <span class="text-sm">方块: <span id="pieces-count" class="font-bold">2</span>个</span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <i class="fa fa-cubes text-game-accent text-sm"></i>
-                        <span class="text-sm">方块: <span id="pieces-count" class="font-bold">2</span>个</span>
+                    
+                    <!-- 按钮区域 (原底部按钮移至此处) -->
+                    <div class="header-buttons flex flex-wrap justify-center gap-2">
+                        <button id="reset-btn" class="btn-game text-sm md:text-base">
+                            <i class="fa fa-refresh"></i>
+                            <span>重置</span>
+                        </button>
+                        <button id="hint-btn" class="btn-game bg-game-accent/20 hover:bg-game-accent/30 text-sm md:text-base">
+                            <i class="fa fa-lightbulb-o"></i>
+                            <span>提示</span>
+                        </button>
+                        <button id="fullscreen-btn" class="btn-game fullscreen-btn text-sm md:text-base">
+                            <i class="fa fa-expand"></i>
+                            <span>全屏</span>
+                        </button>
+                        <button id="next-btn" class="btn-game bg-game-accent hover:bg-game-accent/80 text-sm md:text-base">
+                            <i class="fa fa-arrow-right"></i>
+                            <span>下一关</span>
+                        </button>
                     </div>
-                    <button id="hint-btn" class="icon-btn bg-game-accent/20 hover:bg-game-accent/30 text-game-text" title="提示">
-                        <i class="fa fa-lightbulb-o"></i>
-                    </button>
                 </div>
             </header>
             
-            <main class="game-main-area mb-3 flex-1">
+            <!-- 游戏主区域 -->
+            <main class="game-main-area flex-1 w-full">
                 <div class="side-container grid-container" id="left-container">
                     <div class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">左侧方块</div>
                     <div id="left-grid" class="p-0 grid grid-cols-9 gap-0 piece-container"></div>
@@ -310,40 +268,25 @@
                 </div>
             </main>
             
-            <footer class="game-footer">
-                <div class="button-container">
-                    <button id="reset-btn" class="btn-game text-sm md:text-base flex-1">
-                        <i class="fa fa-refresh"></i>
-                        <span>重置</span>
-                    </button>
-                    <button id="fullscreen-btn" class="btn-game fullscreen-btn text-sm md:text-base flex-1">
-                        <i class="fa fa-expand"></i>
-                        <span>全屏</span>
-                    </button>
-                    <button id="next-btn" class="btn-game bg-game-accent hover:bg-game-accent/80 text-sm md:text-base flex-1">
-                        <i class="fa fa-arrow-right"></i>
-                        <span>下一关</span>
-                    </button>
-                </div>
-            </footer>
+            <!-- 底部区域已移除，按钮已合并到顶部 -->
         </div>
     </div>
 
     <script>
-        // 计算网格大小 - 改进版，确保等比缩放且在屏幕内显示
+        // 计算网格大小 - 确保等比缩放且在屏幕内显示
         function calculateGridSize() {
             // 获取窗口可用尺寸
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
             
-            // 计算标题和按钮区域大致高度
-            const headerFooterHeight = window.innerWidth < 768 ? 180 : 140;
-            const availableHeight = windowHeight - headerFooterHeight;
+            // 计算标题区域大致高度（包含合并的按钮）
+            const headerHeight = 100; // 调整为合并后的头部高度
+            const availableHeight = windowHeight - headerHeight;
             
             // 计算基于宽度的最大可能网格尺寸
             // 总宽度 = 左网格(9列) + 中网格(16列) + 右网格(8列) + 间距
             const totalColumns = 9 + 16 + 8;
-            const gaps = window.innerWidth < 768 ? 20 : 40;
+            const gaps = 40; // 预估的间距总和
             const widthBasedSize = (windowWidth - gaps) / totalColumns;
             
             // 计算基于高度的最大可能网格尺寸
@@ -475,7 +418,6 @@
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         const fullscreenIcon = fullscreenBtn.querySelector('i');
         const fullscreenText = fullscreenBtn.querySelector('span');
-        const buttonContainer = document.querySelector('.button-container');
 
         // 初始化游戏
         function initGame() {
@@ -491,13 +433,9 @@
             generateLevel();
             addEventListeners();
             
-            // 确保按钮在移动设备上可见
-            ensureButtonsVisible();
-            
             // 使用resizeObserver监听窗口变化，实现更平滑的响应式调整
             const resizeObserver = new ResizeObserver(entries => {
                 handleResize();
-                ensureButtonsVisible();
             });
             resizeObserver.observe(document.body);
             
@@ -506,29 +444,7 @@
             document.addEventListener('mozfullscreenchange', handleFullscreenChange);
             document.addEventListener('msfullscreenchange', handleFullscreenChange);
             
-            setTimeout(() => {
-                handleResize();
-                ensureButtonsVisible();
-            }, 100);
-        }
-
-        // 确保底部按钮可见
-        function ensureButtonsVisible() {
-            if (window.innerWidth < 768) {
-                // 移动设备上强制设置按钮容器的位置和可见性
-                const footer = document.querySelector('.game-footer');
-                footer.style.position = 'relative';
-                footer.style.zIndex = '50';
-                footer.style.opacity = '1';
-                footer.style.pointerEvents = 'auto';
-                
-                // 增加按钮大小以提高可点击性
-                const buttons = document.querySelectorAll('.btn-game');
-                buttons.forEach(btn => {
-                    btn.style.minHeight = '52px';
-                    btn.style.minWidth = '52px';
-                });
-            }
+            setTimeout(handleResize, 100);
         }
 
         // 更新所有容器大小以匹配内部网格
@@ -587,7 +503,6 @@
             }
             
             handleResize();
-            ensureButtonsVisible();
         }
 
         // 切换全屏模式
@@ -1339,27 +1254,6 @@
             hintBtn.addEventListener('click', showHint);
             fullscreenBtn.addEventListener('click', toggleFullscreen);
             nextBtn.addEventListener('click', nextLevel);
-            
-            // 为移动设备添加触摸支持
-            resetBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                resetPieces();
-            }, { passive: false });
-            
-            fullscreenBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                toggleFullscreen();
-            }, { passive: false });
-            
-            nextBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                nextLevel();
-            }, { passive: false });
-            
-            hintBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                showHint();
-            }, { passive: false });
             
             targetGrid.addEventListener('click', () => {
                 if (gameState.isDragging) stopDrag();
