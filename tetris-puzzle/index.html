@@ -72,7 +72,7 @@
             display: flex;
             width: 100%;
             flex: 1;
-            gap: min(2vw, 15px);
+            gap: 5px;
             min-height: 0;
             justify-content: center;
             align-items: center;
@@ -161,23 +161,30 @@
         @media (max-aspect-ratio: 1/1) {
             .game-main-area {
                 flex-direction: column;
-                gap: min(2vh, 15px);
+                gap: 5px;
                 justify-content: center;
-                padding: 5px 0;
+                padding: 0;
+                width: 100%;
+                max-width: 100%;
+                margin: 0 auto;
             }
             
             .side-container {
-                width: 80vw;
+                width: auto;
                 max-width: none;
                 max-height: 25vh;
                 flex: 0 0 auto;
+                margin-left: auto;
+                margin-right: auto;
             }
             
             .center-container {
-                max-width: 90vw;
+                max-width: 100%;
                 flex: 1 1 auto;
                 width: 100%;
                 max-height: 40vh;
+                margin-left: auto;
+                margin-right: auto;
             }
             
             .header-content {
@@ -196,6 +203,15 @@
             .btn-game {
                 padding: 1px 6px;
                 font-size: 12px;
+            }
+            
+            /* 确保网格容器不超出内部网格宽度并水平居中 */
+            #left-container, #right-container, #target-container {
+                width: auto !important;
+                max-width: 100% !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                display: block;
             }
         }
 
@@ -311,18 +327,17 @@
             let gridSize;
             
             if (isPortrait) {
-                // 竖屏布局计算
+                // 竖屏布局计算 - 确保容器宽度不超过网格宽度
+                const availableWidth = windowWidth - 20; // 减去边距
+                const maxWidthBasedSize = availableWidth / 16; // 基于目标区16列计算
+                
                 // 总高度分配：上方方块(25%) + 目标区(40%) + 下方方块(25%) + 间距(10%)
                 const verticalSpace = availableHeight * 0.9; // 扣除10%间距
                 const targetHeight = verticalSpace * 0.4;
-                
-                // 基于目标区高度计算
                 const heightBasedSize = targetHeight / 16; // 14行 + 2行标题空间
                 
-                // 基于宽度计算
-                const widthBasedSize = (windowWidth * 0.8) / 16; // 目标区占宽度的80%
-                
-                gridSize = Math.floor(Math.min(widthBasedSize, heightBasedSize));
+                // 取较小值确保能完整显示
+                gridSize = Math.floor(Math.min(maxWidthBasedSize, heightBasedSize));
             } else {
                 // 横屏布局计算
                 // 总宽度 = 左网格(9列) + 中网格(16列) + 右网格(8列) + 间距
@@ -500,26 +515,42 @@
             const rightTitleHeight = getTitleHeight(rightGrid);
             const targetTitleHeight = getTitleHeight(targetGrid);
             
-            // 更新左侧/上方容器
-            const leftWidth = isPortrait ? 9 * gridSize * 0.9 : 9 * gridSize;
-            const leftHeight = isPortrait ? 10 * gridSize : 10 * gridSize + leftTitleHeight;
-            document.getElementById('left-container').style.width = isPortrait ? '80vw' : `${leftWidth}px`;
-            document.getElementById('left-container').style.height = `${leftHeight + leftTitleHeight}px`;
+            // 计算网格实际宽度
+            const leftGridWidth = 9 * gridSize;
+            const rightGridWidth = 8 * gridSize;
+            const targetGridWidth = 16 * gridSize;
             
-            // 更新右侧/下方容器
-            const rightWidth = isPortrait ? 8 * gridSize * 1.1 : 8 * gridSize;
-            const rightHeight = isPortrait ? 10 * gridSize : 10 * gridSize + rightTitleHeight;
-            document.getElementById('right-container').style.width = isPortrait ? '80vw' : `${rightWidth}px`;
-            document.getElementById('right-container').style.height = `${rightHeight + rightTitleHeight}px`;
+            // 更新左侧/上方容器 - 确保宽度不超过网格宽度
+            const leftHeight = 10 * gridSize + leftTitleHeight;
+            document.getElementById('left-container').style.width = `${leftGridWidth}px`;
+            document.getElementById('left-container').style.maxWidth = `${leftGridWidth}px`;
+            document.getElementById('left-container').style.height = `${leftHeight}px`;
             
-            // 更新中间目标容器
-            const targetWidth = isPortrait ? 16 * gridSize : 16 * gridSize;
-            const targetHeight = isPortrait ? 14 * gridSize : 14 * gridSize + targetTitleHeight;
-            targetContainer.style.width = isPortrait ? '90vw' : `${targetWidth}px`;
-            targetContainer.style.height = `${targetHeight + targetTitleHeight}px`;
+            // 更新右侧/下方容器 - 确保宽度不超过网格宽度
+            const rightHeight = 10 * gridSize + rightTitleHeight;
+            document.getElementById('right-container').style.width = `${rightGridWidth}px`;
+            document.getElementById('right-container').style.maxWidth = `${rightGridWidth}px`;
+            document.getElementById('right-container').style.height = `${rightHeight}px`;
+            
+            // 更新中间目标容器 - 确保宽度不超过网格宽度
+            const targetHeight = 14 * gridSize + targetTitleHeight;
+            targetContainer.style.width = `${targetGridWidth}px`;
+            targetContainer.style.maxWidth = `${targetGridWidth}px`;
+            targetContainer.style.height = `${targetHeight}px`;
             
             // 让中间包装器适应内容大小
-            centerWrapper.style.width = isPortrait ? '90vw' : `${targetWidth}px`;
+            centerWrapper.style.width = `${targetGridWidth}px`;
+            centerWrapper.style.maxWidth = `${targetGridWidth}px`;
+            
+            // 竖屏时确保所有容器水平居中
+            if (isPortrait) {
+                document.getElementById('left-container').style.marginLeft = 'auto';
+                document.getElementById('left-container').style.marginRight = 'auto';
+                document.getElementById('right-container').style.marginLeft = 'auto';
+                document.getElementById('right-container').style.marginRight = 'auto';
+                targetContainer.style.marginLeft = 'auto';
+                targetContainer.style.marginRight = 'auto';
+            }
         }
         
         // 获取标题栏高度
