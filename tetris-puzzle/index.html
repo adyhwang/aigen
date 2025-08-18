@@ -63,6 +63,7 @@
             .hint-pulse { animation: hintPulse 1.2s infinite; }
             .target-hint-pulse { animation: targetHintPulse 1.2s infinite; }
             .success-animation { animation: success 0.5s ease-in-out; }
+            .tip-highlight { @apply text-game-accent font-semibold; }
         }
     </style>
 
@@ -185,7 +186,7 @@
             z-index: 30;
         }
 
-        #success-message {
+        #success-message, #tutorial-message {
             z-index: 100;
         }
 
@@ -263,6 +264,77 @@
             box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.2);
         }
 
+        /* 操作提示样式 */
+        #tutorial-message {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(18, 18, 18, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        #tutorial-message.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .tutorial-content {
+            max-width: 600px;
+            background-color: #1E1E1E;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 0 30px rgba(187, 134, 252, 0.3);
+        }
+
+        .tutorial-title {
+            text-align: center;
+            color: #BB86FC;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .tutorial-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .tutorial-step {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            background-color: #BB86FC;
+            color: #121212;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .tutorial-buttons {
+            display: flex;
+            justify-content: center;
+        }
+
         /* 竖屏布局 - 宽度小于高度时 */
         @media (max-aspect-ratio: 1/1) {
             .game-main-area {
@@ -323,6 +395,12 @@
                 margin-right: auto !important;
                 display: block;
             }
+
+            /* 竖屏提示调整 */
+            .tutorial-content {
+                width: 90%;
+                padding: 15px;
+            }
         }
 
         /* 小屏幕横屏优化 */
@@ -341,6 +419,51 @@
 </head>
 
 <body class="bg-game-bg text-game-text font-sans">
+    <!-- 操作提示弹窗 -->
+    <div id="tutorial-message">
+        <div class="tutorial-content">
+            <h2 class="tutorial-title">游戏操作指南</h2>
+            <div class="tutorial-steps">
+                <div class="tutorial-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <p>拖动左侧/上方的<span class="tip-highlight">彩色方块</span>到中间的目标区域</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <p><span class="tip-highlight">双击方块</span>或在触摸屏上<span class="tip-highlight">快速点击两次</span>可以旋转方块</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <p>将所有方块正确放入目标区域，填满灰色图形即可过关</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <p>点击<span class="tip-highlight">提示按钮</span>可以获得放置线索</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <p>可以在顶部选择<span class="tip-highlight">游戏模式</span>和<span class="tip-highlight">难度</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="tutorial-buttons">
+                <button id="tutorial-close-btn" class="btn-game bg-game-accent hover:bg-game-accent/80">
+                    <i class="fa fa-check"></i>
+                    <span>开始游戏</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="game-wrapper">
         <div class="w-full max-w-7xl mx-auto flex flex-col items-center h-full">
             <!-- 顶部区域 - 包含标题、信息和所有按钮 -->
@@ -427,6 +550,10 @@
                             class="absolute inset-0 bg-game-bg/80 flex flex-col items-center justify-center gap-4 rounded-xl opacity-0 pointer-events-none transition-opacity duration-500 z-100">
                             <div class="text-4xl font-bold text-game-accent success-animation">通关!</div>
                             <p class="text-lg">太棒了，准备好挑战下一关了吗？</p>
+                            <button id="success-next-btn" class="btn-game bg-game-accent hover:bg-game-accent/80 text-sm md:text-base">
+                                <i class="fa fa-arrow-right"></i>
+                                <span>下一关</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -519,7 +646,8 @@
             touchCount: 0,
             touchTimeout: null,
             isFullscreen: false,
-            isPortrait: window.innerWidth < window.innerHeight
+            isPortrait: window.innerWidth < window.innerHeight,
+            hasSeenTutorial: false // 新增：记录用户是否已看过教程
         };
 
         // 经典方块定义
@@ -651,7 +779,7 @@
                 [[0, 2], [1, 1], [1, 2], [2, 0], [2, 1]], // 原始
                 [[2, 3], [1, 2], [2, 2], [0, 1], [1, 1]], // 旋转90度
                 [[3, 1], [2, 2], [2, 1], [1, 3], [1, 2]], // 旋转180度
-                [[1, 0], [2, 1], [1, 1], [3, 2], [2, 2]]  // 旋转270度
+                [[2, 0], [2, 1], [1, 1], [3, 2], [2, 2]]  // 旋转270度
             ],
             g4: [
                 [[0, 3], [1, 3], [1, 2], [1, 1], [0, 0], [1, 0]], // 旋转90度
@@ -760,14 +888,20 @@
         const hintBtn = document.getElementById('hint-btn');
         const nextBtn = document.getElementById('next-btn');
         const successMessage = document.getElementById('success-message');
+        const successNextBtn = document.getElementById('success-next-btn'); // 过关提示中的下一关按钮
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         const fullscreenIcon = fullscreenBtn.querySelector('i');
         const fullscreenText = fullscreenBtn.querySelector('span');
         const leftContainerTitle = document.querySelector('#left-container div:first-child');
         const rightContainerTitle = document.querySelector('#right-container div:first-child');
+        const tutorialMessage = document.getElementById('tutorial-message');
+        const tutorialCloseBtn = document.getElementById('tutorial-close-btn');
 
         // 初始化游戏
         function initGame() {
+            // 检查用户是否已看过教程
+            checkTutorialStatus();
+            
             // 创建网格时将左右网格行数改为14
             createGridBackground(leftGrid, 9, 14);
             createGridBackground(rightGrid, 8, 14);
@@ -793,6 +927,27 @@
             document.addEventListener('msfullscreenchange', handleFullscreenChange);
 
             setTimeout(handleResize, 100);
+        }
+
+        // 检查教程状态
+        function checkTutorialStatus() {
+            const hasSeen = localStorage.getItem('tetrisPuzzleHasSeenTutorial');
+            if (!hasSeen) {
+                // 首次打开，显示教程
+                gameState.hasSeenTutorial = false;
+                setTimeout(() => {
+                    tutorialMessage.classList.add('show');
+                }, 500);
+            } else {
+                gameState.hasSeenTutorial = true;
+            }
+        }
+
+        // 关闭教程并记录状态
+        function closeTutorial() {
+            tutorialMessage.classList.remove('show');
+            gameState.hasSeenTutorial = true;
+            localStorage.setItem('tetrisPuzzleHasSeenTutorial', 'true');
         }
 
         // 更新所有容器大小以匹配内部网格
@@ -1519,14 +1674,12 @@
                         gameState.difficulty = 'medium';
                         gameState.level = 1;
                         difficultySelect.value = 'medium';
-                        showDifficultyChangeMessage('简单', '一般');
                         break;
                     case 'medium':
                         // 一般难度最后一关，切换到困难难度第一关
                         gameState.difficulty = 'hard';
                         gameState.level = 1;
                         difficultySelect.value = 'hard';
-                        showDifficultyChangeMessage('一般', '困难');
                         break;
                     case 'hard':
                         // 困难难度最后一关，保持在最后一关
@@ -1543,16 +1696,6 @@
             gameState.totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
             levelDisplay.textContent = gameState.level;
             totalLevelsDisplay.textContent = gameState.totalLevels;
-        }
-
-        // 显示难度变化消息
-        function showDifficultyChangeMessage(from, to) {
-            // 修改成功消息内容
-            const title = successMessage.querySelector('div:first-child');
-            const message = successMessage.querySelector('p');
-
-            title.textContent = `恭喜进入${to}难度！`;
-            message.textContent = `您已完成所有${from}难度关卡，准备好迎接更高挑战了吗？`;
         }
 
         // 显示自定义消息
@@ -1678,40 +1821,48 @@
             createGridBackground(rightGrid, 8, 14);
             createGridBackground(targetGrid, 16, 14);
 
+            // 加载该模式下的进度
+            loadGameProgress();
+            
             // 创建新模式的方块
             createAllPieces();
 
             // 重新生成关卡
             generateLevel();
-
-            // 保存游戏进度（包括当前模式）
-            saveGameProgress();
         }
 
-        // 保存游戏进度
+        // 保存游戏进度 - 按模式分别保存
         function saveGameProgress() {
+            // 使用包含游戏模式的键名，确保不同模式进度分开
+            const progressKey = `tetrisPuzzleProgress-${gameState.mode}`;
+            
             const progress = {
-                mode: gameState.mode, // 保存当前游戏模式
                 difficulty: gameState.difficulty,
                 level: gameState.level
             };
 
-            localStorage.setItem('tetrisPuzzleProgress', JSON.stringify(progress));
+            localStorage.setItem(progressKey, JSON.stringify(progress));
         }
 
-        // 加载游戏进度
+        // 加载游戏进度 - 按当前模式加载
         function loadGameProgress() {
-            const savedProgress = localStorage.getItem('tetrisPuzzleProgress');
+            // 使用包含当前游戏模式的键名
+            const progressKey = `tetrisPuzzleProgress-${gameState.mode}`;
+            const savedProgress = localStorage.getItem(progressKey);
 
             if (savedProgress) {
                 const progress = JSON.parse(savedProgress);
-                gameState.mode = progress.mode || 'classic'; // 加载游戏模式
                 gameState.difficulty = progress.difficulty || 'easy';
                 gameState.level = progress.level || 1;
 
-                gameModeSelect.value = gameState.mode; // 设置游戏模式选择框
                 difficultySelect.value = gameState.difficulty;
                 levelDisplay.textContent = gameState.level;
+            } else {
+                // 如果该模式没有保存的进度，使用默认值
+                gameState.difficulty = 'easy';
+                gameState.level = 1;
+                difficultySelect.value = 'easy';
+                levelDisplay.textContent = '1';
             }
 
             gameState.totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
@@ -1720,6 +1871,9 @@
 
         // 添加事件监听器
         function addEventListeners() {
+            // 教程关闭按钮事件
+            tutorialCloseBtn.addEventListener('click', closeTutorial);
+            
             // 游戏模式切换事件
             gameModeSelect.addEventListener('change', () => {
                 switchGameMode(gameModeSelect.value);
@@ -1739,6 +1893,7 @@
             hintBtn.addEventListener('click', showHint);
             fullscreenBtn.addEventListener('click', toggleFullscreen);
             nextBtn.addEventListener('click', nextLevel);
+            successNextBtn.addEventListener('click', nextLevel); // 过关提示中的下一关按钮
 
             targetGrid.addEventListener('click', () => {
                 if (gameState.isDragging) stopDrag();
