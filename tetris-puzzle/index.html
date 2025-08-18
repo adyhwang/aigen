@@ -647,7 +647,7 @@
             touchTimeout: null,
             isFullscreen: false,
             isPortrait: window.innerWidth < window.innerHeight,
-            hasSeenTutorial: false // 新增：记录用户是否已看过教程
+            hasSeenTutorial: false // 记录用户是否已看过教程
         };
 
         // 经典方块定义
@@ -1479,7 +1479,92 @@
             clearHint();
         }
 
-        // 生成目标形状
+        // 检查两个位置是否相邻
+        function areAdjacent(r1, c1, r2, c2) {
+            return (Math.abs(r1 - r2) === 1 && c1 === c2) || 
+                   (Math.abs(c1 - c2) === 1 && r1 === r2);
+        }
+
+        // 获取所有相邻的空位置
+        function getAdjacentEmptyPositions(targetBlocks, rows, cols) {
+            const adjacentPositions = new Set();
+            
+            targetBlocks.forEach(block => {
+                const [r, c] = block.split(',').map(Number);
+                
+                // 检查四个方向的相邻位置
+                const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                directions.forEach(([dr, dc]) => {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    
+                    // 确保位置在网格内且未被占用
+                    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                        const pos = `${nr},${nc}`;
+                        if (!targetBlocks.has(pos)) {
+                            adjacentPositions.add(pos);
+                        }
+                    }
+                });
+            });
+            
+            return Array.from(adjacentPositions);
+        }
+
+        // 检查形状是否与已有方块至少有一个相邻
+        function checkShapeAdjacency(shape, baseRow, baseCol, targetBlocks) {
+            for (const [sr, sc] of shape) {
+                const r = baseRow + sr;
+                const c = baseCol + sc;
+                
+                // 检查这个位置的四个方向是否有已存在的方块
+                const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                for (const [dr, dc] of directions) {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    if (targetBlocks.has(`${nr},${nc}`)) {
+                        return true; // 找到相邻的方块
+                    }
+                }
+            }
+            return false; // 没有相邻的方块
+        }
+
+        // 检查图形是否完全连通
+        function isFullyConnected(targetBlocks) {
+            if (targetBlocks.size <= 1) return true;
+            
+            // 转换为数组并获取第一个块作为起点
+            const blocksArray = Array.from(targetBlocks);
+            const startBlock = blocksArray[0];
+            const visited = new Set();
+            const queue = [startBlock];
+            
+            visited.add(startBlock);
+            
+            while (queue.length > 0) {
+                const current = queue.shift();
+                const [r, c] = current.split(',').map(Number);
+                
+                // 检查四个方向的相邻块
+                const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                for (const [dr, dc] of directions) {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    const neighbor = `${nr},${nc}`;
+                    
+                    if (targetBlocks.has(neighbor) && !visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        queue.push(neighbor);
+                    }
+                }
+            }
+            
+            // 如果所有块都被访问到，则说明是连通的
+            return visited.size === targetBlocks.size;
+        }
+
+        // 生成目标形状 - 修复新方块模式连接问题
         function generateTargetShape() {
             const targetBlocks = new Set();
             const usedPieces = gameState.pieces.filter(p => gameState.usedPieceIds.includes(p.id));
@@ -1487,6 +1572,7 @@
 
             let placed = false;
             let attempts = 0;
+            const maxAttempts = gameState.mode === 'new' ? 300 : 100; // 新方块模式增加尝试次数
 
             const targetCols = 16;
             const targetRows = 14;
@@ -1495,11 +1581,12 @@
             const minRow = 1;
             const maxRow = targetRows - 2;
 
-            while (!placed && attempts < 100) {
+            while (!placed && attempts < maxAttempts) {
                 attempts++;
                 targetBlocks.clear();
                 gameState.targetShapeColors.clear();
 
+                // 放置第一个方块作为基础
                 const firstPiece = usedPieces[0];
                 const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
                 const rotationCount = shapes[firstPiece.type].length;
@@ -1531,16 +1618,24 @@
                     const shape = shapes[piece.type][rotation];
                     let placedPiece = false;
 
-                    for (let attempt = 0; attempt < 50; attempt++) {
-                        const existingBlocks = Array.from(targetBlocks);
-                        const [refRow, refCol] = existingBlocks[Math.floor(Math.random() * existingBlocks.length)].split(',').map(Number);
+                    // 获取所有与已有方块相邻的空位置
+                    const adjacentPositions = getAdjacentEmptyPositions(targetBlocks, targetRows, targetCols);
+                    
+                    // 尝试放置方块，优先考虑相邻位置
+                    for (let attempt = 0; attempt < 100; attempt++) {
+                        let baseRow, baseCol;
+                        
+                        // 有相邻位置时优先使用，否则使用随机位置
+                        if (adjacentPositions.length > 0 && attempt < 70) { // 前70次尝试优先使用相邻位置
+                            const pos = adjacentPositions[Math.floor(Math.random() * adjacentPositions.length)];
+                            [baseRow, baseCol] = pos.split(',').map(Number);
+                        } else {
+                            // 随机位置，但确保在网格内
+                            baseRow = Math.floor(Math.random() * (maxRow - minRow + 1)) + minRow;
+                            baseCol = Math.floor(Math.random() * (maxCol - minCol + 1)) + minCol;
+                        }
 
-                        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-                        const [dr, dc] = directions[Math.floor(Math.random() * directions.length)];
-
-                        const baseRow = refRow + dr;
-                        const baseCol = refCol + dc;
-
+                        // 检查是否可以放置这个形状
                         let canPlace = true;
                         const newBlocks = [];
 
@@ -1559,7 +1654,13 @@
                             newBlocks.push(`${r},${c}`);
                         });
 
+                        // 新方块模式下，严格检查是否与已有方块相邻
+                        if (gameState.mode === 'new' && canPlace) {
+                            canPlace = checkShapeAdjacency(shape, baseRow, baseCol, targetBlocks);
+                        }
+
                         if (canPlace) {
+                            // 放置方块
                             newBlocks.forEach(block => {
                                 targetBlocks.add(block);
                                 gameState.targetShapeColors.set(block, piece.color);
@@ -1575,8 +1676,30 @@
                     }
                 }
 
+                // 新方块模式下，额外检查整个图形是否完全连通
+                if (allPlaced && gameState.mode === 'new') {
+                    allPlaced = isFullyConnected(targetBlocks);
+                }
+
                 if (allPlaced) {
                     placed = true;
+                }
+            }
+
+            // 如果尝试多次仍无法生成有效图形，降级处理
+            if (!placed) {
+                console.log(`警告: 尝试${maxAttempts}次后仍无法生成完全连通的图形，使用当前结果`);
+                // 至少确保有一些方块
+                if (targetBlocks.size === 0 && usedPieces.length > 0) {
+                    const firstPiece = usedPieces[0];
+                    const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
+                    const shape = shapes[firstPiece.type][0];
+                    shape.forEach(([dr, dc]) => {
+                        const r = minRow + dr;
+                        const c = minCol + dc;
+                        targetBlocks.add(`${r},${c}`);
+                        gameState.targetShapeColors.set(`${r},${c}`, firstPiece.color);
+                    });
                 }
             }
 
