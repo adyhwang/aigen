@@ -3,53 +3,29 @@
 
 <head>
     <meta charset="UTF-8">
-    <!-- 设置视口，确保在移动设备上正确显示，禁止用户缩放 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>俄罗斯方块拼图 | 经典益智游戏</title>
-    <!-- 引入Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入Font Awesome图标库 -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
 
     <script>
-        // 配置Tailwind自定义主题
         tailwind.config = {
             theme: {
                 extend: {
-                    // 定义俄罗斯方块颜色
                     colors: {
                         tetris: {
-                            l: '#FF9500',  // 橙色L形
-                            j: '#003366',  // 深蓝色J形
-                            s: '#34C759',  // 绿色S形
-                            z: '#FF3B30',  // 红色Z形
-                            i: '#66CCFF',  // 浅蓝色I形
-                            t: '#AF52DE',  // 紫色T形
-                            o: '#FFCC00'   // 黄色O形
+                            l: '#FF9500', j: '#003366', s: '#34C759', z: '#FF3B30', i: '#66CCFF', t: '#AF52DE', o: '#FFCC00'
                         },
-                        // 新方块颜色
                         newtetris: {
-                            y: '#FFCC00',  // 黄色
-                            g: '#34C759',  // 绿色
-                            b: '#0066CC',  // 蓝色
-                            r: '#FF3B30'   // 红色
+                            y: '#FFCC00', g: '#34C759', b: '#0066CC', r: '#FF3B30'
                         },
-                        // 游戏界面颜色
                         game: {
-                            bg: '#121212',     // 背景色
-                            panel: '#1E1E1E',  // 面板色
-                            grid: '#2D2D2D',   // 网格线
-                            target: '#3A3A3A', // 目标区域
-                            text: '#FFFFFF',   // 文本色
-                            accent: '#BB86FC', // 强调色
-                            hint: '#00FFFF'    // 提示色
+                            bg: '#121212', panel: '#1E1E1E', grid: '#2D2D2D', target: '#3A3A3A', text: '#FFFFFF', accent: '#BB86FC', hint: '#00FFFF'
                         }
                     },
-                    // 字体设置
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif']
                     },
-                    // 自定义阴影效果
                     boxShadow: {
                         'tetris': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
                         'tetris-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
@@ -64,36 +40,32 @@
         }
     </script>
 
-    <!-- 自定义Tailwind工具类 -->
     <style type="text/tailwindcss">
         @layer utilities {
-            .content-auto { content-visibility: auto; } /* 自动内容可见性 */
-            .grid-cell { @apply border border-game-grid/30; } /* 网格单元格样式 */
-            .tetris-piece { @apply transition-all duration-150 cursor-move select-none; touch-action: none; } /* 方块整体样式 */
-            .tetris-block { @apply shadow-md transition-all duration-150 shadow-block-relief border border-white/10; } /* 方块小格子样式 */
-            .btn-game { @apply bg-game-panel hover:bg-game-panel/80 text-game-text py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md flex items-center gap-2; } /* 游戏按钮样式 */
-            .grid-container { @apply bg-game-panel rounded-xl shadow-lg overflow-hidden relative; } /* 网格容器样式 */
-            .piece-container { @apply relative overflow-hidden; } /* 方块容器样式 */
-            .pulse-animation { animation: pulse 1.2s infinite; } /* 脉冲动画 */
-            .hint-pulse { animation: hintPulse 1.2s infinite; } /* 提示脉冲动画 */
-            .target-hint-pulse { animation: targetHintPulse 1.2s infinite; } /* 目标提示脉冲动画 */
-            .success-animation { animation: success 0.5s ease-in-out; } /* 成功动画 */
-            .tip-highlight { @apply text-game-accent font-semibold; } /* 提示高亮文本 */
+            .content-auto { content-visibility: auto; }
+            .grid-cell { @apply border border-game-grid/30; }
+            .tetris-piece { @apply transition-all duration-150 cursor-move select-none; touch-action: none; }
+            .tetris-block { @apply shadow-md transition-all duration-150 shadow-block-relief border border-white/10; }
+            .btn-game { @apply bg-game-panel hover:bg-game-panel/80 text-game-text py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md flex items-center gap-2; }
+            .grid-container { @apply bg-game-panel rounded-xl shadow-lg overflow-hidden relative; }
+            .piece-container { @apply relative overflow-hidden; }
+            .pulse-animation { animation: pulse 1.2s infinite; }
+            .hint-pulse { animation: hintPulse 1.2s infinite; }
+            .target-hint-pulse { animation: targetHintPulse 1.2s infinite; }
+            .success-animation { animation: success 0.5s ease-in-out; }
+            .tip-highlight { @apply text-game-accent font-semibold; }
         }
     </style>
 
     <style>
-        /* 基础样式设置 */
         html,
         body {
             height: 100%;
             margin: 0;
             padding: 0;
             overflow: hidden;
-            /* 防止页面滚动 */
         }
 
-        /* 游戏容器样式 */
         .game-wrapper {
             width: 100vw;
             height: 100vh;
@@ -106,14 +78,12 @@
             overflow: hidden;
         }
 
-        /* 游戏头部样式 */
         .game-header {
             width: 100%;
             z-index: 50;
             margin-bottom: 10px;
         }
 
-        /* 游戏主区域样式 */
         .game-main-area {
             display: flex;
             width: 100%;
@@ -125,12 +95,10 @@
             box-sizing: border-box;
         }
 
-        /* 竖屏布局样式 */
         .game-main-area.portrait {
             flex-direction: column;
         }
 
-        /* 确保各容器使用box-sizing */
         .pieces-container,
         .center-container,
         #pieces-grid,
@@ -139,14 +107,12 @@
             box-sizing: border-box;
         }
 
-        /* 方块容器样式 */
         .pieces-container {
             width: 30vw;
             min-width: 0;
             max-width: 350px;
         }
 
-        /* 中间区域样式 */
         .center-container {
             min-width: 0;
             display: flex;
@@ -154,7 +120,6 @@
             max-width: 60vw;
         }
 
-        /* 竖屏布局下的容器样式 */
         .portrait .pieces-container,
         .portrait .center-container {
             width: 100%;
@@ -162,18 +127,15 @@
             max-height: 45vh;
         }
 
-        /* 禁用触摸操作以优化拖动体验 */
         * {
             touch-action: manipulation;
         }
 
-        /* 网格容器最大尺寸限制 */
         .grid-container {
             max-width: 100%;
             max-height: 100%;
         }
 
-        /* 提示块样式 */
         .hint-block {
             position: absolute;
             z-index: 10;
@@ -181,7 +143,6 @@
             box-sizing: border-box;
         }
 
-        /* 全屏状态样式 */
         .fullscreen-active {
             background-color: #000;
         }
@@ -190,19 +151,16 @@
             padding: 0;
         }
 
-        /* 全屏按钮样式 */
         .fullscreen-btn {
             @apply bg-game-accent/30 hover:bg-game-accent/50;
         }
 
-        /* 目标区域提示块样式 */
         .target-block.hint {
             opacity: 0.9;
             border: 2px solid rgba(255, 255, 255, 0.7);
             box-shadow: inset 2px 2px 3px rgba(255, 255, 255, 0.2), inset -2px -2px 3px rgba(0, 0, 0, 0.4);
         }
 
-        /* 目标网格层级设置 */
         #target-grid {
             z-index: 1;
         }
@@ -215,7 +173,6 @@
             z-index: 40;
         }
 
-        /* 方块层级设置 */
         .tetris-piece {
             z-index: 10;
         }
@@ -228,13 +185,11 @@
             z-index: 30;
         }
 
-        /* 消息提示层级 */
         #success-message,
         #tutorial-message {
             z-index: 100;
         }
 
-        /* 脉冲动画定义 */
         @keyframes pulse {
 
             0%,
@@ -251,7 +206,6 @@
             }
         }
 
-        /* 提示脉冲动画 */
         @keyframes hintPulse {
 
             0%,
@@ -266,7 +220,6 @@
             }
         }
 
-        /* 目标提示脉冲动画 */
         @keyframes targetHintPulse {
 
             0%,
@@ -281,7 +234,6 @@
             }
         }
 
-        /* 成功动画 */
         @keyframes success {
 
             0%,
@@ -294,7 +246,6 @@
             }
         }
 
-        /* 自定义下拉选择框样式 */
         .custom-select {
             background-color: #1E1E1E;
             color: #FFFFFF;
@@ -313,7 +264,6 @@
             box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.2);
         }
 
-        /* 教程消息样式 */
         #tutorial-message {
             position: fixed;
             inset: 0;
@@ -384,7 +334,6 @@
             justify-content: center;
         }
 
-        /* 响应式设计：小屏幕适配 */
         @media (max-width: 768px) {
             .game-main-area {
                 gap: min(1vw, 8px);
@@ -405,12 +354,10 @@
         }
     </style>
 
-    <!-- 引入Inter字体 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body class="bg-game-bg text-game-text font-sans">
-    <!-- 游戏教程提示 -->
     <div id="tutorial-message">
         <div class="tutorial-content">
             <h2 class="tutorial-title">游戏操作指南</h2>
@@ -425,7 +372,6 @@
                     <div class="step-number">2</div>
                     <div class="step-content">
                         <p><span class="tip-highlight">双击彩色方块</span>可以旋转方块</p>
-                        </p>
                     </div>
                 </div>
                 <div class="tutorial-step">
@@ -449,8 +395,7 @@
             </div>
             <div class="tutorial-buttons">
                 <button id="tutorial-close-btn" class="btn-game bg-game-accent hover:bg-game-accent/80">
-                    <i class="fa fa-check"></i>
-                    <span>开始游戏</span>
+                    <i class="fa fa-check"></i><span>开始游戏</span>
                 </button>
             </div>
         </div>
@@ -458,10 +403,8 @@
 
     <div class="game-wrapper">
         <div class="w-full max-w-7xl mx-auto flex flex-col items-center h-full">
-            <!-- 游戏头部 -->
             <div class="game-header w-full mb-3">
-                <div class="header-content flex flex-row items-center justify-center gap-4 px-2 flex-wrap">
-                    <!-- 游戏标题 -->
+                <div class="header-content flex flex-row items-center justify-center gap-2 px-2 flex-wrap">
                     <div class="flex items-center gap-2">
                         <div class="tetris-block bg-tetris-l"></div>
                         <div class="tetris-block bg-tetris-j"></div>
@@ -469,9 +412,7 @@
                         <h1 class="text-[clamp(1rem,5vw,1.8rem)] font-bold tracking-tight">俄罗斯方块拼图</h1>
                     </div>
 
-                    <!-- 游戏控制区 -->
                     <div class="header-controls bg-game-panel px-3 py-1.5 rounded-lg shadow-md flex items-center gap-4">
-                        <!-- 游戏模式选择 -->
                         <div class="flex items-center gap-1.5">
                             <i class="fa fa-cube text-game-accent text-sm"></i>
                             <select id="game-mode" class="custom-select px-2 py-1 text-sm bg-game-panel text-game-text">
@@ -479,7 +420,6 @@
                                 <option value="new">新方块</option>
                             </select>
                         </div>
-                        <!-- 难度选择 -->
                         <div class="flex items-center gap-1.5">
                             <i class="fa fa-signal text-game-accent text-sm"></i>
                             <select id="difficulty"
@@ -489,46 +429,37 @@
                                 <option value="hard">困难</option>
                             </select>
                         </div>
-                        <!-- 关卡显示 -->
                         <div class="flex items-center gap-1.5">
                             <i class="fa fa-map-signs text-game-accent text-sm"></i>
                             <span class="text-sm">关卡: <span id="level-display" class="font-bold">1</span>/<span
                                     id="total-levels" class="font-medium">30</span></span>
                         </div>
-                        <!-- 方块数量显示 -->
                         <div class="flex items-center gap-1.5">
                             <i class="fa fa-cubes text-game-accent text-sm"></i>
                             <span class="text-sm">方块: <span id="pieces-count" class="font-bold">2</span>个</span>
                         </div>
                     </div>
 
-                    <!-- 游戏按钮区 -->
                     <div class="header-buttons flex flex-wrap justify-center gap-2">
                         <button id="reset-btn" class="btn-game text-sm md:text-base">
-                            <i class="fa fa-refresh"></i>
-                            <span>重置</span>
+                            <i class="fa fa-refresh"></i><span>重置</span>
                         </button>
                         <button id="hint-btn"
                             class="btn-game bg-game-accent/20 hover:bg-game-accent/30 text-sm md:text-base">
-                            <i class="fa fa-lightbulb-o"></i>
-                            <span>提示</span>
+                            <i class="fa fa-lightbulb-o"></i><span>提示</span>
                         </button>
                         <button id="fullscreen-btn" class="btn-game fullscreen-btn text-sm md:text-base">
-                            <i class="fa fa-expand"></i>
-                            <span>全屏</span>
+                            <i class="fa fa-expand"></i><span>全屏</span>
                         </button>
                         <button id="next-btn"
                             class="btn-game bg-game-accent hover:bg-game-accent/80 text-sm md:text-base">
-                            <i class="fa fa-arrow-right"></i>
-                            <span>下一关</span>
+                            <i class="fa fa-arrow-right"></i><span>下一关</span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- 游戏主区域 -->
             <main class="game-main-area flex-1 w-full" id="game-main-area">
-                <!-- 可用方块区域 -->
                 <div class="center-container" id="center-wrapper">
                     <div class="pieces-container grid-container" id="pieces-container">
                         <div
@@ -538,7 +469,6 @@
                     </div>
                 </div>
 
-                <!-- 目标区域 -->
                 <div class="center-container" id="center-wrapper">
                     <div class="grid-container h-full" id="target-container">
                         <div
@@ -546,15 +476,13 @@
                             目标图形</div>
                         <div id="target-grid"
                             class="p-0 grid grid-cols-16 gap-0 relative piece-container h-[calc(100%-32px)]"></div>
-                        <!-- 通关成功消息 -->
                         <div id="success-message"
                             class="absolute inset-0 bg-game-bg/80 flex flex-col items-center justify-center gap-4 rounded-xl opacity-0 pointer-events-none transition-opacity duration-500 z-100">
                             <div class="text-4xl font-bold text-game-accent success-animation">通关!</div>
                             <p class="text-lg">太棒了，准备好挑战下一关了吗？</p>
                             <button id="success-next-btn"
                                 class="btn-game bg-game-accent hover:bg-game-accent/80 text-sm md:text-base">
-                                <i class="fa fa-arrow-right"></i>
-                                <span>下一关</span>
+                                <i class="fa fa-arrow-right"></i><span>下一关</span>
                             </button>
                         </div>
                     </div>
@@ -564,80 +492,39 @@
     </div>
 
     <script>
-        // 难度级别定义：每种难度对应的总关卡数
-        const DIFFICULTY_LEVELS = {
-            easy: 30,
-            medium: 80,
-            hard: 100
-        };
-
-        // 网格宽高比
+        // 游戏常量定义
+        const DIFFICULTY_LEVELS = { easy: 30, medium: 80, hard: 100 };
         const GRID_ASPECT_RATIO = 4 / 3;
+        const COLS = 16;
+        const ROWS = 14;
 
-        /**
-         * 计算网格单元格大小，根据屏幕尺寸自适应
-         * @returns {number} 网格单元格大小（像素）
-         */
-        function calculateGridSize() {
-            const windowWidth = window.innerWidth;
-            const windowHeight = window.innerHeight;
-            const isPortrait = windowHeight > windowWidth;
-
-            // 获取头部高度
-            const header = document.querySelector('.game-header');
-            const headerHeight = header ? header.offsetHeight : 120;
-            const availableHeight = windowHeight - headerHeight - 20;
-
-            let widthBasedSize, heightBasedSize;
-
-            // 根据横竖屏计算不同的尺寸
-            if (!isPortrait) {
-                const totalColumns = 16 + 16; // 两个16列的网格
-                const gaps = 40; // 间隙
-                widthBasedSize = (windowWidth - gaps) / totalColumns;
-                heightBasedSize = availableHeight / 14; // 14行高
-            } else {
-                const totalRows = 14 + 14 + 2; // 两个14行的网格加间隙
-                heightBasedSize = availableHeight / totalRows;
-                const maxWidth = windowWidth * 0.9; // 最大宽度为屏幕的90%
-                widthBasedSize = maxWidth / 16; // 16列宽
-            }
-
-            // 计算并限制网格大小范围
-            let gridSize = Math.floor(Math.min(widthBasedSize, heightBasedSize));
-            const maxGridSize = 30; // 最大30px
-            gridSize = Math.min(gridSize, maxGridSize);
-            const minGridSize = 8; // 最小8px
-            return Math.max(gridSize, minGridSize);
-        }
-
-        // 游戏状态管理对象
+        // 游戏状态管理
         const gameState = {
-            mode: 'classic', // 游戏模式：经典或新方块
-            difficulty: 'easy', // 难度
-            level: 1, // 当前关卡
-            totalLevels: DIFFICULTY_LEVELS.easy, // 总关卡数
-            pieces: [], // 所有方块
-            usedPieceIds: [], // 当前使用的方块ID
-            pieceCount: 2, // 当前关卡方块数量
-            targetShape: [], // 目标图形
-            targetShapeColors: new Map(), // 目标图形各位置的颜色
-            isDragging: false, // 是否正在拖动
-            draggedPiece: null, // 当前拖动的方块
-            dragOffset: { x: 0, y: 0 }, // 拖动偏移量
-            gridSize: calculateGridSize(), // 网格大小
-            isPortrait: window.innerHeight > window.innerWidth, // 是否竖屏
-            hintActive: false, // 是否显示提示
-            hintTimer: null, // 提示计时器
-            hintedPieces: [], // 被提示的方块
-            lastTouchTime: 0, // 上次触摸时间（用于双击检测）
-            touchCount: 0, // 触摸计数
-            touchTimeout: null, // 触摸超时计时器
-            isFullscreen: false, // 是否全屏
-            hasSeenTutorial: false // 是否已查看教程
+            mode: 'classic',
+            difficulty: 'easy',
+            level: 1,
+            totalLevels: DIFFICULTY_LEVELS.easy,
+            pieces: [],
+            usedPieceIds: [],
+            pieceCount: 2,
+            targetShape: [],
+            targetShapeColors: new Map(),
+            isDragging: false,
+            draggedPiece: null,
+            dragOffset: { x: 0, y: 0 },
+            gridSize: calculateGridSize(),
+            isPortrait: window.innerHeight > window.innerWidth,
+            hintActive: false,
+            hintTimer: null,
+            hintedPieces: [],
+            lastTouchTime: 0,
+            touchCount: 0,
+            touchTimeout: null,
+            isFullscreen: false,
+            hasSeenTutorial: false
         };
 
-        // 经典方块定义
+        // 方块定义
         const classicPieceDefinitions = {
             1: { type: 'l', color: 'tetris-l', rotation: 0, container: 'pieces' },
             2: { type: 'j', color: 'tetris-j', rotation: 0, container: 'pieces' },
@@ -655,7 +542,6 @@
             14: { type: 'i', color: 'tetris-i', rotation: 1, container: 'pieces' }
         };
 
-        // 新方块定义
         const newPieceDefinitions = {
             1: { type: 'y1', color: 'newtetris-y', rotation: 0, container: 'pieces' },
             2: { type: 'y2', color: 'newtetris-y', rotation: 0, container: 'pieces' },
@@ -675,437 +561,271 @@
             16: { type: 'r4', color: 'newtetris-r', rotation: 0, container: 'pieces' }
         };
 
-        // 经典方块形状定义（不同旋转状态）
+        // 方块形状定义
         const classicShapes = {
-            l: [
-                [[0, 0], [1, 0], [2, 0], [2, 1]],
-                [[1, 0], [1, 1], [1, 2], [0, 2]],
-                [[0, 0], [0, 1], [1, 1], [2, 1]],
-                [[1, 0], [0, 0], [0, 1], [0, 2]]
-            ],
-            j: [
-                [[0, 1], [1, 1], [2, 1], [2, 0]],
-                [[0, 0], [1, 0], [1, 1], [1, 2]],
-                [[0, 0], [0, 1], [1, 0], [2, 0]],
-                [[1, 0], [1, 1], [1, 2], [2, 2]]
-            ],
-            s: [
-                [[0, 1], [0, 2], [1, 0], [1, 1]],
-                [[0, 0], [1, 0], [1, 1], [2, 1]],
-                [[0, 1], [0, 2], [1, 0], [1, 1]],
-                [[0, 0], [1, 0], [1, 1], [2, 1]]
-            ],
-            z: [
-                [[0, 0], [0, 1], [1, 1], [1, 2]],
-                [[1, 0], [2, 0], [0, 1], [1, 1]],
-                [[0, 0], [0, 1], [1, 1], [1, 2]],
-                [[1, 0], [2, 0], [0, 1], [1, 1]]
-            ],
-            i: [
-                [[0, 0], [0, 1], [0, 2], [0, 3]],
-                [[0, 0], [1, 0], [2, 0], [3, 0]],
-                [[0, 0], [0, 1], [0, 2], [0, 3]],
-                [[0, 0], [1, 0], [2, 0], [3, 0]]
-            ],
-            t: [
-                [[0, 1], [1, 0], [1, 1], [1, 2]],
-                [[0, 1], [1, 1], [1, 2], [2, 1]],
-                [[1, 0], [1, 1], [1, 2], [2, 1]],
-                [[1, 0], [0, 0], [0, 1], [2, 1]]
-            ],
-            o: [
-                [[0, 0], [0, 1], [1, 0], [1, 1]],
-                [[0, 0], [0, 1], [1, 0], [1, 1]],
-                [[0, 0], [0, 1], [1, 0], [1, 1]],
-                [[0, 0], [0, 1], [1, 0], [1, 1]]
-            ]
+            l: [[[0, 0], [1, 0], [2, 0], [2, 1]], [[1, 0], [1, 1], [1, 2], [0, 2]], [[0, 0], [0, 1], [1, 1], [2, 1]], [[1, 0], [0, 0], [0, 1], [0, 2]]],
+            j: [[[0, 1], [1, 1], [2, 1], [2, 0]], [[0, 0], [1, 0], [1, 1], [1, 2]], [[0, 0], [0, 1], [1, 0], [2, 0]], [[1, 0], [1, 1], [1, 2], [2, 2]]],
+            s: [[[0, 1], [0, 2], [1, 0], [1, 1]], [[0, 0], [1, 0], [1, 1], [2, 1]], [[0, 1], [0, 2], [1, 0], [1, 1]], [[0, 0], [1, 0], [1, 1], [2, 1]]],
+            z: [[[0, 0], [0, 1], [1, 1], [1, 2]], [[1, 0], [2, 0], [0, 1], [1, 1]], [[0, 0], [0, 1], [1, 1], [1, 2]], [[1, 0], [2, 0], [0, 1], [1, 1]]],
+            i: [[[0, 0], [0, 1], [0, 2], [0, 3]], [[0, 0], [1, 0], [2, 0], [3, 0]], [[0, 0], [0, 1], [0, 2], [0, 3]], [[0, 0], [1, 0], [2, 0], [3, 0]]],
+            t: [[[0, 1], [1, 0], [1, 1], [1, 2]], [[0, 1], [1, 1], [1, 2], [2, 1]], [[1, 0], [1, 1], [1, 2], [2, 1]], [[1, 0], [1, 1], [0, 1], [2, 1]]],
+            o: [[[0, 0], [0, 1], [1, 0], [1, 1]], [[0, 0], [0, 1], [1, 0], [1, 1]], [[0, 0], [0, 1], [1, 0], [1, 1]], [[0, 0], [0, 1], [1, 0], [1, 1]]]
         };
 
-        // 新方块形状定义（不同旋转状态）
         const newShapes = {
-            y1: [
-                [[0, 0], [0, 1], [0, 2], [0, 3]],
-                [[0, 3], [1, 3], [2, 3], [3, 3]],
-                [[3, 0], [3, 1], [3, 2], [3, 3]],
-                [[0, 0], [1, 0], [2, 0], [3, 0]]
-            ],
-            y2: [
-                [[0, 1], [0, 2], [1, 0], [1, 1], [2, 1], [2, 2]],
-                [[1, 3], [2, 3], [0, 2], [1, 2], [1, 1], [2, 1]],
-                [[3, 2], [3, 1], [2, 3], [2, 2], [1, 2], [1, 1]],
-                [[2, 0], [1, 0], [3, 1], [2, 1], [2, 2], [1, 2]]
-            ],
-            y3: [
-                [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]],
-                [[1, 3], [0, 2], [1, 2], [2, 2], [1, 1]],
-                [[3, 2], [2, 3], [2, 2], [2, 1], [1, 2]],
-                [[2, 0], [3, 1], [2, 1], [1, 1], [2, 2]]
-            ],
-            y4: [
-                [[0, 3], [0, 2], [1, 2], [0, 1], [1, 1], [1, 0]],
-                [[3, 3], [2, 3], [2, 2], [1, 3], [1, 2], [0, 2]],
-                [[3, 0], [3, 1], [2, 1], [3, 2], [2, 2], [2, 3]],
-                [[0, 0], [1, 0], [1, 1], [2, 0], [2, 1], [3, 1]]
-            ],
-
-            g1: [
-                [[0, 0], [1, 0], [1, 1], [1, 2], [2, 0]],
-                [[0, 3], [0, 2], [1, 2], [2, 2], [0, 1]],
-                [[3, 3], [2, 3], [2, 2], [2, 1], [1, 3]],
-                [[3, 0], [3, 1], [2, 1], [1, 1], [3, 2]]
-            ],
-            g2: [
-                [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1]],
-                [[0, 3], [1, 3], [2, 3], [0, 2], [1, 2]],
-                [[3, 3], [3, 2], [3, 1], [2, 3], [2, 2]],
-                [[3, 0], [2, 0], [1, 0], [3, 1], [2, 1]]
-            ],
-            g3: [
-                [[0, 2], [1, 1], [1, 2], [2, 0], [2, 1]],
-                [[2, 3], [1, 2], [2, 2], [0, 1], [1, 1]],
-                [[3, 1], [2, 2], [2, 1], [1, 3], [1, 2]],
-                [[1, 0], [2, 1], [1, 1], [3, 2], [2, 2]]
-            ],
-            g4: [
-                [[0, 3], [1, 3], [1, 2], [1, 1], [0, 0], [1, 0]],
-                [[3, 3], [3, 2], [2, 2], [1, 2], [0, 3], [0, 2]],
-                [[3, 0], [2, 0], [2, 1], [2, 2], [3, 3], [2, 3]],
-                [[0, 0], [0, 1], [1, 1], [2, 1], [3, 0], [3, 1]]
-            ],
-
-            b1: [
-                [[1, 3], [0, 2], [1, 2], [0, 1], [1, 1], [1, 0]],
-                [[3, 2], [2, 3], [2, 2], [1, 3], [1, 2], [0, 2]],
-                [[2, 0], [3, 1], [2, 1], [3, 2], [2, 2], [2, 3]],
-                [[0, 1], [1, 0], [1, 1], [2, 0], [2, 1], [3, 1]]
-            ],
-            b2: [
-                [[0, 3], [1, 3], [2, 3], [0, 2], [0, 1]],
-                [[3, 3], [3, 2], [3, 1], [2, 3], [1, 3]],
-                [[3, 0], [2, 0], [1, 0], [3, 1], [3, 2]],
-                [[0, 0], [0, 1], [0, 2], [1, 0], [2, 0]]
-            ],
-            b3: [
-                [[0, 1], [1, 0], [1, 1], [1, 2], [1, 3], [2, 1]],
-                [[1, 3], [0, 2], [1, 2], [2, 2], [3, 2], [1, 1]],
-                [[3, 2], [2, 3], [2, 2], [2, 1], [2, 0], [1, 2]],
-                [[2, 0], [3, 1], [2, 1], [1, 1], [0, 1], [2, 2]]
-            ],
-            b4: [
-                [[0, 1], [0, 2], [1, 0], [1, 1]],
-                [[1, 3], [2, 3], [0, 2], [1, 2]],
-                [[3, 2], [3, 1], [2, 3], [2, 2]],
-                [[2, 0], [1, 0], [3, 1], [2, 1]]
-            ],
-
-            r1: [
-                [[0, 3], [1, 3], [1, 2], [1, 1], [1, 0]],
-                [[3, 3], [3, 2], [2, 2], [1, 2], [0, 2]],
-                [[3, 0], [2, 0], [2, 1], [2, 2], [2, 3]],
-                [[0, 0], [0, 1], [1, 1], [2, 1], [3, 1]]
-            ],
-            r2: [
-                [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [2, 0]],
-                [[0, 3], [1, 3], [2, 3], [0, 2], [1, 2], [0, 1]],
-                [[3, 3], [3, 2], [3, 1], [2, 3], [2, 2], [1, 3]],
-                [[3, 0], [2, 0], [1, 0], [3, 1], [2, 1], [3, 2]]
-            ],
-            r3: [
-                [[3, 3], [3, 2], [2, 3], [2, 2], [2, 1], [1, 2]],
-                [[3, 0], [2, 0], [3, 1], [2, 1], [1, 1], [2, 2]],
-                [[0, 0], [0, 1], [1, 0], [1, 1], [1, 2], [2, 1]],
-                [[0, 3], [1, 3], [0, 2], [1, 2], [2, 2], [1, 1]]
-            ],
-            r4: [
-                [[0, 3], [1, 3], [1, 2], [0, 1], [1, 1]],
-                [[3, 3], [3, 2], [2, 2], [1, 3], [1, 2]],
-                [[3, 0], [2, 0], [2, 1], [3, 2], [2, 2]],
-                [[0, 0], [0, 1], [1, 1], [2, 0], [2, 1]]
-            ]
+            y1: [[[0, 0], [0, 1], [0, 2], [0, 3]], [[0, 3], [1, 3], [2, 3], [3, 3]], [[3, 0], [3, 1], [3, 2], [3, 3]], [[0, 0], [1, 0], [2, 0], [3, 0]]],
+            y2: [[[0, 1], [0, 2], [1, 0], [1, 1], [2, 1], [2, 2]], [[1, 3], [2, 3], [0, 2], [1, 2], [1, 1], [2, 1]],
+            [[3, 2], [3, 1], [2, 3], [2, 2], [1, 2], [1, 1]], [[2, 0], [1, 0], [3, 1], [2, 1], [2, 2], [1, 2]]],
+            y3: [[[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]], [[1, 3], [0, 2], [1, 2], [2, 2], [1, 1]],
+            [[3, 2], [2, 3], [2, 2], [2, 1], [1, 2]], [[2, 0], [3, 1], [2, 1], [1, 1], [2, 2]]],
+            y4: [[[0, 3], [0, 2], [1, 2], [0, 1], [1, 1], [1, 0]], [[3, 3], [2, 3], [2, 2], [1, 3], [1, 2], [0, 2]],
+            [[3, 0], [3, 1], [2, 1], [3, 2], [2, 2], [2, 3]], [[0, 0], [1, 0], [1, 1], [2, 0], [2, 1], [3, 1]]],
+            g1: [[[0, 0], [1, 0], [1, 1], [1, 2], [2, 0]], [[0, 3], [0, 2], [1, 2], [2, 2], [0, 1]],
+            [[3, 3], [2, 3], [2, 2], [2, 1], [1, 3]], [[3, 0], [3, 1], [2, 1], [1, 1], [3, 2]]],
+            g2: [[[0, 0], [0, 1], [0, 2], [1, 0], [1, 1]], [[0, 3], [1, 3], [2, 3], [0, 2], [1, 2]],
+            [[3, 3], [3, 2], [3, 1], [2, 3], [2, 2]], [[3, 0], [2, 0], [1, 0], [3, 1], [2, 1]]],
+            g3: [[[0, 2], [1, 1], [1, 2], [2, 0], [2, 1]], [[2, 3], [1, 2], [2, 2], [0, 1], [1, 1]],
+            [[3, 1], [2, 2], [2, 1], [1, 3], [1, 2]], [[1, 0], [2, 1], [1, 1], [3, 2], [2, 2]]],
+            g4: [[[0, 3], [1, 3], [1, 2], [1, 1], [0, 0], [1, 0]], [[3, 3], [3, 2], [2, 2], [1, 2], [0, 3], [0, 2]],
+            [[3, 0], [2, 0], [2, 1], [2, 2], [3, 3], [2, 3]], [[0, 0], [0, 1], [1, 1], [2, 1], [3, 0], [3, 1]]],
+            b1: [[[1, 3], [0, 2], [1, 2], [0, 1], [1, 1], [1, 0]], [[3, 2], [2, 3], [2, 2], [1, 3], [1, 2], [0, 2]],
+            [[2, 0], [3, 1], [2, 1], [3, 2], [2, 2], [2, 3]], [[0, 1], [1, 0], [1, 1], [2, 0], [2, 1], [3, 1]]],
+            b2: [[[0, 3], [1, 3], [2, 3], [0, 2], [0, 1]], [[3, 3], [3, 2], [3, 1], [2, 3], [1, 3]],
+            [[3, 0], [2, 0], [1, 0], [3, 1], [3, 2]], [[0, 0], [0, 1], [0, 2], [1, 0], [2, 0]]],
+            b3: [[[0, 1], [1, 0], [1, 1], [1, 2], [1, 3], [2, 1]], [[1, 3], [0, 2], [1, 2], [2, 2], [3, 2], [1, 1]],
+            [[3, 2], [2, 3], [2, 2], [2, 1], [2, 0], [1, 2]], [[2, 0], [3, 1], [2, 1], [1, 1], [0, 1], [2, 2]]],
+            b4: [[[0, 1], [0, 2], [1, 0], [1, 1]], [[1, 3], [2, 3], [0, 2], [1, 2]],
+            [[3, 2], [3, 1], [2, 3], [2, 2]], [[2, 0], [1, 0], [3, 1], [2, 1]]],
+            r1: [[[0, 3], [1, 3], [1, 2], [1, 1], [1, 0]], [[3, 3], [3, 2], [2, 2], [1, 2], [0, 2]],
+            [[3, 0], [2, 0], [2, 1], [2, 2], [2, 3]], [[0, 0], [0, 1], [1, 1], [2, 1], [3, 1]]],
+            r2: [[[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [2, 0]], [[0, 3], [1, 3], [2, 3], [0, 2], [1, 2], [0, 1]],
+            [[3, 3], [3, 2], [3, 1], [2, 3], [2, 2], [1, 3]], [[3, 0], [2, 0], [1, 0], [3, 1], [2, 1], [3, 2]]],
+            r3: [[[3, 3], [3, 2], [2, 3], [2, 2], [2, 1], [1, 2]], [[3, 0], [2, 0], [3, 1], [2, 1], [1, 1], [2, 2]],
+            [[0, 0], [0, 1], [1, 0], [1, 1], [1, 2], [2, 1]], [[0, 3], [1, 3], [0, 2], [1, 2], [2, 2], [1, 1]]],
+            r4: [[[0, 3], [1, 3], [1, 2], [0, 1], [1, 1]], [[3, 3], [3, 2], [2, 2], [1, 3], [1, 2]],
+            [[3, 0], [2, 0], [2, 1], [3, 2], [2, 2]], [[0, 0], [0, 1], [1, 1], [2, 0], [2, 1]]]
         };
 
-        // 经典方块初始位置
+        // 初始位置定义
         const classicInitialPositions = {
-            1: { row: 0, col: 0 },   // l (橙色)
-            2: { row: 0, col: 5 },   // j (深蓝) 
-            3: { row: 0, col: 10 },  // z (红色) 
-            4: { row: 4, col: 0 },   // s (绿色) 
-            5: { row: 4, col: 5 },   // o (黄色) 
-            6: { row: 4, col: 10 },  // t (紫色) 
-            7: { row: 7, col: 0 },   // i (淡蓝) 
-            8: { row: 7, col: 5 },   // l (橙色) 
-            9: { row: 7, col: 10 },  // j (深蓝) 
-            10: { row: 9, col: 0 }, // z (红色) 
-            11: { row: 9, col: 5 }, // s (绿色)
-            12: { row: 9, col: 10 },// o (黄色) 
-            13: { row: 6, col: 13 }, // t (紫色) 
-            14: { row: 1, col: 14 }  // i (淡蓝)
+            1: { row: 0, col: 0 }, 2: { row: 0, col: 5 }, 3: { row: 0, col: 10 }, 4: { row: 4, col: 0 },
+            5: { row: 4, col: 5 }, 6: { row: 4, col: 10 }, 7: { row: 7, col: 0 }, 8: { row: 7, col: 5 },
+            9: { row: 7, col: 10 }, 10: { row: 9, col: 0 }, 11: { row: 9, col: 5 }, 12: { row: 9, col: 10 },
+            13: { row: 6, col: 13 }, 14: { row: 1, col: 14 }
         };
 
-        // 新方块初始位置
         const newInitialPositions = {
-            // 黄色方块 
-            1: { row: 0, col: 0 },   // y1
-            2: { row: 0, col: 8 },   // y2 
-            3: { row: 3, col: 0 },   // y3 
-            4: { row: 4, col: 8 },   // y4 
-
-            // 绿色方块
-            5: { row: 0, col: 4 },   // g1
-            6: { row: 0, col: 12 },  // g2
-            7: { row: 3, col: 4 },   // g3
-            8: { row: 3, col: 12 },  // g4
-
-            // 蓝色方块
-            9: { row: 6, col: 0 },   // b1
-            10: { row: 6, col: 8 },  // b2
-            11: { row: 9, col: 0 }, // b3
-            12: { row: 10, col: 8 }, // b4
-
-            // 红色方块
-            13: { row: 6, col: 4 },  // r1
-            14: { row: 6, col: 12 }, // r2
-            15: { row: 8, col: 4 }, // r3
-            16: { row: 10, col: 11 } // r4
+            1: { row: 0, col: 0 }, 2: { row: 0, col: 8 }, 3: { row: 3, col: 0 }, 4: { row: 4, col: 8 },
+            5: { row: 0, col: 4 }, 6: { row: 0, col: 12 }, 7: { row: 3, col: 4 }, 8: { row: 3, col: 12 },
+            9: { row: 6, col: 0 }, 10: { row: 6, col: 8 }, 11: { row: 9, col: 0 }, 12: { row: 10, col: 8 },
+            13: { row: 6, col: 4 }, 14: { row: 6, col: 12 }, 15: { row: 8, col: 4 }, 16: { row: 10, col: 11 }
         };
 
-        // 获取DOM元素引用
-        const piecesGrid = document.getElementById('pieces-grid');
-        const targetGrid = document.getElementById('target-grid');
-        const targetContainer = document.getElementById('target-container');
-        const centerWrapper = document.getElementById('center-wrapper');
-        const gameMainArea = document.getElementById('game-main-area');
-        const gameModeSelect = document.getElementById('game-mode');
-        const difficultySelect = document.getElementById('difficulty');
-        const levelDisplay = document.getElementById('level-display');
-        const totalLevelsDisplay = document.getElementById('total-levels');
-        const piecesCountDisplay = document.getElementById('pieces-count');
-        const resetBtn = document.getElementById('reset-btn');
-        const hintBtn = document.getElementById('hint-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const successMessage = document.getElementById('success-message');
-        const successNextBtn = document.getElementById('success-next-btn');
-        const fullscreenBtn = document.getElementById('fullscreen-btn');
-        const fullscreenIcon = fullscreenBtn.querySelector('i');
-        const fullscreenText = fullscreenBtn.querySelector('span');
-        const tutorialMessage = document.getElementById('tutorial-message');
-        const tutorialCloseBtn = document.getElementById('tutorial-close-btn');
+        // DOM元素引用
+        const elements = {
+            piecesGrid: document.getElementById('pieces-grid'),
+            targetGrid: document.getElementById('target-grid'),
+            targetContainer: document.getElementById('target-container'),
+            centerWrapper: document.getElementById('center-wrapper'),
+            gameMainArea: document.getElementById('game-main-area'),
+            gameModeSelect: document.getElementById('game-mode'),
+            difficultySelect: document.getElementById('difficulty'),
+            levelDisplay: document.getElementById('level-display'),
+            totalLevelsDisplay: document.getElementById('total-levels'),
+            piecesCountDisplay: document.getElementById('pieces-count'),
+            resetBtn: document.getElementById('reset-btn'),
+            hintBtn: document.getElementById('hint-btn'),
+            nextBtn: document.getElementById('next-btn'),
+            successMessage: document.getElementById('success-message'),
+            successNextBtn: document.getElementById('success-next-btn'),
+            fullscreenBtn: document.getElementById('fullscreen-btn'),
+            fullscreenIcon: document.querySelector('#fullscreen-btn i'),
+            fullscreenText: document.querySelector('#fullscreen-btn span'),
+            tutorialMessage: document.getElementById('tutorial-message'),
+            tutorialCloseBtn: document.getElementById('tutorial-close-btn')
+        };
 
-        /**
-         * 初始化游戏
-         */
+        // 初始化游戏
         function initGame() {
-            checkTutorialStatus(); // 检查是否需要显示教程
-            createGridBackground(piecesGrid, 16, 14); // 创建方块区域网格背景
-            createGridBackground(targetGrid, 16, 14); // 创建目标区域网格背景
-            updateContainerSizes(); // 更新容器尺寸
-            loadGameProgress(); // 加载游戏进度
-            createAllPieces(); // 创建所有方块
-            generateLevel(); // 生成当前关卡
-            addEventListeners(); // 添加事件监听器
+            checkTutorialStatus();
+            createGridBackground(elements.piecesGrid);
+            createGridBackground(elements.targetGrid);
+            updateContainerSizes();
+            loadGameProgress();
+            createAllPieces();
+            generateLevel();
+            addEventListeners();
 
-            // 监听窗口大小变化，动态调整游戏布局
-            const resizeObserver = new ResizeObserver(entries => {
-                handleResize();
-            });
+            const resizeObserver = new ResizeObserver(entries => handleResize());
             resizeObserver.observe(document.body);
 
-            // 监听全屏状态变化
-            document.addEventListener('fullscreenchange', handleFullscreenChange);
-            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-            document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-            document.addEventListener('msfullscreenchange', handleFullscreenChange);
+            ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'msfullscreenchange']
+                .forEach(event => document.addEventListener(event, handleFullscreenChange));
 
-            // 延迟执行一次尺寸调整，确保布局正确
             setTimeout(handleResize, 100);
         }
 
-        /**
-         * 检查是否需要显示教程
-         */
+        // 计算网格大小
+        function calculateGridSize() {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const isPortrait = windowHeight > windowWidth;
+            const header = document.querySelector('.game-header');
+            const headerHeight = header ? header.offsetHeight : 120;
+            const availableHeight = windowHeight - headerHeight - 20;
+
+            let widthBasedSize, heightBasedSize;
+
+            if (!isPortrait) {
+                const totalColumns = COLS + COLS;
+                const gaps = 40;
+                widthBasedSize = (windowWidth - gaps) / totalColumns;
+                heightBasedSize = availableHeight / ROWS;
+            } else {
+                const totalRows = ROWS + ROWS + 2;
+                heightBasedSize = availableHeight / totalRows;
+                const maxWidth = windowWidth * 0.9;
+                widthBasedSize = maxWidth / COLS;
+            }
+
+            let gridSize = Math.floor(Math.min(widthBasedSize, heightBasedSize));
+            return Math.max(Math.min(gridSize, 30), 8);
+        }
+
+        // 检查教程状态
         function checkTutorialStatus() {
-            // 不读取localStorage，每次都显示教程
             gameState.hasSeenTutorial = false;
-            // 显示教程
-            setTimeout(() => {
-                tutorialMessage.classList.add('show');
-            }, 500);
+            setTimeout(() => elements.tutorialMessage.classList.add('show'), 500);
         }
 
-        /**
-         * 关闭教程提示
-         */
+        // 关闭教程
         function closeTutorial() {
-            tutorialMessage.classList.remove('show');
+            elements.tutorialMessage.classList.remove('show');
             gameState.hasSeenTutorial = true;
-            // 不保存到localStorage
         }
 
-        /**
-         * 更新容器尺寸，确保布局正确
-         */
+        // 更新容器尺寸
         function updateContainerSizes() {
             const gridSize = gameState.gridSize;
             const isPortrait = gameState.isPortrait;
 
-            // 获取标题高度
-            const piecesTitleHeight = getTitleHeight(piecesGrid);
-            const targetTitleHeight = getTitleHeight(targetGrid);
+            const piecesTitleHeight = getTitleHeight(elements.piecesGrid);
+            const targetTitleHeight = getTitleHeight(elements.targetGrid);
 
-            // 计算网格宽高
-            const gridWidth = 16 * gridSize;
-            const gridHeight = 14 * gridSize;
+            const gridWidth = COLS * gridSize;
+            const gridHeight = ROWS * gridSize;
 
-            // 设置方块容器尺寸
-            const piecesHeight = gridHeight + piecesTitleHeight;
             const piecesContainer = document.getElementById('pieces-container');
+            const piecesHeight = gridHeight + piecesTitleHeight;
             piecesContainer.style.width = `${gridWidth}px`;
             piecesContainer.style.maxWidth = `${gridWidth}px`;
             piecesContainer.style.height = `${piecesHeight}px`;
 
-            // 设置目标容器尺寸
             const targetHeight = gridHeight + targetTitleHeight;
-            targetContainer.style.width = `${gridWidth}px`;
-            targetContainer.style.maxWidth = `${gridWidth}px`;
-            targetContainer.style.height = `${targetHeight}px`;
+            elements.targetContainer.style.width = `${gridWidth}px`;
+            elements.targetContainer.style.maxWidth = `${gridWidth}px`;
+            elements.targetContainer.style.height = `${targetHeight}px`;
 
-            // 设置中间区域尺寸
-            centerWrapper.style.width = `${gridWidth}px`;
-            centerWrapper.style.maxWidth = `${gridWidth}px`;
+            elements.centerWrapper.style.width = `${gridWidth}px`;
+            elements.centerWrapper.style.maxWidth = `${gridWidth}px`;
 
-            // 根据横竖屏调整布局
             if (isPortrait) {
-                gameMainArea.classList.add('portrait');
-                gameMainArea.style.maxWidth = `${gridWidth}px`;
+                elements.gameMainArea.classList.add('portrait');
+                elements.gameMainArea.style.maxWidth = `${gridWidth}px`;
             } else {
-                gameMainArea.classList.remove('portrait');
-                gameMainArea.style.maxWidth = 'none';
+                elements.gameMainArea.classList.remove('portrait');
+                elements.gameMainArea.style.maxWidth = 'none';
             }
         }
 
-        /**
-         * 获取标题高度
-         * @param {HTMLElement} gridElement 网格元素
-         * @returns {number} 标题高度
-         */
+        // 获取标题高度
         function getTitleHeight(gridElement) {
             const container = gridElement.parentElement;
             const title = container.querySelector('div:first-child');
             return title ? title.offsetHeight : 0;
         }
 
-        /**
-         * 处理全屏状态变化
-         */
+        // 处理全屏变化
         function handleFullscreenChange() {
             gameState.isFullscreen = !!document.fullscreenElement ||
                 !!document.webkitFullscreenElement ||
                 !!document.mozFullScreenElement ||
                 !!document.msFullscreenElement;
 
-            // 更新全屏按钮状态
             if (gameState.isFullscreen) {
-                fullscreenIcon.className = 'fa fa-compress';
-                fullscreenText.textContent = '退出全屏';
+                elements.fullscreenIcon.className = 'fa fa-compress';
+                elements.fullscreenText.textContent = '退出全屏';
                 document.body.classList.add('fullscreen-active');
             } else {
-                fullscreenIcon.className = 'fa fa-expand';
-                fullscreenText.textContent = '全屏';
+                elements.fullscreenIcon.className = 'fa fa-expand';
+                elements.fullscreenText.textContent = '全屏';
                 document.body.classList.remove('fullscreen-active');
             }
 
-            // 调整布局
             handleResize();
         }
 
-        /**
-         * 切换全屏状态
-         */
+        // 切换全屏
         function toggleFullscreen() {
             if (!gameState.isFullscreen) {
                 const docEl = document.documentElement;
-                // 尝试各种浏览器的全屏API
-                if (docEl.requestFullscreen) {
-                    docEl.requestFullscreen().catch(err => console.error(`进入全屏失败: ${err.message}`));
-                } else if (docEl.webkitRequestFullscreen) {
-                    docEl.webkitRequestFullscreen().catch(err => console.error(`进入全屏失败: ${err.message}`));
-                } else if (docEl.msRequestFullscreen) {
-                    docEl.msRequestFullscreen().catch(err => console.error(`进入全屏失败: ${err.message}`));
-                }
+                if (docEl.requestFullscreen) docEl.requestFullscreen().catch(err => console.error(`进入全屏失败: ${err.message}`));
+                else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(err => console.error(`进入全屏失败: ${err.message}`));
+                else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen().catch(err => console.error(`进入全屏失败: ${err.message}`));
             } else {
-                // 退出全屏
                 if (document.exitFullscreen) document.exitFullscreen();
                 else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
                 else if (document.msExitFullscreen) document.msExitFullscreen();
             }
         }
 
-        /**
-         * 处理窗口大小变化，调整游戏布局
-         */
+        // 处理窗口大小变化
         function handleResize() {
             const oldSize = gameState.gridSize;
             const oldOrientation = gameState.isPortrait;
 
-            // 更新屏幕方向和网格大小
             gameState.isPortrait = window.innerHeight > window.innerWidth;
             gameState.gridSize = calculateGridSize();
 
-            // 如果尺寸或方向变化，重新渲染
             if (Math.abs(gameState.gridSize - oldSize) > 0 || gameState.isPortrait !== oldOrientation) {
                 const scaleRatio = gameState.gridSize / oldSize || 1;
 
-                // 清空网格
-                clearGrid(piecesGrid);
-                clearGrid(targetGrid);
+                clearGrid(elements.piecesGrid);
+                clearGrid(elements.targetGrid);
 
-                // 重新创建网格背景
-                createGridBackground(piecesGrid, 16, 14);
-                createGridBackground(targetGrid, 16, 14);
+                createGridBackground(elements.piecesGrid);
+                createGridBackground(elements.targetGrid);
 
-                // 更新容器尺寸
                 updateContainerSizes();
 
-                // 重新定位所有方块
                 gameState.pieces.forEach(piece => {
                     piece.col = Math.round(piece.col * scaleRatio);
                     piece.row = Math.round(piece.row * scaleRatio);
                     renderPiece(piece);
                 });
 
-                // 重新渲染目标图形
                 renderTargetShape();
             }
         }
 
-        /**
-         * 清空网格内容
-         * @param {HTMLElement} grid 网格元素
-         */
+        // 清空网格
         function clearGrid(grid) {
             while (grid.firstChild) grid.removeChild(grid.firstChild);
         }
 
-        /**
-         * 创建网格背景
-         * @param {HTMLElement} container 容器元素
-         * @param {number} cols 列数
-         * @param {number} rows 行数
-         */
-        function createGridBackground(container, cols, rows) {
+        // 创建网格背景
+        function createGridBackground(container) {
             const gridSize = gameState.gridSize;
-            const containerWidth = cols * gridSize;
-            const containerHeight = rows * gridSize;
+            const containerWidth = COLS * gridSize;
+            const containerHeight = ROWS * gridSize;
 
-            // 设置网格样式
-            container.style.gridTemplateColumns = `repeat(${cols}, ${gridSize}px)`;
+            container.style.gridTemplateColumns = `repeat(${COLS}, ${gridSize}px)`;
             container.style.width = `${containerWidth}px`;
             container.style.height = `${containerHeight}px`;
             container.style.position = 'relative';
 
-            // 创建网格单元格
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
                     const cell = document.createElement('div');
                     cell.className = 'grid-cell';
                     cell.style.width = `${gridSize}px`;
@@ -1118,32 +838,21 @@
             }
         }
 
-        /**
-         * 创建所有方块
-         */
+        // 创建所有方块
         function createAllPieces() {
             gameState.pieces = [];
-
-            // 根据游戏模式选择不同的方块定义和初始位置
             const definitions = gameState.mode === 'classic' ? classicPieceDefinitions : newPieceDefinitions;
             const positions = gameState.mode === 'classic' ? classicInitialPositions : newInitialPositions;
-
-            // 创建所有方块
             const ids = Object.keys(definitions).map(Number);
-            for (const id of ids) {
+
+            ids.forEach(id => {
                 const piece = createPiece(id, definitions, positions);
                 gameState.pieces.push(piece);
                 renderPiece(piece);
-            }
+            });
         }
 
-        /**
-         * 创建单个方块
-         * @param {number} id 方块ID
-         * @param {Object} definitions 方块定义
-         * @param {Object} positions 初始位置
-         * @returns {Object} 方块对象
-         */
+        // 创建单个方块
         function createPiece(id, definitions, positions) {
             const def = definitions[id];
             const pos = positions[id];
@@ -1163,12 +872,8 @@
             };
         }
 
-        /**
-         * 渲染方块
-         * @param {Object} piece 方块对象
-         */
+        // 渲染方块
         function renderPiece(piece) {
-            // 移除旧元素
             if (piece.element) piece.element.remove();
 
             const gridSize = gameState.gridSize;
@@ -1177,16 +882,13 @@
             pieceEl.dataset.id = piece.id;
             pieceEl.dataset.type = piece.type;
 
-            // 提示状态下提高层级
             if (gameState.hintActive) pieceEl.classList.add('z-30');
 
-            // 获取方块形状
             const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
             const shape = shapes[piece.type][piece.rotation];
             pieceEl.style.left = `${piece.col * gridSize}px`;
             pieceEl.style.top = `${piece.row * gridSize}px`;
 
-            // 创建方块的每个小格子
             shape.forEach(([dr, dc]) => {
                 const block = document.createElement('div');
                 block.className = `tetris-block bg-${piece.color} absolute`;
@@ -1198,50 +900,34 @@
                 pieceEl.appendChild(block);
             });
 
-            // 添加到相应容器
-            const container = piece.container === 'pieces' ? piecesGrid : targetGrid;
+            const container = piece.container === 'pieces' ? elements.piecesGrid : elements.targetGrid;
             container.appendChild(pieceEl);
             piece.element = pieceEl;
 
-            // 添加事件监听
             addPieceEvents(piece);
-            // 限制在容器内
             constrainPieceToContainer(piece);
         }
 
-        /**
-         * 限制方块在容器内
-         * @param {Object} piece 方块对象
-         */
+        // 限制方块在容器内
         function constrainPieceToContainer(piece) {
             if (!piece.element) return;
 
-            const cols = 16;
-            const rows = 14;
-
-            // 获取方块形状
             const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
             const shape = shapes[piece.type][piece.rotation];
             const maxDr = Math.max(...shape.map(([dr, _]) => dr));
             const maxDc = Math.max(...shape.map(([_, dc]) => dc));
 
-            // 计算最大可放置位置
-            const maxCol = cols - maxDc - 1;
-            const maxRow = rows - maxDr - 1;
+            const maxCol = COLS - maxDc - 1;
+            const maxRow = ROWS - maxDr - 1;
 
-            // 限制位置在容器内
             piece.col = Math.max(0, Math.min(piece.col, maxCol));
             piece.row = Math.max(0, Math.min(piece.row, maxRow));
 
-            // 更新位置
             piece.element.style.left = `${piece.col * gameState.gridSize}px`;
             piece.element.style.top = `${piece.row * gameState.gridSize}px`;
         }
 
-        /**
-         * 为方块添加事件监听
-         * @param {Object} piece 方块对象
-         */
+        // 为方块添加事件
         function addPieceEvents(piece) {
             const el = piece.element;
 
@@ -1251,25 +937,22 @@
                 rotatePiece(piece);
             });
 
-            // 触摸事件（移动端）
+            // 触摸事件
             el.addEventListener('touchstart', (e) => {
                 e.preventDefault();
 
                 const now = Date.now();
                 const timeSinceLastTouch = now - gameState.lastTouchTime;
 
-                // 检测双击（300ms内两次触摸）
                 if (timeSinceLastTouch < 300 && timeSinceLastTouch > 0) {
                     rotatePiece(piece);
                     gameState.touchCount = 0;
                     if (gameState.touchTimeout) clearTimeout(gameState.touchTimeout);
                 } else {
-                    // 开始拖动
                     const touch = e.touches[0];
                     startDrag(piece, touch);
                     gameState.touchCount++;
 
-                    // 重置触摸计数超时
                     if (gameState.touchTimeout) clearTimeout(gameState.touchTimeout);
                     gameState.touchTimeout = setTimeout(() => gameState.touchCount = 0, 300);
                 }
@@ -1277,46 +960,33 @@
                 gameState.lastTouchTime = now;
             }, { passive: false });
 
-            // 鼠标事件（桌面端）
+            // 鼠标事件
             el.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
                 startDrag(piece, e);
             });
         }
 
-        /**
-         * 旋转方块
-         * @param {Object} piece 方块对象
-         */
+        // 旋转方块
         function rotatePiece(piece) {
             const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
             const rotationCount = shapes[piece.type].length;
-
-            // 旋转（循环）
             piece.rotation = (piece.rotation + 1) % rotationCount;
             renderPiece(piece);
-            // 确保旋转后仍在容器内
             constrainPieceToContainer(piece);
         }
 
-        /**
-         * 开始拖动方块
-         * @param {Object} piece 方块对象
-         * @param {Event} e 事件对象
-         */
+        // 开始拖动
         function startDrag(piece, e) {
             gameState.isDragging = true;
             gameState.draggedPiece = piece;
 
-            // 计算拖动偏移量
             const rect = piece.element.getBoundingClientRect();
             gameState.dragOffset.x = e.clientX - rect.left;
             gameState.dragOffset.y = e.clientY - rect.top;
 
-            // 添加拖动状态样式
             piece.element.classList.add('z-20', 'scale-110', 'shadow-tetris-hover');
 
-            // 添加拖动相关事件监听
             document.addEventListener('mousemove', dragMove);
             document.addEventListener('mouseup', stopDrag);
             document.addEventListener('mouseleave', stopDrag);
@@ -1326,123 +996,91 @@
             document.addEventListener('touchcancel', touchStopDrag);
         }
 
-        /**
-         * 触摸拖动处理
-         * @param {Event} e 触摸事件
-         */
+        // 触摸拖动
         function touchDragMove(e) {
             e.preventDefault();
             if (e.touches && e.touches.length > 0) dragMove(e.touches[0]);
         }
 
-        /**
-         * 触摸结束拖动处理
-         */
+        // 触摸停止拖动
         function touchStopDrag() {
             stopDrag();
-            // 移除事件监听
             document.removeEventListener('touchmove', touchDragMove);
             document.removeEventListener('touchend', touchStopDrag);
             document.removeEventListener('touchcancel', touchStopDrag);
         }
 
-        /**
-         * 拖动过程处理
-         * @param {Event} e 事件对象
-         */
+        // 拖动移动
         function dragMove(e) {
             if (!gameState.isDragging || !gameState.draggedPiece) return;
 
             const piece = gameState.draggedPiece;
             const gridSize = gameState.gridSize;
 
-            // 获取当前容器信息
-            const currentContainer = piece.container === 'pieces' ? piecesGrid : targetGrid;
+            const currentContainer = piece.container === 'pieces' ? elements.piecesGrid : elements.targetGrid;
             const currentContainerRect = currentContainer.getBoundingClientRect();
 
-            // 计算位置
             let x = e.clientX - currentContainerRect.left - gameState.dragOffset.x;
             let y = e.clientY - currentContainerRect.top - gameState.dragOffset.y;
 
             let col = Math.round(x / gridSize);
             let row = Math.round(y / gridSize);
 
-            // 检测是否拖动到目标区域
-            const targetRect = targetGrid.getBoundingClientRect();
-            const isOverTarget = e.clientX >= targetRect.left &&
-                e.clientX <= targetRect.right &&
-                e.clientY >= targetRect.top &&
-                e.clientY <= targetRect.bottom;
+            const targetRect = elements.targetGrid.getBoundingClientRect();
+            const isOverTarget = e.clientX >= targetRect.left && e.clientX <= targetRect.right &&
+                e.clientY >= targetRect.top && e.clientY <= targetRect.bottom;
 
-            // 如果拖动到目标区域且当前不在目标区域
             if (isOverTarget && piece.container !== 'target') {
                 piece.element.remove();
                 piece.container = 'target';
-                targetGrid.appendChild(piece.element);
+                elements.targetGrid.appendChild(piece.element);
 
-                // 重新计算位置
                 x = e.clientX - targetRect.left - gameState.dragOffset.x;
                 y = e.clientY - targetRect.top - gameState.dragOffset.y;
                 col = Math.round(x / gridSize);
                 row = Math.round(y / gridSize);
-            }
-            // 如果拖动出目标区域且当前在目标区域
-            else if (!isOverTarget && piece.container === 'target') {
+            } else if (!isOverTarget && piece.container === 'target') {
                 piece.element.remove();
                 piece.container = 'pieces';
-                piecesGrid.appendChild(piece.element);
+                elements.piecesGrid.appendChild(piece.element);
 
-                // 重新计算位置
-                const piecesRect = piecesGrid.getBoundingClientRect();
+                const piecesRect = elements.piecesGrid.getBoundingClientRect();
                 x = e.clientX - piecesRect.left - gameState.dragOffset.x;
                 y = e.clientY - piecesRect.top - gameState.dragOffset.y;
                 col = Math.round(x / gridSize);
                 row = Math.round(y / gridSize);
             }
 
-            // 获取方块形状信息
             const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
             const shape = shapes[piece.type][piece.rotation];
             const maxDc = Math.max(...shape.map(([_, dc]) => dc));
             const maxDr = Math.max(...shape.map(([dr, _]) => dr));
 
-            const cols = 16;
-            const rows = 14;
+            const maxCol = COLS - maxDc - 1;
+            const maxRow = ROWS - maxDr - 1;
 
-            // 计算最大可放置位置
-            const maxCol = cols - maxDc - 1;
-            const maxRow = rows - maxDr - 1;
-
-            // 限制位置在容器内
             piece.col = Math.max(0, Math.min(col, maxCol));
             piece.row = Math.max(0, Math.min(row, maxRow));
 
-            // 更新位置
             piece.element.style.left = `${piece.col * gridSize}px`;
             piece.element.style.top = `${piece.row * gridSize}px`;
         }
 
-        /**
-         * 停止拖动
-         */
+        // 停止拖动
         function stopDrag() {
             if (!gameState.isDragging || !gameState.draggedPiece) return;
 
             const piece = gameState.draggedPiece;
             const gridSize = gameState.gridSize;
 
-            // 移除拖动状态样式
             piece.element.classList.remove('z-20', 'scale-110', 'shadow-tetris-hover');
             if (gameState.hintActive) piece.element.classList.add('z-30');
 
-            // 确保位置正确
             piece.element.style.left = `${piece.col * gridSize}px`;
             piece.element.style.top = `${piece.row * gridSize}px`;
 
-            // 检查是否完成关卡
             checkLevelCompletion();
 
-            // 如果有提示，更新提示状态
             if (gameState.hintActive && gameState.hintedPieces.some(hp => hp.id === piece.id)) {
                 const remainingHints = gameState.hintedPieces.filter(hp =>
                     !gameState.pieces.some(p => p.id === hp.id && p.container === 'target')
@@ -1455,58 +1093,40 @@
                 }
             }
 
-            // 重置拖动状态
             gameState.isDragging = false;
             gameState.draggedPiece = null;
 
-            // 移除事件监听
             document.removeEventListener('mousemove', dragMove);
             document.removeEventListener('mouseup', stopDrag);
             document.removeEventListener('mouseleave', stopDrag);
         }
 
-        /**
-         * 计算当前关卡的方块数量
-         * @returns {number} 方块数量
-         */
+        // 计算方块数量
         function calculatePieceCount() {
-            let minPieces, maxPieces;
-
-            // 根据难度设置方块数量范围
+            let [minPieces, maxPieces] = [2, 4];
             switch (gameState.difficulty) {
-                case 'easy':
-                    minPieces = 2; maxPieces = 4; break;
-                case 'medium':
-                    minPieces = 5; maxPieces = 8; break;
-                case 'hard':
-                    minPieces = 9; maxPieces = gameState.mode === 'classic' ? 14 : 16; break;
+                case 'medium': [minPieces, maxPieces] = [5, 8]; break;
+                case 'hard': [minPieces, maxPieces] = [9, gameState.mode === 'classic' ? 14 : 16]; break;
             }
 
-            // 根据当前关卡计算方块数量（随关卡增加而增加）
             const totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
             const progress = (gameState.level - 1) / (totalLevels - 1);
             const pieceCount = Math.round(minPieces + progress * (maxPieces - minPieces));
 
-            // 确保在范围内
             return Math.max(minPieces, Math.min(pieceCount, maxPieces));
         }
 
-        /**
-         * 生成当前关卡
-         */
+        // 生成关卡
         function generateLevel() {
-            clearTargetArea(); // 清空目标区域
+            clearTargetArea();
 
-            // 更新方块数量
             gameState.pieceCount = calculatePieceCount();
-            piecesCountDisplay.textContent = gameState.pieceCount;
+            elements.piecesCountDisplay.textContent = gameState.pieceCount;
 
-            // 随机选择方块
             const totalPieces = gameState.mode === 'classic' ? 14 : 16;
             const allPieceIds = Array.from({ length: totalPieces }, (_, i) => i + 1);
             gameState.usedPieceIds = [];
 
-            // 随机选择指定数量的方块
             while (gameState.usedPieceIds.length < gameState.pieceCount) {
                 const randomId = allPieceIds[Math.floor(Math.random() * allPieceIds.length)];
                 if (!gameState.usedPieceIds.includes(randomId)) {
@@ -1514,15 +1134,11 @@
                 }
             }
 
-            // 生成目标图形
             generateTargetShape();
         }
 
-        /**
-         * 清空目标区域
-         */
+        // 清空目标区域
         function clearTargetArea() {
-            // 重置所有方块位置
             gameState.pieces.forEach(piece => {
                 piece.row = piece.originalRow;
                 piece.col = piece.originalCol;
@@ -1530,55 +1146,32 @@
                 renderPiece(piece);
             });
 
-            // 清空目标图形
             gameState.targetShape = [];
             gameState.targetShapeColors.clear();
             document.querySelectorAll('#target-grid .target-block').forEach(block => block.remove());
-
-            // 隐藏成功消息
-            successMessage.classList.add('opacity-0', 'pointer-events-none');
-            // 清除提示
+            elements.successMessage.classList.add('opacity-0', 'pointer-events-none');
             clearHint();
         }
 
-        /**
-         * 检查两个位置是否相邻
-         * @param {number} r1 行1
-         * @param {number} c1 列1
-         * @param {number} r2 行2
-         * @param {number} c2 列2
-         * @returns {boolean} 是否相邻
-         */
+        // 检查相邻
         function areAdjacent(r1, c1, r2, c2) {
-            return (Math.abs(r1 - r2) === 1 && c1 === c2) ||
-                (Math.abs(c1 - c2) === 1 && r1 === r2);
+            return (Math.abs(r1 - r2) === 1 && c1 === c2) || (Math.abs(c1 - c2) === 1 && r1 === r2);
         }
 
-        /**
-         * 获取与目标块相邻的空位置
-         * @param {Set} targetBlocks 目标块集合
-         * @param {number} rows 行数
-         * @param {number} cols 列数
-         * @returns {Array} 相邻空位置数组
-         */
+        // 获取相邻空位置
         function getAdjacentEmptyPositions(targetBlocks, rows, cols) {
             const adjacentPositions = new Set();
 
             targetBlocks.forEach(block => {
                 const [r, c] = block.split(',').map(Number);
-
-                // 检查四个方向
                 const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
                 directions.forEach(([dr, dc]) => {
                     const nr = r + dr;
                     const nc = c + dc;
-
-                    // 检查是否在范围内且未被占用
                     if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
                         const pos = `${nr},${nc}`;
-                        if (!targetBlocks.has(pos)) {
-                            adjacentPositions.add(pos);
-                        }
+                        if (!targetBlocks.has(pos)) adjacentPositions.add(pos);
                     }
                 });
             });
@@ -1586,41 +1179,26 @@
             return Array.from(adjacentPositions);
         }
 
-        /**
-         * 检查形状是否与目标块相邻
-         * @param {Array} shape 形状
-         * @param {number} baseRow 基准行
-         * @param {number} baseCol 基准列
-         * @param {Set} targetBlocks 目标块集合
-         * @returns {boolean} 是否相邻
-         */
+        // 检查形状相邻
         function checkShapeAdjacency(shape, baseRow, baseCol, targetBlocks) {
             for (const [sr, sc] of shape) {
                 const r = baseRow + sr;
                 const c = baseCol + sc;
-
-                // 检查四个方向
                 const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
                 for (const [dr, dc] of directions) {
                     const nr = r + dr;
                     const nc = c + dc;
-                    if (targetBlocks.has(`${nr},${nc}`)) {
-                        return true;
-                    }
+                    if (targetBlocks.has(`${nr},${nc}`)) return true;
                 }
             }
             return false;
         }
 
-        /**
-         * 检查目标块是否完全连通
-         * @param {Set} targetBlocks 目标块集合
-         * @returns {boolean} 是否完全连通
-         */
+        // 检查连通性
         function isFullyConnected(targetBlocks) {
             if (targetBlocks.size <= 1) return true;
 
-            // 使用BFS检查连通性
             const blocksArray = Array.from(targetBlocks);
             const startBlock = blocksArray[0];
             const visited = new Set();
@@ -1631,29 +1209,24 @@
             while (queue.length > 0) {
                 const current = queue.shift();
                 const [r, c] = current.split(',').map(Number);
-
-                // 检查四个方向
                 const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-                for (const [dr, dc] of directions) {
+
+                directions.forEach(([dr, dc]) => {
                     const nr = r + dr;
                     const nc = c + dc;
                     const neighbor = `${nr},${nc}`;
 
-                    // 如果是目标块且未访问过
                     if (targetBlocks.has(neighbor) && !visited.has(neighbor)) {
                         visited.add(neighbor);
                         queue.push(neighbor);
                     }
-                }
+                });
             }
 
-            // 所有块都被访问到则连通
             return visited.size === targetBlocks.size;
         }
 
-        /**
-         * 生成目标图形
-         */
+        // 生成目标形状
         function generateTargetShape() {
             const targetBlocks = new Set();
             const usedPieces = gameState.pieces.filter(p => gameState.usedPieceIds.includes(p.id));
@@ -1661,23 +1234,18 @@
 
             let placed = false;
             let attempts = 0;
-            const maxAttempts = 300; // 最大尝试次数
+            const maxAttempts = 300;
 
-            // 目标区域范围（留出边界）
-            const targetCols = 16;
-            const targetRows = 14;
             const minCol = 1;
-            const maxCol = targetCols - 2;
+            const maxCol = COLS - 2;
             const minRow = 1;
-            const maxRow = targetRows - 2;
+            const maxRow = ROWS - 2;
 
-            // 尝试生成连通的目标图形
             while (!placed && attempts < maxAttempts) {
                 attempts++;
                 targetBlocks.clear();
                 gameState.targetShapeColors.clear();
 
-                // 放置第一个方块
                 const firstPiece = usedPieces[0];
                 const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
                 const rotationCount = shapes[firstPiece.type].length;
@@ -1688,22 +1256,16 @@
                 const shape = shapes[firstPiece.type][firstRotation];
                 let firstPieceValid = true;
 
-                // 检查第一个方块是否在有效范围内
                 shape.forEach(([dr, dc]) => {
                     const r = startRow + dr;
                     const c = startCol + dc;
-
-                    if (r < minRow || r > maxRow || c < minCol || c > maxCol) {
-                        firstPieceValid = false;
-                    }
-
+                    if (r < minRow || r > maxRow || c < minCol || c > maxCol) firstPieceValid = false;
                     targetBlocks.add(`${r},${c}`);
                     gameState.targetShapeColors.set(`${r},${c}`, firstPiece.color);
                 });
 
                 if (!firstPieceValid) continue;
 
-                // 放置剩余方块
                 let allPlaced = true;
                 for (let i = 1; i < usedPieces.length; i++) {
                     const piece = usedPieces[i];
@@ -1711,14 +1273,11 @@
                     const shape = shapes[piece.type][rotation];
                     let placedPiece = false;
 
-                    // 获取与已有块相邻的位置
-                    const adjacentPositions = getAdjacentEmptyPositions(targetBlocks, targetRows, targetCols);
+                    const adjacentPositions = getAdjacentEmptyPositions(targetBlocks, ROWS, COLS);
 
-                    // 尝试放置方块
                     for (let attempt = 0; attempt < 100; attempt++) {
                         let baseRow, baseCol;
 
-                        // 前70%尝试放在相邻位置，后30%随机位置
                         if (adjacentPositions.length > 0 && attempt < 70) {
                             const pos = adjacentPositions[Math.floor(Math.random() * adjacentPositions.length)];
                             [baseRow, baseCol] = pos.split(',').map(Number);
@@ -1727,33 +1286,19 @@
                             baseCol = Math.floor(Math.random() * (maxCol - minCol + 1)) + minCol;
                         }
 
-                        // 检查是否可以放置
                         let canPlace = true;
                         const newBlocks = [];
 
                         shape.forEach(([sr, sc]) => {
                             const r = baseRow + sr;
                             const c = baseCol + sc;
-
-                            // 检查是否在范围内
-                            if (r < minRow || r > maxRow || c < minCol || c > maxCol) {
-                                canPlace = false;
-                            }
-
-                            // 检查是否与已有块重叠
-                            if (targetBlocks.has(`${r},${c}`)) {
-                                canPlace = false;
-                            }
-
+                            if (r < minRow || r > maxRow || c < minCol || c > maxCol) canPlace = false;
+                            if (targetBlocks.has(`${r},${c}`)) canPlace = false;
                             newBlocks.push(`${r},${c}`);
                         });
 
-                        // 检查是否与已有块相邻
-                        if (canPlace) {
-                            canPlace = checkShapeAdjacency(shape, baseRow, baseCol, targetBlocks);
-                        }
+                        if (canPlace) canPlace = checkShapeAdjacency(shape, baseRow, baseCol, targetBlocks);
 
-                        // 如果可以放置，添加到目标块
                         if (canPlace) {
                             newBlocks.forEach(block => {
                                 targetBlocks.add(block);
@@ -1764,29 +1309,20 @@
                         }
                     }
 
-                    // 如果无法放置当前方块，重新尝试
                     if (!placedPiece) {
                         allPlaced = false;
                         break;
                     }
                 }
 
-                // 检查所有块是否连通
-                if (allPlaced) {
-                    allPlaced = isFullyConnected(targetBlocks);
-                }
+                if (allPlaced) allPlaced = isFullyConnected(targetBlocks);
 
-                // 如果所有方块都已放置且连通，完成生成
-                if (allPlaced) {
-                    placed = true;
-                }
+                if (allPlaced) placed = true;
             }
 
-            // 如果多次尝试失败，使用当前结果（保底）
             if (!placed) {
                 console.log(`警告: 尝试${maxAttempts}次后仍无法生成完全连通的图形，使用当前结果`);
                 if (targetBlocks.size === 0 && usedPieces.length > 0) {
-                    // 至少放置第一个方块
                     const firstPiece = usedPieces[0];
                     const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
                     const shape = shapes[firstPiece.type][0];
@@ -1799,36 +1335,28 @@
                 }
             }
 
-            // 保存目标图形
             gameState.targetShape = Array.from(targetBlocks).map(block => {
                 const [r, c] = block.split(',').map(Number);
                 return { row: r, col: c };
             });
 
-            // 渲染目标图形
             renderTargetShape();
         }
 
-        /**
-         * 渲染目标图形
-         */
+        // 渲染目标形状
         function renderTargetShape() {
-            // 移除旧的目标块
             document.querySelectorAll('#target-grid .target-block').forEach(block => block.remove());
 
             const gridSize = gameState.gridSize;
-            const targetGridStyle = window.getComputedStyle(targetGrid);
+            const targetGridStyle = window.getComputedStyle(elements.targetGrid);
             const targetPaddingTop = parseFloat(targetGridStyle.paddingTop);
             const targetPaddingLeft = parseFloat(targetGridStyle.paddingLeft);
 
-            // 创建目标块
             gameState.targetShape.forEach(({ row, col }) => {
                 const blockId = `${row},${col}`;
                 const block = document.createElement('div');
-
                 let classes = 'tetris-block absolute target-block';
 
-                // 提示状态下显示颜色
                 if (gameState.hintActive) {
                     const color = gameState.targetShapeColors.get(blockId);
                     classes += ` bg-${color} opacity-95 hint target-hint-pulse hint-active`;
@@ -1842,17 +1370,14 @@
                 block.style.left = `${col * gridSize + targetPaddingLeft}px`;
                 block.style.top = `${row * gridSize + targetPaddingTop}px`;
                 block.style.boxSizing = 'border-box';
-                targetGrid.appendChild(block);
+                elements.targetGrid.appendChild(block);
             });
         }
 
-        /**
-         * 检查关卡是否完成
-         */
+        // 检查关卡完成
         function checkLevelCompletion() {
             const placedBlocks = new Set();
 
-            // 收集所有已放置在目标区域的方块
             gameState.pieces.forEach(piece => {
                 if (piece.container === 'target') {
                     const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
@@ -1865,84 +1390,58 @@
                 }
             });
 
-            // 获取目标图形的所有块
             const targetBlocks = new Set(gameState.targetShape.map(({ row, col }) => `${row},${col}`));
 
-            // 检查块数量是否一致
             if (placedBlocks.size === targetBlocks.size) {
                 let isComplete = true;
-
-                // 检查所有放置的块是否都在目标图形中
                 placedBlocks.forEach(block => {
                     if (!targetBlocks.has(block)) isComplete = false;
                 });
 
-                // 如果完成，显示成功消息
                 if (isComplete) completeLevel();
             }
         }
 
-        /**
-         * 完成当前关卡
-         */
+        // 完成关卡
         function completeLevel() {
-            successMessage.classList.remove('opacity-0', 'pointer-events-none');
-            handleLevelProgression(); // 处理关卡进度
-            saveGameProgress(); // 保存游戏进度
+            elements.successMessage.classList.remove('opacity-0', 'pointer-events-none');
+            handleLevelProgression();
+            saveGameProgress();
         }
 
-        /**
-         * 处理关卡进度
-         */
+        // 处理关卡进度
         function handleLevelProgression() {
             const currentDifficulty = gameState.difficulty;
             const currentLevel = gameState.level;
             const totalLevels = DIFFICULTY_LEVELS[currentDifficulty];
 
-            // 检查是否完成当前难度所有关卡
             if (currentLevel >= totalLevels) {
                 switch (currentDifficulty) {
                     case 'easy':
-                        // 简单 -> 一般
                         gameState.difficulty = 'medium';
                         gameState.level = 1;
-                        difficultySelect.value = 'medium';
+                        elements.difficultySelect.value = 'medium';
                         break;
                     case 'medium':
-                        // 一般 -> 困难
                         gameState.difficulty = 'hard';
                         gameState.level = 1;
-                        difficultySelect.value = 'hard';
+                        elements.difficultySelect.value = 'hard';
                         break;
                     case 'hard':
-                        // 困难 -> 保持在最后一关
                         gameState.level = totalLevels;
-                        showMessage('恭喜您已完成所有难度！将继续挑战困难难度最后一关。');
+                        elements.successMessage.querySelector('p').textContent = '恭喜您已完成所有难度！将继续挑战困难难度最后一关。';
                         break;
                 }
             } else {
-                // 进入下一关
                 gameState.level++;
             }
 
-            // 更新显示
             gameState.totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
-            levelDisplay.textContent = gameState.level;
-            totalLevelsDisplay.textContent = gameState.totalLevels;
+            elements.levelDisplay.textContent = gameState.level;
+            elements.totalLevelsDisplay.textContent = gameState.totalLevels;
         }
 
-        /**
-         * 显示消息
-         * @param {string} text 消息文本
-         */
-        function showMessage(text) {
-            const message = successMessage.querySelector('p');
-            message.textContent = text;
-        }
-
-        /**
-         * 重置所有方块位置
-         */
+        // 重置方块
         function resetPieces() {
             gameState.pieces.forEach(piece => {
                 piece.row = piece.originalRow;
@@ -1954,26 +1453,19 @@
             clearHint();
         }
 
-        /**
-         * 清除提示
-         */
+        // 清除提示
         function clearHint() {
             if (gameState.hintActive) {
                 gameState.hintActive = false;
                 gameState.hintedPieces = [];
 
-                // 移除提示样式
                 document.querySelectorAll('.tetris-piece').forEach(el => {
                     el.classList.remove('shadow-hint', 'pulse-animation', 'scale-110', 'z-30', 'opacity-70');
-                    el.querySelectorAll('.tetris-block').forEach(block => {
-                        block.style.opacity = '1';
-                    });
+                    el.querySelectorAll('.tetris-block').forEach(block => block.style.opacity = '1');
                 });
 
-                // 重新渲染目标图形（关闭提示状态）
                 renderTargetShape();
 
-                // 清除提示计时器
                 if (gameState.hintTimer) {
                     clearTimeout(gameState.hintTimer);
                     gameState.hintTimer = null;
@@ -1981,36 +1473,27 @@
             }
         }
 
-        /**
-         * 更新剩余提示方块的样式
-         * @param {Array} remainingPieces 剩余提示方块
-         */
+        // 更新剩余提示
         function updateHintForRemainingPieces(remainingPieces) {
-            // 移除所有提示样式
             document.querySelectorAll('.tetris-piece').forEach(el => {
                 el.classList.remove('shadow-hint', 'pulse-animation', 'scale-110');
             });
 
-            // 更新剩余提示方块
             gameState.hintedPieces = remainingPieces;
 
-            // 为剩余提示方块添加样式
             remainingPieces.forEach(piece => {
                 const pieceEl = document.querySelector(`.tetris-piece[data-id="${piece.id}"]`);
                 if (pieceEl) pieceEl.classList.add('shadow-hint', 'pulse-animation', 'scale-110');
             });
         }
 
-        /**
-         * 显示提示
-         */
+        // 显示提示
         function showHint() {
-            clearHint(); // 先清除现有提示
+            clearHint();
 
             gameState.hintActive = true;
             gameState.hintedPieces = [];
 
-            // 收集已放置的方块
             const placedPieces = gameState.pieces.filter(p => p.container === 'target');
             const placedBlocks = new Set();
 
@@ -2024,80 +1507,60 @@
                 });
             });
 
-            // 找出未放置的方块
             const unusedPieces = gameState.pieces.filter(p =>
                 gameState.usedPieceIds.includes(p.id) && p.container !== 'target'
             );
 
             if (unusedPieces.length === 0) return;
 
-            // 标记需要提示的方块
             gameState.hintedPieces = unusedPieces;
 
-            // 为提示方块添加样式
             unusedPieces.forEach(piece => {
                 const pieceEl = document.querySelector(`.tetris-piece[data-id="${piece.id}"]`);
                 if (pieceEl) pieceEl.classList.add('shadow-hint', 'pulse-animation', 'scale-110');
             });
 
-            // 重新渲染方块和目标图形（显示提示）
             gameState.pieces.forEach(piece => renderPiece(piece));
             renderTargetShape();
 
-            // 设置提示自动消失
             gameState.hintTimer = setTimeout(clearHint, 2500);
         }
 
-        /**
-         * 进入下一关
-         */
+        // 下一关
         function nextLevel() {
-            successMessage.classList.add('opacity-0', 'pointer-events-none');
+            elements.successMessage.classList.add('opacity-0', 'pointer-events-none');
             handleLevelProgression();
             generateLevel();
             saveGameProgress();
         }
 
-        /**
-         * 切换游戏模式
-         * @param {string} mode 游戏模式：classic 或 new
-         */
+        // 切换游戏模式
         function switchGameMode(mode) {
             gameState.mode = mode;
 
-            // 清空网格
-            clearGrid(piecesGrid);
-            clearGrid(targetGrid);
+            clearGrid(elements.piecesGrid);
+            clearGrid(elements.targetGrid);
 
-            // 重新创建网格背景
-            createGridBackground(piecesGrid, 16, 14);
-            createGridBackground(targetGrid, 16, 14);
+            createGridBackground(elements.piecesGrid);
+            createGridBackground(elements.targetGrid);
 
-            // 加载该模式下的游戏进度
             loadGameProgress();
-            // 创建该模式下的方块
             createAllPieces();
-            // 生成关卡
             generateLevel();
         }
 
-        /**
-         * 保存游戏进度
-         */
+        // 保存游戏进度
         function saveGameProgress() {
             const progressKey = `tetrisPuzzleProgress-${gameState.mode}`;
-
             const progress = {
                 difficulty: gameState.difficulty,
                 level: gameState.level
             };
-
             localStorage.setItem(progressKey, JSON.stringify(progress));
         }
 
-        /**
-         * 加载游戏进度
-         */
+        // 加载游戏进度
+        // 加载游戏进度
         function loadGameProgress() {
             const progressKey = `tetrisPuzzleProgress-${gameState.mode}`;
             const savedProgress = localStorage.getItem(progressKey);
@@ -2106,71 +1569,49 @@
                 const progress = JSON.parse(savedProgress);
                 gameState.difficulty = progress.difficulty || 'easy';
                 gameState.level = progress.level || 1;
-
-                difficultySelect.value = gameState.difficulty;
-                levelDisplay.textContent = gameState.level;
+                elements.difficultySelect.value = gameState.difficulty;
+                elements.levelDisplay.textContent = gameState.level;
             } else {
-                // 默认从简单难度第一关开始
                 gameState.difficulty = 'easy';
                 gameState.level = 1;
-                difficultySelect.value = 'easy';
-                levelDisplay.textContent = '1';
+                elements.difficultySelect.value = 'easy';
+                elements.levelDisplay.textContent = '1';
             }
 
-            // 更新总关卡数显示
             gameState.totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
-            totalLevelsDisplay.textContent = gameState.totalLevels;
+            elements.totalLevelsDisplay.textContent = gameState.totalLevels;
         }
 
-        /**
-         * 添加事件监听器
-         */
+        // 添加事件监听
         function addEventListeners() {
-            // 教程关闭按钮
-            tutorialCloseBtn.addEventListener('click', closeTutorial);
-
-            // 游戏模式选择
-            gameModeSelect.addEventListener('change', () => {
-                switchGameMode(gameModeSelect.value);
-            });
-
-            // 难度选择
-            difficultySelect.addEventListener('change', () => {
-                gameState.difficulty = difficultySelect.value;
+            elements.tutorialCloseBtn.addEventListener('click', closeTutorial);
+            elements.gameModeSelect.addEventListener('change', () => switchGameMode(elements.gameModeSelect.value));
+            elements.difficultySelect.addEventListener('change', () => {
+                gameState.difficulty = elements.difficultySelect.value;
                 gameState.totalLevels = DIFFICULTY_LEVELS[gameState.difficulty];
-                totalLevelsDisplay.textContent = gameState.totalLevels;
+                elements.totalLevelsDisplay.textContent = gameState.totalLevels;
                 gameState.level = 1;
-                levelDisplay.textContent = gameState.level;
+                elements.levelDisplay.textContent = gameState.level;
                 generateLevel();
                 saveGameProgress();
             });
 
-            // 重置按钮
-            resetBtn.addEventListener('click', resetPieces);
-            // 提示按钮
-            hintBtn.addEventListener('click', showHint);
-            // 全屏按钮
-            fullscreenBtn.addEventListener('click', toggleFullscreen);
-            // 下一关按钮
-            nextBtn.addEventListener('click', nextLevel);
-            // 成功消息中的下一关按钮
-            successNextBtn.addEventListener('click', nextLevel);
+            elements.resetBtn.addEventListener('click', resetPieces);
+            elements.hintBtn.addEventListener('click', showHint);
+            elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
+            elements.nextBtn.addEventListener('click', nextLevel);
+            elements.successNextBtn.addEventListener('click', nextLevel);
 
-            // 点击目标区域停止拖动
-            targetGrid.addEventListener('click', () => {
+            elements.targetGrid.addEventListener('click', () => {
                 if (gameState.isDragging) stopDrag();
             });
 
-            // 禁用默认拖动行为
             document.addEventListener('dragstart', (e) => e.preventDefault());
-
-            // 触摸移动时阻止默认行为（优化拖动体验）
             document.addEventListener('touchmove', (e) => {
                 if (gameState.isDragging) e.preventDefault();
             }, { passive: false });
         }
 
-        // 页面加载完成后初始化游戏
         window.addEventListener('DOMContentLoaded', initGame);
     </script>
 </body>
