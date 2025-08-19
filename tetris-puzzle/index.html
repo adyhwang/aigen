@@ -158,7 +158,7 @@
         .portrait .pieces-container,
         .portrait .center-container {
             width: 100%;
-            max-width: 90vw;
+            max-width: 95vw;
             max-height: 45vh;
         }
 
@@ -529,11 +529,13 @@
             <!-- 游戏主区域 -->
             <main class="game-main-area flex-1 w-full" id="game-main-area">
                 <!-- 可用方块区域 -->
-                <div class="pieces-container grid-container" id="pieces-container">
-                    <div
-                        class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">
-                        可用方块</div>
-                    <div id="pieces-grid" class="p-0 grid grid-cols-16 gap-0 piece-container"></div>
+                <div class="center-container" id="center-wrapper">
+                    <div class="pieces-container grid-container" id="pieces-container">
+                        <div
+                            class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">
+                            可用方块</div>
+                        <div id="pieces-grid" class="p-0 grid grid-cols-16 gap-0 piece-container"></div>
+                    </div>
                 </div>
 
                 <!-- 目标区域 -->
