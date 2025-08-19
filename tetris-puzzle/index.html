@@ -418,20 +418,20 @@
                 <div class="tutorial-step">
                     <div class="step-number">1</div>
                     <div class="step-content">
-                        <p>拖动<span class="tip-highlight">彩色方块</span>到目标区域</p>
+                        <p><span class="tip-highlight">拖动彩色方块</span>到目标区域</p>
                     </div>
                 </div>
                 <div class="tutorial-step">
                     <div class="step-number">2</div>
                     <div class="step-content">
-                        <p><span class="tip-highlight">双击方块</span>可以旋转方块</p>
+                        <p><span class="tip-highlight">双击彩色方块</span>可以旋转方块</p>
                         </p>
                     </div>
                 </div>
                 <div class="tutorial-step">
                     <div class="step-number">3</div>
                     <div class="step-content">
-                        <p>将所有方块正确放入目标区域，填满灰色图形即可过关</p>
+                        <p>将所有方块正确放入目标区域，<span class="tip-highlight">填满灰色图形</span>即可过关</p>
                     </div>
                 </div>
                 <div class="tutorial-step">
@@ -919,19 +919,15 @@
         }
 
         /**
-         * 检查用户是否已查看过教程
+         * 检查是否需要显示教程
          */
         function checkTutorialStatus() {
-            const hasSeen = localStorage.getItem('tetrisPuzzleHasSeenTutorial');
-            if (!hasSeen) {
-                gameState.hasSeenTutorial = false;
-                // 延迟显示教程，确保页面加载完成
-                setTimeout(() => {
-                    tutorialMessage.classList.add('show');
-                }, 500);
-            } else {
-                gameState.hasSeenTutorial = true;
-            }
+            // 不读取localStorage，每次都显示教程
+            gameState.hasSeenTutorial = false;
+            // 显示教程
+            setTimeout(() => {
+                tutorialMessage.classList.add('show');
+            }, 500);
         }
 
         /**
@@ -940,7 +936,7 @@
         function closeTutorial() {
             tutorialMessage.classList.remove('show');
             gameState.hasSeenTutorial = true;
-            localStorage.setItem('tetrisPuzzleHasSeenTutorial', 'true');
+            // 不保存到localStorage
         }
 
         /**
