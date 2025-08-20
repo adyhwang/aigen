@@ -17,6 +17,7 @@
                     colors: {
                         primary: '#4F46E5', // 主色调：靛蓝色
                         secondary: '#10B981', // 辅助色：绿色
+                        accent: '#F59E0B', // 强调色：橙色，用于新游戏
                         dark: '#1E293B',
                         light: '#F8FAFC'
                     },
@@ -53,40 +54,60 @@
             </p>
         </header>
         
-        <!-- 项目链接卡片 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- 四则运算生成器链接 -->
-            <a href="/aigen/Math-Problem-Generator/" class="block">
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover border border-gray-100">
-                    <div class="h-48 bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
-                        <i class="fa fa-calculator text-white text-6xl"></i>
+        <!-- 项目链接卡片 - 调整为三列布局 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- 1. 是男人就下100层 -->
+            <a href="/aigen/mandown/" class="block">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover border border-gray-100 h-full flex flex-col">
+                    <div class="h-48 bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center">
+                        <i class="fa fa-male text-white text-6xl"></i>
+                        <i class="fa fa-fast-forward text-white text-6xl fa-rotate-90"></i>
                     </div>
-                    <div class="p-6">
-                        <h2 class="text-xl font-bold mb-2 text-dark">四则运算生成器</h2>
-                        <p class="text-gray-600 mb-4">
-                            生成不同难度级别的自定义数学问题，用于练习和学习。
+                    <div class="p-6 flex-grow flex flex-col">
+                        <h2 class="text-xl font-bold mb-2 text-dark">是男人就下100层</h2>
+                        <p class="text-gray-600 mb-4 flex-grow">
+                            挑战你的反应速度和技巧，不断向下跳跃，看看能否到达100层。
                         </p>
-                        <div class="inline-flex items-center text-primary font-medium">
-                            <span>访问项目</span>
+                        <div class="inline-flex items-center text-accent font-medium">
+                            <span>开始挑战</span>
                             <i class="fa fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
                         </div>
                     </div>
                 </div>
             </a>
             
-            <!-- 俄罗斯方块拼图链接 -->
+            <!-- 2. 俄罗斯方块拼图 -->
             <a href="/aigen/tetris-puzzle/" class="block">
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover border border-gray-100">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover border border-gray-100 h-full flex flex-col">
                     <div class="h-48 bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center">
                         <i class="fa fa-cubes text-white text-6xl"></i>
                     </div>
-                    <div class="p-6">
+                    <div class="p-6 flex-grow flex flex-col">
                         <h2 class="text-xl font-bold mb-2 text-dark">俄罗斯方块拼图</h2>
-                        <p class="text-gray-600 mb-4">
+                        <p class="text-gray-600 mb-4 flex-grow">
                             玩这个经典的拼图游戏，带有AI增强功能，带来新的挑战。
                         </p>
                         <div class="inline-flex items-center text-secondary font-medium">
                             <span>开始游戏</span>
+                            <i class="fa fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- 3. 四则运算生成器 -->
+            <a href="/aigen/Math-Problem-Generator/" class="block">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover border border-gray-100 h-full flex flex-col">
+                    <div class="h-48 bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+                        <i class="fa fa-calculator text-white text-6xl"></i>
+                    </div>
+                    <div class="p-6 flex-grow flex flex-col">
+                        <h2 class="text-xl font-bold mb-2 text-dark">四则运算生成器</h2>
+                        <p class="text-gray-600 mb-4 flex-grow">
+                            生成不同难度级别的自定义数学问题，用于练习和学习。
+                        </p>
+                        <div class="inline-flex items-center text-primary font-medium">
+                            <span>访问项目</span>
                             <i class="fa fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
                         </div>
                     </div>
@@ -100,7 +121,7 @@
         </footer>
     </div>
     
-    <!-- 简单的交互脚本 -->
+    <!-- 交互脚本 -->
     <script>
         // 添加页面加载动画效果
         document.addEventListener('DOMContentLoaded', () => {
