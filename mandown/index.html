@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,28 +48,75 @@
                 box-shadow: 0 2px 0 rgba(0,0,0,0.3),
                             inset 0 2px 2px rgba(0,0,0,0.1);
             }
+            /* 音量滑块样式 */
+            .volume-slider {
+                -webkit-appearance: none;
+                height: 6px;
+                border-radius: 3px;
+                background: #374151;
+                outline: none;
+            }
+            .volume-slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background: #3B82F6;
+                cursor: pointer;
+                box-shadow: 0 0 2px rgba(0,0,0,0.5);
+                transition: all 0.1s ease;
+            }
+            .volume-slider::-webkit-slider-thumb:hover {
+                transform: scale(1.2);
+                background: #60A5FA;
+            }
+            .volume-slider::-moz-range-thumb {
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background: #3B82F6;
+                cursor: pointer;
+                box-shadow: 0 0 2px rgba(0,0,0,0.5);
+                border: none;
+                transition: all 0.1s ease;
+            }
+            .volume-slider::-moz-range-thumb:hover {
+                transform: scale(1.2);
+                background: #60A5FA;
+            }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex flex-col items-center justify-center p-4 text-white overflow-hidden">
+
+<body
+    class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex flex-col items-center justify-center p-4 text-white overflow-hidden">
     <!-- 游戏容器 -->
     <div class="relative w-full max-w-md">
         <!-- 游戏标题 -->
-        <h1 class="text-[clamp(1.2rem,5vw,1.8rem)] font-game text-center mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 tracking-wider">
+        <h1
+            class="text-[clamp(1.2rem,5vw,1.8rem)] font-game text-center mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 tracking-wider">
             是男人就下一百层
         </h1>
-        
+
         <!-- 游戏画布容器 -->
         <div class="relative bg-dark rounded-lg overflow-hidden game-shadow aspect-[3/4]">
             <!-- 游戏画布 -->
             <canvas id="gameCanvas" class="w-full h-full"></canvas>
-            
-            <!-- 暂停按钮 -->
-            <button id="pauseButton" class="absolute top-4 right-4 z-5 bg-dark/70 hover:bg-dark/90 text-white p-2 rounded-full transition-all transform hover:scale-110 active:scale-90 hidden">
+
+            <!-- 暂停按钮 - 移至右下角 -->
+            <button id="pauseButton"
+                class="absolute bottom-4 right-4 z-5 bg-dark/70 hover:bg-dark/90 text-white p-2 rounded-full transition-all transform hover:scale-110 active:scale-90 hidden">
                 <i class="fa fa-pause"></i>
             </button>
-            
+
+            <!-- 音量控制 -->
+            <div class="absolute bottom-4 left-4 z-5 flex items-center gap-2 bg-dark/70 px-3 py-2 rounded-full">
+                <i class="fa fa-volume-up text-gray-300"></i>
+                <input type="range" id="volumeSlider" class="volume-slider w-24" min="0" max="100" value="70">
+            </div>
+
             <!-- 开始菜单 -->
             <div id="startMenu" class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10">
                 <div class="text-center mb-8">
@@ -77,11 +125,12 @@
                     <p class="text-gray-400 text-sm">下得越深，得分越高</p>
                     <p class="text-gray-400 text-sm mt-4">按回车键开始游戏</p>
                 </div>
-                
-                <button id="startButton" class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">
+
+                <button id="startButton"
+                    class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">
                     开始游戏
                 </button>
-                
+
                 <!-- 平台说明 -->
                 <div class="mt-8 grid grid-cols-2 gap-3 w-full">
                     <div class="flex items-center gap-2">
@@ -100,7 +149,9 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-5 h-2 bg-yellow-400 rounded-sm relative">
-                            <div class="absolute -top-1 left-1/2 w-2 h-2 bg-yellow-300 rounded-full transform -translate-x-1/2"></div>
+                            <div
+                                class="absolute -top-1 left-1/2 w-2 h-2 bg-yellow-300 rounded-full transform -translate-x-1/2">
+                            </div>
                         </div>
                         <span class="text-sm text-gray-300">跳板</span>
                     </div>
@@ -113,42 +164,49 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- 暂停菜单 -->
-            <div id="pauseMenu" class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10 hidden">
+            <div id="pauseMenu"
+                class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10 hidden">
                 <h2 class="text-2xl font-game mb-6 text-warning">游戏暂停</h2>
-                <button id="resumeButton" class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow mb-4">
+                <button id="resumeButton"
+                    class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow mb-4">
                     继续游戏
                 </button>
-                <button id="restartFromPauseButton" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">
+                <button id="restartFromPauseButton"
+                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">
                     重新开始
                 </button>
                 <p class="text-gray-400 text-sm mt-8">按回车键继续游戏</p>
             </div>
-            
+
             <!-- 游戏结束菜单 -->
-            <div id="gameOverMenu" class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10 hidden">
+            <div id="gameOverMenu"
+                class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10 hidden">
                 <h2 class="text-2xl font-game mb-2 text-danger">游戏结束</h2>
                 <p class="text-xl mb-1">你的成绩</p>
                 <p id="finalScore" class="text-3xl font-game mb-6 text-primary">0 层</p>
-                <button id="restartButton" class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">
+                <button id="restartButton"
+                    class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">
                     再来一次
                 </button>
                 <p class="text-gray-400 text-sm mt-4">按回车键重新开始</p>
             </div>
         </div>
-        
+
         <!-- 移动设备控制按钮 -->
         <div class="mt-4 grid grid-cols-3 gap-4 md:hidden">
-            <button id="leftBtn" class="bg-gray-700/80 text-white h-16 rounded-full flex items-center justify-center control-shadow active:control-active">
+            <button id="leftBtn"
+                class="bg-gray-700/80 text-white h-16 rounded-full flex items-center justify-center control-shadow active:control-active">
                 <i class="fa fa-arrow-left text-2xl"></i>
             </button>
             <div></div>
-            <button id="rightBtn" class="bg-gray-700/80 text-white h-16 rounded-full flex items-center justify-center control-shadow active:control-active">
+            <button id="rightBtn"
+                class="bg-gray-700/80 text-white h-16 rounded-full flex items-center justify-center control-shadow active:control-active">
                 <i class="fa fa-arrow-right text-2xl"></i>
             </button>
         </div>
-        
+
         <!-- 游戏说明 -->
         <div class="mt-4 text-center text-gray-400 text-sm">
             <p class="mb-1">电脑: 方向键左右移动 | 手机: 点击左右按钮</p>
@@ -158,29 +216,303 @@
     </div>
 
     <script>
+        // 音效管理器类 - 封装Web Audio API功能
+        class SoundManager {
+            constructor() {
+                // 创建音频上下文
+                this.audioContext = null;
+                this.initAudioContext();
+
+                // 主音量控制 (0-1范围)
+                this.mainVolume = 0.7; // 默认70%
+
+                // 缓存音效节点，避免重复创建
+                this.soundNodes = new Map();
+
+                // 监听用户交互以激活音频上下文（应对自动播放政策）
+                this.setupUserInteractionListener();
+            }
+
+            // 初始化音频上下文
+            initAudioContext() {
+                try {
+                    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.audioContext = new AudioContext();
+                } catch (e) {
+                    console.warn('Web Audio API is not supported in this browser');
+                    this.audioContext = null;
+                }
+            }
+
+            // 确保音频上下文已启动
+            ensureAudioContext() {
+                if (!this.audioContext) {
+                    this.initAudioContext();
+                }
+
+                // 检查音频上下文是否已暂停（浏览器自动暂停）
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+
+                return this.audioContext !== null;
+            }
+
+            // 设置用户交互监听器以激活音频上下文
+            setupUserInteractionListener() {
+                const activateAudio = () => {
+                    if (this.audioContext && this.audioContext.state === 'suspended') {
+                        this.audioContext.resume();
+                    }
+
+                    // 移除监听器，只需要一次交互
+                    document.removeEventListener('click', activateAudio);
+                    document.removeEventListener('touchstart', activateAudio);
+                    document.removeEventListener('keydown', activateAudio);
+                };
+
+                // 监听各种用户交互
+                document.addEventListener('click', activateAudio);
+                document.addEventListener('touchstart', activateAudio);
+                document.addEventListener('keydown', activateAudio);
+            }
+
+            // 设置主音量
+            setVolume(volume) {
+                // 确保音量在0-1范围内
+                this.mainVolume = Math.max(0, Math.min(1, volume));
+            }
+
+            // 创建振荡器节点
+            createOscillator(type = 'sine', frequency = 440) {
+                if (!this.ensureAudioContext()) return null;
+
+                const oscillator = this.audioContext.createOscillator();
+                oscillator.type = type;
+                oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+
+                return oscillator;
+            }
+
+            // 创建增益节点
+            createGainNode(gainValue = 0.1) {
+                if (!this.ensureAudioContext()) return null;
+
+                const gainNode = this.audioContext.createGain();
+                gainNode.gain.setValueAtTime(gainValue * this.mainVolume, this.audioContext.currentTime);
+
+                return gainNode;
+            }
+
+            // 播放简单音调
+            playTone(type, frequency, duration, startTime = 0, envelope = {}) {
+                if (!this.ensureAudioContext()) return;
+
+                const oscillator = this.createOscillator(type, frequency);
+                const gainNode = this.createGainNode();
+
+                if (!oscillator || !gainNode) return;
+
+                // 连接节点
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                // 设置包络线
+                const attack = envelope.attack || 0.01;
+                const decay = envelope.decay || 0.1;
+                const sustain = envelope.sustain || 0.5;
+                const release = envelope.release || 0.2;
+
+                const currentTime = this.audioContext.currentTime + startTime;
+
+                gainNode.gain.setValueAtTime(0, currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.1 * this.mainVolume, currentTime + attack);
+                gainNode.gain.linearRampToValueAtTime(0.1 * sustain * this.mainVolume, currentTime + attack + decay);
+                gainNode.gain.setValueAtTime(0.1 * sustain * this.mainVolume, currentTime + duration - release);
+                gainNode.gain.linearRampToValueAtTime(0, currentTime + duration);
+
+                // 开始并停止振荡器
+                oscillator.start(currentTime);
+                oscillator.stop(currentTime + duration);
+
+                // 清理
+                oscillator.onended = () => {
+                    oscillator.disconnect();
+                    gainNode.disconnect();
+                };
+            }
+
+            // 播放上升音阶
+            playAscendingScale() {
+                if (!this.ensureAudioContext()) return;
+
+                // C大调音阶
+                const notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25];
+                const duration = 0.1;
+
+                notes.forEach((frequency, index) => {
+                    this.playTone('sine', frequency, duration, index * duration, {
+                        attack: 0.02,
+                        decay: 0.05,
+                        sustain: 0.7,
+                        release: 0.03
+                    });
+                });
+            }
+
+            // 播放下降音阶
+            playDescendingScale() {
+                if (!this.ensureAudioContext()) return;
+
+                // 反向C大调音阶
+                const notes = [523.25, 493.88, 440.00, 392.00, 349.23, 329.63, 293.66, 261.63];
+                const duration = 0.1;
+
+                notes.forEach((frequency, index) => {
+                    this.playTone('sine', frequency, duration, index * duration, {
+                        attack: 0.02,
+                        decay: 0.05,
+                        sustain: 0.5,
+                        release: 0.03
+                    });
+                });
+            }
+
+            // 游戏音效 - 开始游戏
+            playStartGameSound() {
+                this.playAscendingScale();
+            }
+
+            // 游戏音效 - 普通平台
+            playNormalPlatformSound() {
+                this.playTone('square', 330, 0.08, 0, {
+                    attack: 0.01,
+                    decay: 0.03,
+                    sustain: 0.3,
+                    release: 0.04
+                });
+            }
+
+            // 游戏音效 - 弹跳
+            playBounceSound() {
+                this.playTone('sine', 880, 0.05, 0, {
+                    attack: 0.005,
+                    decay: 0.02,
+                    sustain: 0.2,
+                    release: 0.025
+                });
+            }
+
+            // 游戏音效 - 翻转平台
+            playFlipPlatformSound() {
+                this.playTone('triangle', 440, 0.15, 0, {
+                    attack: 0.02,
+                    decay: 0.05,
+                    sustain: 0.4,
+                    release: 0.08
+                });
+                // 添加一个高音作为结尾
+                this.playTone('triangle', 660, 0.05, 0.1, {
+                    attack: 0.01,
+                    decay: 0.02,
+                    sustain: 0.3,
+                    release: 0.02
+                });
+            }
+
+            // 游戏音效 - 传送带
+            playConveyorSound() {
+                // 创建机械感的连续音效
+                for (let i = 0; i < 3; i++) {
+                    this.playTone('sawtooth', 110 + i * 20, 0.2, i * 0.15, {
+                        attack: 0.05,
+                        decay: 0.1,
+                        sustain: 0.2,
+                        release: 0.05
+                    });
+                }
+            }
+
+            // 游戏音效 - 掉血
+            playDamageSound() {
+                this.playTone('sawtooth', 110, 0.3, 0, {
+                    attack: 0.01,
+                    decay: 0.1,
+                    sustain: 0.7,
+                    release: 0.19
+                });
+                this.playTone('sawtooth', 82, 0.2, 0.1, {
+                    attack: 0.01,
+                    decay: 0.05,
+                    sustain: 0.5,
+                    release: 0.14
+                });
+            }
+
+            // 游戏音效 - 回血
+            playHealSound() {
+                this.playTone('sine', 330, 0.1, 0, {
+                    attack: 0.02,
+                    decay: 0.03,
+                    sustain: 0.5,
+                    release: 0.05
+                });
+                this.playTone('sine', 440, 0.15, 0.08, {
+                    attack: 0.02,
+                    decay: 0.05,
+                    sustain: 0.5,
+                    release: 0.08
+                });
+            }
+
+            // 游戏音效 - 游戏结束
+            playGameOverSound() {
+                this.playDescendingScale();
+            }
+
+            // 游戏音效 - 暂停
+            playPauseSound() {
+                this.playTone('square', 220, 0.1, 0, {
+                    attack: 0.01,
+                    decay: 0.03,
+                    sustain: 0.5,
+                    release: 0.06
+                });
+            }
+
+            // 游戏音效 - 继续
+            playResumeSound() {
+                this.playTone('square', 330, 0.1, 0, {
+                    attack: 0.01,
+                    decay: 0.03,
+                    sustain: 0.5,
+                    release: 0.06
+                });
+            }
+        }
+
         // 游戏主类
         class Game {
             constructor() {
+                // 初始化音效管理器
+                this.soundManager = new SoundManager();
+
                 // 获取画布和上下文
                 this.canvas = document.getElementById('gameCanvas');
                 this.ctx = this.canvas.getContext('2d');
-                
-                // 初始化Web Audio API上下文
-                this.audioContext = null;
-                this.initAudioContext();
-                
+
                 // 检测设备类型
                 this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                
+
                 // 设置画布尺寸
                 this.resizeCanvas();
                 window.addEventListener('resize', () => this.resizeCanvas());
-                
+
                 // 时间控制变量，用于解决不同设备帧率差异
                 this.lastTime = 0;
                 this.deltaTime = 0;
                 this.maxDeltaTime = 1000 / 30; // 最大时间间隔，防止切换标签页后速度异常
-                
+
                 // 游戏状态
                 this.isRunning = false;
                 this.isPaused = false;
@@ -192,10 +524,10 @@
                 this.speedIncreaseInterval = 50; // 每多少层增加一次速度
                 this.platformSpawnRate = 50; // 平台生成速率 (基于60fps的帧)
                 this.spawnCounter = 0;
-                
+
                 // 玩家属性 - 根据设备类型调整跳板力度
                 const bounceForce = this.isMobile ? -10 : -12;
-                
+
                 this.player = {
                     x: this.canvas.width / 2,
                     y: this.canvas.height / 2,
@@ -214,125 +546,79 @@
                     bounceForce: bounceForce, // 弹跳力，移动端减小
                     bounceCounter: 0, // 弹跳计数器
                     standingPlatform: null, // 当前站立的平台
+                    previousPlatform: null, // 上一个站立的平台，用于音效播放控制
                     damagedPlatforms: new Set() // 已经造成伤害的钉板平台
                 };
-                
+
                 // 平台数组
                 this.platforms = [];
                 // 平台类型: normal, flip, conveyor-left, conveyor-right, spring, spike
                 this.platformTypes = ['normal', 'normal', 'normal', 'flip', 'conveyor-left', 'conveyor-right', 'spring', 'spike'];
-                
+
                 // 按键状态
                 this.keys = {
                     left: false,
                     right: false
                 };
-                
+
                 // 游戏菜单和按钮
                 this.startMenu = document.getElementById('startMenu');
                 this.pauseMenu = document.getElementById('pauseMenu');
                 this.gameOverMenu = document.getElementById('gameOverMenu');
                 this.finalScore = document.getElementById('finalScore');
                 this.pauseButton = document.getElementById('pauseButton');
-                
+                this.volumeSlider = document.getElementById('volumeSlider');
+
+                // 音量控制
+                this.volumeSlider.addEventListener('input', (e) => {
+                    const volume = parseInt(e.target.value) / 100;
+                    this.soundManager.setVolume(volume);
+                });
+
                 // 按钮事件监听
                 document.getElementById('startButton').addEventListener('click', () => this.startGame());
                 document.getElementById('restartButton').addEventListener('click', () => this.startGame());
                 document.getElementById('resumeButton').addEventListener('click', () => this.resumeGame());
                 document.getElementById('restartFromPauseButton').addEventListener('click', () => this.startGame());
                 this.pauseButton.addEventListener('click', () => this.togglePause());
-                
-                // 为音频交互添加触摸/点击事件监听器
-                document.addEventListener('click', () => this.initAudioContext());
-                document.addEventListener('touchstart', () => this.initAudioContext());
-                
+
                 // 键盘控制
                 window.addEventListener('keydown', (e) => this.handleKeyDown(e));
                 window.addEventListener('keyup', (e) => this.handleKeyUp(e));
-                
+
                 // 触屏控制
                 const leftBtn = document.getElementById('leftBtn');
                 const rightBtn = document.getElementById('rightBtn');
-                
+
                 leftBtn.addEventListener('touchstart', () => this.keys.left = true);
                 leftBtn.addEventListener('touchend', () => this.keys.left = false);
                 leftBtn.addEventListener('mousedown', () => this.keys.left = true);
                 leftBtn.addEventListener('mouseup', () => this.keys.left = false);
                 leftBtn.addEventListener('mouseleave', () => this.keys.left = false);
-                
+
                 rightBtn.addEventListener('touchstart', () => this.keys.right = true);
                 rightBtn.addEventListener('touchend', () => this.keys.right = false);
                 rightBtn.addEventListener('mousedown', () => this.keys.right = true);
                 rightBtn.addEventListener('mouseup', () => this.keys.right = false);
                 rightBtn.addEventListener('mouseleave', () => this.keys.right = false);
-                
+
                 // 初始化游戏
                 this.init();
             }
-            
-            // 初始化音频上下文
-            initAudioContext() {
-                if (this.audioContext) return;
-                
-                try {
-                    window.AudioContext = window.AudioContext || window.webkitAudioContext;
-                    this.audioContext = new AudioContext();
-                } catch (e) {
-                    console.warn('Web Audio API is not supported in this browser');
-                }
-            }
-            
-            // 播放音调
-            playTone({
-                frequency = 440,
-                type = 'sine',
-                duration = 0.3,
-                attack = 0.05,
-                release = 0.15,
-                volume = 0.7
-            }) {
-                if (!this.audioContext) {
-                    this.initAudioContext();
-                    if (!this.audioContext) return; // 音频上下文初始化失败
-                }
-                
-                // 确保音频上下文处于运行状态
-                if (this.audioContext.state === 'suspended') {
-                    this.audioContext.resume();
-                }
-                
-                const oscillator = this.audioContext.createOscillator();
-                const gainNode = this.audioContext.createGain();
-                
-                oscillator.type = type;
-                oscillator.frequency.value = frequency;
-                
-                // 设置音量包络
-                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-                gainNode.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + attack);
-                gainNode.gain.linearRampToValueAtTime(volume * 0.7, this.audioContext.currentTime + duration - release);
-                gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration);
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
-                
-                oscillator.start();
-                oscillator.stop(this.audioContext.currentTime + duration);
-            }
-            
+
             // 调整画布尺寸
             resizeCanvas() {
                 const container = this.canvas.parentElement;
                 this.canvas.width = container.clientWidth;
                 this.canvas.height = container.clientHeight;
             }
-            
+
             // 初始化游戏
             init() {
                 // 创建初始平台
                 this.platforms = [];
                 this.createInitialPlatforms();
-                
+
                 // 重置玩家 - 重新应用设备相关的属性
                 const bounceForce = this.isMobile ? -10 : -12;
                 this.player = {
@@ -346,10 +632,11 @@
                     isBouncing: false,
                     bounceCounter: 0,
                     standingPlatform: null,
+                    previousPlatform: null,
                     damagedPlatforms: new Set(),
                     bounceForce: bounceForce
                 };
-                
+
                 // 重置游戏状态
                 this.score = 0;
                 this.speed = this.baseSpeed;
@@ -358,7 +645,7 @@
                 this.lastTime = 0;
                 this.deltaTime = 0;
             }
-            
+
             // 创建初始平台
             createInitialPlatforms() {
                 // 在玩家脚下创建一个初始平台
@@ -377,51 +664,6 @@
                 this.platforms.push({
                     id: Date.now() + 2,
                     x: this.canvas.width / 2 - 50,
-                    y: this.canvas.height / 2 + 150,
-                    width: 100,
-                    height: 10,
-                    type: 'flip',
-                    flipped: false,
-                    flipTimer: 0
-                });
-
-                this.platforms.push({
-                    id: Date.now() + 3,
-                    x: this.canvas.width / 2 + 120,
-                    y: this.canvas.height / 2 + 150,
-                    width: 100,
-                    height: 10,
-                    type: 'spring',
-                    flipped: false,
-                    flipTimer: 0
-                });
-              
-                this.platforms.push({
-                    id: Date.now() + 4,
-                    x: this.canvas.width / 2 - 220,
-                    y: this.canvas.height / 2 + 150,
-                    width: 100,
-                    height: 10,
-                    type: 'spike',
-                    flipped: false,
-                    flipTimer: 0
-                });
-              
-                this.platforms.push({
-                    id: Date.now() + 5,
-                    x: this.canvas.width / 2 - 180,
-                    y: this.canvas.height / 2 + 300,
-                    width: 100,
-                    height: 10,
-                    type: 'conveyor-left',
-                    flipped: false,
-                    flipTimer: 0,
-                    conveyorSpeed: 3
-                });
-              
-                this.platforms.push({
-                    id: Date.now() + 6,
-                    x: this.canvas.width / 2 + 80,
                     y: this.canvas.height / 2 + 300,
                     width: 100,
                     height: 10,
@@ -430,18 +672,32 @@
                     flipTimer: 0,
                     conveyorSpeed: -3
                 });
+
+                this.platforms.push({
+                    id: Date.now() + 4,
+                    x: this.canvas.width / 2 - 200,
+                    y: this.canvas.height / 2 + 150,
+                    width: 100,
+                    height: 10,
+                    type: 'conveyor-left',
+                    flipped: false,
+                    flipTimer: 0,
+                    conveyorSpeed: 3
+                });
+
+
             }
-            
+
             // 创建平台
             createPlatform() {
                 const width = Math.random() * 30 + 90; // 90-120px
                 const x = Math.random() * (this.canvas.width - width);
                 // 从屏幕底部外面生成
                 const y = this.canvas.height + 20;
-                
+
                 // 随机选择平台类型
                 const type = this.platformTypes[Math.floor(Math.random() * this.platformTypes.length)];
-                
+
                 this.platforms.push({
                     id: Date.now() + Math.random(), // 添加唯一ID用于识别
                     x,
@@ -454,23 +710,7 @@
                     conveyorSpeed: type.includes('conveyor') ? (type === 'conveyor-left' ? 3 : -3) : 0
                 });
             }
-            
-            // 重置玩家
-            resetPlayer() {
-                const bounceForce = this.isMobile ? -10 : -12;
-                this.player.x = this.canvas.width / 2;
-                this.player.y = this.canvas.height / 2;
-                this.player.velocityX = 0;
-                this.player.velocityY = 0;
-                this.player.onGround = false;
-                this.player.health = this.player.maxHealth;
-                this.player.isBouncing = false;
-                this.player.bounceCounter = 0;
-                this.player.standingPlatform = null;
-                this.player.damagedPlatforms = new Set();
-                this.player.bounceForce = bounceForce;
-            }
-            
+
             // 开始游戏
             startGame() {
                 this.init();
@@ -480,73 +720,41 @@
                 this.pauseMenu.classList.add('hidden');
                 this.gameOverMenu.classList.add('hidden');
                 this.pauseButton.classList.remove('hidden');
-                
-                // 播放游戏开始音效
-                this.playTone({
-                    frequency: 659.25, // E5
-                    type: 'sine',
-                    duration: 0.3,
-                    attack: 0.05,
-                    release: 0.15,
-                    volume: 0.7
-                });
-                
-                setTimeout(() => {
-                    this.playTone({
-                        frequency: 783.99, // G5
-                        type: 'sine',
-                        duration: 0.4,
-                        attack: 0.05,
-                        release: 0.2,
-                        volume: 0.8
-                    });
-                }, 200);
-                
+
+                // 播放开始游戏音效
+                this.soundManager.playStartGameSound();
+
                 this.lastTime = performance.now();
                 requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
             }
-            
+
             // 暂停游戏
             pauseGame() {
                 if (!this.isRunning || this.gameOver) return;
-                
+
                 this.isPaused = true;
                 this.pauseMenu.classList.remove('hidden');
                 this.pauseButton.classList.add('hidden');
-                
+
                 // 播放暂停音效
-                this.playTone({
-                    frequency: 329.63, // E4
-                    type: 'sine',
-                    duration: 0.2,
-                    attack: 0.03,
-                    release: 0.1,
-                    volume: 0.5
-                });
+                this.soundManager.playPauseSound();
             }
-            
+
             // 继续游戏
             resumeGame() {
                 if (!this.isRunning || this.gameOver) return;
-                
+
                 this.isPaused = false;
                 this.pauseMenu.classList.add('hidden');
                 this.pauseButton.classList.remove('hidden');
-                
+
                 // 播放继续音效
-                this.playTone({
-                    frequency: 392.00, // G4
-                    type: 'sine',
-                    duration: 0.2,
-                    attack: 0.03,
-                    release: 0.1,
-                    volume: 0.5
-                });
-                
+                this.soundManager.playResumeSound();
+
                 this.lastTime = performance.now();
                 requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
             }
-            
+
             // 切换暂停/继续状态
             togglePause() {
                 if (this.isPaused) {
@@ -555,7 +763,7 @@
                     this.pauseGame();
                 }
             }
-            
+
             // 结束游戏
             endGame() {
                 this.isRunning = false;
@@ -563,34 +771,16 @@
                 this.gameOverMenu.classList.remove('hidden');
                 this.pauseButton.classList.add('hidden');
                 this.finalScore.textContent = `${this.score} 层`;
-                
+
                 // 播放游戏结束音效
-                this.playTone({
-                    frequency: 220.00, // A3
-                    type: 'sine',
-                    duration: 0.5,
-                    attack: 0.1,
-                    release: 0.3,
-                    volume: 0.6
-                });
-                
-                setTimeout(() => {
-                    this.playTone({
-                        frequency: 165.00, // E3
-                        type: 'sine',
-                        duration: 0.7,
-                        attack: 0.1,
-                        release: 0.5,
-                        volume: 0.6
-                    });
-                }, 300);
-                
+                this.soundManager.playGameOverSound();
+
                 // 更新最高分
                 if (this.score > this.maxScore) {
                     this.maxScore = this.score;
                 }
             }
-            
+
             // 键盘按下事件
             handleKeyDown(e) {
                 // 回车键控制暂停/开始
@@ -603,9 +793,9 @@
                     }
                     return;
                 }
-                
+
                 if (this.isPaused) return; // 暂停状态下不响应移动按键
-                
+
                 if (e.key === 'ArrowLeft') {
                     this.keys.left = true;
                     this.player.direction = -1;
@@ -614,23 +804,23 @@
                     this.player.direction = 1;
                 }
             }
-            
+
             // 键盘释放事件
             handleKeyUp(e) {
                 if (this.isPaused) return; // 暂停状态下不响应移动按键
-                
+
                 if (e.key === 'ArrowLeft') {
                     this.keys.left = false;
                 } else if (e.key === 'ArrowRight') {
                     this.keys.right = false;
                 }
             }
-            
+
             // 更新玩家状态
             updatePlayer() {
                 // 计算时间补偿因子 (基于60fps)
                 const timeFactor = this.deltaTime / (1000 / 60);
-                
+
                 // 左右移动基础速度
                 let moveSpeed = 0;
                 if (this.keys.left) {
@@ -640,19 +830,19 @@
                     moveSpeed = this.player.speed * timeFactor;
                     this.player.direction = 1;
                 }
-                
+
                 // 如果站在传送带上，添加传送带速度
-                if (this.player.standingPlatform && 
-                    (this.player.standingPlatform.type === 'conveyor-left' || 
-                     this.player.standingPlatform.type === 'conveyor-right')) {
+                if (this.player.standingPlatform &&
+                    (this.player.standingPlatform.type === 'conveyor-left' ||
+                        this.player.standingPlatform.type === 'conveyor-right')) {
                     this.player.velocityX = moveSpeed + (this.player.standingPlatform.conveyorSpeed * timeFactor);
                 } else {
                     this.player.velocityX = moveSpeed;
                 }
-                
+
                 // 应用重力
                 this.player.velocityY += this.player.gravity * timeFactor;
-                
+
                 // 弹跳逻辑 - 只有站在跳板上才会持续弹跳
                 if (this.player.isBouncing) {
                     // 检查是否仍然站在跳板上
@@ -662,16 +852,9 @@
                         if (this.player.bounceCounter * this.deltaTime > 500) { // 约0.5秒弹跳一次
                             this.player.velocityY = this.player.bounceForce;
                             this.player.bounceCounter = 0;
-                            
+
                             // 播放弹跳音效
-                            this.playTone({
-                                frequency: 587.33, // D5
-                                type: 'sine',
-                                duration: 0.15,
-                                attack: 0.02,
-                                release: 0.08,
-                                volume: 0.4
-                            });
+                            this.soundManager.playBounceSound();
                         }
                     } else {
                         // 不在跳板上了，关闭弹跳状态
@@ -679,137 +862,88 @@
                         this.player.bounceCounter = 0;
                     }
                 }
-                
+
                 // 检查站立的翻转平台是否已经翻转完成
-                if (this.player.standingPlatform && 
-                    this.player.standingPlatform.type === 'flip' && 
+                if (this.player.standingPlatform &&
+                    this.player.standingPlatform.type === 'flip' &&
                     this.player.standingPlatform.flipped &&
                     this.player.standingPlatform.flipTimer > 42) { // 0.7秒后
                     this.player.onGround = false;
                     this.player.standingPlatform = null;
                     this.player.velocityY = 5 * timeFactor; // 给一个向下的初速度
                 }
-                
+
                 // 更新位置
                 this.player.x += this.player.velocityX;
                 this.player.y += this.player.velocityY;
-                
+
                 // 边界检测
                 if (this.player.x < 0) {
                     this.player.x = 0;
                 } else if (this.player.x + this.player.width > this.canvas.width) {
                     this.player.x = this.canvas.width - this.player.width;
                 }
-                
+
                 // 掉出屏幕底部 - 游戏结束
                 if (this.player.y > this.canvas.height) {
                     this.endGame();
                 }
-                
+
                 // 被推到屏幕顶部 - 游戏结束
                 if (this.player.y + this.player.velocityY < 0) {
                     this.endGame();
                 }
-                
+
+                // 保存当前站立平台用于比较
+                const previousPlatform = this.player.standingPlatform;
+
                 // 默认不在地面上，碰撞检测会更新这个状态
-                // 保存当前站立平台类型用于判断
-                const wasOnSpring = this.player.standingPlatform && this.player.standingPlatform.type === 'spring';
                 this.player.onGround = false;
                 this.player.standingPlatform = null;
-                
-                // 如果之前在跳板上但现在不在了，关闭弹跳
-                if (wasOnSpring && !this.player.isBouncing) {
-                    this.player.isBouncing = false;
+
+                // 检查是否从一个平台移动到了另一个平台
+                if (previousPlatform && this.player.standingPlatform &&
+                    previousPlatform.id !== this.player.standingPlatform.id) {
+                    this.player.previousPlatform = previousPlatform;
+                } else if (!this.player.standingPlatform) {
+                    this.player.previousPlatform = previousPlatform;
                 }
             }
-            
+
             // 更新平台
             updatePlatforms() {
                 // 计算时间补偿因子 (基于60fps)
                 const timeFactor = this.deltaTime / (1000 / 60);
-                
+
                 // 移动平台
                 for (let i = this.platforms.length - 1; i >= 0; i--) {
                     const platform = this.platforms[i];
                     platform.y -= this.speed * timeFactor; // 平台向上移动，应用时间补偿
-                    
+
                     // 处理翻转平台
                     if (platform.type === 'flip' && platform.flipped) {
                         // 基于时间更新翻转计时器
                         platform.flipTimer += timeFactor;
-                        
+
                         // 翻转后1.3秒(总共2秒)完全移除平台
                         if (platform.flipTimer > 120) {
                             this.platforms.splice(i, 1);
                             // 移除平台时计分
                             this.score++;
-                            
-                            // 播放得分音效
-                            if (this.score % 5 === 0) { // 每5分播放一个特殊音效
-                                this.playTone({
-                                    frequency: 783.99, // G5
-                                    type: 'sine',
-                                    duration: 0.25,
-                                    attack: 0.03,
-                                    release: 0.15,
-                                    volume: 0.6
-                                });
-                            }
                             continue;
                         }
                     }
-                    
+
                     // 移除超出屏幕的平台
                     if (platform.y + platform.height < 0 && !(platform.type === 'flip' && platform.flipped)) {
                         this.platforms.splice(i, 1);
                         // 每移除一个平台，分数加1
                         this.score++;
-                        
-                        // 播放普通得分音效
-                        if (this.score % 10 !== 0) { // 每10分的音效在下面
-                            this.playTone({
-                                frequency: 523.25, // C5
-                                type: 'sine',
-                                duration: 0.1,
-                                attack: 0.02,
-                                release: 0.05,
-                                volume: 0.3
-                            });
-                        } else { // 每10分播放一个特殊音效
-                            this.playTone({
-                                frequency: 659.25, // E5
-                                type: 'sine',
-                                duration: 0.2,
-                                attack: 0.03,
-                                release: 0.1,
-                                volume: 0.5
-                            });
-                            setTimeout(() => {
-                                this.playTone({
-                                    frequency: 783.99, // G5
-                                    type: 'sine',
-                                    duration: 0.25,
-                                    attack: 0.03,
-                                    release: 0.15,
-                                    volume: 0.6
-                                });
-                            }, 150);
-                        }
-                        
+
                         // 每一定层数增加速度
                         if (this.score % this.speedIncreaseInterval === 0) {
                             this.speed += 0.2;
-                            
-                            // 播放速度提升音效
-                            this.playTone({
-                                frequency: 880.00, // A5
-                                type: 'square',
-                                duration: 0.2,
-                                attack: 0.02,
-                                release: 0.1,
-                                volume: 0.5
-                            });
-                            
+
                             // 稍微降低生成速率，增加难度
                             if (this.platformSpawnRate > 60) {
                                 this.platformSpawnRate--;
@@ -817,7 +951,7 @@
                         }
                     }
                 }
-                
+
                 // 基于时间更新生成计数器
                 this.spawnCounter += timeFactor;
                 if (this.spawnCounter >= this.platformSpawnRate) {
@@ -825,15 +959,15 @@
                     this.spawnCounter = 0;
                 }
             }
-            
+
             // 检测碰撞
             checkCollisions() {
                 for (let i = 0; i < this.platforms.length; i++) {
                     const platform = this.platforms[i];
-                    
+
                     // 跳过已经翻转且超过倒计时的平台
                     if (platform.type === 'flip' && platform.flipped && platform.flipTimer > 42) continue;
-                    
+
                     // 简单的AABB碰撞检测
                     if (
                         this.player.x < platform.x + platform.width &&
@@ -847,73 +981,57 @@
                             this.player.velocityY = 0;
                             this.player.onGround = true;
                             this.player.standingPlatform = platform;
-                            
+
                             // 处理不同类型平台的效果
                             this.handlePlatformEffect(platform);
                         }
                     }
                 }
             }
-            
+
             // 处理平台效果
             handlePlatformEffect(platform) {
+                // 检查是否是新平台（避免重复播放音效）
+                const isNewPlatform = !this.player.previousPlatform ||
+                    this.player.previousPlatform.id !== platform.id;
+
                 // 重置弹跳状态，只在当前是跳板时才启用
                 this.player.isBouncing = false;
-                
+
                 switch (platform.type) {
                     case 'normal':
                         // 普通平台，恢复1点生命值
                         this.healPlayer(1);
-                        
-                        // 播放普通平台音效
-                        this.playTone({
-                            frequency: 440.00, // A4
-                            type: 'sine',
-                            duration: 0.1,
-                            attack: 0.02,
-                            release: 0.05,
-                            volume: 0.3
-                        });
+                        if (isNewPlatform) {
+                            this.soundManager.playNormalPlatformSound();
+                        }
                         break;
-                        
+
                     case 'flip':
                         // 翻转平台，设置翻转状态但不立即下坠
                         if (!platform.flipped) {
                             platform.flipped = true;
                             platform.flipTimer = 0;
-                            
+
                             // 恢复1点生命值
                             this.healPlayer(1);
-                            
-                            // 播放翻转平台音效
-                            this.playTone({
-                                frequency: 493.88, // B4
-                                type: 'triangle',
-                                duration: 0.2,
-                                attack: 0.03,
-                                release: 0.1,
-                                volume: 0.4
-                            });
+
+                            if (isNewPlatform) {
+                                this.soundManager.playFlipPlatformSound();
+                            }
                         }
                         break;
-                        
+
                     case 'conveyor-left':
                     case 'conveyor-right':
                         // 传送带，会在updatePlayer中应用持续的平移效果
                         // 恢复1点生命值
                         this.healPlayer(1);
-                        
-                        // 播放传送带音效
-                        this.playTone({
-                            frequency: 292.00, // G4
-                            type: 'sawtooth',
-                            duration: 0.3,
-                            attack: 0.05,
-                            release: 0.15,
-                            volume: 0.05
-                        });
+                        if (isNewPlatform) {
+                            this.soundManager.playConveyorSound();
+                        }
                         break;
-                        
+
                     case 'spring':
                         // 跳板，使玩家弹跳，使用设备特定的弹跳力
                         this.player.velocityY = this.player.bounceForce;
@@ -921,38 +1039,25 @@
                         this.player.bounceCounter = 0;
                         // 恢复1点生命值
                         this.healPlayer(1);
-                        
-                        // 播放跳板音效
-                        this.playTone({
-                            frequency: 659.25, // E5
-                            type: 'sine',
-                            duration: 0.2,
-                            attack: 0.03,
-                            release: 0.1,
-                            volume: 0.6
-                        });
+
+                        if (isNewPlatform) {
+                            this.soundManager.playBounceSound();
+                        }
                         break;
-                        
+
                     case 'spike':
                         // 钉板，只在第一次接触时扣血
                         if (!this.player.damagedPlatforms.has(platform.id)) {
                             this.damagePlayer(1);
                             this.player.damagedPlatforms.add(platform.id);
-                            
+
                             // 被刺后弹起
                             this.player.velocityY = -8;
                             this.player.onGround = false;
-                            
-                            // 播放受伤音效
-                            this.playTone({
-                                frequency: 220.00, // A3
-                                type: 'sine',
-                                duration: 0.3,
-                                attack: 0.05,
-                                release: 0.2,
-                                volume: 0.5
-                            });
-                            
+
+                            // 播放掉血音效
+                            this.soundManager.playDamageSound();
+
                             // 如果生命值为0，游戏结束
                             if (this.player.health <= 0) {
                                 this.endGame();
@@ -961,37 +1066,34 @@
                         break;
                 }
             }
-            
+
             // 玩家受伤
             damagePlayer(amount) {
+                const previousHealth = this.player.health;
                 this.player.health = Math.max(0, this.player.health - amount);
             }
-            
+
             // 玩家回血
             healPlayer(amount) {
+                const previousHealth = this.player.health;
                 if (this.player.health < this.player.maxHealth) {
                     this.player.health = Math.min(this.player.maxHealth, this.player.health + amount);
-                    
-                    // 播放回血音效
-                    this.playTone({
-                        frequency: 523.25, // C5
-                        type: 'sine',
-                        duration: 0.15,
-                        attack: 0.03,
-                        release: 0.08,
-                        volume: 0.4
-                    });
+
+                    // 只有实际回血了才播放音效
+                    if (this.player.health > previousHealth) {
+                        this.soundManager.playHealSound();
+                    }
                 }
             }
-            
+
             // 绘制玩家
             drawPlayer() {
                 this.ctx.save();
-                
+
                 // 玩家身体
                 this.ctx.fillStyle = '#3B82F6';
                 this.ctx.fillRect(this.player.x, this.player.y, this.player.width, this.player.height);
-                
+
                 // 玩家头部
                 this.ctx.fillStyle = '#F59E0B';
                 const headRadius = this.player.width / 2;
@@ -1004,7 +1106,7 @@
                     Math.PI * 2
                 );
                 this.ctx.fill();
-                
+
                 // 眼睛
                 this.ctx.fillStyle = 'white';
                 const eyeOffset = this.player.direction * 5;
@@ -1017,111 +1119,111 @@
                     Math.PI * 2
                 );
                 this.ctx.fill();
-                
+
                 // 腿部动画
                 this.ctx.fillStyle = '#1F2937';
                 if (this.player.velocityX !== 0) {
                     // 走路动画
                     const legPhase = Math.sin(Date.now() * 0.01) * 3;
                     this.ctx.fillRect(
-                        this.player.x + 5, 
-                        this.player.y + this.player.height, 
-                        8, 
+                        this.player.x + 5,
+                        this.player.y + this.player.height,
+                        8,
                         10 + legPhase
                     );
                     this.ctx.fillRect(
-                        this.player.x + this.player.width - 13, 
-                        this.player.y + this.player.height, 
-                        8, 
+                        this.player.x + this.player.width - 13,
+                        this.player.y + this.player.height,
+                        8,
                         10 - legPhase
                     );
                 } else {
                     // 站立
                     this.ctx.fillRect(
-                        this.player.x + 5, 
-                        this.player.y + this.player.height, 
-                        8, 
+                        this.player.x + 5,
+                        this.player.y + this.player.height,
+                        8,
                         10
                     );
                     this.ctx.fillRect(
-                        this.player.x + this.player.width - 13, 
-                        this.player.y + this.player.height, 
-                        8, 
+                        this.player.x + this.player.width - 13,
+                        this.player.y + this.player.height,
+                        8,
                         10
                     );
                 }
-                
+
                 this.ctx.restore();
             }
-            
+
             // 绘制平台
             drawPlatforms() {
                 this.ctx.save();
-                
+
                 for (const platform of this.platforms) {
                     this.ctx.beginPath();
-                    
+
                     // 保存当前透明度设置
                     const originalAlpha = this.ctx.globalAlpha;
-                    
+
                     // 如果是翻转平台且已超过倒计时，应用透明度
                     if (platform.type === 'flip' && platform.flipped && platform.flipTimer > 42) {
                         this.ctx.globalAlpha = 0.5 - (platform.flipTimer - 42) / 156;
                     }
-                    
+
                     switch (platform.type) {
                         case 'normal':
                             // 蓝色普通平台
                             this.ctx.fillStyle = '#3B82F6';
                             break;
-                            
+
                         case 'flip':
                             // 绿色翻转平台，翻转时变色
                             this.ctx.fillStyle = platform.flipped ? '#6B7280' : '#10B981';
                             break;
-                            
+
                         case 'conveyor-left':
                         case 'conveyor-right':
                             // 白色传送带，添加箭头
                             this.ctx.fillStyle = '#F3F4F6';
                             break;
-                            
+
                         case 'spring':
                             // 黄色跳板，添加弹簧
                             this.ctx.fillStyle = '#F59E0B';
                             break;
-                            
+
                         case 'spike':
                             // 红色钉板，添加尖刺
                             this.ctx.fillStyle = '#EF4444';
                             break;
                     }
-                    
+
                     // 绘制平台主体
                     this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-                    
+
                     // 绘制平台特殊效果
                     switch (platform.type) {
                         case 'conveyor-left':
                             // 向左的箭头
                             this.drawConveyorArrows(platform, -1);
                             break;
-                            
+
                         case 'conveyor-right':
                             // 向右的箭头
                             this.drawConveyorArrows(platform, 1);
                             break;
-                            
+
                         case 'spring':
                             // 弹簧
                             this.drawSpring(platform);
                             break;
-                            
+
                         case 'spike':
                             // 尖刺
                             this.drawSpikes(platform);
                             break;
-                            
+
                         case 'flip':
                             // 翻转平台添加倒计时效果
                             if (platform.flipped && platform.flipTimer <= 42) {
@@ -1135,20 +1237,20 @@
                             }
                             break;
                     }
-                    
+
                     // 恢复透明度设置
                     this.ctx.globalAlpha = originalAlpha;
                 }
-                
+
                 this.ctx.restore();
             }
-            
+
             // 绘制传送带箭头
             drawConveyorArrows(platform, direction) {
                 this.ctx.fillStyle = '#D1D5DB';
                 const arrowSize = 8;
                 const spacing = 20;
-                
+
                 for (let x = platform.x + 10; x < platform.x + platform.width - 10; x += spacing) {
                     this.ctx.beginPath();
                     this.ctx.moveTo(x, platform.y + platform.height / 2);
@@ -1158,39 +1260,39 @@
                     this.ctx.fill();
                 }
             }
-            
+
             // 绘制弹簧
             drawSpring(platform) {
                 this.ctx.strokeStyle = '#FBBF24';
                 this.ctx.lineWidth = 2;
-                
+
                 const springX = platform.x + platform.width / 2;
                 const springTop = platform.y - 8;
                 const springBottom = platform.y;
-                
+
                 this.ctx.beginPath();
                 this.ctx.moveTo(springX, springTop);
-                
+
                 // 绘制弹簧线圈
                 let y = springTop;
                 let direction = 1;
                 const segmentLength = 4;
-                
+
                 while (y < springBottom) {
                     this.ctx.lineTo(springX + direction * 5, y + segmentLength);
                     y += segmentLength;
                     direction *= -1;
                 }
-                
+
                 this.ctx.stroke();
             }
-            
+
             // 绘制尖刺
             drawSpikes(platform) {
                 this.ctx.fillStyle = '#DC2626';
                 const spikeWidth = 8;
                 const spikeHeight = 8;
-                
+
                 for (let x = platform.x; x < platform.x + platform.width; x += spikeWidth) {
                     this.ctx.beginPath();
                     this.ctx.moveTo(x, platform.y);
@@ -1200,23 +1302,23 @@
                     this.ctx.fill();
                 }
             }
-            
+
             // 绘制生命值
             drawHealth() {
                 this.ctx.save();
-                
+
                 const healthBarX = 10;
                 const healthBarY = 10;
                 const healthBarWidth = 120;
                 const healthBarHeight = 20;
-                
+
                 // 绘制生命值背景
                 this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
                 this.ctx.fillRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
-                
+
                 // 绘制生命值
                 const segmentWidth = healthBarWidth / this.player.maxHealth;
-                
+
                 for (let i = 0; i < this.player.maxHealth; i++) {
                     if (i < this.player.health) {
                         // 健康的生命值
@@ -1225,7 +1327,7 @@
                         // 失去的生命值
                         this.ctx.fillStyle = '#6B7280';
                     }
-                    
+
                     this.ctx.fillRect(
                         healthBarX + i * segmentWidth + 2,
                         healthBarY + 2,
@@ -1233,51 +1335,51 @@
                         healthBarHeight - 4
                     );
                 }
-                
+
                 this.ctx.restore();
             }
-            
+
             // 绘制分数
             drawScore() {
                 this.ctx.save();
-                
+
                 const scoreX = this.canvas.width - 80;
                 const scoreY = 30;
-                
+
                 // 绘制分数背景
                 this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
                 this.ctx.fillRect(scoreX - 10, scoreY - 20, 80, 30);
-                
+
                 // 绘制分数文本
                 this.ctx.font = '16px "Press Start 2P", cursive';
                 this.ctx.fillStyle = '#F59E0B';
                 this.ctx.textAlign = 'center';
                 this.ctx.fillText(this.score, scoreX + 30, scoreY);
-                
+
                 this.ctx.restore();
             }
-            
+
             // 绘制游戏
             draw() {
                 // 清空画布
                 this.ctx.fillStyle = '#111827';
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                
+
                 // 绘制网格背景
                 this.drawBackground();
-                
+
                 // 绘制平台
                 this.drawPlatforms();
-                
+
                 // 绘制玩家
                 this.drawPlayer();
-                
+
                 // 绘制生命值
                 this.drawHealth();
-                
+
                 // 绘制分数
                 this.drawScore();
-                
+
                 // 如果游戏暂停，显示暂停提示
                 if (this.isPaused) {
                     this.ctx.save();
@@ -1286,15 +1388,15 @@
                     this.ctx.restore();
                 }
             }
-            
+
             // 绘制背景网格
             drawBackground() {
                 this.ctx.save();
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
                 this.ctx.lineWidth = 1;
-                
+
                 const gridSize = 30;
-                
+
                 // 水平线
                 for (let y = 0; y < this.canvas.height; y += gridSize) {
                     this.ctx.beginPath();
@@ -1302,7 +1404,7 @@
                     this.ctx.lineTo(this.canvas.width, y);
                     this.ctx.stroke();
                 }
-                
+
                 // 垂直线
                 for (let x = 0; x < this.canvas.width; x += gridSize) {
                     this.ctx.beginPath();
@@ -1310,14 +1412,14 @@
                     this.ctx.lineTo(x, this.canvas.height);
                     this.ctx.stroke();
                 }
-                
+
                 this.ctx.restore();
             }
-            
+
             // 游戏主循环 - 使用时间戳来计算帧率补偿
             gameLoop(timestamp) {
                 if (!this.isRunning || this.isPaused) return;
-                
+
                 // 计算时间差
                 if (this.lastTime) {
                     this.deltaTime = Math.min(timestamp - this.lastTime, this.maxDeltaTime);
@@ -1325,24 +1427,25 @@
                     this.deltaTime = 0;
                 }
                 this.lastTime = timestamp;
-                
+
                 // 更新游戏状态
                 this.updatePlayer();
                 this.updatePlatforms();
                 this.checkCollisions();
-                
+
                 // 绘制游戏
                 this.draw();
-                
+
                 // 继续循环
                 requestAnimationFrame((nextTimestamp) => this.gameLoop(nextTimestamp));
             }
         }
-        
+
         // 当页面加载完成后初始化游戏
         window.addEventListener('load', () => {
             const game = new Game();
         });
     </script>
 </body>
+
 </html>
