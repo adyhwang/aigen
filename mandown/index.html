@@ -68,12 +68,19 @@
             <!-- 游戏画布 -->
             <canvas id="gameCanvas" class="w-full h-full"></canvas>
 
+            <!-- 暂停按钮 -->
+            <button id="pauseButton"
+                class="absolute top-4 right-4 z-5 bg-dark/70 hover:bg-dark/90 text-white p-2 rounded-full transition-all transform hover:scale-110 active:scale-90 hidden">
+                <i class="fa fa-pause"></i>
+            </button>
+
             <!-- 开始菜单 -->
             <div id="startMenu" class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10">
                 <div class="text-center mb-8">
                     <h2 class="text-2xl font-game mb-4 text-primary">准备好了吗？</h2>
                     <p class="text-gray-300 mb-2">左右移动以躲避危险</p>
                     <p class="text-gray-400 text-sm">下得越深，得分越高</p>
+                    <p class="text-gray-400 text-sm mt-4">按回车键开始游戏</p>
                 </div>
 
                 <button id="startButton"
@@ -115,6 +122,21 @@
                 </div>
             </div>
 
+            <!-- 暂停菜单 -->
+            <div id="pauseMenu"
+                class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10 hidden">
+                <h2 class="text-2xl font-game mb-6 text-warning">游戏暂停</h2>
+                <button id="resumeButton"
+                    class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow mb-4">
+                    继续游戏
+                </button>
+                <button id="restartFromPauseButton"
+                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">
+                    重新开始
+                </button>
+                <p class="text-gray-400 text-sm mt-8">按回车键继续游戏</p>
+            </div>
+
             <!-- 游戏结束菜单 -->
             <div id="gameOverMenu"
                 class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10 hidden">
@@ -125,6 +147,7 @@
                     class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">
                     再来一次
                 </button>
+                <p class="text-gray-400 text-sm mt-4">按回车键重新开始</p>
             </div>
         </div>
 
@@ -144,6 +167,7 @@
         <!-- 游戏说明 -->
         <div class="mt-4 text-center text-gray-400 text-sm">
             <p class="mb-1">电脑: 方向键左右移动 | 手机: 点击左右按钮</p>
+            <p class="mb-1">按回车键或点击暂停按钮可暂停/继续游戏</p>
             <p>除钉板外，踩其他平台可回复1点生命值</p>
         </div>
     </div>
@@ -170,6 +194,7 @@
 
                 // 游戏状态
                 this.isRunning = false;
+                this.isPaused = false; // 新增：暂停状态
                 this.gameOver = false;
                 this.score = 0;
                 this.maxScore = 0;
@@ -214,14 +239,19 @@
                     right: false
                 };
 
-                // 游戏菜单
+                // 游戏菜单和按钮
                 this.startMenu = document.getElementById('startMenu');
+                this.pauseMenu = document.getElementById('pauseMenu'); // 新增：暂停菜单
                 this.gameOverMenu = document.getElementById('gameOverMenu');
                 this.finalScore = document.getElementById('finalScore');
+                this.pauseButton = document.getElementById('pauseButton'); // 新增：暂停按钮
 
                 // 按钮事件监听
                 document.getElementById('startButton').addEventListener('click', () => this.startGame());
                 document.getElementById('restartButton').addEventListener('click', () => this.startGame());
+                document.getElementById('resumeButton').addEventListener('click', () => this.resumeGame()); // 新增：继续按钮
+                document.getElementById('restartFromPauseButton').addEventListener('click', () => this.startGame()); // 新增：从暂停菜单重新开始
+                this.pauseButton.addEventListener('click', () => this.togglePause()); // 新增：暂停按钮点击事件
 
                 // 键盘控制
                 window.addEventListener('keydown', (e) => this.handleKeyDown(e));
@@ -281,6 +311,7 @@
                 this.score = 0;
                 this.speed = this.baseSpeed;
                 this.gameOver = false;
+                this.isPaused = false; // 重置暂停状态
                 this.lastTime = 0;
                 this.deltaTime = 0;
             }
@@ -401,10 +432,42 @@
             startGame() {
                 this.init();
                 this.isRunning = true;
+                this.isPaused = false;
                 this.startMenu.classList.add('hidden');
+                this.pauseMenu.classList.add('hidden');
                 this.gameOverMenu.classList.add('hidden');
+                this.pauseButton.classList.remove('hidden'); // 显示暂停按钮
                 this.lastTime = performance.now();
                 requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+            }
+
+            // 暂停游戏
+            pauseGame() {
+                if (!this.isRunning || this.gameOver) return;
+
+                this.isPaused = true;
+                this.pauseMenu.classList.remove('hidden');
+                this.pauseButton.classList.add('hidden'); // 隐藏暂停按钮
+            }
+
+            // 继续游戏
+            resumeGame() {
+                if (!this.isRunning || this.gameOver) return;
+
+                this.isPaused = false;
+                this.pauseMenu.classList.add('hidden');
+                this.pauseButton.classList.remove('hidden'); // 显示暂停按钮
+                this.lastTime = performance.now();
+                requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+            }
+
+            // 切换暂停/继续状态
+            togglePause() {
+                if (this.isPaused) {
+                    this.resumeGame();
+                } else {
+                    this.pauseGame();
+                }
             }
 
             // 结束游戏
@@ -412,6 +475,7 @@
                 this.isRunning = false;
                 this.gameOver = true;
                 this.gameOverMenu.classList.remove('hidden');
+                this.pauseButton.classList.add('hidden'); // 隐藏暂停按钮
                 this.finalScore.textContent = `${this.score} 层`;
 
                 // 更新最高分
@@ -422,6 +486,19 @@
 
             // 键盘按下事件
             handleKeyDown(e) {
+                // 新增：回车键控制暂停/开始
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (this.gameOver || !this.isRunning) {
+                        this.startGame();
+                    } else {
+                        this.togglePause();
+                    }
+                    return;
+                }
+
+                if (this.isPaused) return; // 暂停状态下不响应移动按键
+
                 if (e.key === 'ArrowLeft') {
                     this.keys.left = true;
                     this.player.direction = -1;
@@ -433,6 +510,8 @@
 
             // 键盘释放事件
             handleKeyUp(e) {
+                if (this.isPaused) return; // 暂停状态下不响应移动按键
+
                 if (e.key === 'ArrowLeft') {
                     this.keys.left = false;
                 } else if (e.key === 'ArrowRight') {
@@ -968,6 +1047,14 @@
 
                 // 绘制分数
                 this.drawScore();
+
+                // 如果游戏暂停，显示暂停提示
+                if (this.isPaused) {
+                    this.ctx.save();
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.restore();
+                }
             }
 
             // 绘制背景网格
@@ -999,7 +1086,7 @@
 
             // 游戏主循环 - 使用时间戳来计算帧率补偿
             gameLoop(timestamp) {
-                if (!this.isRunning) return;
+                if (!this.isRunning || this.isPaused) return;
 
                 // 计算时间差
                 if (this.lastTime) {
