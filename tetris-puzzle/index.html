@@ -54,6 +54,7 @@
             .target-hint-pulse { animation: targetHintPulse 1.2s infinite; }
             .success-animation { animation: success 0.5s ease-in-out; }
             .tip-highlight { @apply text-game-accent font-semibold; }
+            .sound-control { @apply flex items-center gap-2 ml-2; }
         }
     </style>
 
@@ -334,6 +335,25 @@
             justify-content: center;
         }
 
+        .volume-slider {
+            -webkit-appearance: none;
+            width: 80px;
+            height: 4px;
+            border-radius: 2px;
+            background: #2D2D2D;
+            outline: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #BB86FC;
+            cursor: pointer;
+        }
+
         @media (max-width: 768px) {
             .game-main-area {
                 gap: min(1vw, 8px);
@@ -350,6 +370,10 @@
             .btn-game {
                 padding: 1px 6px;
                 font-size: 12px;
+            }
+
+            .volume-slider {
+                width: 60px;
             }
         }
     </style>
@@ -438,6 +462,10 @@
                             <i class="fa fa-cubes text-game-accent text-sm"></i>
                             <span class="text-sm">方块: <span id="pieces-count" class="font-bold">2</span>个</span>
                         </div>
+                        <div class="sound-control">
+                            <i class="fa fa-volume-up text-game-accent text-sm" id="volume-icon"></i>
+                            <input type="range" min="0" max="100" value="30" class="volume-slider" id="volume-slider">
+                        </div>
                     </div>
 
                     <div class="header-buttons flex flex-wrap justify-center gap-2">
@@ -492,11 +520,234 @@
     </div>
 
     <script>
+        // 音效管理器 - 创建轻松明快的音效
+        class SoundManager {
+            constructor() {
+                this.audioContext = null;
+                this.volume = 0.3; // 默认音量适中
+                this.isMuted = false;
+                
+                // 尝试初始化音频上下文
+                this.initAudioContext();
+                
+                // 绑定事件监听
+                document.getElementById('volume-slider').addEventListener('input', (e) => {
+                    this.setVolume(e.target.value / 100);
+                });
+                
+                // 音量图标点击切换静音
+                document.getElementById('volume-icon').addEventListener('click', () => {
+                    this.toggleMute();
+                });
+            }
+            
+            // 初始化音频上下文
+            initAudioContext() {
+                try {
+                    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.audioContext = new AudioContext();
+                } catch (e) {
+                    console.warn('Web Audio API 不受支持，音效将无法播放');
+                }
+            }
+            
+            // 设置音量
+            setVolume(value) {
+                this.volume = Math.max(0, Math.min(1, value));
+                
+                // 更新音量图标
+                const icon = document.getElementById('volume-icon');
+                if (this.volume === 0 || this.isMuted) {
+                    icon.className = 'fa fa-volume-off text-game-accent text-sm';
+                } else if (this.volume < 0.5) {
+                    icon.className = 'fa fa-volume-down text-game-accent text-sm';
+                } else {
+                    icon.className = 'fa fa-volume-up text-game-accent text-sm';
+                }
+                
+                // 更新滑块值
+                document.getElementById('volume-slider').value = this.volume * 100;
+            }
+            
+            // 切换静音状态
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                this.setVolume(this.volume); // 更新图标
+            }
+            
+            // 播放方块放置音效 - 清脆的短音
+            playPlaceSound() {
+                this.playTone({
+                    frequency: 660, // A5音调，清脆明亮
+                    type: 'sine',
+                    duration: 0.1,
+                    attack: 0.01,
+                    release: 0.05,
+                    volume: 0.7
+                });
+            }
+            
+            // 播放旋转音效 - 稍高的音调
+            playRotateSound() {
+                this.playTone({
+                    frequency: 880, // A6音调，比放置音高
+                    type: 'sine',
+                    duration: 0.08,
+                    attack: 0.005,
+                    release: 0.03,
+                    volume: 0.6
+                });
+            }
+            
+            // 播放提示音效 - 柔和的提示音
+            playHintSound() {
+                this.playTone({
+                    frequency: 523.25, // C5音调，明亮但不刺耳
+                    type: 'triangle',
+                    duration: 0.2,
+                    attack: 0.05,
+                    release: 0.1,
+                    volume: 0.5
+                });
+            }
+            
+            // 播放成功音效 - 愉快的和弦
+            playSuccessSound() {
+                // 和弦由三个音符组成
+                this.playTone({
+                    frequency: 659.25, // E5
+                    type: 'sine',
+                    duration: 0.3,
+                    attack: 0.05,
+                    release: 0.15,
+                    volume: 0.7
+                });
+                
+                setTimeout(() => {
+                    this.playTone({
+                        frequency: 783.99, // G5
+                        type: 'sine',
+                        duration: 0.3,
+                        attack: 0.05,
+                        release: 0.15,
+                        volume: 0.7
+                    });
+                }, 100);
+                
+                setTimeout(() => {
+                    this.playTone({
+                        frequency: 1046.5, // C6
+                        type: 'sine',
+                        duration: 0.5,
+                        attack: 0.05,
+                        release: 0.3,
+                        volume: 0.8
+                    });
+                }, 200);
+            }
+            
+            // 播放重置音效 - 简短的下行音
+            playResetSound() {
+                this.playTone({
+                    frequency: 659.25, // E5
+                    type: 'sine',
+                    duration: 0.2,
+                    attack: 0.02,
+                    release: 0.1,
+                    volume: 0.5,
+                    slide: -100 // 轻微下滑
+                });
+            }
+            
+            // 播放下一关音效 - 上升音
+            playNextLevelSound() {
+                this.playTone({
+                    frequency: 659.25, // E5
+                    type: 'sine',
+                    duration: 0.2,
+                    attack: 0.02,
+                    release: 0.1,
+                    volume: 0.6,
+                    slide: 150 // 轻微上升
+                });
+            }
+            
+            // 播放基本音调
+            playTone(options) {
+                if (!this.audioContext || this.isMuted || this.volume === 0) return;
+                
+                const {
+                    frequency = 440,
+                    type = 'sine',
+                    duration = 0.5,
+                    attack = 0.01,
+                    release = 0.1,
+                    volume = 1,
+                    slide = 0
+                } = options;
+                
+                // 创建音频节点
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                // 连接节点
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                // 设置 oscillator 参数
+                oscillator.type = type;
+                oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                
+                // 滑音效果
+                if (slide !== 0) {
+                    oscillator.frequency.linearRampToValueAtTime(
+                        frequency + slide, 
+                        this.audioContext.currentTime + duration
+                    );
+                }
+                
+                // 设置音量包络
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(volume * this.volume, this.audioContext.currentTime + attack);
+                
+                if (duration > attack + release) {
+                    const sustainTime = duration - attack - release;
+                    gainNode.gain.setValueAtTime(volume * this.volume, this.audioContext.currentTime + attack + sustainTime);
+                }
+                
+                gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration);
+                
+                // 开始播放
+                oscillator.start();
+                
+                // 结束播放
+                oscillator.stop(this.audioContext.currentTime + duration);
+                
+                // 清理
+                oscillator.onended = () => {
+                    oscillator.disconnect();
+                    gainNode.disconnect();
+                };
+            }
+            
+            // 确保音频上下文已启动（处理浏览器自动播放限制）
+            ensureAudioContext() {
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                } else if (!this.audioContext) {
+                    this.initAudioContext();
+                }
+            }
+        }
+
         // 游戏常量定义
         const DIFFICULTY_LEVELS = { easy: 30, medium: 80, hard: 100 };
         const GRID_ASPECT_RATIO = 4 / 3;
         const COLS = 16;
         const ROWS = 14;
+
+        // 初始化音效管理器
+        const soundManager = new SoundManager();
 
         // 游戏状态管理
         const gameState = {
@@ -588,7 +839,7 @@
             g4: [[[0, 3], [1, 3], [1, 2], [1, 1], [0, 0], [1, 0]], [[3, 3], [3, 2], [2, 2], [1, 2], [0, 3], [0, 2]],
             [[3, 0], [2, 0], [2, 1], [2, 2], [3, 3], [2, 3]], [[0, 0], [0, 1], [1, 1], [2, 1], [3, 0], [3, 1]]],
             b1: [[[1, 3], [0, 2], [1, 2], [0, 1], [1, 1], [1, 0]], [[3, 2], [2, 3], [2, 2], [1, 3], [1, 2], [0, 2]],
-            [[2, 0], [3, 1], [2, 1], [3, 2], [2, 2], [2, 3]], [[0, 1], [1, 0], [1, 1], [2, 0], [2, 1], [3, 1]]],
+            [[3, 0], [2, 0], [2, 1], [2, 2], [3, 3], [2, 3]], [[2, 0], [3, 1], [2, 1], [3, 2], [2, 2], [2, 3]]],
             b2: [[[0, 3], [1, 3], [2, 3], [0, 2], [0, 1]], [[3, 3], [3, 2], [3, 1], [2, 3], [1, 3]],
             [[3, 0], [2, 0], [1, 0], [3, 1], [3, 2]], [[0, 0], [0, 1], [0, 2], [1, 0], [2, 0]]],
             b3: [[[0, 1], [1, 0], [1, 1], [1, 2], [1, 3], [2, 1]], [[1, 3], [0, 2], [1, 2], [2, 2], [3, 2], [1, 1]],
@@ -640,11 +891,18 @@
             fullscreenIcon: document.querySelector('#fullscreen-btn i'),
             fullscreenText: document.querySelector('#fullscreen-btn span'),
             tutorialMessage: document.getElementById('tutorial-message'),
-            tutorialCloseBtn: document.getElementById('tutorial-close-btn')
+            tutorialCloseBtn: document.getElementById('tutorial-close-btn'),
+            volumeSlider: document.getElementById('volume-slider'),
+            volumeIcon: document.getElementById('volume-icon')
         };
 
         // 初始化游戏
         function initGame() {
+            // 添加点击事件以激活音频上下文（处理浏览器自动播放限制）
+            document.addEventListener('click', () => {
+                soundManager.ensureAudioContext();
+            }, { once: true });
+            
             checkTutorialStatus();
             createGridBackground(elements.piecesGrid);
             createGridBackground(elements.targetGrid);
@@ -700,6 +958,8 @@
         function closeTutorial() {
             elements.tutorialMessage.classList.remove('show');
             gameState.hasSeenTutorial = true;
+            // 播放开始音效
+            soundManager.playNextLevelSound();
         }
 
         // 更新容器尺寸
@@ -765,6 +1025,7 @@
 
         // 切换全屏
         function toggleFullscreen() {
+            soundManager.playPlaceSound();
             if (!gameState.isFullscreen) {
                 const docEl = document.documentElement;
                 if (docEl.requestFullscreen) docEl.requestFullscreen().catch(err => console.error(`进入全屏失败: ${err.message}`));
@@ -850,7 +1111,7 @@
             });
         }
 
-        // 创建单个方块 - 增加originalRotation属性保存初始旋转状态
+        // 创建单个方块
         function createPiece(id, definitions, positions) {
             const def = definitions[id];
             const pos = positions[id];
@@ -973,6 +1234,8 @@
             piece.rotation = (piece.rotation + 1) % rotationCount;
             renderPiece(piece);
             constrainPieceToContainer(piece);
+            // 播放旋转音效
+            soundManager.playRotateSound();
         }
 
         // 开始拖动
@@ -1078,6 +1341,9 @@
             piece.element.style.left = `${piece.col * gridSize}px`;
             piece.element.style.top = `${piece.row * gridSize}px`;
 
+            // 播放放置音效
+            soundManager.playPlaceSound();
+            
             checkLevelCompletion();
 
             if (gameState.hintActive && gameState.hintedPieces.some(hp => hp.id === piece.id)) {
@@ -1407,6 +1673,8 @@
             elements.successMessage.classList.remove('opacity-0', 'pointer-events-none');
             handleLevelProgression();
             saveGameProgress();
+            // 播放成功音效
+            soundManager.playSuccessSound();
         }
 
         // 处理关卡进度
@@ -1441,7 +1709,7 @@
             elements.totalLevelsDisplay.textContent = gameState.totalLevels;
         }
 
-        // 重置方块 - 增加旋转状态重置
+        // 重置方块
         function resetPieces() {
             gameState.pieces.forEach(piece => {
                 piece.row = piece.originalRow;
@@ -1452,6 +1720,8 @@
             });
 
             clearHint();
+            // 播放重置音效
+            soundManager.playResetSound();
         }
 
         // 清除提示
@@ -1524,6 +1794,9 @@
             gameState.pieces.forEach(piece => renderPiece(piece));
             renderTargetShape();
 
+            // 播放提示音效
+            soundManager.playHintSound();
+            
             gameState.hintTimer = setTimeout(clearHint, 2500);
         }
 
@@ -1533,6 +1806,8 @@
             handleLevelProgression();
             generateLevel();
             saveGameProgress();
+            // 播放下一关音效
+            soundManager.playNextLevelSound();
         }
 
         // 切换游戏模式
@@ -1548,6 +1823,8 @@
             loadGameProgress();
             createAllPieces();
             generateLevel();
+            // 播放模式切换音效
+            soundManager.playNextLevelSound();
         }
 
         // 保存游戏进度
@@ -1594,6 +1871,8 @@
                 elements.levelDisplay.textContent = gameState.level;
                 generateLevel();
                 saveGameProgress();
+                // 播放难度切换音效
+                soundManager.playNextLevelSound();
             });
 
             elements.resetBtn.addEventListener('click', resetPieces);
