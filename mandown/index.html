@@ -135,7 +135,7 @@
                 <div class="mt-8 grid grid-cols-2 gap-3 w-full">
                     <div class="flex items-center gap-2">
                         <div class="w-5 h-2 bg-blue-500 rounded-sm"></div>
-                        <span class="text-sm text-gray-300">普通平台</span>
+                        <span class="text-sm text-gray-300">普通平台（可回血）</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-5 h-2 bg-green-500 rounded-sm"></div>
@@ -211,7 +211,7 @@
         <div class="mt-4 text-center text-gray-400 text-sm">
             <p class="mb-1">电脑: 方向键左右移动 | 手机: 点击左右按钮</p>
             <p class="mb-1">按回车键或点击暂停按钮可暂停/继续游戏</p>
-            <p>除钉板外，踩其他平台可回复1点生命值</p>
+            <p>只有普通平台可以回血一次</p>
         </div>
     </div>
 
@@ -526,7 +526,7 @@
                 this.spawnCounter = 0;
 
                 // 玩家属性 - 根据设备类型调整跳板力度
-                const bounceForce = this.isMobile ? -10 : -12;
+                const bounceForce = this.isMobile ? -11 : -12;
 
                 this.player = {
                     x: this.canvas.width / 2,
@@ -547,13 +547,14 @@
                     bounceCounter: 0, // 弹跳计数器
                     standingPlatform: null, // 当前站立的平台
                     previousPlatform: null, // 上一个站立的平台，用于音效播放控制
+                    healedPlatforms: new Set(), // 已经回过长的普通平台
                     damagedPlatforms: new Set() // 已经造成伤害的钉板平台
                 };
 
                 // 平台数组
                 this.platforms = [];
                 // 平台类型: normal, flip, conveyor-left, conveyor-right, spring, spike
-                this.platformTypes = ['normal', 'normal', 'normal', 'flip', 'conveyor-left', 'conveyor-right', 'spring', 'spike'];
+                this.platformTypes = ['normal', 'normal', 'flip', 'flip', 'conveyor-left', 'conveyor-right', 'spring', 'spike'];
 
                 // 按键状态
                 this.keys = {
@@ -624,7 +625,7 @@
                 this.player = {
                     ...this.player,
                     x: this.canvas.width / 2,
-                    y: this.canvas.height / 2,
+                    y: 10,
                     velocityX: 0,
                     velocityY: 0,
                     onGround: false,
@@ -633,6 +634,7 @@
                     bounceCounter: 0,
                     standingPlatform: null,
                     previousPlatform: null,
+                    healedPlatforms: new Set(), // 重置已回血平台集合
                     damagedPlatforms: new Set(),
                     bounceForce: bounceForce
                 };
@@ -652,40 +654,13 @@
                 this.platforms.push({
                     id: Date.now() + 1, // 添加唯一ID
                     x: this.canvas.width / 2 - 50,
-                    y: this.canvas.height / 2 + 50,
-                    width: 100,
-                    height: 10,
+                    y: this.canvas.height / 2 + 250,
+                    width: 120,
+                    height: 14,
                     type: 'normal',
                     flipped: false,
                     flipTimer: 0
                 });
-
-                // 再创建几个平台
-                this.platforms.push({
-                    id: Date.now() + 2,
-                    x: this.canvas.width / 2 - 50,
-                    y: this.canvas.height / 2 + 300,
-                    width: 100,
-                    height: 10,
-                    type: 'conveyor-right',
-                    flipped: false,
-                    flipTimer: 0,
-                    conveyorSpeed: -3
-                });
-
-                this.platforms.push({
-                    id: Date.now() + 4,
-                    x: this.canvas.width / 2 - 200,
-                    y: this.canvas.height / 2 + 150,
-                    width: 100,
-                    height: 10,
-                    type: 'conveyor-left',
-                    flipped: false,
-                    flipTimer: 0,
-                    conveyorSpeed: 3
-                });
-
-
             }
 
             // 创建平台
@@ -703,7 +678,7 @@
                     x,
                     y,
                     width,
-                    height: 10,
+                    height: 14,
                     type,
                     flipped: false,
                     flipTimer: 0,
@@ -943,11 +918,6 @@
                         // 每一定层数增加速度
                         if (this.score % this.speedIncreaseInterval === 0) {
                             this.speed += 0.2;
-
-                            // 稍微降低生成速率，增加难度
-                            if (this.platformSpawnRate > 60) {
-                                this.platformSpawnRate--;
-                            }
                         }
                     }
                 }
@@ -1000,8 +970,11 @@
 
                 switch (platform.type) {
                     case 'normal':
-                        // 普通平台，恢复1点生命值
-                        this.healPlayer(1);
+                        // 普通平台，恢复1点生命值，且只能回血一次
+                        if (!this.player.healedPlatforms.has(platform.id)) {
+                            this.healPlayer(1);
+                            this.player.healedPlatforms.add(platform.id);
+                        }
                         if (isNewPlatform) {
                             this.soundManager.playNormalPlatformSound();
                         }
@@ -1013,9 +986,6 @@
                             platform.flipped = true;
                             platform.flipTimer = 0;
 
-                            // 恢复1点生命值
-                            this.healPlayer(1);
-
                             if (isNewPlatform) {
                                 this.soundManager.playFlipPlatformSound();
                             }
@@ -1025,8 +995,6 @@
                     case 'conveyor-left':
                     case 'conveyor-right':
                         // 传送带，会在updatePlayer中应用持续的平移效果
-                        // 恢复1点生命值
-                        this.healPlayer(1);
                         if (isNewPlatform) {
                             this.soundManager.playConveyorSound();
                         }
@@ -1037,8 +1005,6 @@
                         this.player.velocityY = this.player.bounceForce;
                         this.player.isBouncing = true;
                         this.player.bounceCounter = 0;
-                        // 恢复1点生命值
-                        this.healPlayer(1);
 
                         if (isNewPlatform) {
                             this.soundManager.playBounceSound();
@@ -1121,7 +1087,7 @@
                 this.ctx.fill();
 
                 // 腿部动画
-                this.ctx.fillStyle = '#1F2937';
+                this.ctx.fillStyle = '#6F2937';
                 if (this.player.velocityX !== 0) {
                     // 走路动画
                     const legPhase = Math.sin(Date.now() * 0.01) * 3;
@@ -1215,12 +1181,12 @@
                             break;
 
                         case 'spring':
-                            // 弹簧
+                            // 重新构建的弹簧
                             this.drawSpring(platform);
                             break;
 
                         case 'spike':
-                            // 尖刺
+                            // 调整后的尖刺，不超出钉板宽度
                             this.drawSpikes(platform);
                             break;
 
@@ -1261,43 +1227,63 @@
                 }
             }
 
-            // 绘制弹簧
+            // 重新构建跳板的弹簧 - 更美观的设计
             drawSpring(platform) {
                 this.ctx.strokeStyle = '#FBBF24';
                 this.ctx.lineWidth = 2;
+                this.ctx.fillStyle = '#FBBF24';
 
-                const springX = platform.x + platform.width / 2;
-                const springTop = platform.y - 8;
-                const springBottom = platform.y;
+                const springWidth = platform.width * 0.6; // 弹簧宽度为平台的60%
+                const springX = platform.x + (platform.width - springWidth) / 2; // 居中
+                const springTop = platform.y - 12; // 弹簧顶部位置
+                const springBottom = platform.y; // 弹簧底部连接平台
 
+                // 弹簧两端的固定部分
+                this.ctx.fillRect(springX, springTop, 4, 3);
+                this.ctx.fillRect(springX + springWidth - 4, springTop, 4, 3);
+
+                // 绘制弹簧线圈 - 更密集的线圈
                 this.ctx.beginPath();
-                this.ctx.moveTo(springX, springTop);
+                this.ctx.moveTo(springX + 4, springTop);
 
-                // 绘制弹簧线圈
                 let y = springTop;
                 let direction = 1;
-                const segmentLength = 4;
+                const segmentLength = 3; // 更短的线段，使弹簧更密集
+                const coilWidth = springWidth - 8; // 线圈宽度
 
                 while (y < springBottom) {
-                    this.ctx.lineTo(springX + direction * 5, y + segmentLength);
+                    // 计算线圈的X位置，使弹簧呈现均匀的波浪形
+                    const x = springX + 4 + (direction > 0 ? 0 : coilWidth);
+                    this.ctx.lineTo(x, y + segmentLength);
                     y += segmentLength;
-                    direction *= -1;
+                    
+                    // 改变方向前先绘制水平线段
+                    if (y < springBottom) {
+                        this.ctx.lineTo(x + direction * coilWidth, y + segmentLength);
+                        y += segmentLength;
+                        direction *= -1;
+                    }
                 }
 
+                // 连接到平台
+                this.ctx.lineTo(springX + springWidth - 4, springBottom);
                 this.ctx.stroke();
             }
 
-            // 绘制尖刺
+            // 绘制钉板 - 确保尖刺不超出钉板宽度
             drawSpikes(platform) {
                 this.ctx.fillStyle = '#DC2626';
-                const spikeWidth = 8;
-                const spikeHeight = 8;
+                // 根据平台宽度计算尖刺数量和大小，确保不超出
+                const spikeCount = Math.floor(platform.width / 8); // 每8px一个尖刺
+                const spikeWidth = platform.width / spikeCount; // 尖刺宽度平均分配
+                const spikeHeight = 10;
 
-                for (let x = platform.x; x < platform.x + platform.width; x += spikeWidth) {
+                for (let i = 0; i < spikeCount; i++) {
+                    const x = platform.x + i * spikeWidth;
                     this.ctx.beginPath();
-                    this.ctx.moveTo(x, platform.y);
-                    this.ctx.lineTo(x + spikeWidth / 2, platform.y - spikeHeight);
-                    this.ctx.lineTo(x + spikeWidth, platform.y);
+                    this.ctx.moveTo(x, platform.y); // 左点
+                    this.ctx.lineTo(x + spikeWidth / 2, platform.y - spikeHeight); // 顶点
+                    this.ctx.lineTo(x + spikeWidth, platform.y); // 右点
                     this.ctx.closePath();
                     this.ctx.fill();
                 }
