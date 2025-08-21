@@ -135,7 +135,7 @@
                 <div class="mt-8 grid grid-cols-2 gap-3 w-full">
                     <div class="flex items-center gap-2">
                         <div class="w-5 h-2 bg-blue-500 rounded-sm"></div>
-                        <span class="text-sm text-gray-300">普通平台（可回血）</span>
+                        <span class="text-sm text-gray-300">普通平台（回血）</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-5 h-2 bg-green-500 rounded-sm"></div>
@@ -148,10 +148,10 @@
                         <span class="text-sm text-gray-300">传送带</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <div class="w-5 h-2 bg-yellow-400 rounded-sm relative">
-                            <div
-                                class="absolute -top-1 left-1/2 w-2 h-2 bg-yellow-300 rounded-full transform -translate-x-1/2">
-                            </div>
+                        <div class="w-5 h-2 relative">
+                            <div class="w-full h-1/3 bg-green-500"></div>
+                            <div class="w-full h-1/3 bg-white"></div>
+                            <div class="w-full h-1/3 bg-green-500"></div>
                         </div>
                         <span class="text-sm text-gray-300">跳板</span>
                     </div>
@@ -216,6 +216,142 @@
     </div>
 
     <script>
+        // 粒子类 - 用于特效
+        class Particle {
+            constructor(x, y, options = {}) {
+                this.x = x;
+                this.y = y;
+                this.size = options.size || Math.random() * 3 + 1;
+                this.speedX = options.speedX || (Math.random() - 0.5) * 4;
+                this.speedY = options.speedY || (Math.random() - 0.5) * 4;
+                this.color = options.color || '#ffffff';
+                this.life = options.life || 30;
+                this.maxLife = this.life;
+                this.gravity = options.gravity || 0;
+                this.fade = options.fade !== undefined ? options.fade : true;
+                // 水滴形状参数
+                this.droplet = options.droplet || false;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.speedY += this.gravity;
+                this.life--;
+                return this.life > 0;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                let alpha = 1;
+                if (this.fade) {
+                    alpha = this.life / this.maxLife;
+                }
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = this.color;
+
+                if (this.droplet) {
+                    // 绘制水滴形状
+                    ctx.beginPath();
+                    ctx.ellipse(this.x, this.y, this.size, this.size * 1.5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // 绘制圆形粒子
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // 特效管理器类
+        class EffectManager {
+            constructor() {
+                this.particles = [];
+                this.effects = []; // 存储特殊效果
+            }
+
+            // 添加粒子
+            addParticles(count, x, y, options = {}) {
+                for (let i = 0; i < count; i++) {
+                    this.particles.push(new Particle(x, y, options));
+                }
+            }
+
+            // 添加闪烁效果
+            addFlashEffect(target, color, duration = 15) {
+                this.effects.push({
+                    type: 'flash',
+                    target: target, // 可以是平台ID或"player"
+                    color: color,
+                    duration: duration,
+                    remaining: duration
+                });
+            }
+
+            // 添加缩放效果
+            addScaleEffect(target, scale, duration = 15) {
+                this.effects.push({
+                    type: 'scale',
+                    target: target,
+                    scale: scale,
+                    duration: duration,
+                    remaining: duration,
+                    currentScale: 1
+                });
+            }
+
+            // 更新所有特效
+            update() {
+                // 更新粒子
+                this.particles = this.particles.filter(particle => particle.update());
+
+                // 更新特殊效果
+                this.effects = this.effects.filter(effect => {
+                    effect.remaining--;
+
+                    if (effect.type === 'scale') {
+                        // 计算当前缩放比例（使用正弦曲线实现弹性效果）
+                        const progress = 1 - (effect.remaining / effect.duration);
+                        effect.currentScale = 1 + (effect.scale * Math.sin(progress * Math.PI));
+                    }
+
+                    return effect.remaining > 0;
+                });
+            }
+
+            // 绘制所有特效
+            draw(ctx, player, platforms) {
+                // 绘制粒子
+                this.particles.forEach(particle => particle.draw(ctx));
+            }
+
+            // 检查目标是否有闪烁效果
+            hasFlashEffect(targetId) {
+                return this.effects.some(effect =>
+                    effect.type === 'flash' && effect.target === targetId && effect.remaining > 0
+                );
+            }
+
+            // 获取目标的闪烁颜色
+            getFlashColor(targetId) {
+                const effect = this.effects.find(effect =>
+                    effect.type === 'flash' && effect.target === targetId && effect.remaining > 0
+                );
+                return effect ? effect.color : null;
+            }
+
+            // 获取目标的缩放比例
+            getScale(targetId) {
+                const effect = this.effects.find(effect =>
+                    effect.type === 'scale' && effect.target === targetId && effect.remaining > 0
+                );
+                return effect ? effect.currentScale : 1;
+            }
+        }
+
         // 音效管理器类 - 封装Web Audio API功能
         class SoundManager {
             constructor() {
@@ -494,7 +630,8 @@
         // 游戏主类
         class Game {
             constructor() {
-                // 初始化音效管理器
+                // 初始化特效管理器和音效管理器
+                this.effectManager = new EffectManager();
                 this.soundManager = new SoundManager();
 
                 // 获取画布和上下文
@@ -548,13 +685,14 @@
                     standingPlatform: null, // 当前站立的平台
                     previousPlatform: null, // 上一个站立的平台，用于音效播放控制
                     healedPlatforms: new Set(), // 已经回过长的普通平台
-                    damagedPlatforms: new Set() // 已经造成伤害的钉板平台
+                    damagedPlatforms: new Set(), // 已经造成伤害的钉板平台
+                    flashTimer: 0 // 用于人物闪烁特效
                 };
 
                 // 平台数组
                 this.platforms = [];
                 // 平台类型: normal, flip, conveyor-left, conveyor-right, spring, spike
-                this.platformTypes = ['normal', 'normal', 'flip', 'flip', 'conveyor-left', 'conveyor-right', 'spring', 'spike'];
+                this.platformTypes = ['normal', 'spike', 'normal', 'flip', 'conveyor-left', 'conveyor-right', 'spring', 'spike'];
 
                 // 按键状态
                 this.keys = {
@@ -616,6 +754,9 @@
 
             // 初始化游戏
             init() {
+                // 清空特效
+                this.effectManager = new EffectManager();
+
                 // 创建初始平台
                 this.platforms = [];
                 this.createInitialPlatforms();
@@ -636,7 +777,8 @@
                     previousPlatform: null,
                     healedPlatforms: new Set(), // 重置已回血平台集合
                     damagedPlatforms: new Set(),
-                    bounceForce: bounceForce
+                    bounceForce: bounceForce,
+                    flashTimer: 0
                 };
 
                 // 重置游戏状态
@@ -682,7 +824,8 @@
                     type,
                     flipped: false,
                     flipTimer: 0,
-                    conveyorSpeed: type.includes('conveyor') ? (type === 'conveyor-left' ? 3 : -3) : 0
+                    conveyorSpeed: type.includes('conveyor') ? (type === 'conveyor-left' ? 3 : -3) : 0,
+                    effectTimer: 0 // 用于平台特效
                 });
             }
 
@@ -727,7 +870,7 @@
                 this.soundManager.playResumeSound();
 
                 this.lastTime = performance.now();
-                requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+                requestAnimationFrame((nextTimestamp) => this.gameLoop(nextTimestamp));
             }
 
             // 切换暂停/继续状态
@@ -796,6 +939,11 @@
                 // 计算时间补偿因子 (基于60fps)
                 const timeFactor = this.deltaTime / (1000 / 60);
 
+                // 更新玩家闪烁计时器
+                if (this.player.flashTimer > 0) {
+                    this.player.flashTimer--;
+                }
+
                 // 左右移动基础速度
                 let moveSpeed = 0;
                 if (this.keys.left) {
@@ -811,6 +959,26 @@
                     (this.player.standingPlatform.type === 'conveyor-left' ||
                         this.player.standingPlatform.type === 'conveyor-right')) {
                     this.player.velocityX = moveSpeed + (this.player.standingPlatform.conveyorSpeed * timeFactor);
+
+                    // 传送带特效：脑袋流汗效果
+                    const platform = this.player.standingPlatform;
+                    if (Math.random() > 0.7) { // 随机发射水滴
+                        // 头部位置（根据玩家头部位置调整）
+                        const headX = this.player.x + this.player.width / 2;
+                        const headY = this.player.y - this.player.width / 2;
+                        const dir = platform.type === 'conveyor-left' ? -1 : 1;
+
+                        // 添加流汗效果 - 水滴从头部向传送带方向流下
+                        this.effectManager.addParticles(1, headX, headY, {
+                            speedX: dir * 1.5, // 沿传送带方向
+                            speedY: 2, // 向下
+                            color: '#DBEAFE', // 浅蓝色
+                            size: 2,
+                            life: 10,
+                            gravity: 0.2,
+                            droplet: true // 水滴形状
+                        });
+                    }
                 } else {
                     this.player.velocityX = moveSpeed;
                 }
@@ -830,6 +998,21 @@
 
                             // 播放弹跳音效
                             this.soundManager.playBounceSound();
+
+                            // 跳板弹跳特效
+                            const platform = this.player.standingPlatform;
+                            this.effectManager.addScaleEffect(platform.id, 0.2, 10);
+
+                            // 添加弹跳粒子
+                            this.effectManager.addParticles(8,
+                                platform.x + platform.width / 2,
+                                platform.y, {
+                                speedX: (Math.random() - 0.5) * 4,
+                                speedY: -3,
+                                color: '#FBBF24',
+                                life: 30,
+                                gravity: 0.2
+                            });
                         }
                     } else {
                         // 不在跳板上了，关闭弹跳状态
@@ -883,6 +1066,9 @@
                 } else if (!this.player.standingPlatform) {
                     this.player.previousPlatform = previousPlatform;
                 }
+
+                // 更新特效
+                this.effectManager.update();
             }
 
             // 更新平台
@@ -895,10 +1081,23 @@
                     const platform = this.platforms[i];
                     platform.y -= this.speed * timeFactor; // 平台向上移动，应用时间补偿
 
+                    // 更新平台特效计时器
+                    if (platform.effectTimer > 0) {
+                        platform.effectTimer--;
+                    }
+
                     // 处理翻转平台
                     if (platform.type === 'flip' && platform.flipped) {
                         // 基于时间更新翻转计时器
                         platform.flipTimer += timeFactor;
+
+                        // 翻转过程中添加闪烁特效
+                        if (platform.flipTimer <= 42) {
+                            const flashInterval = 5; // 每5帧闪烁一次
+                            if (Math.floor(platform.flipTimer) % flashInterval === 0) {
+                                this.effectManager.addFlashEffect(platform.id, '#6B7280', flashInterval);
+                            }
+                        }
 
                         // 翻转后1.3秒(总共2秒)完全移除平台
                         if (platform.flipTimer > 120) {
@@ -959,9 +1158,9 @@
                 }
             }
 
-            // 处理平台效果
+            // 处理平台效果和添加特效
             handlePlatformEffect(platform) {
-                // 检查是否是新平台（避免重复播放音效）
+                // 检查是否是新平台（避免重复播放音效和特效）
                 const isNewPlatform = !this.player.previousPlatform ||
                     this.player.previousPlatform.id !== platform.id;
 
@@ -988,15 +1187,40 @@
 
                             if (isNewPlatform) {
                                 this.soundManager.playFlipPlatformSound();
+
+                                // 翻转平台特效：添加绿色粒子（取消人物特效）
+                                this.effectManager.addParticles(10,
+                                    platform.x + platform.width / 2,
+                                    platform.y + platform.height / 2, {
+                                    speedX: (Math.random() - 0.5) * 3,
+                                    speedY: (Math.random() - 0.5) * 3,
+                                    color: '#10B981',
+                                    life: 40
+                                });
                             }
                         }
                         break;
 
                     case 'conveyor-left':
                     case 'conveyor-right':
-                        // 传送带，会在updatePlayer中应用持续的平移效果
+                        // 传送带，流汗特效在updatePlayer中持续产生
                         if (isNewPlatform) {
                             this.soundManager.playConveyorSound();
+
+                            // 初始接触时添加少量水滴
+                            const dir = platform.type === 'conveyor-left' ? -1 : 1;
+                            const headX = this.player.x + this.player.width / 2;
+                            const headY = this.player.y - this.player.width / 2;
+
+                            this.effectManager.addParticles(3, headX, headY, {
+                                speedX: dir * 1.5,
+                                speedY: 2,
+                                color: '#DBEAFE',
+                                size: 2,
+                                life: 30,
+                                gravity: 0.2,
+                                droplet: true
+                            });
                         }
                         break;
 
@@ -1008,6 +1232,21 @@
 
                         if (isNewPlatform) {
                             this.soundManager.playBounceSound();
+
+                            // 跳板接触特效：添加黄色粒子和缩放效果
+                            this.effectManager.addScaleEffect(platform.id, 0.3, 15);
+                            this.effectManager.addParticles(12,
+                                platform.x + platform.width / 2,
+                                platform.y, {
+                                speedX: (Math.random() - 0.5) * 5,
+                                speedY: -4,
+                                color: '#FBBF24',
+                                life: 40,
+                                gravity: 0.2
+                            });
+
+                            // 人物弹跳时的特效
+                            this.effectManager.addFlashEffect('player', '#FBBF24', 10);
                         }
                         break;
 
@@ -1023,6 +1262,20 @@
 
                             // 播放掉血音效
                             this.soundManager.playDamageSound();
+
+                            // 钉板接触特效：添加红色粒子和闪烁
+                            this.effectManager.addParticles(15,
+                                this.player.x + this.player.width / 2,
+                                this.player.y + this.player.height / 2, {
+                                speedX: (Math.random() - 0.5) * 6,
+                                speedY: (Math.random() - 0.5) * 6,
+                                color: '#EF4444',
+                                life: 30,
+                                gravity: 0.1
+                            });
+
+                            // 人物受伤闪烁特效
+                            this.player.flashTimer = 20; // 闪烁20帧
 
                             // 如果生命值为0，游戏结束
                             if (this.player.health <= 0) {
@@ -1048,6 +1301,16 @@
                     // 只有实际回血了才播放音效
                     if (this.player.health > previousHealth) {
                         this.soundManager.playHealSound();
+
+                        // 回血特效
+                        this.effectManager.addParticles(8,
+                            this.player.x + this.player.width / 2,
+                            this.player.y, {
+                            speedX: (Math.random() - 0.5) * 3,
+                            speedY: (Math.random() - 0.5) * 3,
+                            color: '#10B981',
+                            life: 30
+                        });
                     }
                 }
             }
@@ -1056,17 +1319,48 @@
             drawPlayer() {
                 this.ctx.save();
 
+                // 玩家闪烁效果
+                const hasFlash = this.effectManager.hasFlashEffect('player');
+                const flashColor = this.effectManager.getFlashColor('player');
+                const flashVisible = hasFlash ? (Math.floor(Date.now() / 50) % 2 === 0) : true;
+
+                // 受伤闪烁效果
+                const hurtFlashVisible = this.player.flashTimer > 0 ?
+                    (Math.floor(this.player.flashTimer / 3) % 2 === 0) : true;
+
+                // 如果闪烁效果激活且当前帧不可见，则不绘制
+                if (!flashVisible || !hurtFlashVisible) {
+                    this.ctx.restore();
+                    return;
+                }
+
+                // 应用缩放效果
+                const scale = this.effectManager.getScale('player');
+                this.ctx.translate(
+                    this.player.x + this.player.width / 2,
+                    this.player.y + this.player.height / 2
+                );
+                this.ctx.scale(scale, scale);
+                this.ctx.translate(
+                    -this.player.width / 2,
+                    -this.player.height / 2
+                );
+
                 // 玩家身体
-                this.ctx.fillStyle = '#3B82F6';
-                this.ctx.fillRect(this.player.x, this.player.y, this.player.width, this.player.height);
+                if (hasFlash && flashColor) {
+                    this.ctx.fillStyle = flashColor;
+                } else {
+                    this.ctx.fillStyle = '#3B82F6';
+                }
+                this.ctx.fillRect(0, 0, this.player.width, this.player.height);
 
                 // 玩家头部
                 this.ctx.fillStyle = '#F59E0B';
                 const headRadius = this.player.width / 2;
                 this.ctx.beginPath();
                 this.ctx.arc(
-                    this.player.x + this.player.width / 2,
-                    this.player.y - headRadius,
+                    this.player.width / 2,
+                    -headRadius,
                     headRadius,
                     0,
                     Math.PI * 2
@@ -1078,8 +1372,8 @@
                 const eyeOffset = this.player.direction * 5;
                 this.ctx.beginPath();
                 this.ctx.arc(
-                    this.player.x + this.player.width / 2 + eyeOffset,
-                    this.player.y - headRadius,
+                    this.player.width / 2 + eyeOffset,
+                    -headRadius,
                     3,
                     0,
                     Math.PI * 2
@@ -1092,28 +1386,28 @@
                     // 走路动画
                     const legPhase = Math.sin(Date.now() * 0.01) * 3;
                     this.ctx.fillRect(
-                        this.player.x + 5,
-                        this.player.y + this.player.height,
+                        5,
+                        this.player.height,
                         8,
                         10 + legPhase
                     );
                     this.ctx.fillRect(
-                        this.player.x + this.player.width - 13,
-                        this.player.y + this.player.height,
+                        this.player.width - 13,
+                        this.player.height,
                         8,
                         10 - legPhase
                     );
                 } else {
                     // 站立
                     this.ctx.fillRect(
-                        this.player.x + 5,
-                        this.player.y + this.player.height,
+                        5,
+                        this.player.height,
                         8,
                         10
                     );
                     this.ctx.fillRect(
-                        this.player.x + this.player.width - 13,
-                        this.player.y + this.player.height,
+                        this.player.width - 13,
+                        this.player.height,
                         8,
                         10
                     );
@@ -1137,36 +1431,72 @@
                         this.ctx.globalAlpha = 0.5 - (platform.flipTimer - 42) / 156;
                     }
 
-                    switch (platform.type) {
-                        case 'normal':
-                            // 蓝色普通平台
-                            this.ctx.fillStyle = '#3B82F6';
-                            break;
+                    // 检查是否有闪烁效果
+                    const hasFlash = this.effectManager.hasFlashEffect(platform.id);
+                    const flashColor = this.effectManager.getFlashColor(platform.id);
+                    const flashVisible = hasFlash ? (Math.floor(Date.now() / 50) % 2 === 0) : true;
 
-                        case 'flip':
-                            // 绿色翻转平台，翻转时变色
-                            this.ctx.fillStyle = platform.flipped ? '#6B7280' : '#10B981';
-                            break;
+                    // 获取缩放比例
+                    const scale = this.effectManager.getScale(platform.id);
 
-                        case 'conveyor-left':
-                        case 'conveyor-right':
-                            // 白色传送带，添加箭头
-                            this.ctx.fillStyle = '#F3F4F6';
-                            break;
+                    // 应用缩放变换
+                    this.ctx.save();
+                    this.ctx.translate(
+                        platform.x + platform.width / 2,
+                        platform.y + platform.height / 2
+                    );
+                    this.ctx.scale(scale, scale);
+                    this.ctx.translate(
+                        -platform.width / 2,
+                        -platform.height / 2
+                    );
 
-                        case 'spring':
-                            // 黄色跳板，添加弹簧
-                            this.ctx.fillStyle = '#F59E0B';
-                            break;
+                    // 绘制平台主体 - 跳板使用三层结构
+                    if (platform.type === 'spring') {
+                        // 跳板：上中下三层，上下绿色，中间白色，总高度与普通平台相同
+                        const layerHeight = platform.height / 3;
 
-                        case 'spike':
-                            // 红色钉板，添加尖刺
-                            this.ctx.fillStyle = '#EF4444';
-                            break;
+                        // 上层绿色
+                        this.ctx.fillStyle = hasFlash && flashColor ? flashColor : '#10B981';
+                        this.ctx.fillRect(0, 0, platform.width, layerHeight);
+
+                        // 中层白色
+                        this.ctx.fillStyle = hasFlash && flashColor ? flashColor : '#F3F4F6';
+                        this.ctx.fillRect(0, layerHeight, platform.width, layerHeight);
+
+                        // 下层绿色
+                        this.ctx.fillStyle = hasFlash && flashColor ? flashColor : '#10B981';
+                        this.ctx.fillRect(0, layerHeight * 2, platform.width, layerHeight);
+                    } else {
+                        // 其他平台类型的颜色
+                        let fillColor;
+                        switch (platform.type) {
+                            case 'normal':
+                                fillColor = '#3B82F6';
+                                break;
+                            case 'flip':
+                                fillColor = platform.flipped ? '#6B7280' : '#10B981';
+                                break;
+                            case 'conveyor-left':
+                            case 'conveyor-right':
+                                fillColor = '#F3F4F6';
+                                break;
+                            case 'spike':
+                                fillColor = '#EF4444';
+                                break;
+                        }
+
+                        // 如果有闪烁效果，使用闪烁颜色
+                        if (hasFlash && flashColor) {
+                            fillColor = flashColor;
+                        }
+
+                        // 绘制其他平台
+                        if (flashVisible) {
+                            this.ctx.fillStyle = fillColor;
+                            this.ctx.fillRect(0, 0, platform.width, platform.height);
+                        }
                     }
-
-                    // 绘制平台主体
-                    this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
 
                     // 绘制平台特殊效果
                     switch (platform.type) {
@@ -1178,11 +1508,6 @@
                         case 'conveyor-right':
                             // 向右的箭头
                             this.drawConveyorArrows(platform, 1);
-                            break;
-
-                        case 'spring':
-                            // 重新构建的弹簧
-                            this.drawSpring(platform);
                             break;
 
                         case 'spike':
@@ -1198,11 +1523,14 @@
                                 this.ctx.textAlign = 'center';
                                 const seconds = Math.ceil((42 - platform.flipTimer) / 60 * 10) / 10;
                                 if (seconds > 0) {
-                                    this.ctx.fillText(seconds.toFixed(1), platform.x + platform.width / 2, platform.y - 5);
+                                    this.ctx.fillText(seconds.toFixed(1), platform.width / 2, -5);
                                 }
                             }
                             break;
                     }
+
+                    // 恢复缩放变换
+                    this.ctx.restore();
 
                     // 恢复透明度设置
                     this.ctx.globalAlpha = originalAlpha;
@@ -1217,57 +1545,14 @@
                 const arrowSize = 8;
                 const spacing = 20;
 
-                for (let x = platform.x + 10; x < platform.x + platform.width - 10; x += spacing) {
+                for (let x = 10; x < platform.width - 10; x += spacing) {
                     this.ctx.beginPath();
-                    this.ctx.moveTo(x, platform.y + platform.height / 2);
-                    this.ctx.lineTo(x + direction * arrowSize, platform.y + platform.height / 2 - arrowSize / 2);
-                    this.ctx.lineTo(x + direction * arrowSize, platform.y + platform.height / 2 + arrowSize / 2);
+                    this.ctx.moveTo(x, platform.height / 2);
+                    this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 - arrowSize / 2);
+                    this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 + arrowSize / 2);
                     this.ctx.closePath();
                     this.ctx.fill();
                 }
-            }
-
-            // 重新构建跳板的弹簧 - 更美观的设计
-            drawSpring(platform) {
-                this.ctx.strokeStyle = '#FBBF24';
-                this.ctx.lineWidth = 2;
-                this.ctx.fillStyle = '#FBBF24';
-
-                const springWidth = platform.width * 0.6; // 弹簧宽度为平台的60%
-                const springX = platform.x + (platform.width - springWidth) / 2; // 居中
-                const springTop = platform.y - 12; // 弹簧顶部位置
-                const springBottom = platform.y; // 弹簧底部连接平台
-
-                // 弹簧两端的固定部分
-                this.ctx.fillRect(springX, springTop, 4, 3);
-                this.ctx.fillRect(springX + springWidth - 4, springTop, 4, 3);
-
-                // 绘制弹簧线圈 - 更密集的线圈
-                this.ctx.beginPath();
-                this.ctx.moveTo(springX + 4, springTop);
-
-                let y = springTop;
-                let direction = 1;
-                const segmentLength = 3; // 更短的线段，使弹簧更密集
-                const coilWidth = springWidth - 8; // 线圈宽度
-
-                while (y < springBottom) {
-                    // 计算线圈的X位置，使弹簧呈现均匀的波浪形
-                    const x = springX + 4 + (direction > 0 ? 0 : coilWidth);
-                    this.ctx.lineTo(x, y + segmentLength);
-                    y += segmentLength;
-                    
-                    // 改变方向前先绘制水平线段
-                    if (y < springBottom) {
-                        this.ctx.lineTo(x + direction * coilWidth, y + segmentLength);
-                        y += segmentLength;
-                        direction *= -1;
-                    }
-                }
-
-                // 连接到平台
-                this.ctx.lineTo(springX + springWidth - 4, springBottom);
-                this.ctx.stroke();
             }
 
             // 绘制钉板 - 确保尖刺不超出钉板宽度
@@ -1279,11 +1564,11 @@
                 const spikeHeight = 10;
 
                 for (let i = 0; i < spikeCount; i++) {
-                    const x = platform.x + i * spikeWidth;
+                    const x = i * spikeWidth;
                     this.ctx.beginPath();
-                    this.ctx.moveTo(x, platform.y); // 左点
-                    this.ctx.lineTo(x + spikeWidth / 2, platform.y - spikeHeight); // 顶点
-                    this.ctx.lineTo(x + spikeWidth, platform.y); // 右点
+                    this.ctx.moveTo(x, 0); // 左点
+                    this.ctx.lineTo(x + spikeWidth / 2, -spikeHeight); // 顶点
+                    this.ctx.lineTo(x + spikeWidth, 0); // 右点
                     this.ctx.closePath();
                     this.ctx.fill();
                 }
@@ -1356,6 +1641,9 @@
 
                 // 绘制平台
                 this.drawPlatforms();
+
+                // 绘制特效
+                this.effectManager.draw(this.ctx, this.player, this.platforms);
 
                 // 绘制玩家
                 this.drawPlayer();
