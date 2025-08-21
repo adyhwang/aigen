@@ -17,8 +17,7 @@
                         danger: '#EF4444',
                         warning: '#F59E0B',
                         light: '#F3F4F6',
-                        dark: '#1F2937',
-                        cyan: '#06B6D4' // 救命道具颜色
+                        dark: '#1F2937'
                     }
                 }
             }
@@ -115,6 +114,11 @@
                 <span id="powerUpText"></span>
             </div>
 
+            <!-- 救命道具待命状态指示器 -->
+            <div id="lifesaverReadyIndicator" class="hidden absolute top-4 right-4 bg-blue-600/80 px-2 py-1 rounded text-xs z-40">
+                <i class="fa fa-shield mr-1"></i>待命
+            </div>
+
             <div id="startMenu" class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10">
                 <div class="text-center mb-8">
                     <h2 class="text-2xl font-[family='Press Start 2P',cursive] mb-4 text-primary">准备好了吗？</h2>
@@ -158,12 +162,6 @@
                         <div class="w-5 h-5 rounded-full bg-yellow-400 relative">
                             <div class="absolute inset-1 bg-yellow-600 rounded-full"></div>
                         </div><span class="text-sm text-gray-300">道具 (增益)</span>
-                    </div>
-                    <!-- 新增：救命道具说明 -->
-                    <div class="flex items-center gap-2">
-                        <div class="w-5 h-5 rounded-full bg-cyan-400 relative">
-                            <div class="absolute inset-1 bg-cyan-600 rounded-full"></div>
-                        </div><span class="text-sm text-gray-300">救命道具</span>
                     </div>
                 </div>
             </div>
@@ -306,10 +304,9 @@
                         this.color = '#EC4899';
                         this.icon = '♦';
                         break;
-                    // 新增：救命道具
-                    case 'savePlayer':
+                    case 'lifeSaver': // 新增：救命道具
                         this.color = '#06B6D4';
-                        this.icon = '✦';
+                        this.icon = '🛡️';
                         break;
                 }
             }
@@ -459,6 +456,51 @@
                     remaining: duration,
                     currentScale: startScale
                 });
+            }
+
+            // 添加传送效果
+            addTeleportEffect(x1, y1, x2, y2, color = '#06B6D4') {
+                // 起点效果
+                this.addParticles(15, x1, y1, {
+                    speedX: (Math.random() - 0.5) * 6,
+                    speedY: (Math.random() - 0.5) * 6,
+                    color,
+                    size: Math.random() * 3 + 1,
+                    life: 40,
+                    gravity: 0,
+                    explosive: true
+                });
+                
+                // 终点效果
+                setTimeout(() => {
+                    this.addParticles(15, x2, y2, {
+                        speedX: (Math.random() - 0.5) * 6,
+                        speedY: (Math.random() - 0.5) * 6,
+                        color,
+                        size: Math.random() * 3 + 1,
+                        life: 40,
+                        gravity: 0,
+                        explosive: true
+                    });
+                }, 200);
+                
+                // 传送轨迹
+                for (let i = 0; i < 10; i++) {
+                    const progress = i / 10;
+                    const x = x1 + (x2 - x1) * progress;
+                    const y = y1 + (y2 - y1) * progress;
+                    
+                    setTimeout(() => {
+                        this.addParticles(3, x, y, {
+                            speedX: (Math.random() - 0.5) * 2,
+                            speedY: (Math.random() - 0.5) * 2,
+                            color,
+                            size: Math.random() * 2 + 0.5,
+                            life: 20,
+                            gravity: 0
+                        });
+                    }, i * 20);
+                }
             }
 
             // 更新所有特效
@@ -653,15 +695,19 @@
                 this.playTone('sine', 660, 0.1, 0, { attack: 0.01, decay: 0.03, sustain: 0.7, release: 0.06 });
                 this.playTone('sine', 880, 0.15, 0.08, { attack: 0.01, decay: 0.03, sustain: 0.7, release: 0.06 });
             }
-            // 新增：救命道具特殊音效
-            playSaveSound() {
-                this.playTone('sine', 523, 0.2, 0, { attack: 0.02, decay: 0.05, sustain: 0.7, release: 0.13 });
-                this.playTone('sine', 659, 0.25, 0.1, { attack: 0.02, decay: 0.05, sustain: 0.7, release: 0.18 });
-                this.playTone('sine', 784, 0.3, 0.2, { attack: 0.02, decay: 0.1, sustain: 0.7, release: 0.18 });
-            }
             playModeChangeSound() {
                 this.playTone('sine', 523.25, 0.1, 0, { attack: 0.01, decay: 0.03, sustain: 0.5, release: 0.06 });
                 this.playTone('sine', 659.25, 0.1, 0.08, { attack: 0.01, decay: 0.03, sustain: 0.5, release: 0.06 });
+            }
+            // 新增：救命道具音效
+            playLifeSaverActivateSound() {
+                this.playTone('sine', 523, 0.2, 0, { attack: 0.02, decay: 0.05, sustain: 0.7, release: 0.13 });
+                this.playTone('sine', 659, 0.3, 0.1, { attack: 0.02, decay: 0.1, sustain: 0.7, release: 0.18 });
+            }
+            // 新增：传送音效
+            playTeleportSound() {
+                this.playTone('sine', 330, 0.15, 0, { attack: 0.01, decay: 0.05, sustain: 0.5, release: 0.09 });
+                this.playTone('sine', 523, 0.15, 0.2, { attack: 0.01, decay: 0.05, sustain: 0.5, release: 0.09 });
             }
         }
 
@@ -685,6 +731,8 @@
                 // 道具相关元素
                 this.powerUpIndicator = document.getElementById('powerUpIndicator');
                 this.powerUpText = document.getElementById('powerUpText');
+                // 新增：救命道具待命指示器
+                this.lifesaverReadyIndicator = document.getElementById('lifesaverReadyIndicator');
 
                 // 设备检测与画布设置
                 this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -713,6 +761,8 @@
                 // 道具相关设置
                 this.lastPowerUpScore = 0;
                 this.powerUpInterval = 10; // 每10分生成一个道具
+                // 新增：救命道具使用状态
+                this.lifeSaverAvailable = false; // 救命道具是否可用
 
                 // 玩家属性
                 const bounceForce = this.isMobile ? -9 : -12;
@@ -758,8 +808,8 @@
                     sizeTimer: 0,
                     allNormalPlatforms: false,
                     allNormalTimer: 0,
-                    // 新增：救命道具状态
-                    hasSave: false
+                    // 新增：传送状态
+                    isTeleporting: false
                 };
 
                 // 游戏元素
@@ -778,14 +828,14 @@
                     'spring'
                 ];
                 
-                // 道具类型 - 新增救命道具
+                // 道具类型 - 新增：救命道具
                 this.powerUpTypes = [
                     'fullHealth',  // 满血道具
                     'smallPlayer', // 人物变小
                     'bigPlayer',   // 人物变大
                     'invincible',  // 不掉血
                     'allNormal',   // 所有平台变普通
-                    'savePlayer'   // 救命道具
+                    'lifeSaver'    // 救命道具
                 ];
 
                 // 按键状态
@@ -872,6 +922,9 @@
                 
                 // 重置道具生成记录
                 this.lastPowerUpScore = 0;
+                // 重置救命道具状态
+                this.lifeSaverAvailable = false;
+                this.lifesaverReadyIndicator.classList.add('hidden');
 
                 const bounceForce = this.isMobile ? -9 : -12;
                 this.player = {
@@ -908,8 +961,7 @@
                     sizeTimer: 0,
                     allNormalPlatforms: false,
                     allNormalTimer: 0,
-                    // 重置救命道具状态
-                    hasSave: false
+                    isTeleporting: false
                 };
 
                 this.score = 0;
@@ -977,6 +1029,36 @@
                     moveDirection,
                     movePosition
                 });
+            }
+            
+            // 新增：创建救命平台
+            createLifeSaverPlatform(x = null, y = null) {
+                // 如果没有指定位置，使用玩家当前x坐标
+                const platformX = x !== null ? x : this.player.x + this.player.width / 2 - 60;
+                // 限制在画布内
+                const limitedX = Math.max(0, Math.min(this.canvas.width - 120, platformX));
+                
+                const platformY = y !== null ? y : this.canvas.height - 50;
+                
+                const platform = {
+                    id: Date.now() + Math.random() + 'lifesaver',
+                    x: limitedX,
+                    y: platformY,
+                    width: 120,
+                    height: 14,
+                    type: 'normal',
+                    flipped: false,
+                    flipTimer: 0,
+                    conveyorSpeed: 0,
+                    effectTimer: 0,
+                    // 标记为救命平台，显示特殊效果
+                    isLifeSaver: true,
+                    // 特效计时器
+                    glowTimer: 60
+                };
+                
+                this.platforms.push(platform);
+                return platform;
             }
             
             // 创建道具
@@ -1057,109 +1139,101 @@
                 else if (e.key === 'ArrowRight') this.keys.right = false;
             }
 
-            // 新增：使用救命道具
-            useSavePowerUp() {
+            // 新增：检测边界并使用救命道具
+            checkBoundaryAndUseLifeSaver() {
+                // 如果玩家正在传送中，不执行检测
+                if (this.player.isTeleporting) return;
+                
                 // 玩家掉到底部
                 if (this.player.y > this.canvas.height) {
-                    // 在玩家位置下方生成平台
-                    const platformY = this.canvas.height - 50;
-                    const platformX = this.player.x + this.player.width / 2 - 60;
-                    
-                    // 确保平台在画布内
-                    const constrainedX = Math.max(0, Math.min(platformX, this.canvas.width - 120));
-                    
-                    // 创建救命平台
-                    const savePlatform = {
-                        id: Date.now() + Math.random() + 1000,
-                        x: constrainedX,
-                        y: platformY,
-                        width: 120,
-                        height: 14,
-                        type: 'normal',
-                        flipped: false,
-                        flipTimer: 0,
-                        isSavePlatform: true // 标记为救命平台
-                    };
-                    
-                    this.platforms.push(savePlatform);
-                    
-                    // 将玩家放在平台上
-                    this.player.y = platformY - this.player.height;
-                    this.player.velocityY = 0;
-                    this.player.onGround = true;
-                    this.player.standingPlatform = savePlatform;
-                    
-                    // 平台出现特效
-                    this.effectManager.addParticles(15,
-                        savePlatform.x + savePlatform.width / 2, savePlatform.y, {
-                        speedX: (Math.random() - 0.5) * 5,
-                        speedY: (Math.random() - 0.5) * 5,
-                        color: '#06B6D4',
-                        life: 40,
-                        gravity: 0.1
-                    });
-                    
-                    this.effectManager.addScaleEffect(savePlatform.id, 0.3, 20);
-                } 
+                    if (this.lifeSaverAvailable) {
+                        this.useLifeSaverAtBottom();
+                        return true; // 已使用道具
+                    }
+                }
                 // 玩家超出顶部
                 else if (this.player.y + this.player.velocityY < 0) {
-                    // 在底部生成平台
-                    const platformY = this.canvas.height - 50;
-                    const platformX = this.canvas.width / 2 - 60;
-                    
-                    // 创建救命平台
-                    const savePlatform = {
-                        id: Date.now() + Math.random() + 2000,
-                        x: platformX,
-                        y: platformY,
-                        width: 120,
-                        height: 14,
-                        type: 'normal',
-                        flipped: false,
-                        flipTimer: 0,
-                        isSavePlatform: true // 标记为救命平台
-                    };
-                    
-                    this.platforms.push(savePlatform);
-                    
-                    // 传送特效 - 玩家消失
-                    this.effectManager.addParticles(20,
-                        this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                        speedX: (Math.random() - 0.5) * 8,
-                        speedY: (Math.random() - 0.5) * 8,
-                        color: '#06B6D4',
-                        life: 30,
-                        gravity: 0
-                    });
-                    
-                    // 短暂延迟后传送玩家
-                    setTimeout(() => {
-                        if (!this.player.isDead) {
-                            // 将玩家传送到平台上
-                            this.player.x = platformX + 60 - this.player.width / 2;
-                            this.player.y = platformY - this.player.height;
-                            this.player.velocityY = 0;
-                            this.player.onGround = true;
-                            this.player.standingPlatform = savePlatform;
-                            
-                            // 传送特效 - 玩家出现
-                            this.effectManager.addParticles(20,
-                                this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                                speedX: (Math.random() - 0.5) * 8,
-                                speedY: (Math.random() - 0.5) * 8,
-                                color: '#06B6D4',
-                                life: 30,
-                                gravity: 0
-                            });
-                            
-                            this.effectManager.addScaleEffect(savePlatform.id, 0.3, 20);
-                        }
-                    }, 200);
+                    if (this.lifeSaverAvailable) {
+                        this.useLifeSaverAtTop();
+                        return true; // 已使用道具
+                    }
                 }
                 
+                return false; // 未使用道具
+            }
+            
+            // 新增：在底部使用救命道具
+            useLifeSaverAtBottom() {
+                // 创建救命平台
+                const platform = this.createLifeSaverPlatform();
+                
+                // 将玩家放置在平台上
+                this.player.y = platform.y - this.player.height;
+                this.player.velocityY = 0;
+                this.player.onGround = true;
+                this.player.standingPlatform = platform;
+                
                 // 播放特效和音效
-                this.soundManager.playSaveSound();
-                this.showPowerUpMessage("救命成功!");
+                this.soundManager.playLifeSaverActivateSound();
+                this.effectManager.addParticles(20,
+                    platform.x + platform.width / 2, platform.y, {
+                    speedX: (Math.random() - 0.5) * 6,
+                    speedY: (Math.random() - 0.5) * 6,
+                    color: '#06B6D4',
+                    life: 50,
+                    gravity: 0.1,
+                    explosive: true
+                });
+                
+                // 消耗救命道具
+                this.lifeSaverAvailable = false;
+                this.lifesaverReadyIndicator.classList.add('hidden');
+                
+                // 显示提示
+                this.showPowerUpMessage("救命平台已激活!");
+            }
+            
+            // 新增：在顶部使用救命道具（传送）
+            useLifeSaverAtTop() {
+                // 记录起点位置用于特效
+                const startX = this.player.x + this.player.width / 2;
+                const startY = this.player.y + this.player.height / 2;
+                
+                // 创建救命平台
+                const platform = this.createLifeSaverPlatform();
+                
+                // 传送终点位置
+                const endX = platform.x + platform.width / 2 - this.player.width / 2;
+                const endY = platform.y - this.player.height;
+                
+                // 标记为传送中
+                this.player.isTeleporting = true;
+                this.player.velocityX = 0;
+                this.player.velocityY = 0;
+                
+                // 播放传送音效
+                this.soundManager.playTeleportSound();
+                
+                // 显示传送特效
+                this.effectManager.addTeleportEffect(startX, startY, endX + this.player.width / 2, endY + this.player.height / 2);
+                
+                // 短暂延迟后执行传送
+                setTimeout(() => {
+                    // 传送玩家
+                    this.player.x = endX;
+                    this.player.y = endY;
+                    this.player.velocityY = 0;
+                    this.player.onGround = true;
+                    this.player.standingPlatform = platform;
+                    this.player.isTeleporting = false;
+                    
+                    // 消耗救命道具
+                    this.lifeSaverAvailable = false;
+                    this.lifesaverReadyIndicator.classList.add('hidden');
+                    
+                    // 显示提示
+                    this.showPowerUpMessage("已传送至底部!");
+                }, 300);
             }
 
             // 更新玩家
@@ -1210,6 +1284,22 @@
                         }
                     }
                     return;
+                }
+
+                // 如果玩家正在传送中，不处理移动
+                if (this.player.isTeleporting) {
+                    return;
+                }
+
+                // 检测边界并使用救命道具
+                const usedLifeSaver = this.checkBoundaryAndUseLifeSaver();
+                if (usedLifeSaver) {
+                    // 如果使用了救命道具，不执行常规死亡检测
+                } else {
+                    // 常规死亡检测
+                    if (this.player.y > this.canvas.height || this.player.y + this.player.velocityY < 0) {
+                        this.player.isDead = true;
+                    }
                 }
 
                 // 更新道具效果
@@ -1300,21 +1390,10 @@
                 this.player.x += this.player.velocityX;
                 this.player.y += this.player.velocityY;
 
-                // 边界检测
+                // 边界检测（左右）
                 if (this.player.x < 0) this.player.x = 0;
                 else if (this.player.x + this.player.width > this.canvas.width) {
                     this.player.x = this.canvas.width - this.player.width;
-                }
-
-                // 死亡检测 - 修改为检查是否有救命道具
-                if ((this.player.y > this.canvas.height || this.player.y + this.player.velocityY < 0) && !this.player.isDead) {
-                    if (this.player.hasSave) {
-                        // 使用救命道具
-                        this.player.hasSave = false;
-                        this.useSavePowerUp();
-                    } else {
-                        this.player.isDead = true;
-                    }
                 }
 
                 // 平台站立状态更新
@@ -1552,7 +1631,7 @@
                 }
 
                 // 生成新平台
-                if (!this.player.isDead) {
+                if (!this.player.isDead && !this.player.isTeleporting) {
                     this.spawnCounter += timeFactor;
                     if (this.spawnCounter >= this.platformSpawnRate) {
                         const newPlatform = this.createPlatform();
@@ -1569,7 +1648,7 @@
             
             // 检查是否需要生成道具
             checkPowerUpSpawn() {
-                if (this.gameMode === 'new'  && (this.score == 2  || this.score >= this.lastPowerUpScore + this.powerUpInterval)) {
+                if (this.gameMode === 'new' && (this.score == 2 || this.score >= this.lastPowerUpScore + this.powerUpInterval)) {
                     // 在最新生成的平台上生成道具
                     if (this.platforms.length > 0) {
                         const lastPlatform = this.platforms[this.platforms.length - 1];
@@ -1603,7 +1682,7 @@
             
             // 检测道具碰撞
             checkPowerUpCollisions() {
-                if (this.player.isDead) return;
+                if (this.player.isDead || this.player.isTeleporting) return;
                 
                 for (let i = this.powerUps.length - 1; i >= 0; i--) {
                     const powerUp = this.powerUps[i];
@@ -1709,16 +1788,18 @@
                         break;
                         
                     // 新增：救命道具效果
-                    case 'savePlayer':
-                        this.player.hasSave = true;
-                        this.showPowerUpMessage("获得一次救命机会!");
-                        this.effectManager.addParticles(15,
+                    case 'lifeSaver':
+                        this.lifeSaverAvailable = true;
+                        this.lifesaverReadyIndicator.classList.remove('hidden');
+                        this.showPowerUpMessage("获得救命道具!");
+                        this.effectManager.addParticles(20,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 4,
-                            speedY: (Math.random() - 0.5) * 4,
+                            speedX: (Math.random() - 0.5) * 5,
+                            speedY: (Math.random() - 0.5) * 5,
                             color: '#06B6D4',
-                            life: 40,
-                            gravity: 0.1
+                            life: 50,
+                            gravity: 0.1,
+                            explosive: true
                         });
                         break;
                 }
@@ -1737,7 +1818,7 @@
 
             // 碰撞检测
             checkCollisions() {
-                if (this.player.isDead) return;
+                if (this.player.isDead || this.player.isTeleporting) return;
 
                 for (let i = 0; i < this.platforms.length; i++) {
                     const platform = this.platforms[i];
@@ -2001,6 +2082,27 @@
                     -this.player.height / 2
                 );
 
+                // 传送状态特效
+                if (this.player.isTeleporting) {
+                    const glowSize = this.player.width * 1.5;
+                    const gradient = this.ctx.createRadialGradient(
+                        this.player.width / 2, this.player.height / 2, 0,
+                        this.player.width / 2, this.player.height / 2, glowSize
+                    );
+                    gradient.addColorStop(0, 'rgba(6, 182, 212, 0.7)');
+                    gradient.addColorStop(1, 'rgba(6, 182, 212, 0)');
+
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(
+                        this.player.width / 2, this.player.height / 2, glowSize, 0, Math.PI * 2
+                    );
+                    this.ctx.fill();
+                    
+                    // 半透明效果
+                    this.ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.01) * 0.3;
+                }
+
                 // 无敌状态特效
                 if (this.player.isInvincible) {
                     const glowSize = this.player.width * 1.2;
@@ -2010,24 +2112,6 @@
                     );
                     gradient.addColorStop(0, 'rgba(245, 158, 11, 0.5)');
                     gradient.addColorStop(1, 'rgba(245, 158, 11, 0)');
-
-                    this.ctx.fillStyle = gradient;
-                    this.ctx.beginPath();
-                    this.ctx.arc(
-                        this.player.width / 2, this.player.height / 2, glowSize, 0, Math.PI * 2
-                    );
-                    this.ctx.fill();
-                }
-
-                // 拥有救命道具时的特效
-                if (this.player.hasSave) {
-                    const glowSize = this.player.width * 1.1;
-                    const gradient = this.ctx.createRadialGradient(
-                        this.player.width / 2, this.player.height / 2, 0,
-                        this.player.width / 2, this.player.height / 2, glowSize
-                    );
-                    gradient.addColorStop(0, 'rgba(6, 182, 212, 0.3)');
-                    gradient.addColorStop(1, 'rgba(6, 182, 212, 0)');
 
                     this.ctx.fillStyle = gradient;
                     this.ctx.beginPath();
@@ -2136,10 +2220,7 @@
                     } else {
                         let fillColor;
                         switch (platform.type) {
-                            case 'normal': 
-                                // 救命平台有特殊颜色
-                                fillColor = platform.isSavePlatform ? '#06B6D4' : '#3B82F6'; 
-                                break;
+                            case 'normal': fillColor = '#3B82F6'; break;
                             case 'flip': fillColor = platform.flipped ? '#6B7280' : '#10B981'; break;
                             case 'conveyor-left':
                             case 'conveyor-right': fillColor = '#F3F4F6'; break;
@@ -2152,6 +2233,17 @@
                             this.ctx.fillStyle = fillColor;
                             this.ctx.fillRect(0, 0, platform.width, platform.height);
                         }
+                    }
+
+                    // 救命平台特效
+                    if (platform.isLifeSaver && platform.glowTimer > 0) {
+                        const alpha = Math.max(0.3, Math.sin(platform.glowTimer * 0.1) * 0.5 + 0.5);
+                        const glowSize = 5 + Math.sin(platform.glowTimer * 0.2) * 2;
+                        
+                        this.ctx.fillStyle = `rgba(6, 182, 212, ${alpha})`;
+                        this.ctx.fillRect(-glowSize, -glowSize, platform.width + glowSize * 2, platform.height + glowSize * 2);
+                        
+                        platform.glowTimer--;
                     }
 
                     // 移动平台指示器
@@ -2229,139 +2321,151 @@
                     this.ctx.fill();
                 }
             }
-
+            
             // 绘制道具
             drawPowerUps() {
-                this.ctx.save();
                 this.powerUps.forEach(powerUp => {
                     powerUp.draw(this.ctx);
                 });
-                this.ctx.restore();
             }
 
-            // 绘制健康条
-            drawHealthBar() {
-                const barWidth = 100;
-                const barHeight = 8;
-                const x = 10;
-                const y = 10;
-                const healthPercentage = this.player.health / this.player.maxHealth;
+            // 绘制生命值（心形图标）
+            drawHealth() {
+                if (this.player.isDead) return;
 
-                // 背景
+                this.ctx.save();
+
+                const heartSize = 12;
+                const heartSpacing = 2;
+                const startX = 10;
+                const startY = 10;
+
+                // 背景半透明矩形
+                const totalWidth = this.player.maxHealth * (heartSize + heartSpacing)                - heartSpacing;
                 this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                this.ctx.fillRect(x, y, barWidth, barHeight);
+                this.ctx.fillRect(startX - 3, startY - 3, totalWidth + 6, heartSize + 6);
 
-                // 健康值
-                let healthColor;
-                if (healthPercentage > 0.7) {
-                    healthColor = '#10B981'; // 绿色
-                } else if (healthPercentage > 0.3) {
-                    healthColor = '#F59E0B'; // 黄色
-                } else {
-                    healthColor = '#EF4444'; // 红色
-                }
+                // 绘制心形图标
+                for (let i = 0; i < this.player.maxHealth; i++) {
+                    const x = startX + i * (heartSize + heartSpacing);
+                    const y = startY;
 
-                // 无敌状态下的健康条颜色
-                if (this.player.isInvincible) {
-                    healthColor = '#F59E0B';
-                }
-
-                this.ctx.fillStyle = healthColor;
-                this.ctx.fillRect(x, y, barWidth * healthPercentage, barHeight);
-
-                // 边框
-                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-                this.ctx.lineWidth = 1;
-                this.ctx.strokeRect(x, y, barWidth, barHeight);
-
-                // 显示救命道具状态
-                if (this.player.hasSave) {
-                    const iconSize = 16;
-                    this.ctx.fillStyle = '#06B6D4';
+                    // 绘制心形
                     this.ctx.beginPath();
-                    this.ctx.arc(
-                        x + barWidth + 20, 
-                        y + barHeight / 2, 
-                        iconSize / 2, 
-                        0, Math.PI * 2
+                    this.ctx.moveTo(x + heartSize / 2, y + heartSize / 4);
+                    this.ctx.bezierCurveTo(
+                        x, y,
+                        x, y + heartSize / 2,
+                        x + heartSize / 2, y + heartSize
                     );
+                    this.ctx.bezierCurveTo(
+                        x + heartSize, y + heartSize / 2,
+                        x + heartSize, y,
+                        x + heartSize / 2, y + heartSize / 4
+                    );
+
+                    // 填充颜色 - 健康的为红色，失去的为灰色
+                    // 无敌状态下生命值图标变色
+                    const heartColor = this.player.isInvincible ? '#F59E0B' : (i < this.player.health ? '#EF4444' : '#6B7280');
+                    this.ctx.fillStyle = heartColor;
                     this.ctx.fill();
-                    
-                    // 图标
-                    this.ctx.fillStyle = 'white';
-                    this.ctx.font = `${iconSize * 0.8}px Arial`;
-                    this.ctx.textAlign = 'center';
-                    this.ctx.textBaseline = 'middle';
-                    this.ctx.fillText('✦', x + barWidth + 20, y + barHeight / 2);
                 }
+
+                // 绘制道具效果剩余时间
+                this.drawPowerUpTimers(startX, startY + heartSize + 10);
+
+                this.ctx.restore();
+            }
+            
+            // 绘制道具效果剩余时间
+            drawPowerUpTimers(x, y) {
+                const timerHeight = 4;
+                const timerWidth = 80;
+                const spacing = 12;
+                let currentY = y;
+                
+                // 无敌状态计时器
+                if (this.player.isInvincible) {
+                    const timeLeft = Math.ceil(this.player.invincibleTimer / 60);
+                    this.drawTimerBar(x, currentY, timerWidth, timerHeight, 
+                        timeLeft, 20, '#F59E0B', '无敌: ' + timeLeft + 's');
+                    currentY += spacing;
+                }
+                
+                // 大小变化计时器
+                if (this.player.isSmall || this.player.isBig) {
+                    const timeLeft = Math.ceil(this.player.sizeTimer / 60);
+                    const type = this.player.isSmall ? '变小' : '变大';
+                    this.drawTimerBar(x, currentY, timerWidth, timerHeight, 
+                        timeLeft, 20, this.player.isSmall ? '#3B82F6' : '#8B5CF6', 
+                        type + ': ' + timeLeft + 's');
+                    currentY += spacing;
+                }
+                
+                // 全普通平台计时器
+                if (this.player.allNormalPlatforms) {
+                    const timeLeft = Math.ceil(this.player.allNormalTimer / 60);
+                    this.drawTimerBar(x, currentY, timerWidth, timerHeight, 
+                        timeLeft, 20, '#EC4899', '普通平台: ' + timeLeft + 's');
+                    currentY += spacing;
+                }
+            }
+            
+            // 绘制计时器进度条
+            drawTimerBar(x, y, width, height, timeLeft, totalTime, color, label) {
+                // 背景
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                this.ctx.fillRect(x, y, width, height);
+                
+                // 进度
+                const progress = timeLeft / totalTime;
+                this.ctx.fillStyle = color;
+                this.ctx.fillRect(x, y, width * progress, height);
+                
+                // 标签
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                this.ctx.font = '8px Arial';
+                this.ctx.fillText(label, x + width + 5, y + height);
             }
 
             // 绘制分数
             drawScore() {
                 this.ctx.save();
-                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                this.ctx.font = '16px Arial';
-                this.ctx.textAlign = 'right';
-                this.ctx.fillText(`分数: ${this.score} 层`, this.canvas.width - 10, 20);
+
+                const scoreX = this.canvas.width - 80;
+                const scoreY = 30;
+
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.fillRect(scoreX - 10, scoreY - 20, 80, 30);
+
+                // 显示当前游戏模式
+                this.ctx.font = '8px Arial';
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(
+                    this.gameMode === 'classic' ? '经典模式' : '新模式', 
+                    scoreX + 30, 
+                    scoreY - 10
+                );
+
+                this.ctx.font = '16px "Press Start 2P", cursive';
+                this.ctx.fillStyle = '#F59E0B';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(this.score, scoreX + 30, scoreY);
+
                 this.ctx.restore();
             }
 
-            // 绘制游戏状态
-            drawGameState() {
-                if (this.isPaused) {
-                    this.ctx.save();
-                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                    this.ctx.fillStyle = 'white';
-                    this.ctx.font = '20px Arial';
-                    this.ctx.textAlign = 'center';
-                    this.ctx.fillText('游戏暂停', this.canvas.width / 2, this.canvas.height / 2);
-                    this.ctx.font = '14px Arial';
-                    this.ctx.fillText('按回车键继续', this.canvas.width / 2, this.canvas.height / 2 + 30);
-                    this.ctx.restore();
-                }
-            }
-
-            // 绘制游戏
-            draw() {
-                // 清空画布
-                this.ctx.fillStyle = '#111827';
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-                // 绘制网格背景
-                this.drawBackground();
-
-                // 绘制平台
-                this.drawPlatforms();
-
-                // 绘制道具
-                this.drawPowerUps();
-
-                // 绘制玩家
-                this.drawPlayer();
-
-                // 绘制特效
-                this.effectManager.draw(this.ctx);
-
-                // 绘制健康条和分数
-                this.drawHealthBar();
-                this.drawScore();
-
-                // 绘制游戏状态
-                this.drawGameState();
-            }
-
-            // 绘制背景网格
+            // 绘制背景
             drawBackground() {
                 this.ctx.save();
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
                 this.ctx.lineWidth = 1;
 
                 const gridSize = 30;
-                const offset = (this.score * 0.5) % gridSize;
 
                 // 水平线
-                for (let y = offset; y < this.canvas.height; y += gridSize) {
+                for (let y = 0; y < this.canvas.height; y += gridSize) {
                     this.ctx.beginPath();
                     this.ctx.moveTo(0, y);
                     this.ctx.lineTo(this.canvas.width, y);
@@ -2376,35 +2480,65 @@
                     this.ctx.stroke();
                 }
 
+                // 新模式背景特效
+                if (this.gameMode === 'new') {
+                    this.ctx.fillStyle = 'rgba(139, 92, 246, 0.03)';
+                    for (let i = 0; i < 10; i++) {
+                        const x = Math.random() * this.canvas.width;
+                        const y = Math.random() * this.canvas.height;
+                        const size = Math.random() * 100 + 50;
+                        this.ctx.beginPath();
+                        this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                }
+
                 this.ctx.restore();
+            }
+
+            // 绘制游戏
+            draw() {
+                this.ctx.fillStyle = '#111827';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                this.drawBackground();
+                this.drawPlatforms();
+                this.drawPowerUps();
+                this.effectManager.draw(this.ctx);
+                this.drawPlayer();
+                this.drawHealth();
+                this.drawScore();
+
+                if (this.isPaused) {
+                    this.ctx.save();
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.restore();
+                }
             }
 
             // 游戏主循环
             gameLoop(timestamp) {
                 if (!this.isRunning || this.isPaused) return;
 
-                // 计算时间差
-                if (this.lastTime === 0) this.lastTime = timestamp;
-                this.deltaTime = Math.min(timestamp - this.lastTime, this.maxDeltaTime);
+                if (this.lastTime) {
+                    this.deltaTime = Math.min(timestamp - this.lastTime, this.maxDeltaTime);
+                } else {
+                    this.deltaTime = 0;
+                }
                 this.lastTime = timestamp;
 
-                // 更新游戏状态
                 this.updatePlayer();
                 this.updatePlatforms();
                 this.checkCollisions();
-
-                // 绘制游戏
                 this.draw();
 
-                // 继续循环
                 requestAnimationFrame((nextTimestamp) => this.gameLoop(nextTimestamp));
             }
         }
 
-        // 启动游戏
-        document.addEventListener('DOMContentLoaded', () => {
-            const game = new Game();
-        });
+        // 页面加载完成后初始化游戏
+        window.addEventListener('load', () => new Game());
     </script>
 </body>
 
