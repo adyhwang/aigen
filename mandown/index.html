@@ -231,12 +231,24 @@
                 this.fade = options.fade !== undefined ? options.fade : true;
                 // 水滴形状参数
                 this.droplet = options.droplet || false;
+                // 爆炸粒子参数
+                this.explosive = options.explosive || false;
+                this.pulseSize = options.pulseSize || 1;
+                this.pulseSpeed = options.pulseSpeed || 0.05;
+                this.currentPulse = 0;
             }
 
             update() {
                 this.x += this.speedX;
                 this.y += this.speedY;
                 this.speedY += this.gravity;
+                
+                // 爆炸粒子脉动效果
+                if (this.explosive) {
+                    this.currentPulse += this.pulseSpeed;
+                    this.size = this.pulseSize * (1 + Math.sin(this.currentPulse) * 0.3);
+                }
+                
                 this.life--;
                 return this.life > 0;
             }
@@ -249,7 +261,7 @@
                 }
                 ctx.globalAlpha = alpha;
                 ctx.fillStyle = this.color;
-
+                
                 if (this.droplet) {
                     // 绘制水滴形状
                     ctx.beginPath();
@@ -261,7 +273,15 @@
                     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                     ctx.fill();
                 }
-
+                
+                // 爆炸粒子添加发光效果
+                if (this.explosive && this.life > this.maxLife * 0.5) {
+                    ctx.fillStyle = this.color.replace('rgb', 'rgba').replace(')', ', 0.3)');
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
                 ctx.restore();
             }
         }
@@ -303,6 +323,19 @@
                 });
             }
 
+            // 添加渐进式缩放效果 - 用于死亡放大
+            addProgressiveScaleEffect(target, startScale, endScale, duration) {
+                this.effects.push({
+                    type: 'progressive-scale',
+                    target: target,
+                    startScale: startScale,
+                    endScale: endScale,
+                    duration: duration,
+                    remaining: duration,
+                    currentScale: startScale
+                });
+            }
+
             // 更新所有特效
             update() {
                 // 更新粒子
@@ -311,13 +344,18 @@
                 // 更新特殊效果
                 this.effects = this.effects.filter(effect => {
                     effect.remaining--;
-
+                    
                     if (effect.type === 'scale') {
                         // 计算当前缩放比例（使用正弦曲线实现弹性效果）
                         const progress = 1 - (effect.remaining / effect.duration);
                         effect.currentScale = 1 + (effect.scale * Math.sin(progress * Math.PI));
                     }
-
+                    // 处理渐进式缩放效果
+                    else if (effect.type === 'progressive-scale') {
+                        const progress = 1 - (effect.remaining / effect.duration);
+                        effect.currentScale = effect.startScale + (effect.endScale - effect.startScale) * progress;
+                    }
+                    
                     return effect.remaining > 0;
                 });
             }
@@ -330,14 +368,14 @@
 
             // 检查目标是否有闪烁效果
             hasFlashEffect(targetId) {
-                return this.effects.some(effect =>
+                return this.effects.some(effect => 
                     effect.type === 'flash' && effect.target === targetId && effect.remaining > 0
                 );
             }
 
             // 获取目标的闪烁颜色
             getFlashColor(targetId) {
-                const effect = this.effects.find(effect =>
+                const effect = this.effects.find(effect => 
                     effect.type === 'flash' && effect.target === targetId && effect.remaining > 0
                 );
                 return effect ? effect.color : null;
@@ -345,10 +383,26 @@
 
             // 获取目标的缩放比例
             getScale(targetId) {
-                const effect = this.effects.find(effect =>
+                // 优先检查渐进式缩放
+                const progressiveEffect = this.effects.find(effect => 
+                    effect.type === 'progressive-scale' && effect.target === targetId && effect.remaining > 0
+                );
+                if (progressiveEffect) {
+                    return progressiveEffect.currentScale;
+                }
+                
+                // 其次检查普通缩放
+                const scaleEffect = this.effects.find(effect => 
                     effect.type === 'scale' && effect.target === targetId && effect.remaining > 0
                 );
-                return effect ? effect.currentScale : 1;
+                return scaleEffect ? scaleEffect.currentScale : 1;
+            }
+
+            // 检查目标是否有渐进式缩放效果
+            hasProgressiveScale(targetId) {
+                return this.effects.some(effect => 
+                    effect.type === 'progressive-scale' && effect.target === targetId && effect.remaining > 0
+                );
             }
         }
 
@@ -601,9 +655,27 @@
                 });
             }
 
-            // 游戏音效 - 游戏结束
-            playGameOverSound() {
-                this.playDescendingScale();
+            // 游戏音效 - 游戏结束/爆炸
+            playExplosionSound() {
+                // 爆炸音效 - 多音调组合创造爆炸感
+                this.playTone('sawtooth', 220, 0.2, 0, {
+                    attack: 0.001,
+                    decay: 0.15,
+                    sustain: 0.8,
+                    release: 0.05
+                });
+                this.playTone('sawtooth', 165, 0.25, 0.05, {
+                    attack: 0.001,
+                    decay: 0.15,
+                    sustain: 0.7,
+                    release: 0.05
+                });
+                this.playTone('sawtooth', 0, 0.3, 0, {
+                    attack: 0.001,
+                    decay: 0.2,
+                    sustain: 0.5,
+                    release: 0.1
+                });
             }
 
             // 游戏音效 - 暂停
@@ -623,6 +695,23 @@
                     decay: 0.03,
                     sustain: 0.5,
                     release: 0.06
+                });
+            }
+
+            // 游戏音效 - 放大效果
+            playGrowSound() {
+                // 音调逐渐降低，营造张力
+                this.playTone('sine', 440, 0.6, 0, {
+                    attack: 0.05,
+                    decay: 0.4,
+                    sustain: 0.7,
+                    release: 0.15
+                });
+                this.playTone('sine', 330, 0.6, 0.1, {
+                    attack: 0.05,
+                    decay: 0.4,
+                    sustain: 0.7,
+                    release: 0.15
                 });
             }
         }
@@ -654,6 +743,9 @@
                 this.isRunning = false;
                 this.isPaused = false;
                 this.gameOver = false;
+                this.deathTimer = 0; // 死亡计时器，用于延迟结束游戏
+                this.deathDelay = 45; // 死亡延迟帧数 (~1秒 @60fps)
+                this.growDuration = 30; // 放大动画持续的帧数
                 this.score = 0;
                 this.maxScore = 0;
                 this.speed = 2;
@@ -686,7 +778,11 @@
                     previousPlatform: null, // 上一个站立的平台，用于音效播放控制
                     healedPlatforms: new Set(), // 已经回过长的普通平台
                     damagedPlatforms: new Set(), // 已经造成伤害的钉板平台
-                    flashTimer: 0 // 用于人物闪烁特效
+                    flashTimer: 0, // 用于人物闪烁特效
+                    isDead: false, // 标记玩家是否已死亡
+                    deathEffectPlayed: false, // 标记死亡特效是否已播放
+                    isGrowing: false, // 标记玩家是否正在放大
+                    growProgress: 0 // 放大进度
                 };
 
                 // 平台数组
@@ -778,7 +874,11 @@
                     healedPlatforms: new Set(), // 重置已回血平台集合
                     damagedPlatforms: new Set(),
                     bounceForce: bounceForce,
-                    flashTimer: 0
+                    flashTimer: 0,
+                    isDead: false,
+                    deathEffectPlayed: false,
+                    isGrowing: false,
+                    growProgress: 0
                 };
 
                 // 重置游戏状态
@@ -786,6 +886,7 @@
                 this.speed = this.baseSpeed;
                 this.gameOver = false;
                 this.isPaused = false;
+                this.deathTimer = 0; // 重置死亡计时器
                 this.lastTime = 0;
                 this.deltaTime = 0;
             }
@@ -889,14 +990,6 @@
                 this.gameOverMenu.classList.remove('hidden');
                 this.pauseButton.classList.add('hidden');
                 this.finalScore.textContent = `${this.score} 层`;
-
-                // 播放游戏结束音效
-                this.soundManager.playGameOverSound();
-
-                // 更新最高分
-                if (this.score > this.maxScore) {
-                    this.maxScore = this.score;
-                }
             }
 
             // 键盘按下事件
@@ -939,6 +1032,64 @@
                 // 计算时间补偿因子 (基于60fps)
                 const timeFactor = this.deltaTime / (1000 / 60);
 
+                // 如果玩家已死亡，启动死亡计时器
+                if (this.player.isDead) {
+                    // 处理放大动画阶段
+                    if (!this.player.isGrowing) {
+                        // 开始放大动画
+                        this.player.isGrowing = true;
+                        this.player.growProgress = 0;
+                        
+                        // 添加渐进式缩放效果
+                        this.effectManager.addProgressiveScaleEffect('player', 1, 3, this.growDuration);
+                        
+                        // 播放放大音效
+                        this.soundManager.playGrowSound();
+                    } else {
+                        // 更新放大进度
+                        this.player.growProgress++;
+                        
+                        // 放大过程中添加能量聚集特效
+                        if (this.player.growProgress % 3 === 0) {
+                            const scale = this.effectManager.getScale('player');
+                            const offset = Math.max(10, this.player.width * scale * 0.5);
+                            const angle = Math.random() * Math.PI * 2;
+                            const centerX = this.player.x + this.player.width / 2;
+                            const centerY = this.player.y + this.player.height / 2;
+                            const x = centerX + Math.cos(angle) * offset;
+                            const y = centerY + Math.sin(angle) * offset;
+                            
+                            // 能量粒子向中心聚集
+                            this.effectManager.addParticles(1, x, y, {
+                                speedX: (centerX - x) / 10,
+                                speedY: (centerY - y) / 10,
+                                color: `hsl(${Math.random() * 60}, 100%, 60%)`,
+                                size: Math.random() * 2 + 1,
+                                life: 20,
+                                gravity: 0,
+                                fade: false
+                            });
+                        }
+                        
+                        // 放大动画完成，触发爆炸
+                        if (this.player.growProgress >= this.growDuration) {
+                            // 只在爆炸的第一帧播放爆炸特效和声音
+                            if (!this.player.deathEffectPlayed) {
+                                this.triggerDeathEffects();
+                                this.player.deathEffectPlayed = true;
+                            }
+                            
+                            this.deathTimer++;
+                            
+                            // 检查死亡延迟是否已到
+                            if (this.deathTimer >= this.deathDelay) {
+                                this.endGame();
+                            }
+                        }
+                    }
+                    return;
+                }
+
                 // 更新玩家闪烁计时器
                 if (this.player.flashTimer > 0) {
                     this.player.flashTimer--;
@@ -959,24 +1110,23 @@
                     (this.player.standingPlatform.type === 'conveyor-left' ||
                         this.player.standingPlatform.type === 'conveyor-right')) {
                     this.player.velocityX = moveSpeed + (this.player.standingPlatform.conveyorSpeed * timeFactor);
-
-                    // 传送带特效：脑袋流汗效果
+                    
+                    // 传送带特效：减少流汗效果
                     const platform = this.player.standingPlatform;
-                    if (Math.random() > 0.7) { // 随机发射水滴
-                        // 头部位置（根据玩家头部位置调整）
+                    if (Math.random() > 0.9) { 
+                        // 头部位置
                         const headX = this.player.x + this.player.width / 2;
                         const headY = this.player.y - this.player.width / 2;
                         const dir = platform.type === 'conveyor-left' ? -1 : 1;
-
-                        // 添加流汗效果 - 水滴从头部向传送带方向流下
+                        
                         this.effectManager.addParticles(1, headX, headY, {
-                            speedX: dir * 1.5, // 沿传送带方向
-                            speedY: 2, // 向下
-                            color: '#DBEAFE', // 浅蓝色
+                            speedX: dir * 1.5,
+                            speedY: 2,
+                            color: '#DBEAFE',
                             size: 2,
-                            life: 10,
+                            life: 30,
                             gravity: 0.2,
-                            droplet: true // 水滴形状
+                            droplet: true
                         });
                     }
                 } else {
@@ -998,21 +1148,21 @@
 
                             // 播放弹跳音效
                             this.soundManager.playBounceSound();
-
+                            
                             // 跳板弹跳特效
                             const platform = this.player.standingPlatform;
                             this.effectManager.addScaleEffect(platform.id, 0.2, 10);
-
+                            
                             // 添加弹跳粒子
-                            this.effectManager.addParticles(8,
-                                platform.x + platform.width / 2,
+                            this.effectManager.addParticles(8, 
+                                platform.x + platform.width / 2, 
                                 platform.y, {
-                                speedX: (Math.random() - 0.5) * 4,
-                                speedY: -3,
-                                color: '#FBBF24',
-                                life: 30,
-                                gravity: 0.2
-                            });
+                                    speedX: (Math.random() - 0.5) * 4,
+                                    speedY: -3,
+                                    color: '#FBBF24',
+                                    life: 30,
+                                    gravity: 0.2
+                                });
                         }
                     } else {
                         // 不在跳板上了，关闭弹跳状态
@@ -1042,14 +1192,14 @@
                     this.player.x = this.canvas.width - this.player.width;
                 }
 
-                // 掉出屏幕底部 - 游戏结束
+                // 掉出屏幕底部 - 标记玩家死亡
                 if (this.player.y > this.canvas.height) {
-                    this.endGame();
+                    this.player.isDead = true;
                 }
 
-                // 被推到屏幕顶部 - 游戏结束
+                // 被推到屏幕顶部 - 标记玩家死亡
                 if (this.player.y + this.player.velocityY < 0) {
-                    this.endGame();
+                    this.player.isDead = true;
                 }
 
                 // 保存当前站立平台用于比较
@@ -1071,15 +1221,76 @@
                 this.effectManager.update();
             }
 
+            // 触发死亡特效和声音
+            triggerDeathEffects() {
+                const centerX = this.player.x + this.player.width / 2;
+                const centerY = this.player.y + this.player.height / 2;
+                const scale = this.effectManager.getScale('player');
+                
+                // 播放爆炸音效
+                this.soundManager.playExplosionSound();
+                
+                // 创建爆炸粒子特效 - 多层次粒子系统
+                // 1. 核心爆炸粒子
+                this.effectManager.addParticles(40, centerX, centerY, {
+                    speedX: (Math.random() - 0.5) * 15 * scale,
+                    speedY: (Math.random() - 0.5) * 15 * scale,
+                    color: '#FF5722',
+                    size: Math.random() * 4 + 2,
+                    life: 40,
+                    gravity: 0.2,
+                    explosive: true,
+                    pulseSize: 2,
+                    fade: true
+                });
+                
+                // 2. 次要爆炸粒子
+                this.effectManager.addParticles(30, centerX, centerY, {
+                    speedX: (Math.random() - 0.5) * 10 * scale,
+                    speedY: (Math.random() - 0.5) * 10 * scale,
+                    color: '#FFB74D',
+                    size: Math.random() * 3 + 1,
+                    life: 50,
+                    gravity: 0.15,
+                    explosive: true,
+                    pulseSize: 1.5
+                });
+                
+                // 3. 火花粒子
+                this.effectManager.addParticles(25, centerX, centerY, {
+                    speedX: (Math.random() - 0.5) * 12 * scale,
+                    speedY: (Math.random() - 0.5) * 12 * scale,
+                    color: '#FFECB3',
+                    size: Math.random() * 2 + 0.5,
+                    life: 30,
+                    gravity: 0.1,
+                    fade: true
+                });
+                
+                // 4. 烟雾粒子
+                this.effectManager.addParticles(15, centerX, centerY, {
+                    speedX: (Math.random() - 0.5) * 6 * scale,
+                    speedY: (Math.random() - 0.5) * 6 * scale,
+                    color: '#BDBDBD',
+                    size: Math.random() * 5 + 3,
+                    life: 60,
+                    gravity: -0.05, // 轻微上浮
+                    fade: true
+                });
+            }
+
             // 更新平台
             updatePlatforms() {
+                // 如果玩家已死亡且正在等待延迟结束，减缓平台移动速度
+                const speedMultiplier = this.player.isDead ? 0.3 : 1;
+                
                 // 计算时间补偿因子 (基于60fps)
                 const timeFactor = this.deltaTime / (1000 / 60);
 
                 // 移动平台
                 for (let i = this.platforms.length - 1; i >= 0; i--) {
                     const platform = this.platforms[i];
-                    platform.y -= this.speed * timeFactor; // 平台向上移动，应用时间补偿
+                    platform.y -= this.speed * timeFactor * speedMultiplier; // 应用速度乘数
 
                     // 更新平台特效计时器
                     if (platform.effectTimer > 0) {
@@ -1090,7 +1301,7 @@
                     if (platform.type === 'flip' && platform.flipped) {
                         // 基于时间更新翻转计时器
                         platform.flipTimer += timeFactor;
-
+                        
                         // 翻转过程中添加闪烁特效
                         if (platform.flipTimer <= 42) {
                             const flashInterval = 5; // 每5帧闪烁一次
@@ -1121,6 +1332,9 @@
                     }
                 }
 
+                // 如果玩家已死亡，停止生成新平台
+                if (this.player.isDead) return;
+
                 // 基于时间更新生成计数器
                 this.spawnCounter += timeFactor;
                 if (this.spawnCounter >= this.platformSpawnRate) {
@@ -1131,6 +1345,9 @@
 
             // 检测碰撞
             checkCollisions() {
+                // 如果玩家已死亡，不检测碰撞
+                if (this.player.isDead) return;
+
                 for (let i = 0; i < this.platforms.length; i++) {
                     const platform = this.platforms[i];
 
@@ -1187,16 +1404,16 @@
 
                             if (isNewPlatform) {
                                 this.soundManager.playFlipPlatformSound();
-
-                                // 翻转平台特效：添加绿色粒子（取消人物特效）
-                                this.effectManager.addParticles(10,
-                                    platform.x + platform.width / 2,
+                                
+                                // 翻转平台特效：添加绿色粒子
+                                this.effectManager.addParticles(10, 
+                                    platform.x + platform.width / 2, 
                                     platform.y + platform.height / 2, {
-                                    speedX: (Math.random() - 0.5) * 3,
-                                    speedY: (Math.random() - 0.5) * 3,
-                                    color: '#10B981',
-                                    life: 40
-                                });
+                                        speedX: (Math.random() - 0.5) * 3,
+                                        speedY: (Math.random() - 0.5) * 3,
+                                        color: '#10B981',
+                                        life: 40
+                                    });
                             }
                         }
                         break;
@@ -1206,13 +1423,13 @@
                         // 传送带，流汗特效在updatePlayer中持续产生
                         if (isNewPlatform) {
                             this.soundManager.playConveyorSound();
-
-                            // 初始接触时添加少量水滴
+                            
+                            // 减少初始接触时的水滴数量
                             const dir = platform.type === 'conveyor-left' ? -1 : 1;
                             const headX = this.player.x + this.player.width / 2;
                             const headY = this.player.y - this.player.width / 2;
-
-                            this.effectManager.addParticles(3, headX, headY, {
+                            
+                            this.effectManager.addParticles(1, headX, headY, {
                                 speedX: dir * 1.5,
                                 speedY: 2,
                                 color: '#DBEAFE',
@@ -1232,21 +1449,18 @@
 
                         if (isNewPlatform) {
                             this.soundManager.playBounceSound();
-
-                            // 跳板接触特效：添加黄色粒子和缩放效果
+                            
+                            // 跳板弹跳特效
                             this.effectManager.addScaleEffect(platform.id, 0.3, 15);
-                            this.effectManager.addParticles(12,
-                                platform.x + platform.width / 2,
+                            this.effectManager.addParticles(12, 
+                                platform.x + platform.width / 2, 
                                 platform.y, {
-                                speedX: (Math.random() - 0.5) * 5,
-                                speedY: -4,
-                                color: '#FBBF24',
-                                life: 40,
-                                gravity: 0.2
-                            });
-
-                            // 人物弹跳时的特效
-                            this.effectManager.addFlashEffect('player', '#FBBF24', 10);
+                                    speedX: (Math.random() - 0.5) * 5,
+                                    speedY: -4,
+                                    color: '#FBBF24',
+                                    life: 40,
+                                    gravity: 0.2
+                                });
                         }
                         break;
 
@@ -1262,24 +1476,24 @@
 
                             // 播放掉血音效
                             this.soundManager.playDamageSound();
-
+                            
                             // 钉板接触特效：添加红色粒子和闪烁
-                            this.effectManager.addParticles(15,
-                                this.player.x + this.player.width / 2,
+                            this.effectManager.addParticles(15, 
+                                this.player.x + this.player.width / 2, 
                                 this.player.y + this.player.height / 2, {
-                                speedX: (Math.random() - 0.5) * 6,
-                                speedY: (Math.random() - 0.5) * 6,
-                                color: '#EF4444',
-                                life: 30,
-                                gravity: 0.1
-                            });
-
+                                    speedX: (Math.random() - 0.5) * 6,
+                                    speedY: (Math.random() - 0.5) * 6,
+                                    color: '#EF4444',
+                                    life: 30,
+                                    gravity: 0.1
+                                });
+                                
                             // 人物受伤闪烁特效
                             this.player.flashTimer = 20; // 闪烁20帧
-
-                            // 如果生命值为0，游戏结束
+                            
+                            // 如果生命值为0，标记玩家死亡
                             if (this.player.health <= 0) {
-                                this.endGame();
+                                this.player.isDead = true;
                             }
                         }
                         break;
@@ -1301,31 +1515,37 @@
                     // 只有实际回血了才播放音效
                     if (this.player.health > previousHealth) {
                         this.soundManager.playHealSound();
-
+                        
                         // 回血特效
-                        this.effectManager.addParticles(8,
-                            this.player.x + this.player.width / 2,
+                        this.effectManager.addParticles(8, 
+                            this.player.x + this.player.width / 2, 
                             this.player.y, {
-                            speedX: (Math.random() - 0.5) * 3,
-                            speedY: (Math.random() - 0.5) * 3,
-                            color: '#10B981',
-                            life: 30
-                        });
+                                speedX: (Math.random() - 0.5) * 3,
+                                speedY: (Math.random() - 0.5) * 3,
+                                color: '#10B981',
+                                life: 30
+                            });
                     }
                 }
             }
 
             // 绘制玩家
             drawPlayer() {
+                // 如果玩家已死亡且爆炸特效已播放，不绘制玩家
+                if (this.player.isDead && this.player.deathEffectPlayed) return;
+                
+                // 如果死亡延迟已到，不绘制
+                if (this.player.isDead && this.deathTimer >= this.deathDelay) return;
+                
                 this.ctx.save();
 
                 // 玩家闪烁效果
                 const hasFlash = this.effectManager.hasFlashEffect('player');
                 const flashColor = this.effectManager.getFlashColor('player');
                 const flashVisible = hasFlash ? (Math.floor(Date.now() / 50) % 2 === 0) : true;
-
+                
                 // 受伤闪烁效果
-                const hurtFlashVisible = this.player.flashTimer > 0 ?
+                const hurtFlashVisible = this.player.flashTimer > 0 ? 
                     (Math.floor(this.player.flashTimer / 3) % 2 === 0) : true;
 
                 // 如果闪烁效果激活且当前帧不可见，则不绘制
@@ -1345,6 +1565,33 @@
                     -this.player.width / 2,
                     -this.player.height / 2
                 );
+
+                // 放大过程中添加能量效果
+                if (this.player.isGrowing) {
+                    const glowSize = this.player.width * 0.8 * (this.player.growProgress / this.growDuration);
+                    const gradient = this.ctx.createRadialGradient(
+                        this.player.width / 2,
+                        this.player.height / 2,
+                        0,
+                        this.player.width / 2,
+                        this.player.height / 2,
+                        glowSize
+                    );
+                    gradient.addColorStop(0, 'rgba(255, 153, 0, 0.5)');
+                    gradient.addColorStop(0.5, 'rgba(255, 69, 0, 0.3)');
+                    gradient.addColorStop(1, 'rgba(255, 69, 0, 0)');
+                    
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(
+                        this.player.width / 2,
+                        this.player.height / 2,
+                        glowSize,
+                        0,
+                        Math.PI * 2
+                    );
+                    this.ctx.fill();
+                }
 
                 // 玩家身体
                 if (hasFlash && flashColor) {
@@ -1435,7 +1682,7 @@
                     const hasFlash = this.effectManager.hasFlashEffect(platform.id);
                     const flashColor = this.effectManager.getFlashColor(platform.id);
                     const flashVisible = hasFlash ? (Math.floor(Date.now() / 50) % 2 === 0) : true;
-
+                    
                     // 获取缩放比例
                     const scale = this.effectManager.getScale(platform.id);
 
@@ -1485,12 +1732,12 @@
                                 fillColor = '#EF4444';
                                 break;
                         }
-
+                        
                         // 如果有闪烁效果，使用闪烁颜色
                         if (hasFlash && flashColor) {
                             fillColor = flashColor;
                         }
-
+                        
                         // 绘制其他平台
                         if (flashVisible) {
                             this.ctx.fillStyle = fillColor;
@@ -1576,6 +1823,9 @@
 
             // 绘制生命值
             drawHealth() {
+                // 玩家死亡后隐藏生命值
+                if (this.player.isDead) return;
+                
                 this.ctx.save();
 
                 const healthBarX = 10;
@@ -1612,6 +1862,7 @@
 
             // 绘制分数
             drawScore() {
+                // 玩家死亡后仍然显示分数
                 this.ctx.save();
 
                 const scoreX = this.canvas.width - 80;
