@@ -43,6 +43,8 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
         }
 
         .volume-slider {
@@ -77,13 +79,42 @@
         .dropdown-shadow {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
         }
+
+        /* 新增样式：使游戏区域填满屏幕 */
+        .game-container {
+            height: calc(100vh - 180px);
+            min-height: 500px;
+            max-height: 800px;
+        }
+
+        @media (max-height: 700px) {
+            .game-container {
+                height: calc(100vh - 150px);
+                min-height: 400px;
+            }
+        }
+
+        @media (max-height: 600px) {
+            .game-container {
+                height: calc(100vh - 120px);
+                min-height: 350px;
+            }
+
+            .controls-section {
+                margin-top: 0.5rem;
+            }
+
+            .instructions {
+                display: none;
+            }
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 
 <body
     class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex flex-col items-center justify-center p-4 text-white overflow-hidden">
-    <div class="relative w-full max-w-md">
+    <div class="relative w-full max-w-md h-full flex flex-col">
         <!-- 顶部标题和控制区 -->
         <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
             <h1
@@ -104,7 +135,7 @@
             </div>
         </div>
 
-        <div class="relative bg-dark rounded-lg overflow-hidden game-shadow aspect-[3/4]">
+        <div class="relative bg-dark rounded-lg overflow-hidden game-shadow game-container">
             <canvas id="gameCanvas" class="w-full h-full"></canvas>
 
             <!-- 暂停按钮在右下角 -->
@@ -120,10 +151,9 @@
             </div>
 
             <div id="startMenu" class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10">
-                <div class="text-center mb-6">
+                <div class="text-center mb-2">
                     <h2 class="text-2xl font-[family='Press Start 2P',cursive] mb-4 text-primary">准备好了吗？</h2>
-                    <p class="text-gray-300 mb-2">左右移动以躲避危险</p>
-                    <p class="text-gray-400 text-sm">下得越深，得分越高</p>
+                    <p class="text-gray-300 mb-2">左右移动，躲避危险；下得越深，得分越高</p>
                 </div>
 
                 <!-- 模式选择下拉菜单 -->
@@ -150,22 +180,22 @@
                     开始游戏
                 </button>
 
-                <div id="classicModeInstructions" class="mt-8 grid grid-cols-2 gap-3 w-full">
-                    <div class="flex items-center gap-2">
+                <div id="classicModeInstructions" class="mt-8 grid grid-cols-2 gap-1 w-full">
+                    <div class="flex items-center gap-1">
                         <div class="w-5 h-2 bg-blue-500 rounded-sm"></div>
                         <span class="text-sm text-gray-300">普通平台</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
                         <div class="w-5 h-2 bg-green-500 rounded-sm"></div>
                         <span class="text-sm text-gray-300">翻转平台</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
                         <div class="w-5 h-2 bg-gray-200 rounded-sm relative overflow-hidden">
                             <div class="absolute top-0 left-0 w-3 h-full bg-gray-300/70 transform -skew-x-12"></div>
                         </div>
                         <span class="text-sm text-gray-300">传送带</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
                         <div class="w-5 h-2 relative">
                             <div class="w-full h-1/3 bg-green-500"></div>
                             <div class="w-full h-1/3 bg-white"></div>
@@ -173,7 +203,7 @@
                         </div>
                         <span class="text-sm text-gray-300">跳板</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
                         <div class="w-5 h-2 bg-red-600 rounded-sm relative">
                             <div class="absolute top-0 left-1/4 w-1 h-1 bg-red-700 transform rotate-45"></div>
                             <div class="absolute top-0 left-3/4 w-1 h-1 bg-red-700 transform -rotate-45"></div>
@@ -187,49 +217,64 @@
                     <h2 class="text-sm font-[family='Press Start 2P',cursive]  mt-4 text-primary">新模式道具：
                     </h2>
                 </div>
-                <div class="mt-2 grid grid-cols-2 gap-3 w-full">
-                    <div class="flex items-center gap-2">
+                <div class="mt-2 grid grid-cols-2 gap-2 w-full">
+                    <div class="flex items-center gap-1">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
                             <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🐜
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">变小 - 免疫钉板，重力减小</span>
+                        <span class="text-sm text-gray-300">变小/免疫钉板，重力减小</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🐘
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">变大 - 免疫传送带，固定移动平台</span>
-                    </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
                             <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">💗
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">生命值全满</span>
+                        <span class="text-sm text-gray-300">生命全满</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🚑
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🐘
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">救命道具 - 濒死时回血</span>
+                        <span class="text-sm text-gray-300">变大/免疫传送带，固定移动平台</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🌪️
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">👼
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">改变重力 - 重力减小15秒</span>
+                        <span class="text-sm text-gray-300">濒死回血</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
+                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🟦
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">所有平台变普通平台</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🌙
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">重力减小</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">💪
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">金身状态</span>
+                    </div>
+                    <div class="flex items-center gap-1">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
                             <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">⏱️
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">平台减速 - 平台速度减慢30%</span>
+                        <span class="text-sm text-gray-300">平台减速</span>
                     </div>
+
                 </div>
             </div>
 
@@ -256,7 +301,7 @@
             </div>
         </div>
 
-        <div class="mt-4 grid grid-cols-3 gap-4 md:hidden">
+        <div class="mt-4 grid grid-cols-3 gap-4 md:hidden controls-section">
             <button id="leftBtn"
                 class="bg-gray-700/80 text-white h-16 rounded-full flex items-center justify-center control-shadow active:control-active">
                 <i class="fa fa-arrow-left text-2xl"></i>
@@ -268,7 +313,7 @@
             </button>
         </div>
 
-        <div class="mt-4 text-center text-gray-400 text-sm">
+        <div class="mt-4 text-center text-gray-400 text-sm instructions">
             <p class="mb-1">电脑: 方向键左右移动 | 手机: 点击左右按钮</p>
             <p>按回车键或点击暂停按钮可暂停/继续游戏</p>
         </div>
@@ -367,7 +412,7 @@
                         break;
                     case 'invincible':
                         this.color = '#F59E0B';
-                        this.icon = '⭐';
+                        this.icon = '💪';
                         break;
                     case 'allNormal':
                         this.color = '#EC4899';
@@ -375,11 +420,11 @@
                         break;
                     case 'lifeSaver':
                         this.color = '#06B6D4';
-                        this.icon = '🚑';
+                        this.icon = '👼';
                         break;
                     case 'gravityChange':
                         this.color = '#9C27B0';
-                        this.icon = '🌪️';
+                        this.icon = '🌙';
                         break;
                     case 'platformSlow':
                         this.color = '#607D8B';
@@ -1048,6 +1093,21 @@
                 const container = this.canvas.parentElement;
                 this.canvas.width = container.clientWidth;
                 this.canvas.height = container.clientHeight;
+
+                // 调整游戏参数以适应新的画布高度
+                if (this.player) {
+                    // 调整玩家位置
+                    if (this.player.y > this.canvas.height * 0.8) {
+                        this.player.y = this.canvas.height * 0.5;
+                    }
+
+                    // 调整平台位置
+                    this.platforms.forEach(platform => {
+                        if (platform.y > this.canvas.height) {
+                            platform.y = this.canvas.height - 50;
+                        }
+                    });
+                }
             }
 
             // 初始化游戏
@@ -2636,7 +2696,7 @@
                     this.ctx.fillStyle = '#06B6D4';
                     this.ctx.font = '12px Arial';
                     this.ctx.textAlign = 'center';
-                    this.ctx.fillText('🚑', lifesaverX, lifesaverY + 3);
+                    this.ctx.fillText('👼', lifesaverX, lifesaverY + 3);
                 }
 
                 this.ctx.restore();
@@ -2775,16 +2835,17 @@
 
                 if (this.lastTime) {
                     this.deltaTime = Math.min(timestamp - this.lastTime, this.maxDeltaTime);
-                } else {
+                }
+                else {
                     this.deltaTime = 0;
                 }
                 this.lastTime = timestamp;
 
-                // 执行顺序调整：先检测碰撞更新站立平台 → 再更新平台移动
-                this.updatePlayer();       // 1. 更新玩家状态
-                this.checkCollisions();    // 2. 碰撞检测（赋值standingPlatform）→ 关键调整
-                this.updatePlatforms();    // 3. 更新平台（此时已能获取当前帧的站立平台）
-                this.draw();               // 4. 绘制画面
+                // 执行顺序：先检测碰撞更新站立平台 → 再更新平台移动
+                this.updatePlayer();
+                this.checkCollisions();
+                this.updatePlatforms();
+                this.draw();
 
                 requestAnimationFrame((nextTimestamp) => this.gameLoop(nextTimestamp));
             }
