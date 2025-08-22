@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>是男人就下一百层</title>
+    <title>就下100层 - 经典与新模式</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script>
@@ -14,9 +14,9 @@
                     colors: {
                         primary: '#3B82F6',
                         secondary: '#10B981',
-                        danger: '#EF4444',
+                        accent: '#8B5CF6',
                         warning: '#F59E0B',
-                        light: '#F3F4F6',
+                        danger: '#EF4444',
                         dark: '#1F2937'
                     }
                 }
@@ -25,45 +25,57 @@
     </script>
     <style type="text/tailwindcss">
         @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
             .game-shadow {
-                box-shadow: 0 0 0 2px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.1);
+                box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
             }
             .control-shadow {
-                box-shadow: 0 5px 0 rgba(0,0,0,0.3), inset 0 2px 2px rgba(255,255,255,0.2);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
             }
             .control-active {
-                transform: translateY(3px);
-                box-shadow: 0 2px 0 rgba(0,0,0,0.3), inset 0 2px 2px rgba(0,0,0,0.1);
+                box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+                background-color: rgba(107, 114, 128, 0.6);
             }
-            .volume-slider {
-                -webkit-appearance: none;
-                height: 6px;
-                border-radius: 3px;
-                background: #374151;
-                outline: none;
-            }
-            .volume-slider::-webkit-slider-thumb {
-                -webkit-appearance: none;
-                width: 16px;
-                height: 16px;
-                border-radius: 50%;
-                background: #3B82F6;
-                cursor: pointer;
-                box-shadow: 0 0 2px rgba(0,0,0,0.5);
-                transition: all 0.1s ease;
-            }
-            .volume-slider::-moz-range-thumb {
-                width: 16px;
-                height: 16px;
-                border-radius: 50%;
-                background: #3B82F6;
-                cursor: pointer;
-                box-shadow: 0 0 2px rgba(0,0,0,0.5);
-                border: none;
-            }
-            .dropdown-shadow {
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-            }
+        }
+    </style>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .volume-slider {
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #374151;
+            outline: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3B82F6;
+            cursor: pointer;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+            transition: all 0.1s ease;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3B82F6;
+            cursor: pointer;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+            border: none;
+        }
+
+        .dropdown-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -72,31 +84,12 @@
 <body
     class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex flex-col items-center justify-center p-4 text-white overflow-hidden">
     <div class="relative w-full max-w-md">
-        <!-- 顶部标题、模式选择和音量控制 -->
+        <!-- 顶部标题和音量控制 -->
         <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
             <h1
                 class="text-[clamp(1.2rem,5vw,1.8rem)] font-[family='Press Start 2P',cursive] text-left text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 tracking-wider">
-                是男人就下一百层
+                就下100层
             </h1>
-
-            <!-- 模式选择下拉菜单 -->
-            <div class="relative inline-block">
-                <button id="modeButton"
-                    class="bg-dark/70 hover:bg-dark/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all">
-                    <i class="fa fa-gamepad"></i>
-                    <span id="currentModeText">经典模式</span>
-                    <i class="fa fa-chevron-down text-xs"></i>
-                </button>
-                <div id="modeDropdown"
-                    class="hidden absolute right-0 mt-2 w-48 bg-dark/95 rounded-lg dropdown-shadow z-20">
-                    <div class="py-1">
-                        <a href="#" class="mode-option block px-4 py-2 hover:bg-primary/20 transition-colors"
-                            data-mode="classic">经典模式</a>
-                        <a href="#" class="mode-option block px-4 py-2 hover:bg-primary/20 transition-colors"
-                            data-mode="new">新模式</a>
-                    </div>
-                </div>
-            </div>
 
             <div class="flex items-center gap-2 bg-dark/70 px-3 py-2 rounded-full">
                 <i class="fa fa-volume-up text-gray-300"></i>
@@ -119,17 +112,30 @@
                 <span id="powerUpText"></span>
             </div>
 
-            <!-- 救命道具待命状态指示器 -->
-            <div id="lifesaverReadyIndicator"
-                class="hidden absolute top-4 right-4 bg-blue-600/80 px-2 py-1 rounded text-xs z-40">
-                <i class="fa fa-shield mr-1"></i>待命
-            </div>
-
             <div id="startMenu" class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10">
-                <div class="text-center mb-8">
+                <div class="text-center mb-6">
                     <h2 class="text-2xl font-[family='Press Start 2P',cursive] mb-4 text-primary">准备好了吗？</h2>
                     <p class="text-gray-300 mb-2">左右移动以躲避危险</p>
                     <p class="text-gray-400 text-sm">下得越深，得分越高</p>
+                </div>
+
+                <!-- 模式选择下拉菜单 -->
+                <div class="relative inline-block mb-6">
+                    <button id="modeButton"
+                        class="bg-dark/70 hover:bg-dark/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all">
+                        <i class="fa fa-gamepad"></i>
+                        <span id="currentModeText">经典模式</span>
+                        <i class="fa fa-chevron-down text-xs"></i>
+                    </button>
+                    <div id="modeDropdown"
+                        class="hidden absolute right-0 mt-2 w-48 bg-dark/95 rounded-lg dropdown-shadow z-20">
+                        <div class="py-1">
+                            <a href="#" class="mode-option block px-4 py-2 hover:bg-primary/20 transition-colors"
+                                data-mode="classic">经典模式</a>
+                            <a href="#" class="mode-option block px-4 py-2 hover:bg-primary/20 transition-colors"
+                                data-mode="new">新模式</a>
+                        </div>
+                    </div>
                 </div>
 
                 <button id="startButton"
@@ -137,38 +143,117 @@
                     开始游戏
                 </button>
 
-                <div class="mt-8 grid grid-cols-2 gap-3 w-full">
+                <!-- 经典模式平台说明 -->
+                <div id="classicModeInstructions" class="mt-8 grid grid-cols-2 gap-3 w-full">
                     <div class="flex items-center gap-2">
-                        <div class="w-5 h-2 bg-blue-500 rounded-sm"></div><span
-                            class="text-sm text-gray-300">普通平台</span>
+                        <div class="w-5 h-2 bg-blue-500 rounded-sm"></div>
+                        <span class="text-sm text-gray-300">普通平台</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <div class="w-5 h-2 bg-green-500 rounded-sm"></div><span
-                            class="text-sm text-gray-300">翻转平台</span>
+                        <div class="w-5 h-2 bg-green-500 rounded-sm"></div>
+                        <span class="text-sm text-gray-300">翻转平台</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-5 h-2 bg-gray-200 rounded-sm relative overflow-hidden">
                             <div class="absolute top-0 left-0 w-3 h-full bg-gray-300/70 transform -skew-x-12"></div>
-                        </div><span class="text-sm text-gray-300">传送带</span>
+                        </div>
+                        <span class="text-sm text-gray-300">传送带</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-5 h-2 relative">
                             <div class="w-full h-1/3 bg-green-500"></div>
                             <div class="w-full h-1/3 bg-white"></div>
                             <div class="w-full h-1/3 bg-green-500"></div>
-                        </div><span class="text-sm text-gray-300">跳板</span>
+                        </div>
+                        <span class="text-sm text-gray-300">跳板</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-5 h-2 bg-red-600 rounded-sm relative">
                             <div class="absolute top-0 left-1/4 w-1 h-1 bg-red-700 transform rotate-45"></div>
                             <div class="absolute top-0 left-3/4 w-1 h-1 bg-red-700 transform -rotate-45"></div>
-                        </div><span class="text-sm text-gray-300">钉板 (掉血)</span>
+                        </div>
+                        <span class="text-sm text-gray-300">钉板 (掉血)</span>
+                    </div>
+                </div>
+
+                <!-- 新模式平台说明 (默认隐藏) -->
+                <div id="newModeInstructions" class="mt-8 grid grid-cols-2 gap-3 w-full hidden">
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-2 bg-blue-500 rounded-sm relative">
+                            <div
+                                class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-0.5 bg-white/50">
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">移动普通平台</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <div class="w-5 h-5 rounded-full bg-yellow-400 relative">
-                            <div class="absolute inset-1 bg-yellow-600 rounded-full"></div>
-                        </div><span class="text-sm text-gray-300">道具 (增益)</span>
+                        <div class="w-5 h-2 bg-red-600 rounded-sm relative">
+                            <div class="absolute top-0 left-1/4 w-1 h-1 bg-red-700 transform rotate-45"></div>
+                            <div class="absolute top-0 left-3/4 w-1 h-1 bg-red-700 transform -rotate-45"></div>
+                            <div
+                                class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-0.5 bg-white/50">
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">移动钉板</span>
                     </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-2 bg-green-500 rounded-sm relative">
+                            <div
+                                class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-0.5 bg-white/50">
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">移动翻转平台</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-2 bg-gray-200 rounded-sm relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-3 h-full bg-gray-300/70 transform -skew-x-12"></div>
+                        </div>
+                        <span class="text-sm text-gray-300">传送带</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-2 relative">
+                            <div class="w-full h-1/3 bg-green-500"></div>
+                            <div class="w-full h-1/3 bg-white"></div>
+                            <div class="w-full h-1/3 bg-green-500"></div>
+                        </div>
+                        <span class="text-sm text-gray-300">跳板</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🟦
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">所有平台变普通</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🐜
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">变小</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🐘
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">变大</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">💗
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">生命值全满</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🚑
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">救命道具</span>
+                    </div>
+
                 </div>
             </div>
 
@@ -186,8 +271,12 @@
                 <h2 class="text-2xl font-[family='Press Start 2P',cursive] mb-2 text-danger">游戏结束</h2>
                 <p class="text-xl mb-1">你的成绩</p>
                 <p id="finalScore" class="text-3xl font-[family='Press Start 2P',cursive] mb-6 text-primary">0 层</p>
-                <button id="restartButton"
-                    class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">再来一次</button>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button id="restartButton"
+                        class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">再来一次</button>
+                    <button id="backToStartButton"
+                        class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">返回开始</button>
+                </div>
             </div>
         </div>
 
@@ -282,8 +371,6 @@
                 this.pulseSize = 1;
                 this.pulseSpeed = 0.05;
                 this.currentPulse = 0;
-                this.rotation = 0;
-                this.rotationSpeed = 0.03;
                 this.collected = false;
                 this.collectedEffect = false;
                 this.effectTimer = 0;
@@ -292,27 +379,27 @@
                 switch (type) {
                     case 'fullHealth':
                         this.color = '#10B981';
-                        this.icon = '❤';
+                        this.icon = '💗';
                         break;
                     case 'smallPlayer':
                         this.color = '#3B82F6';
-                        this.icon = '↓';
+                        this.icon = '🐜';
                         break;
                     case 'bigPlayer':
                         this.color = '#8B5CF6';
-                        this.icon = '↑';
+                        this.icon = '🐘';
                         break;
                     case 'invincible':
                         this.color = '#F59E0B';
-                        this.icon = '✧';
+                        this.icon = '⭐';
                         break;
                     case 'allNormal':
                         this.color = '#EC4899';
-                        this.icon = '♦';
+                        this.icon = '🟦';
                         break;
-                    case 'lifeSaver': // 新增：救命道具
+                    case 'lifeSaver':
                         this.color = '#06B6D4';
-                        this.icon = '🛡️';
+                        this.icon = '🚑';
                         break;
                 }
             }
@@ -320,7 +407,6 @@
             update() {
                 this.currentPulse += this.pulseSpeed;
                 this.pulseSize = 1 + Math.sin(this.currentPulse) * 0.2;
-                this.rotation += this.rotationSpeed;
 
                 if (this.collected && !this.collectedEffect) {
                     this.collectedEffect = true;
@@ -388,23 +474,19 @@
 
             // 颜色加深方法
             darkenColor(color, factor) {
-                // 检查颜色格式是否正确
                 if (!/^#[0-9A-F]{6}$/i.test(color)) {
-                    return '#000000'; // 默认返回黑色
+                    return '#000000';
                 }
 
-                // 解析RGB值
                 const r = parseInt(color.slice(1, 3), 16);
                 const g = parseInt(color.slice(3, 5), 16);
                 const b = parseInt(color.slice(5, 7), 16);
 
-                // 加深颜色（减少RGB值）
                 const darken = (value) => Math.max(0, Math.floor(value * (1 - factor)));
                 const newR = darken(r);
                 const newG = darken(g);
                 const newB = darken(b);
 
-                // 转换回十六进制颜色字符串
                 const toHex = (value) => {
                     const hex = value.toString(16);
                     return hex.length === 1 ? '0' + hex : hex;
@@ -733,12 +815,12 @@
                 this.modeDropdown = document.getElementById('modeDropdown');
                 this.currentModeText = document.getElementById('currentModeText');
                 this.modeOptions = document.querySelectorAll('.mode-option');
+                this.classicInstructions = document.getElementById('classicModeInstructions');
+                this.newInstructions = document.getElementById('newModeInstructions');
 
                 // 道具相关元素
                 this.powerUpIndicator = document.getElementById('powerUpIndicator');
                 this.powerUpText = document.getElementById('powerUpText');
-                // 救命道具待命指示器
-                this.lifesaverReadyIndicator = document.getElementById('lifesaverReadyIndicator');
 
                 // 设备检测与画布设置
                 this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -766,7 +848,7 @@
 
                 // 道具相关设置
                 this.lastPowerUpScore = 0;
-                this.powerUpInterval = 10; // 每10分生成一个道具
+                this.powerUpInterval = 12; // 每12分生成一个道具
                 // 救命道具使用状态
                 this.lifeSaverAvailable = false; // 救命道具是否可用
 
@@ -854,6 +936,7 @@
                 this.finalScore = document.getElementById('finalScore');
                 this.pauseButton = document.getElementById('pauseButton');
                 this.volumeSlider = document.getElementById('volumeSlider');
+                this.backToStartButton = document.getElementById('backToStartButton');
 
                 // 事件监听
                 this.volumeSlider.addEventListener('input', (e) => this.soundManager.setVolume(parseInt(e.target.value) / 100));
@@ -862,8 +945,9 @@
                 document.getElementById('resumeButton').addEventListener('click', () => this.resumeGame());
                 document.getElementById('restartFromPauseButton').addEventListener('click', () => this.startGame());
                 this.pauseButton.addEventListener('click', () => this.togglePause());
+                this.backToStartButton.addEventListener('click', () => this.backToStart());
 
-                // 模式选择事件
+                // 模式选择事件 - 关键修改：切换显示不同的平台说明
                 this.modeButton.addEventListener('click', () => {
                     this.modeDropdown.classList.toggle('hidden');
                 });
@@ -877,6 +961,15 @@
                             this.currentModeText.textContent = e.target.textContent;
                             this.modeDropdown.classList.add('hidden');
                             this.soundManager.playModeChangeSound();
+
+                            // 根据选择的模式显示对应的平台说明
+                            if (mode === 'classic') {
+                                this.classicInstructions.classList.remove('hidden');
+                                this.newInstructions.classList.add('hidden');
+                            } else {
+                                this.classicInstructions.classList.add('hidden');
+                                this.newInstructions.classList.remove('hidden');
+                            }
 
                             // 如果游戏正在运行，重启游戏
                             if (this.isRunning) {
@@ -912,6 +1005,16 @@
                 this.init();
             }
 
+            // 返回开始菜单
+            backToStart() {
+                this.isRunning = false;
+                this.gameOver = false;
+                this.gameOverMenu.classList.add('hidden');
+                this.startMenu.classList.remove('hidden');
+                this.pauseButton.classList.add('hidden');
+                this.init();
+            }
+
             // 调整画布尺寸
             resizeCanvas() {
                 const container = this.canvas.parentElement;
@@ -931,11 +1034,6 @@
 
                 // 新模式开始时自动获得一个救命道具
                 this.lifeSaverAvailable = this.gameMode === 'new';
-                if (this.lifeSaverAvailable) {
-                    this.lifesaverReadyIndicator.classList.remove('hidden');
-                } else {
-                    this.lifesaverReadyIndicator.classList.add('hidden');
-                }
 
                 const bounceForce = this.isMobile ? -9 : -12;
                 this.player = {
@@ -1179,7 +1277,7 @@
                 const platform = this.createLifeSaverPlatform();
 
                 // 将玩家放置在平台上
-                this.player.y = platform.y - this.player.height;
+                this.player.y = platform.y - this.player.height - 50;
                 this.player.velocityY = 0;
                 this.player.onGround = true;
                 this.player.standingPlatform = platform;
@@ -1198,7 +1296,6 @@
 
                 // 消耗救命道具
                 this.lifeSaverAvailable = false;
-                this.lifesaverReadyIndicator.classList.add('hidden');
 
                 // 显示提示
                 this.showPowerUpMessage("救命平台已激活!");
@@ -1215,7 +1312,7 @@
 
                 // 传送终点位置
                 const endX = platform.x + platform.width / 2 - this.player.width / 2;
-                const endY = platform.y - this.player.height - 20;
+                const endY = platform.y - this.player.height - 50;
 
                 // 标记为传送中
                 this.player.isTeleporting = true;
@@ -1229,22 +1326,21 @@
                 this.effectManager.addTeleportEffect(startX, startY, endX + this.player.width / 2, endY + this.player.height / 2);
 
                 // 短暂延迟后执行传送
-                // setTimeout(() => {
-                // 传送玩家
-                this.player.x = endX;
-                this.player.y = endY;
-                this.player.velocityY = 0;
-                this.player.onGround = true;
-                this.player.standingPlatform = platform;
-                this.player.isTeleporting = false;
+                setTimeout(() => {
+                    // 传送玩家
+                    this.player.x = endX;
+                    this.player.y = endY;
+                    this.player.velocityY = 0;
+                    this.player.onGround = true;
+                    this.player.standingPlatform = platform;
+                    this.player.isTeleporting = false;
 
-                // 消耗救命道具
-                this.lifeSaverAvailable = false;
-                this.lifesaverReadyIndicator.classList.add('hidden');
+                    // 消耗救命道具
+                    this.lifeSaverAvailable = false;
 
-                // 显示提示
-                this.showPowerUpMessage("已传送至底部!");
-                // }, 300);
+                    // 显示提示
+                    this.showPowerUpMessage("已传送至底部!");
+                }, 300);
             }
 
             // 更新玩家
@@ -1424,12 +1520,12 @@
 
             // 更新道具效果
             updatePowerUpEffects(timeFactor) {
-                // 无敌效果
+                // 金身效果
                 if (this.player.isInvincible) {
                     this.player.invincibleTimer -= timeFactor;
                     if (this.player.invincibleTimer <= 0) {
                         this.player.isInvincible = false;
-                        this.showPowerUpMessage("无敌效果结束");
+                        this.showPowerUpMessage("金身效果结束");
                     }
                 }
 
@@ -1437,6 +1533,12 @@
                 if (this.player.isSmall || this.player.isBig) {
                     this.player.sizeTimer -= timeFactor;
                     if (this.player.sizeTimer <= 0) {
+                        // 恢复原始大小时调整位置，保持在平台上
+                        if (this.player.isBig) {
+                            const heightDecrease = this.player.originalHeight * 0.5;
+                            this.player.y += heightDecrease * 0.7; // 恢复时向下调整
+                        }
+
                         // 恢复原始大小
                         this.player.width = this.player.originalWidth;
                         this.player.height = this.player.originalHeight;
@@ -1749,6 +1851,10 @@
                         break;
 
                     case 'bigPlayer':
+                        // 变大时向上调整位置，防止超出平台
+                        const heightIncrease = this.player.originalHeight * 0.5;
+                        this.player.y -= heightIncrease * 0.7; // 向上调整70%的高度增量
+
                         this.player.width = this.player.originalWidth * 1.5;
                         this.player.height = this.player.originalHeight * 1.5;
                         this.player.isBig = true;
@@ -1765,10 +1871,11 @@
                         });
                         break;
 
+
                     case 'invincible':
                         this.player.isInvincible = true;
                         this.player.invincibleTimer = 20 * 60; // 20秒
-                        this.showPowerUpMessage("无敌状态 (20秒)");
+                        this.showPowerUpMessage("金身状态 (20秒)");
                         this.effectManager.addParticles(15,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
                             speedX: (Math.random() - 0.5) * 5,
@@ -1801,7 +1908,6 @@
                     // 救命道具效果
                     case 'lifeSaver':
                         this.lifeSaverAvailable = true;
-                        this.lifesaverReadyIndicator.classList.remove('hidden');
                         this.showPowerUpMessage("获得救命道具!");
                         this.effectManager.addParticles(20,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
@@ -1946,7 +2052,7 @@
                         break;
 
                     case 'spike':
-                        // 钉板伤害（无敌状态下不受伤害）
+                        // 钉板伤害（金身状态下不受伤害）
                         if (!this.player.damagedPlatforms.has(platform.id) && !this.player.isInvincible) {
                             this.damagePlayer(3);
                             this.player.damagedPlatforms.add(platform.id);
@@ -1969,7 +2075,7 @@
                                 this.player.isDead = true;
                             }
                         } else if (this.player.isInvincible && !this.player.damagedPlatforms.has(platform.id)) {
-                            // 无敌状态下碰到钉板的特效
+                            // 金身状态下碰到钉板的特效
                             this.player.damagedPlatforms.add(platform.id);
                             this.effectManager.addParticles(8,
                                 this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
@@ -2072,15 +2178,6 @@
                 const hurtFlashVisible = this.player.flashTimer > 0 ?
                     (Math.floor(this.player.flashTimer / 3) % 2 === 0) : true;
 
-                // 无敌状态闪烁效果
-                const invincibleFlashVisible = this.player.isInvincible ?
-                    (Math.floor(Date.now() / 100) % 2 === 0) : true;
-
-                if (!flashVisible || !hurtFlashVisible || !invincibleFlashVisible) {
-                    this.ctx.restore();
-                    return;
-                }
-
                 // 应用缩放
                 const scale = this.effectManager.getScale('player');
                 this.ctx.translate(
@@ -2114,7 +2211,7 @@
                     this.ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.01) * 0.3;
                 }
 
-                // 无敌状态特效
+                // 金身状态特效
                 if (this.player.isInvincible) {
                     const glowSize = this.player.width * 1.2;
                     const gradient = this.ctx.createRadialGradient(
@@ -2156,7 +2253,7 @@
 
                 // 玩家身体
                 const flashColor = this.effectManager.getFlashColor('player');
-                // 无敌状态下的颜色变化
+                // 金身状态下的颜色变化
                 const bodyColor = this.player.isInvincible ? '#F59E0B' : (flashColor || '#3B82F6');
                 this.ctx.fillStyle = bodyColor;
                 this.ctx.fillRect(0, 0, this.player.width, this.player.height);
@@ -2280,7 +2377,8 @@
                             this.drawSpikes(platform);
                             break;
                         case 'flip':
-                            if (platform.flipped && platform.flipTimer <= 42) {
+                            if (platform.flipped && platform.flipTimer > 0 && platform.flipTimer <= 42) {
+                                this.ctx.save();
                                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
                                 this.ctx.font = '10px Arial';
                                 this.ctx.textAlign = 'center';
@@ -2288,6 +2386,7 @@
                                 if (seconds > 0) {
                                     this.ctx.fillText(seconds.toFixed(1), platform.width / 2, -5);
                                 }
+                                this.ctx.restore();
                             }
                             break;
                     }
@@ -2340,12 +2439,11 @@
                 });
             }
 
-            // 绘制生命值（心形图标）
-            drawHealth() {
-                if (this.player.isDead) return;
-
+            // 绘制HUD（整合生命值、道具计时器和救命道具状态）
+            drawHUD() {
                 this.ctx.save();
 
+                // 左侧区域：生命值和道具计时器
                 const heartSize = 12;
                 const heartSpacing = 2;
                 const startX = 10;
@@ -2376,7 +2474,7 @@
                     );
 
                     // 填充颜色 - 健康的为红色，失去的为灰色
-                    // 无敌状态下生命值图标变色
+                    // 金身状态下生命值图标变色
                     const heartColor = this.player.isInvincible ? '#F59E0B' : (i < this.player.health ? '#EF4444' : '#6B7280');
                     this.ctx.fillStyle = heartColor;
                     this.ctx.fill();
@@ -2384,6 +2482,36 @@
 
                 // 绘制道具效果剩余时间
                 this.drawPowerUpTimers(startX, startY + heartSize + 10);
+
+                // 右侧区域：分数和救命道具状态
+                const scoreX = this.canvas.width - 80;
+                const scoreY = 30;
+
+                // 分数背景
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.fillRect(scoreX - 10, scoreY - 20, 80, 30);
+
+                // 绘制分数
+                this.ctx.font = '16px "Press Start 2P", cursive';
+                this.ctx.fillStyle = '#F59E0B';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(this.score, scoreX + 30, scoreY);
+
+                // 绘制救命道具待命状态（整合到HUD）
+                if (this.lifeSaverAvailable) {
+                    const lifesaverX = scoreX - 30;
+                    const lifesaverY = scoreY - 10;
+
+                    // 背景
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                    this.ctx.fillRect(lifesaverX - 15, lifesaverY - 10, 30, 20);
+
+                    // 图标和文字
+                    this.ctx.fillStyle = '#06B6D4';
+                    this.ctx.font = '12px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('🚑', lifesaverX, lifesaverY + 3);
+                }
 
                 this.ctx.restore();
             }
@@ -2395,11 +2523,11 @@
                 const spacing = 12;
                 let currentY = y;
 
-                // 无敌状态计时器
+                // 金身状态计时器
                 if (this.player.isInvincible) {
                     const timeLeft = Math.ceil(this.player.invincibleTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
-                        timeLeft, 20, '#F59E0B', '无敌: ' + timeLeft + 's');
+                        timeLeft, 20, '#F59E0B', '金身: ' + timeLeft + 's');
                     currentY += spacing;
                 }
 
@@ -2437,34 +2565,6 @@
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
                 this.ctx.font = '8px Arial';
                 this.ctx.fillText(label, x + width + 5, y + height);
-            }
-
-            // 绘制分数
-            drawScore() {
-                this.ctx.save();
-
-                const scoreX = this.canvas.width - 80;
-                const scoreY = 30;
-
-                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                this.ctx.fillRect(scoreX - 10, scoreY - 20, 80, 30);
-
-                // 显示当前游戏模式
-                this.ctx.font = '8px Arial';
-                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-                this.ctx.textAlign = 'center';
-                this.ctx.fillText(
-                    this.gameMode === 'classic' ? '经典模式' : '新模式',
-                    scoreX + 30,
-                    scoreY - 10
-                );
-
-                this.ctx.font = '16px "Press Start 2P", cursive';
-                this.ctx.fillStyle = '#F59E0B';
-                this.ctx.textAlign = 'center';
-                this.ctx.fillText(this.score, scoreX + 30, scoreY);
-
-                this.ctx.restore();
             }
 
             // 绘制背景
@@ -2517,8 +2617,7 @@
                 this.drawPowerUps();
                 this.effectManager.draw(this.ctx);
                 this.drawPlayer();
-                this.drawHealth();
-                this.drawScore();
+                this.drawHUD();
 
                 if (this.isPaused) {
                     this.ctx.save();
