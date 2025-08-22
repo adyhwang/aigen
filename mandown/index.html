@@ -1744,27 +1744,30 @@
                     const platform = this.platforms[i];
                     platform.y -= this.speed * timeFactor * speedMultiplier;
 
-                    // 移动平台逻辑（变大道具效果：玩家站在平台上时平台不移动）
-                    if (this.gameMode === 'new' && platform.originalType && platform.originalType.startsWith('moving-') &&
-                        (!this.player.isBig || this.player.standingPlatform !== platform)) {
-                        platform.movePosition += platform.moveSpeed * platform.moveDirection * timeFactor;
+                    // 移动平台逻辑（核心修复：变大道具踩平台时停止移动）
+                    if (this.gameMode === 'new' && platform.originalType && platform.originalType.startsWith('moving-')) {
+                        // 关键修复：当玩家变大且站在当前移动平台上时，不执行移动逻辑
+                        if (!(this.player.isBig && this.player.standingPlatform?.id === platform.id)) {
+                            // 正常移动逻辑（仅在玩家未变大或未站在该平台时执行）
+                            platform.movePosition += platform.moveSpeed * platform.moveDirection * timeFactor;
 
-                        // 到达移动边界，改变方向
-                        if (Math.abs(platform.movePosition) >= platform.moveRange) {
-                            platform.moveDirection *= -1;
-                        }
+                            // 到达移动边界，改变方向
+                            if (Math.abs(platform.movePosition) >= platform.moveRange) {
+                                platform.moveDirection *= -1;
+                            }
 
-                        platform.x += platform.moveSpeed * platform.moveDirection * timeFactor;
+                            platform.x += platform.moveSpeed * platform.moveDirection * timeFactor;
 
-                        // 确保平台不会移出屏幕
-                        if (platform.x < 0) {
-                            platform.x = 0;
-                            platform.moveDirection = 1;
-                            platform.movePosition = -platform.moveRange;
-                        } else if (platform.x + platform.width > this.canvas.width) {
-                            platform.x = this.canvas.width - platform.width;
-                            platform.moveDirection = -1;
-                            platform.movePosition = platform.moveRange;
+                            // 确保平台不会移出屏幕
+                            if (platform.x < 0) {
+                                platform.x = 0;
+                                platform.moveDirection = 1;
+                                platform.movePosition = -platform.moveRange;
+                            } else if (platform.x + platform.width > this.canvas.width) {
+                                platform.x = this.canvas.width - platform.width;
+                                platform.moveDirection = -1;
+                                platform.movePosition = platform.moveRange;
+                            }
                         }
                     }
 
@@ -1813,22 +1816,21 @@
                     }
                 }
 
-                // 生成新平台
+                // 生成新平台（玩家未死亡且未传送时）
                 if (!this.player.isDead && !this.player.isTeleporting) {
                     this.spawnCounter += timeFactor;
                     if (this.spawnCounter >= this.platformSpawnRate) {
-                        const newPlatform = this.createPlatform();
+                        this.createPlatform();
                         this.spawnCounter = 0;
                     }
                 }
 
-                // 更新道具
+                // 更新道具状态
                 this.updatePowerUps(timeFactor);
 
-                // 检测道具碰撞
+                // 检测道具与玩家的碰撞
                 this.checkPowerUpCollisions();
             }
-
             // 检查是否需要生成道具
             checkPowerUpSpawn() {
                 if (this.gameMode === 'new' && (this.score == 2 || this.score >= this.lastPowerUpScore + this.powerUpInterval)) {
