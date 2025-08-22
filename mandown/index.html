@@ -1744,11 +1744,10 @@
                     const platform = this.platforms[i];
                     platform.y -= this.speed * timeFactor * speedMultiplier;
 
-                    // 移动平台逻辑（核心修复：变大道具踩平台时停止移动）
+                    // 移动平台逻辑（核心修复：变大+落地+站在当前平台 → 停止移动）
                     if (this.gameMode === 'new' && platform.originalType && platform.originalType.startsWith('moving-')) {
-                        // 关键修复：当玩家变大且站在当前移动平台上时，不执行移动逻辑
-                        if (!(this.player.isBig && this.player.standingPlatform?.id === platform.id)) {
-                            // 正常移动逻辑（仅在玩家未变大或未站在该平台时执行）
+                        // 关键条件：玩家未变大 OR 未落地 OR 没站在当前平台 → 才执行移动
+                        if (!(this.player.isBig && this.player.onGround && this.player.standingPlatform?.id === platform.id)) {
                             platform.movePosition += platform.moveSpeed * platform.moveDirection * timeFactor;
 
                             // 到达移动边界，改变方向
@@ -1794,9 +1793,7 @@
                         if (platform.flipTimer > 120) {
                             this.platforms.splice(i, 1);
                             this.score++;
-
-                            // 检查是否需要生成道具
-                            this.checkPowerUpSpawn();
+                            this.checkPowerUpSpawn(); // 检查是否生成道具
                             continue;
                         }
                     }
@@ -1805,9 +1802,7 @@
                     if (platform.y + platform.height < 0 && !(platform.type === 'flip' && platform.flipped)) {
                         this.platforms.splice(i, 1);
                         this.score++;
-
-                        // 检查是否需要生成道具
-                        this.checkPowerUpSpawn();
+                        this.checkPowerUpSpawn(); // 检查是否生成道具
 
                         // 速度递增
                         if (this.score % this.speedIncreaseInterval === 0) {
@@ -2785,10 +2780,11 @@
                 }
                 this.lastTime = timestamp;
 
-                this.updatePlayer();
-                this.updatePlatforms();
-                this.checkCollisions();
-                this.draw();
+                // 执行顺序调整：先检测碰撞更新站立平台 → 再更新平台移动
+                this.updatePlayer();       // 1. 更新玩家状态
+                this.checkCollisions();    // 2. 碰撞检测（赋值standingPlatform）→ 关键调整
+                this.updatePlatforms();    // 3. 更新平台（此时已能获取当前帧的站立平台）
+                this.draw();               // 4. 绘制画面
 
                 requestAnimationFrame((nextTimestamp) => this.gameLoop(nextTimestamp));
             }
