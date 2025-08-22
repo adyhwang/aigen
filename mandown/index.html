@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>就下100层 - 经典与新模式</title>
+    <title>就下100层 - 道具增强版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script>
@@ -84,7 +84,7 @@
 <body
     class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex flex-col items-center justify-center p-4 text-white overflow-hidden">
     <div class="relative w-full max-w-md">
-        <!-- 顶部标题和控制区（新增全屏按钮） -->
+        <!-- 顶部标题和控制区 -->
         <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
             <h1
                 class="text-[clamp(1.2rem,5vw,1.8rem)] font-[family='Press Start 2P',cursive] text-left text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 tracking-wider">
@@ -92,12 +92,11 @@
             </h1>
 
             <div class="flex items-center gap-2">
-                <!-- 新增全屏按钮 -->
-                <button id="fullscreenButton" 
+                <button id="fullscreenButton"
                     class="bg-dark/70 hover:bg-dark/90 text-white p-2 rounded-full transition-all transform hover:scale-110 active:scale-90">
                     <i class="fa fa-expand"></i>
                 </button>
-                
+
                 <div class="bg-dark/70 px-3 py-2 rounded-full">
                     <i class="fa fa-volume-up text-gray-300"></i>
                     <input type="range" id="volumeSlider" class="volume-slider w-24" min="0" max="100" value="70">
@@ -151,7 +150,6 @@
                     开始游戏
                 </button>
 
-                <!-- 经典模式平台说明 -->
                 <div id="classicModeInstructions" class="mt-8 grid grid-cols-2 gap-3 w-full">
                     <div class="flex items-center gap-2">
                         <div class="w-5 h-2 bg-blue-500 rounded-sm"></div>
@@ -180,72 +178,29 @@
                             <div class="absolute top-0 left-1/4 w-1 h-1 bg-red-700 transform rotate-45"></div>
                             <div class="absolute top-0 left-3/4 w-1 h-1 bg-red-700 transform -rotate-45"></div>
                         </div>
-                        <span class="text-sm text-gray-300">钉板 (掉血)</span>
+                        <span class="text-sm text-gray-300">钉板</span>
                     </div>
                 </div>
 
-                <!-- 新模式平台说明 (默认隐藏) -->
-                <div id="newModeInstructions" class="mt-8 grid grid-cols-2 gap-3 w-full hidden">
-                    <div class="flex items-center gap-2">
-                        <div class="w-5 h-2 bg-blue-500 rounded-sm relative">
-                            <div
-                                class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-0.5 bg-white/50">
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">移动普通平台</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-5 h-2 bg-red-600 rounded-sm relative">
-                            <div class="absolute top-0 left-1/4 w-1 h-1 bg-red-700 transform rotate-45"></div>
-                            <div class="absolute top-0 left-3/4 w-1 h-1 bg-red-700 transform -rotate-45"></div>
-                            <div
-                                class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-0.5 bg-white/50">
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">移动钉板</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-5 h-2 bg-green-500 rounded-sm relative">
-                            <div
-                                class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-0.5 bg-white/50">
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">移动翻转平台</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-5 h-2 bg-gray-200 rounded-sm relative overflow-hidden">
-                            <div class="absolute top-0 left-0 w-3 h-full bg-gray-300/70 transform -skew-x-12"></div>
-                        </div>
-                        <span class="text-sm text-gray-300">传送带</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-5 h-2 relative">
-                            <div class="w-full h-1/3 bg-green-500"></div>
-                            <div class="w-full h-1/3 bg-white"></div>
-                            <div class="w-full h-1/3 bg-green-500"></div>
-                        </div>
-                        <span class="text-sm text-gray-300">跳板</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🟦
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">所有平台变普通</span>
-                    </div>
+                <!-- 道具说明 -->
+                <div class="flex text-left items-center gap-2">
+                    <h2 class="text-sm font-[family='Press Start 2P',cursive]  mt-4 text-primary">新模式道具：
+                    </h2>
+                </div>
+                <div class="mt-2 grid grid-cols-2 gap-3 w-full">
                     <div class="flex items-center gap-2">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
                             <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🐜
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">变小</span>
+                        <span class="text-sm text-gray-300">变小 - 免疫钉板，重力减小</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
                             <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🐘
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">变大</span>
+                        <span class="text-sm text-gray-300">变大 - 免疫传送带，固定移动平台</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
@@ -259,9 +214,22 @@
                             <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🚑
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">救命道具</span>
+                        <span class="text-sm text-gray-300">救命道具 - 濒死时回血</span>
                     </div>
-
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🌪️
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">改变重力 - 重力减小15秒</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">⏱️
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">平台减速 - 平台速度减慢30%</span>
+                    </div>
                 </div>
             </div>
 
@@ -408,6 +376,14 @@
                     case 'lifeSaver':
                         this.color = '#06B6D4';
                         this.icon = '🚑';
+                        break;
+                    case 'gravityChange':
+                        this.color = '#9C27B0';
+                        this.icon = '🌪️';
+                        break;
+                    case 'platformSlow':
+                        this.color = '#607D8B';
+                        this.icon = '⏱️';
                         break;
                 }
             }
@@ -881,6 +857,7 @@
                     speed: 5,
                     jumpForce: -15,
                     gravity: 0.7,
+                    originalGravity: 0.7, // 保存原始重力值
                     onGround: false,
                     direction: 1,
                     health: 10,
@@ -911,6 +888,12 @@
                     sizeTimer: 0,
                     allNormalPlatforms: false,
                     allNormalTimer: 0,
+                    // 重力改变效果
+                    isGravityChanged: false,
+                    gravityChangedTimer: 0,
+                    // 平台速度改变效果
+                    isPlatformSpeedChanged: false,
+                    platformSpeedChangedTimer: 0,
                     // 传送状态
                     isTeleporting: false
                 };
@@ -931,14 +914,16 @@
                     'spring'
                 ];
 
-                // 道具类型 - 包含救命道具
+                // 道具类型 - 包含救命道具和新道具
                 this.powerUpTypes = [
                     'fullHealth',  // 满血道具
                     'smallPlayer', // 人物变小
                     'bigPlayer',   // 人物变大
                     'invincible',  // 不掉血
                     'allNormal',   // 所有平台变普通
-                    'lifeSaver'    // 救命道具
+                    'lifeSaver',   // 救命道具
+                    'gravityChange', // 改变重力道具
+                    'platformSlow'   // 平台减速道具
                 ];
 
                 // 按键状态
@@ -980,15 +965,6 @@
                             this.modeDropdown.classList.add('hidden');
                             this.soundManager.playModeChangeSound();
 
-                            // 根据选择的模式显示对应的平台说明
-                            if (mode === 'classic') {
-                                this.classicInstructions.classList.remove('hidden');
-                                this.newInstructions.classList.add('hidden');
-                            } else {
-                                this.classicInstructions.classList.add('hidden');
-                                this.newInstructions.classList.remove('hidden');
-                            }
-
                             // 如果游戏正在运行，重启游戏
                             if (this.isRunning) {
                                 this.startGame();
@@ -1026,7 +1002,7 @@
             // 新增全屏切换方法
             toggleFullscreen() {
                 const docEl = document.documentElement;
-                
+
                 if (!document.fullscreenElement) {
                     // 进入全屏
                     if (docEl.requestFullscreen) {
@@ -1052,7 +1028,7 @@
                     }
                     this.fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
                 }
-                
+
                 // 播放全屏切换音效
                 this.soundManager.playFullscreenSound();
             }
@@ -1122,7 +1098,14 @@
                     sizeTimer: 0,
                     allNormalPlatforms: false,
                     allNormalTimer: 0,
-                    isTeleporting: false
+                    // 新道具效果重置
+                    isGravityChanged: false,
+                    gravityChangedTimer: 0,
+                    isPlatformSpeedChanged: false,
+                    platformSpeedChangedTimer: 0,
+                    isTeleporting: false,
+                    // 恢复原始重力
+                    gravity: this.player.originalGravity
                 };
 
                 this.score = 0;
@@ -1188,7 +1171,9 @@
                     moveSpeed,
                     moveRange,
                     moveDirection,
-                    movePosition
+                    movePosition,
+                    // 平台原始速度（用于减速效果）
+                    originalMoveSpeed: moveSpeed
                 });
             }
 
@@ -1480,33 +1465,39 @@
                     this.player.direction = 1;
                 }
 
-                // 传送带效果
+                // 变大道具效果：免疫传送带位移
+                let conveyorEffect = 0;
                 if (this.player.standingPlatform &&
-                    ['conveyor-left', 'conveyor-right'].includes(this.player.standingPlatform.type)) {
-                    this.player.velocityX = moveSpeed + (this.player.standingPlatform.conveyorSpeed * timeFactor);
-
-                    // 传送带特效
-                    if (Math.random() > 0.9) {
-                        const headX = this.player.x + this.player.width / 2;
-                        const headY = this.player.y - this.player.width / 2;
-                        const dir = this.player.standingPlatform.type === 'conveyor-left' ? -1 : 1;
-
-                        this.effectManager.addParticles(1, headX, headY, {
-                            speedX: dir * 1.5,
-                            speedY: 2,
-                            color: '#DBEAFE',
-                            size: 2,
-                            life: 30,
-                            gravity: 0.2,
-                            droplet: true
-                        });
-                    }
-                } else {
-                    this.player.velocityX = moveSpeed;
+                    ['conveyor-left', 'conveyor-right'].includes(this.player.standingPlatform.type) &&
+                    !this.player.isBig) {
+                    conveyorEffect = this.player.standingPlatform.conveyorSpeed * timeFactor;
                 }
 
-                // 重力应用
-                this.player.velocityY += this.player.gravity * timeFactor;
+                this.player.velocityX = moveSpeed + conveyorEffect;
+
+                // 传送带特效
+                if (this.player.standingPlatform &&
+                    ['conveyor-left', 'conveyor-right'].includes(this.player.standingPlatform.type) &&
+                    Math.random() > 0.9) {
+                    const headX = this.player.x + this.player.width / 2;
+                    const headY = this.player.y - this.player.width / 2;
+                    const dir = this.player.standingPlatform.type === 'conveyor-left' ? -1 : 1;
+
+                    this.effectManager.addParticles(1, headX, headY, {
+                        speedX: dir * 1.5,
+                        speedY: 2,
+                        color: '#DBEAFE',
+                        size: 2,
+                        life: 30,
+                        gravity: 0.2,
+                        droplet: true
+                    });
+                }
+
+                // 重力应用（考虑重力改变道具效果）
+                const currentGravity = this.player.isGravityChanged ?
+                    this.player.originalGravity * 0.5 : this.player.originalGravity;
+                this.player.velocityY += currentGravity * timeFactor;
 
                 // 弹跳逻辑
                 if (this.player.isBouncing) {
@@ -1614,6 +1605,31 @@
                         this.showPowerUpMessage("平台恢复正常");
                     }
                 }
+
+                // 重力改变效果
+                if (this.player.isGravityChanged) {
+                    this.player.gravityChangedTimer -= timeFactor;
+                    if (this.player.gravityChangedTimer <= 0) {
+                        this.player.isGravityChanged = false;
+                        this.player.gravity = this.player.originalGravity;
+                        this.showPowerUpMessage("重力恢复正常");
+                    }
+                }
+
+                // 平台速度改变效果
+                if (this.player.isPlatformSpeedChanged) {
+                    this.player.platformSpeedChangedTimer -= timeFactor;
+                    if (this.player.platformSpeedChangedTimer <= 0) {
+                        this.player.isPlatformSpeedChanged = false;
+                        // 恢复平台原始速度
+                        this.platforms.forEach(platform => {
+                            if (platform.originalMoveSpeed) {
+                                platform.moveSpeed = platform.originalMoveSpeed;
+                            }
+                        });
+                        this.showPowerUpMessage("平台速度恢复正常");
+                    }
+                }
             }
 
             // 更新手臂角度动画
@@ -1719,7 +1735,8 @@
 
             // 更新平台
             updatePlatforms() {
-                const speedMultiplier = this.player.isDead ? 0.3 : 1;
+                // 计算速度倍数（考虑平台减速道具效果）
+                const speedMultiplier = this.player.isPlatformSpeedChanged ? 0.7 : 1;
                 const timeFactor = this.deltaTime / (1000 / 60);
 
                 // 移动并更新平台
@@ -1727,8 +1744,9 @@
                     const platform = this.platforms[i];
                     platform.y -= this.speed * timeFactor * speedMultiplier;
 
-                    // 移动平台逻辑
-                    if (this.gameMode === 'new' && platform.originalType && platform.originalType.startsWith('moving-')) {
+                    // 移动平台逻辑（变大道具效果：玩家站在平台上时平台不移动）
+                    if (this.gameMode === 'new' && platform.originalType && platform.originalType.startsWith('moving-') &&
+                        (!this.player.isBig || this.player.standingPlatform !== platform)) {
                         platform.movePosition += platform.moveSpeed * platform.moveDirection * timeFactor;
 
                         // 到达移动边界，改变方向
@@ -1757,8 +1775,8 @@
 
                     if (platform.effectTimer > 0) platform.effectTimer--;
 
-                    // 处理翻转平台
-                    if (platform.type === 'flip' && platform.flipped) {
+                    // 处理翻转平台（变小道具效果：翻转平台不会被翻转）
+                    if (platform.type === 'flip' && platform.flipped && !this.player.isSmall) {
                         platform.flipTimer += timeFactor;
 
                         // 翻转闪烁特效
@@ -1891,7 +1909,7 @@
                         this.player.isSmall = true;
                         this.player.isBig = false;
                         this.player.sizeTimer = 20 * 60; // 20秒
-                        this.showPowerUpMessage("体型变小 (20秒)");
+                        this.showPowerUpMessage("体型变小 (20秒) - 免疫钉板，重力减小，翻转平台不会翻转");
                         this.effectManager.addParticles(10,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
                             speedX: (Math.random() - 0.5) * 3,
@@ -1912,7 +1930,7 @@
                         this.player.isBig = true;
                         this.player.isSmall = false;
                         this.player.sizeTimer = 20 * 60; // 20秒
-                        this.showPowerUpMessage("体型变大 (20秒)");
+                        this.showPowerUpMessage("体型变大 (20秒) - 免疫传送带，固定移动平台");
                         this.effectManager.addParticles(10,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
                             speedX: (Math.random() - 0.5) * 3,
@@ -1922,7 +1940,6 @@
                             gravity: 0
                         });
                         break;
-
 
                     case 'invincible':
                         this.player.isInvincible = true;
@@ -1960,7 +1977,7 @@
                     // 救命道具效果
                     case 'lifeSaver':
                         this.lifeSaverAvailable = true;
-                        this.showPowerUpMessage("获得救命道具!");
+                        this.showPowerUpMessage("获得救命道具! 濒死时自动回血");
                         this.effectManager.addParticles(20,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
                             speedX: (Math.random() - 0.5) * 5,
@@ -1969,6 +1986,44 @@
                             life: 50,
                             gravity: 0.1,
                             explosive: true
+                        });
+                        break;
+
+                    // 重力改变道具
+                    case 'gravityChange':
+                        this.player.isGravityChanged = true;
+                        this.player.gravityChangedTimer = 15 * 60; // 15秒
+                        this.player.gravity = this.player.originalGravity * 0.35; // 重力0.35
+                        this.showPowerUpMessage("重力减小 (15秒)");
+                        this.effectManager.addParticles(15,
+                            this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
+                            speedX: (Math.random() - 0.5) * 4,
+                            speedY: (Math.random() - 0.5) * 4,
+                            color: '#9C27B0',
+                            life: 40,
+                            gravity: -0.1, // 负重力使粒子向上飘
+                            explosive: true
+                        });
+                        break;
+
+                    // 平台减速道具
+                    case 'platformSlow':
+                        this.player.isPlatformSpeedChanged = true;
+                        this.player.platformSpeedChangedTimer = 15 * 60; // 15秒
+                        // 所有移动平台速度减慢30%
+                        this.platforms.forEach(platform => {
+                            if (platform.originalMoveSpeed) {
+                                platform.moveSpeed = platform.originalMoveSpeed * 0.7;
+                            }
+                        });
+                        this.showPowerUpMessage("平台速度减慢30% (15秒)");
+                        this.effectManager.addParticles(15,
+                            this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
+                            speedX: (Math.random() - 0.5) * 3,
+                            speedY: (Math.random() - 0.5) * 3,
+                            color: '#607D8B',
+                            life: 40,
+                            gravity: 0.1
                         });
                         break;
                 }
@@ -2038,7 +2093,8 @@
                             this.healPlayer(1);
                             this.player.healedPlatforms.add(platform.id);
                         }
-                        if (!platform.flipped) {
+                        // 变小道具效果：翻转平台不会被翻转
+                        if (!platform.flipped && !this.player.isSmall) {
                             platform.flipped = true;
                             platform.flipTimer = 0;
                             if (isNewPlatform) {
@@ -2104,8 +2160,9 @@
                         break;
 
                     case 'spike':
-                        // 钉板伤害（金身状态下不受伤害）
-                        if (!this.player.damagedPlatforms.has(platform.id) && !this.player.isInvincible) {
+                        // 钉板伤害（金身状态或变小状态下不受伤害）
+                        if (!this.player.damagedPlatforms.has(platform.id) &&
+                            !this.player.isInvincible && !this.player.isSmall) {
                             this.damagePlayer(3);
                             this.player.damagedPlatforms.add(platform.id);
                             this.player.velocityY = -8;
@@ -2126,14 +2183,15 @@
                             if (this.player.health <= 0) {
                                 this.player.isDead = true;
                             }
-                        } else if (this.player.isInvincible && !this.player.damagedPlatforms.has(platform.id)) {
-                            // 金身状态下碰到钉板的特效
+                        } else if ((this.player.isInvincible || this.player.isSmall) &&
+                            !this.player.damagedPlatforms.has(platform.id)) {
+                            // 免疫状态下碰到钉板的特效
                             this.player.damagedPlatforms.add(platform.id);
                             this.effectManager.addParticles(8,
                                 this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
                                 speedX: (Math.random() - 0.5) * 4,
                                 speedY: (Math.random() - 0.5) * 4,
-                                color: '#F59E0B',
+                                color: this.player.isSmall ? '#3B82F6' : '#F59E0B',
                                 life: 20,
                                 gravity: 0.1
                             });
@@ -2144,7 +2202,26 @@
 
             // 玩家受伤
             damagePlayer(amount) {
+                const previousHealth = this.player.health;
                 this.player.health = Math.max(0, this.player.health - amount);
+
+                // 救命道具效果：血量即将为0时，增加5滴血
+                if (previousHealth > 0 && this.player.health <= 0 && this.lifeSaverAvailable) {
+                    this.player.health = Math.min(this.player.maxHealth, 5);
+                    this.lifeSaverAvailable = false;
+                    this.showPowerUpMessage("救命道具生效! +5生命值");
+                    this.soundManager.playHealSound();
+
+                    this.effectManager.addParticles(15,
+                        this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
+                        speedX: (Math.random() - 0.5) * 4,
+                        speedY: (Math.random() - 0.5) * 4,
+                        color: '#06B6D4',
+                        life: 40,
+                        gravity: 0.1,
+                        explosive: true
+                    });
+                }
             }
 
             // 玩家回血
@@ -2364,344 +2441,360 @@
                     );
                     this.ctx.scale(scale, scale);
                     this.ctx.translate(
-    -platform.width / 2,
-    -platform.height / 2
-);
+                        -platform.width / 2,
+                        -platform.height / 2
+                    );
 
-// 绘制平台主体
-if (platform.type === 'spring') {
-    const layerHeight = platform.height / 3;
-    this.ctx.fillStyle = flashColor || '#10B981';
-    this.ctx.fillRect(0, 0, platform.width, layerHeight);
-    this.ctx.fillStyle = flashColor || '#F3F4F6';
-    this.ctx.fillRect(0, layerHeight, platform.width, layerHeight);
-    this.ctx.fillStyle = flashColor || '#10B981';
-    this.ctx.fillRect(0, layerHeight * 2, platform.width, layerHeight);
-} else {
-    let fillColor;
-    switch (platform.type) {
-        case 'normal': fillColor = '#3B82F6'; break;
-        case 'flip': fillColor = platform.flipped ? '#6B7280' : '#10B981'; break;
-        case 'conveyor-left':
-        case 'conveyor-right': fillColor = '#F3F4F6'; break;
-        case 'spike': fillColor = '#EF4444'; break;
-    }
+                    // 绘制平台主体
+                    if (platform.type === 'spring') {
+                        const layerHeight = platform.height / 3;
+                        this.ctx.fillStyle = flashColor || '#10B981';
+                        this.ctx.fillRect(0, 0, platform.width, layerHeight);
+                        this.ctx.fillStyle = flashColor || '#F3F4F6';
+                        this.ctx.fillRect(0, layerHeight, platform.width, layerHeight);
+                        this.ctx.fillStyle = flashColor || '#10B981';
+                        this.ctx.fillRect(0, layerHeight * 2, platform.width, layerHeight);
+                    } else {
+                        let fillColor;
+                        switch (platform.type) {
+                            case 'normal': fillColor = '#3B82F6'; break;
+                            case 'flip': fillColor = platform.flipped ? '#6B7280' : '#10B981'; break;
+                            case 'conveyor-left':
+                            case 'conveyor-right': fillColor = '#F3F4F6'; break;
+                            case 'spike': fillColor = '#EF4444'; break;
+                        }
 
-    if (flashColor) fillColor = flashColor;
+                        if (flashColor) fillColor = flashColor;
 
-    if (flashVisible) {
-        this.ctx.fillStyle = fillColor;
-        this.ctx.fillRect(0, 0, platform.width, platform.height);
-    }
-}
+                        if (flashVisible) {
+                            this.ctx.fillStyle = fillColor;
+                            this.ctx.fillRect(0, 0, platform.width, platform.height);
+                        }
+                    }
 
-// 救命平台特效
-if (platform.isLifeSaver && platform.glowTimer > 0) {
-    const alpha = Math.max(0.3, Math.sin(platform.glowTimer * 0.1) * 0.5 + 0.5);
-    const glowSize = 5 + Math.sin(platform.glowTimer * 0.2) * 2;
+                    // 救命平台特效
+                    if (platform.isLifeSaver && platform.glowTimer > 0) {
+                        const alpha = Math.max(0.3, Math.sin(platform.glowTimer * 0.1) * 0.5 + 0.5);
+                        const glowSize = 5 + Math.sin(platform.glowTimer * 0.2) * 2;
 
-    this.ctx.fillStyle = `rgba(6, 182, 212, ${alpha})`;
-    this.ctx.fillRect(-glowSize, -glowSize, platform.width + glowSize * 2, platform.height + glowSize * 2);
+                        this.ctx.fillStyle = `rgba(6, 182, 212, ${alpha})`;
+                        this.ctx.fillRect(-glowSize, -glowSize, platform.width + glowSize * 2, platform.height + glowSize * 2);
 
-    platform.glowTimer--;
-}
+                        platform.glowTimer--;
+                    }
 
-// 移动平台指示器
-if (this.gameMode === 'new' && platform.originalType && platform.originalType.startsWith('moving-')) {
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-    const indicatorWidth = 8;
-    const indicatorHeight = 4;
-    const spacing = 10;
+                    // 移动平台指示器
+                    if (this.gameMode === 'new' && platform.originalType && platform.originalType.startsWith('moving-')) {
+                        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                        const indicatorWidth = 8;
+                        const indicatorHeight = 4;
+                        const spacing = 10;
 
-    // 在平台两端绘制移动指示器
-    for (let x = 5; x < platform.width - 5; x += spacing) {
-        this.ctx.fillRect(x, platform.height / 2 - indicatorHeight / 2, indicatorWidth, indicatorHeight);
-    }
-}
+                        // 在平台两端绘制移动指示器
+                        for (let x = 5; x < platform.width - 5; x += spacing) {
+                            this.ctx.fillRect(x, platform.height / 2 - indicatorHeight / 2, indicatorWidth, indicatorHeight);
+                        }
+                    }
 
-// 平台特殊效果
-switch (platform.type) {
-    case 'conveyor-left':
-    case 'conveyor-right':
-        this.drawConveyorArrows(platform, platform.type === 'conveyor-left' ? -1 : 1);
-        break;
-    case 'spike':
-        this.drawSpikes(platform);
-        break;
-    case 'flip':
-        if (platform.flipped && platform.flipTimer > 0 && platform.flipTimer <= 42) {
-            this.ctx.save();
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            this.ctx.font = '10px Arial';
-            this.ctx.textAlign = 'center';
-            const seconds = Math.ceil((42 - platform.flipTimer) / 60 * 10) / 10;
-            if (seconds > 0) {
-                this.ctx.fillText(seconds.toFixed(1), platform.width / 2, -5);
+                    // 平台特殊效果
+                    switch (platform.type) {
+                        case 'conveyor-left':
+                        case 'conveyor-right':
+                            this.drawConveyorArrows(platform, platform.type === 'conveyor-left' ? -1 : 1);
+                            break;
+                        case 'spike':
+                            this.drawSpikes(platform);
+                            break;
+                        case 'flip':
+                            if (platform.flipped && platform.flipTimer > 0 && platform.flipTimer <= 42) {
+                                this.ctx.save();
+                                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                                this.ctx.font = '10px Arial';
+                                this.ctx.textAlign = 'center';
+                                const seconds = Math.ceil((42 - platform.flipTimer) / 60 * 10) / 10;
+                                if (seconds > 0) {
+                                    this.ctx.fillText(seconds.toFixed(1), platform.width / 2, -5);
+                                }
+                                this.ctx.restore();
+                            }
+                            break;
+                    }
+
+                    this.ctx.restore();
+                    this.ctx.globalAlpha = originalAlpha;
+                }
+
+                this.ctx.restore();
             }
-            this.ctx.restore();
+
+            // 绘制传送带箭头
+            drawConveyorArrows(platform, direction) {
+                this.ctx.fillStyle = '#D1D5DB';
+                const arrowSize = 8;
+                const spacing = 20;
+
+                for (let x = 10; x < platform.width - 10; x += spacing) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, platform.height / 2);
+                    this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 - arrowSize / 2);
+                    this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 + arrowSize / 2);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+                }
+            }
+
+            // 绘制钉板
+            drawSpikes(platform) {
+                this.ctx.fillStyle = '#DC2626';
+                const spikeCount = Math.floor(platform.width / 8);
+                const spikeWidth = platform.width / spikeCount;
+                const spikeHeight = 10;
+
+                for (let i = 0; i < spikeCount; i++) {
+                    const x = i * spikeWidth;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x + spikeWidth / 2, -spikeHeight);
+                    this.ctx.lineTo(x + spikeWidth, 0);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+                }
+            }
+
+            // 绘制道具
+            drawPowerUps() {
+                this.powerUps.forEach(powerUp => {
+                    powerUp.draw(this.ctx);
+                });
+            }
+
+            // 绘制HUD（整合生命值、道具计时器和救命道具状态）
+            drawHUD() {
+                this.ctx.save();
+
+                // 左侧区域：生命值和道具计时器
+                const heartSize = 12;
+                const heartSpacing = 2;
+                const startX = 10;
+                const startY = 10;
+
+                // 背景半透明矩形
+                const totalWidth = this.player.maxHealth * (heartSize + heartSpacing) - heartSpacing;
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.fillRect(startX - 3, startY - 3, totalWidth + 6, heartSize + 6);
+
+                // 绘制心形图标
+                for (let i = 0; i < this.player.maxHealth; i++) {
+                    const x = startX + i * (heartSize + heartSpacing);
+                    const y = startY;
+
+                    // 绘制心形
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x + heartSize / 2, y + heartSize / 4);
+                    this.ctx.bezierCurveTo(
+                        x, y,
+                        x, y + heartSize / 2,
+                        x + heartSize / 2, y + heartSize
+                    );
+                    this.ctx.bezierCurveTo(
+                        x + heartSize, y + heartSize / 2,
+                        x + heartSize, y,
+                        x + heartSize / 2, y + heartSize / 4
+                    );
+
+                    // 填充颜色 - 健康的为红色，失去的为灰色
+                    // 金身状态下生命值图标变色
+                    const heartColor = this.player.isInvincible ? '#F59E0B' : (i < this.player.health ? '#EF4444' : '#6B7280');
+                    this.ctx.fillStyle = heartColor;
+                    this.ctx.fill();
+                }
+
+                // 绘制道具效果剩余时间
+                this.drawPowerUpTimers(startX, startY + heartSize + 10);
+
+                // 右侧区域：分数和救命道具状态
+                const scoreX = this.canvas.width - 80;
+                const scoreY = 30;
+
+                // 分数背景
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.fillRect(scoreX - 10, scoreY - 20, 80, 30);
+
+                // 绘制分数
+                this.ctx.font = '16px "Press Start 2P", cursive';
+                this.ctx.fillStyle = '#F59E0B';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(this.score, scoreX + 30, scoreY);
+
+                // 绘制救命道具待命状态（整合到HUD）
+                if (this.lifeSaverAvailable) {
+                    const lifesaverX = scoreX - 30;
+                    const lifesaverY = scoreY - 10;
+
+                    // 背景
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                    this.ctx.fillRect(lifesaverX - 15, lifesaverY - 10, 30, 20);
+
+                    // 图标和文字
+                    this.ctx.fillStyle = '#06B6D4';
+                    this.ctx.font = '12px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('🚑', lifesaverX, lifesaverY + 3);
+                }
+
+                this.ctx.restore();
+            }
+
+            // 绘制道具效果剩余时间
+            drawPowerUpTimers(x, y) {
+                const timerHeight = 4;
+                const timerWidth = 80;
+                const spacing = 12;
+                let currentY = y;
+
+                // 金身状态计时器
+                if (this.player.isInvincible) {
+                    const timeLeft = Math.ceil(this.player.invincibleTimer / 60);
+                    this.drawTimerBar(x, currentY, timerWidth, timerHeight,
+                        timeLeft, 20, '#F59E0B', '金身: ' + timeLeft + 's');
+                    currentY += spacing;
+                }
+
+                // 大小变化计时器
+                if (this.player.isSmall || this.player.isBig) {
+                    const timeLeft = Math.ceil(this.player.sizeTimer / 60);
+                    const type = this.player.isSmall ? '变小' : '变大';
+                    this.drawTimerBar(x, currentY, timerWidth, timerHeight,
+                        timeLeft, 20, this.player.isSmall ? '#3B82F6' : '#8B5CF6',
+                        type + ': ' + timeLeft + 's');
+                    currentY += spacing;
+                }
+
+                // 全普通平台计时器
+                if (this.player.allNormalPlatforms) {
+                    const timeLeft = Math.ceil(this.player.allNormalTimer / 60);
+                    this.drawTimerBar(x, currentY, timerWidth, timerHeight,
+                        timeLeft, 20, '#EC4899', '普通平台: ' + timeLeft + 's');
+                    currentY += spacing;
+                }
+
+                // 重力改变计时器
+                if (this.player.isGravityChanged) {
+                    const timeLeft = Math.ceil(this.player.gravityChangedTimer / 60);
+                    this.drawTimerBar(x, currentY, timerWidth, timerHeight,
+                        timeLeft, 15, '#9C27B0', '重力减小: ' + timeLeft + 's');
+                    currentY += spacing;
+                }
+
+                // 平台减速计时器
+                if (this.player.isPlatformSpeedChanged) {
+                    const timeLeft = Math.ceil(this.player.platformSpeedChangedTimer / 60);
+                    this.drawTimerBar(x, currentY, timerWidth, timerHeight,
+                        timeLeft, 15, '#607D8B', '平台减速: ' + timeLeft + 's');
+                    currentY += spacing;
+                }
+            }
+
+            // 绘制计时器进度条
+            drawTimerBar(x, y, width, height, timeLeft, totalTime, color, label) {
+                // 背景
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                this.ctx.fillRect(x, y, width, height);
+
+                // 进度
+                const progress = timeLeft / totalTime;
+                this.ctx.fillStyle = color;
+                this.ctx.fillRect(x, y, width * progress, height);
+
+                // 标签
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                this.ctx.font = '8px Arial';
+                this.ctx.fillText(label, x + width + 5, y + height);
+            }
+
+            // 绘制背景
+            drawBackground() {
+                this.ctx.save();
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                this.ctx.lineWidth = 1;
+
+                const gridSize = 30;
+
+                // 水平线
+                for (let y = 0; y < this.canvas.height; y += gridSize) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.canvas.width, y);
+                    this.ctx.stroke();
+                }
+
+                // 垂直线
+                for (let x = 0; x < this.canvas.width; x += gridSize) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.canvas.height);
+                    this.ctx.stroke();
+                }
+
+                // 新模式背景特效
+                if (this.gameMode === 'new') {
+                    this.ctx.fillStyle = 'rgba(139, 92, 246, 0.03)';
+                    for (let i = 0; i < 10; i++) {
+                        const x = Math.random() * this.canvas.width;
+                        const y = Math.random() * this.canvas.height;
+                        const size = Math.random() * 100 + 50;
+                        this.ctx.beginPath();
+                        this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                }
+
+                this.ctx.restore();
+            }
+
+            // 绘制游戏
+            draw() {
+                this.ctx.fillStyle = '#111827';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                this.drawBackground();
+                this.drawPlatforms();
+                this.drawPowerUps();
+                this.effectManager.draw(this.ctx);
+                this.drawPlayer();
+                this.drawHUD();
+
+                if (this.isPaused) {
+                    this.ctx.save();
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.restore();
+                }
+            }
+
+            // 游戏主循环
+            gameLoop(timestamp) {
+                if (!this.isRunning || this.isPaused) return;
+
+                if (this.lastTime) {
+                    this.deltaTime = Math.min(timestamp - this.lastTime, this.maxDeltaTime);
+                } else {
+                    this.deltaTime = 0;
+                }
+                this.lastTime = timestamp;
+
+                this.updatePlayer();
+                this.updatePlatforms();
+                this.checkCollisions();
+                this.draw();
+
+                requestAnimationFrame((nextTimestamp) => this.gameLoop(nextTimestamp));
+            }
         }
-        break;
-}
 
-this.ctx.restore();
-this.ctx.globalAlpha = originalAlpha;
-}
-
-this.ctx.restore();
-}
-
-// 绘制传送带箭头
-drawConveyorArrows(platform, direction) {
-this.ctx.fillStyle = '#D1D5DB';
-const arrowSize = 8;
-const spacing = 20;
-
-for (let x = 10; x < platform.width - 10; x += spacing) {
-    this.ctx.beginPath();
-    this.ctx.moveTo(x, platform.height / 2);
-    this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 - arrowSize / 2);
-    this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 + arrowSize / 2);
-    this.ctx.closePath();
-    this.ctx.fill();
-}
-}
-
-// 绘制钉板
-drawSpikes(platform) {
-this.ctx.fillStyle = '#DC2626';
-const spikeCount = Math.floor(platform.width / 8);
-const spikeWidth = platform.width / spikeCount;
-const spikeHeight = 10;
-
-for (let i = 0; i < spikeCount; i++) {
-    const x = i * spikeWidth;
-    this.ctx.beginPath();
-    this.ctx.moveTo(x, 0);
-    this.ctx.lineTo(x + spikeWidth / 2, -spikeHeight);
-    this.ctx.lineTo(x + spikeWidth, 0);
-    this.ctx.closePath();
-    this.ctx.fill();
-}
-}
-
-// 绘制道具
-drawPowerUps() {
-this.powerUps.forEach(powerUp => {
-    powerUp.draw(this.ctx);
-});
-}
-
-// 绘制HUD（整合生命值、道具计时器和救命道具状态）
-drawHUD() {
-this.ctx.save();
-
-// 左侧区域：生命值和道具计时器
-const heartSize = 12;
-const heartSpacing = 2;
-const startX = 10;
-const startY = 10;
-
-// 背景半透明矩形
-const totalWidth = this.player.maxHealth * (heartSize + heartSpacing) - heartSpacing;
-this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-this.ctx.fillRect(startX - 3, startY - 3, totalWidth + 6, heartSize + 6);
-
-// 绘制心形图标
-for (let i = 0; i < this.player.maxHealth; i++) {
-    const x = startX + i * (heartSize + heartSpacing);
-    const y = startY;
-
-    // 绘制心形
-    this.ctx.beginPath();
-    this.ctx.moveTo(x + heartSize / 2, y + heartSize / 4);
-    this.ctx.bezierCurveTo(
-        x, y,
-        x, y + heartSize / 2,
-        x + heartSize / 2, y + heartSize
-    );
-    this.ctx.bezierCurveTo(
-        x + heartSize, y + heartSize / 2,
-        x + heartSize, y,
-        x + heartSize / 2, y + heartSize / 4
-    );
-
-    // 填充颜色 - 健康的为红色，失去的为灰色
-    // 金身状态下生命值图标变色
-    const heartColor = this.player.isInvincible ? '#F59E0B' : (i < this.player.health ? '#EF4444' : '#6B7280');
-    this.ctx.fillStyle = heartColor;
-    this.ctx.fill();
-}
-
-// 绘制道具效果剩余时间
-this.drawPowerUpTimers(startX, startY + heartSize + 10);
-
-// 右侧区域：分数和救命道具状态
-const scoreX = this.canvas.width - 80;
-const scoreY = 30;
-
-// 分数背景
-this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-this.ctx.fillRect(scoreX - 10, scoreY - 20, 80, 30);
-
-// 绘制分数
-this.ctx.font = '16px "Press Start 2P", cursive';
-this.ctx.fillStyle = '#F59E0B';
-this.ctx.textAlign = 'center';
-this.ctx.fillText(this.score, scoreX + 30, scoreY);
-
-// 绘制救命道具待命状态（整合到HUD）
-if (this.lifeSaverAvailable) {
-    const lifesaverX = scoreX - 30;
-    const lifesaverY = scoreY - 10;
-
-    // 背景
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    this.ctx.fillRect(lifesaverX - 15, lifesaverY - 10, 30, 20);
-
-    // 图标和文字
-    this.ctx.fillStyle = '#06B6D4';
-    this.ctx.font = '12px Arial';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText('🚑', lifesaverX, lifesaverY + 3);
-}
-
-this.ctx.restore();
-}
-
-// 绘制道具效果剩余时间
-drawPowerUpTimers(x, y) {
-const timerHeight = 4;
-const timerWidth = 80;
-const spacing = 12;
-let currentY = y;
-
-// 金身状态计时器
-if (this.player.isInvincible) {
-    const timeLeft = Math.ceil(this.player.invincibleTimer / 60);
-    this.drawTimerBar(x, currentY, timerWidth, timerHeight,
-        timeLeft, 20, '#F59E0B', '金身: ' + timeLeft + 's');
-    currentY += spacing;
-}
-
-// 大小变化计时器
-if (this.player.isSmall || this.player.isBig) {
-    const timeLeft = Math.ceil(this.player.sizeTimer / 60);
-    const type = this.player.isSmall ? '变小' : '变大';
-    this.drawTimerBar(x, currentY, timerWidth, timerHeight,
-        timeLeft, 20, this.player.isSmall ? '#3B82F6' : '#8B5CF6',
-        type + ': ' + timeLeft + 's');
-    currentY += spacing;
-}
-
-// 全普通平台计时器
-if (this.player.allNormalPlatforms) {
-    const timeLeft = Math.ceil(this.player.allNormalTimer / 60);
-    this.drawTimerBar(x, currentY, timerWidth, timerHeight,
-        timeLeft, 20, '#EC4899', '普通平台: ' + timeLeft + 's');
-    currentY += spacing;
-}
-}
-
-// 绘制计时器进度条
-drawTimerBar(x, y, width, height, timeLeft, totalTime, color, label) {
-// 背景
-this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-this.ctx.fillRect(x, y, width, height);
-
-// 进度
-const progress = timeLeft / totalTime;
-this.ctx.fillStyle = color;
-this.ctx.fillRect(x, y, width * progress, height);
-
-// 标签
-this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-this.ctx.font = '8px Arial';
-this.ctx.fillText(label, x + width + 5, y + height);
-}
-
-// 绘制背景
-drawBackground() {
-this.ctx.save();
-this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-this.ctx.lineWidth = 1;
-
-const gridSize = 30;
-
-// 水平线
-for (let y = 0; y < this.canvas.height; y += gridSize) {
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, y);
-    this.ctx.lineTo(this.canvas.width, y);
-    this.ctx.stroke();
-}
-
-// 垂直线
-for (let x = 0; x < this.canvas.width; x += gridSize) {
-    this.ctx.beginPath();
-    this.ctx.moveTo(x, 0);
-    this.ctx.lineTo(x, this.canvas.height);
-    this.ctx.stroke();
-}
-
-// 新模式背景特效
-if (this.gameMode === 'new') {
-    this.ctx.fillStyle = 'rgba(139, 92, 246, 0.03)';
-    for (let i = 0; i < 10; i++) {
-        const x = Math.random() * this.canvas.width;
-        const y = Math.random() * this.canvas.height;
-        const size = Math.random() * 100 + 50;
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, size, 0, Math.PI * 2);
-        this.ctx.fill();
-    }
-}
-
-this.ctx.restore();
-}
-
-// 绘制游戏
-draw() {
-this.ctx.fillStyle = '#111827';
-this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-this.drawBackground();
-this.drawPlatforms();
-this.drawPowerUps();
-this.effectManager.draw(this.ctx);
-this.drawPlayer();
-this.drawHUD();
-
-if (this.isPaused) {
-    this.ctx.save();
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.restore();
-}
-}
-
-// 游戏主循环
-gameLoop(timestamp) {
-if (!this.isRunning || this.isPaused) return;
-
-if (this.lastTime) {
-    this.deltaTime = Math.min(timestamp - this.lastTime, this.maxDeltaTime);
-} else {
-    this.deltaTime = 0;
-}
-this.lastTime = timestamp;
-
-this.updatePlayer();
-this.updatePlatforms();
-this.checkCollisions();
-this.draw();
-
-requestAnimationFrame((nextTimestamp) => this.gameLoop(nextTimestamp));
-}
-}
-
-// 页面加载完成后初始化游戏
-window.addEventListener('load', () => new Game());
-</script>
+        // 页面加载完成后初始化游戏
+        window.addEventListener('load', () => new Game());
+    </script>
 </body>
 
 </html>
