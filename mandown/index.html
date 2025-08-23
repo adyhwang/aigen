@@ -296,7 +296,7 @@
                     <button id="restartButton"
                         class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">再来一次</button>
                     <button id="backToStartButton"
-                        class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">返回开始</button>
+                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">返回开始</button>
                 </div>
             </div>
         </div>
@@ -940,7 +940,16 @@
                     isPlatformSpeedChanged: false,
                     platformSpeedChangedTimer: 0,
                     // 传送状态
-                    isTeleporting: false
+                    isTeleporting: false,
+                    // 新增动画状态
+                    animationState: 'idle', // idle, walking, jumping, falling
+                    animationFrame: 0,
+                    expression: 'normal', // normal, happy, hurt
+                    expressionTimer: 0,
+                    // 身体倾斜
+                    bodyTilt: 0,
+                    // 腿部动画
+                    legOffset: 0
                 };
 
                 // 游戏元素
@@ -1165,7 +1174,14 @@
                     platformSpeedChangedTimer: 0,
                     isTeleporting: false,
                     // 恢复原始重力
-                    gravity: this.player.originalGravity
+                    gravity: this.player.originalGravity,
+                    // 动画状态重置
+                    animationState: 'idle',
+                    animationFrame: 0,
+                    expression: 'normal',
+                    expressionTimer: 0,
+                    bodyTilt: 0,
+                    legOffset: 0
                 };
 
                 this.score = 0;
@@ -1480,11 +1496,11 @@
                                 this.triggerDeathEffects();
                                 this.player.deathEffectPlayed = true;
                             }
+                        }
 
-                            this.deathTimer++;
-                            if (this.deathTimer >= this.deathDelay) {
-                                this.endGame();
-                            }
+                        this.deathTimer++;
+                        if (this.deathTimer >= this.deathDelay) {
+                            this.endGame();
                         }
                     }
                     return;
@@ -1505,6 +1521,9 @@
                         this.player.isDead = true;
                     }
                 }
+
+                // 更新动画状态
+                this.updateAnimationState(timeFactor);
 
                 // 更新道具效果
                 this.updatePowerUpEffects(timeFactor);
@@ -1573,10 +1592,10 @@
                             this.effectManager.addScaleEffect(platform.id, 0.2, 10);
                             this.effectManager.addParticles(8,
                                 platform.x + platform.width / 2, platform.y, {
-                                speedX: (Math.random() - 0.5) * 4,
-                                speedY: -3,
+                                speedX: (Math.random() - 0.5) * 5,
+                                speedY: -4,
                                 color: '#FBBF24',
-                                life: 30,
+                                life: 40,
                                 gravity: 0.2
                             });
                         }
@@ -1619,6 +1638,49 @@
                 }
 
                 this.effectManager.update();
+            }
+
+            // 更新动画状态
+            updateAnimationState(timeFactor) {
+                // 更新动画帧
+                this.player.animationFrame += timeFactor;
+
+                // 更新表情计时器
+                if (this.player.expressionTimer > 0) {
+                    this.player.expressionTimer -= timeFactor;
+                    if (this.player.expressionTimer <= 0) {
+                        this.player.expression = 'normal';
+                    }
+                }
+
+                // 确定动画状态
+                if (!this.player.onGround) {
+                    if (this.player.velocityY < 0) {
+                        this.player.animationState = 'jumping';
+                    } else {
+                        this.player.animationState = 'falling';
+                    }
+                } else if (Math.abs(this.player.velocityX) > 0.1) {
+                    this.player.animationState = 'walking';
+                } else {
+                    this.player.animationState = 'idle';
+                }
+
+                // 更新腿部动画
+                if (this.player.animationState === 'walking') {
+                    this.player.legOffset = Math.sin(this.player.animationFrame * 0.2) * 5;
+                } else {
+                    this.player.legOffset = 0;
+                }
+
+                // 更新身体倾斜
+                if (this.player.animationState === 'walking') {
+                    this.player.bodyTilt = this.player.direction * 0.1;
+                } else if (this.player.animationState === 'jumping') {
+                    this.player.bodyTilt = this.player.direction * 0.05;
+                } else {
+                    this.player.bodyTilt *= 0.9; // 逐渐恢复直立
+                }
             }
 
             // 更新道具效果
@@ -2236,6 +2298,8 @@
                             });
 
                             this.player.flashTimer = 20;
+                            this.player.expression = 'hurt';
+                            this.player.expressionTimer = 30;
 
                             if (this.player.health <= 0) {
                                 this.player.isDead = true;
@@ -2295,6 +2359,12 @@
                             color: '#10B981',
                             life: 30
                         });
+                        
+                        // 回血时显示高兴表情
+                        if (this.player.health === this.player.maxHealth) {
+                            this.player.expression = 'happy';
+                            this.player.expressionTimer = 45;
+                        }
                     }
                 }
             }
@@ -2371,6 +2441,10 @@
                     this.player.y + this.player.height / 2
                 );
                 this.ctx.scale(scale, scale);
+                
+                // 应用身体倾斜
+                this.ctx.rotate(this.player.bodyTilt);
+                
                 this.ctx.translate(
                     -this.player.width / 2,
                     -this.player.height / 2
@@ -2442,31 +2516,97 @@
                 // 金身状态下的颜色变化
                 const bodyColor = this.player.isInvincible ? '#F59E0B' : (flashColor || '#3B82F6');
                 this.ctx.fillStyle = bodyColor;
-                this.ctx.fillRect(0, 0, this.player.width, this.player.height);
+                
+                // 根据动画状态调整身体形状
+                let bodyHeight = this.player.height;
+                let bodyY = 0;
+                
+                if (this.player.animationState === 'jumping') {
+                    // 跳跃时身体稍微压缩
+                    bodyHeight = this.player.height * 0.9;
+                    bodyY = this.player.height * 0.05;
+                } else if (this.player.animationState === 'falling') {
+                    // 下落时身体稍微拉伸
+                    bodyHeight = this.player.height * 1.1;
+                    bodyY = -this.player.height * 0.05;
+                }
+                
+                this.ctx.fillRect(0, bodyY, this.player.width, bodyHeight);
 
                 // 玩家头部
                 this.ctx.fillStyle = '#F59E0B';
                 const headRadius = this.player.width / 2;
                 this.ctx.beginPath();
-                this.ctx.arc(this.player.width / 2, -headRadius, headRadius, 0, Math.PI * 2);
+                this.ctx.arc(this.player.width / 2, -headRadius + bodyY, headRadius, 0, Math.PI * 2);
                 this.ctx.fill();
 
                 // 眼睛
                 this.ctx.fillStyle = 'white';
                 const eyeOffset = this.player.direction * 5;
                 this.ctx.beginPath();
-                this.ctx.arc(this.player.width / 2 + eyeOffset, -headRadius, 3, 0, Math.PI * 2);
+                this.ctx.arc(this.player.width / 2 + eyeOffset, -headRadius + bodyY, 3, 0, Math.PI * 2);
                 this.ctx.fill();
+
+                // 嘴巴表情
+                this.ctx.strokeStyle = 'white';
+                this.ctx.lineWidth = 1.5;
+                this.ctx.beginPath();
+                
+                if (this.player.expression === 'happy') {
+                    // 笑脸
+                    this.ctx.arc(this.player.width / 2, -headRadius + bodyY + 5, 5, 0.2 * Math.PI, 0.8 * Math.PI);
+                } else if (this.player.expression === 'hurt') {
+                    // 痛苦表情
+                    this.ctx.moveTo(this.player.width / 2 - 4, -headRadius + bodyY + 3);
+                    this.ctx.lineTo(this.player.width / 2 + 4, -headRadius + bodyY + 7);
+                    this.ctx.moveTo(this.player.width / 2 + 4, -headRadius + bodyY + 3);
+                    this.ctx.lineTo(this.player.width / 2 - 4, -headRadius + bodyY + 7);
+                } else {
+                    // 普通表情
+                    this.ctx.moveTo(this.player.width / 2 - 4, -headRadius + bodyY + 5);
+                    this.ctx.lineTo(this.player.width / 2 + 4, -headRadius + bodyY + 5);
+                }
+                this.ctx.stroke();
 
                 // 腿部动画
                 this.ctx.fillStyle = '#6F2937';
-                if (this.player.velocityX !== 0) {
-                    const legPhase = Math.sin(Date.now() * 0.01) * 3;
-                    this.ctx.fillRect(5, this.player.height, 8, 10 + legPhase);
-                    this.ctx.fillRect(this.player.width - 13, this.player.height, 8, 10 - legPhase);
+                const legWidth = 8;
+                const legHeight = 10;
+                
+                if (this.player.animationState === 'walking') {
+                    // 行走动画
+                    this.ctx.fillRect(5, this.player.height, legWidth, legHeight + this.player.legOffset);
+                    this.ctx.fillRect(this.player.width - 13, this.player.height, legWidth, legHeight - this.player.legOffset);
+                } else if (this.player.animationState === 'jumping') {
+                    // 跳跃时腿部收缩
+                    this.ctx.fillRect(5, this.player.height, legWidth, legHeight * 0.7);
+                    this.ctx.fillRect(this.player.width - 13, this.player.height, legWidth, legHeight * 0.7);
+                } else if (this.player.animationState === 'falling') {
+                    // 下落时腿部伸展
+                    this.ctx.fillRect(5, this.player.height, legWidth, legHeight * 1.2);
+                    this.ctx.fillRect(this.player.width - 13, this.player.height, legWidth, legHeight * 1.2);
                 } else {
-                    this.ctx.fillRect(5, this.player.height, 8, 10);
-                    this.ctx.fillRect(this.player.width - 13, this.player.height, 8, 10);
+                    // 站立状态
+                    this.ctx.fillRect(5, this.player.height, legWidth, legHeight);
+                    this.ctx.fillRect(this.player.width - 13, this.player.height, legWidth, legHeight);
+                }
+
+                // 行走特效 - 脚印
+                if (this.player.animationState === 'walking' && this.player.onGround && 
+                    Math.floor(this.player.animationFrame) % 10 === 0) {
+                    const footX = this.player.direction > 0 ? 
+                        this.player.width - 9 : 5;
+                    
+                    this.effectManager.addParticles(1, 
+                        this.player.x + footX, this.player.y + this.player.height + 5, {
+                        speedX: 0,
+                        speedY: 0,
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        size: 3,
+                        life: 20,
+                        gravity: 0,
+                        fade: true
+                    });
                 }
 
                 this.ctx.restore();
@@ -2504,13 +2644,44 @@
 
                     // 绘制平台主体
                     if (platform.type === 'spring') {
+                        // 跳板绘制 - 修改为三层结构
                         const layerHeight = platform.height / 3;
+                        
+                        // 上层绿色
                         this.ctx.fillStyle = flashColor || '#10B981';
                         this.ctx.fillRect(0, 0, platform.width, layerHeight);
+                        
+                        // 中层灰白色，由多个小矩形组成，中间有间隔
                         this.ctx.fillStyle = flashColor || '#F3F4F6';
-                        this.ctx.fillRect(0, layerHeight, platform.width, layerHeight);
+                        const segmentWidth = platform.width / 6; // 分为6段，每段之间有间隔
+                        const gap = 2; // 间隔
+                        for (let i = 0; i < 6; i++) {
+                            const x = i * segmentWidth + gap/2;
+                            const width = segmentWidth - gap;
+                            this.ctx.fillRect(x, layerHeight, width, layerHeight);
+                        }
+                        
+                        // 下层绿色
                         this.ctx.fillStyle = flashColor || '#10B981';
                         this.ctx.fillRect(0, layerHeight * 2, platform.width, layerHeight);
+
+                        // 绘制弹簧线圈
+                        this.ctx.strokeStyle = '#F59E0B';
+                        this.ctx.lineWidth = 1.5;
+                        this.ctx.beginPath();
+
+                        const coilCount = 6;
+                        const coilSpacing = platform.width / coilCount;
+
+                        for (let i = 0; i <= coilCount; i++) {
+                            const x = i * coilSpacing;
+                            if (i % 2 === 0) {
+                                this.ctx.lineTo(x, -2);
+                            } else {
+                                this.ctx.lineTo(x, 2);
+                            }
+                        }
+                        this.ctx.stroke();
                     } else {
                         let fillColor;
                         switch (platform.type) {
@@ -2592,11 +2763,20 @@
 
                 for (let x = 10; x < platform.width - 10; x += spacing) {
                     this.ctx.beginPath();
+                    // 绘制箭头主体
                     this.ctx.moveTo(x, platform.height / 2);
                     this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 - arrowSize / 2);
                     this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 + arrowSize / 2);
                     this.ctx.closePath();
                     this.ctx.fill();
+
+                    // 添加箭头尾部线条
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, platform.height / 2);
+                    this.ctx.lineTo(x - direction * 5, platform.height / 2);
+                    this.ctx.strokeStyle = '#9CA3AF';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.stroke();
                 }
             }
 
