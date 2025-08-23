@@ -4,9 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>就下100层 - 背景优化版</title>
+    <title>就下100层 - 优化版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
     <script>
         tailwind.config = {
             theme: {
@@ -23,30 +25,69 @@
             }
         }
     </script>
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .content-auto {
-                content-visibility: auto;
-            }
-            .game-shadow {
-                box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
-            }
-            .control-shadow {
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-            }
-            .control-active {
-                box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
-                background-color: rgba(107, 114, 128, 0.6);
-            }
-        }
-    </style>
+
     <style>
+        /* 基础样式 */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             height: 100vh;
             overflow: hidden;
+            background: linear-gradient(to bottom right, #111827, #1F2937);
         }
 
+        /* 工具类 */
+        .content-auto {
+            content-visibility: auto;
+        }
+
+        .game-shadow {
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .control-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-active {
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+            background-color: rgba(107, 114, 128, 0.6);
+        }
+
+        .dropdown-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 游戏容器 */
+        .game-container {
+            height: calc(100vh - 180px);
+            min-height: 500px;
+            max-height: 800px;
+        }
+
+        /* 响应式设计 */
+        @media (max-height: 700px) {
+            .game-container {
+                height: calc(100vh - 150px);
+                min-height: 400px;
+            }
+        }
+
+        @media (max-height: 600px) {
+            .game-container {
+                height: calc(100vh - 120px);
+                min-height: 350px;
+            }
+
+            .controls-section {
+                margin-top: 0.5rem;
+            }
+
+            .instructions {
+                display: none;
+            }
+        }
+
+        /* 音量滑块 */
         .volume-slider {
             -webkit-appearance: none;
             height: 6px;
@@ -76,39 +117,7 @@
             border: none;
         }
 
-        .dropdown-shadow {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-        }
-
-        .game-container {
-            height: calc(100vh - 180px);
-            min-height: 500px;
-            max-height: 800px;
-        }
-
-        @media (max-height: 700px) {
-            .game-container {
-                height: calc(100vh - 150px);
-                min-height: 400px;
-            }
-        }
-
-        @media (max-height: 600px) {
-            .game-container {
-                height: calc(100vh - 120px);
-                min-height: 350px;
-            }
-
-            .controls-section {
-                margin-top: 0.5rem;
-            }
-
-            .instructions {
-                display: none;
-            }
-        }
-
-        /* 熔岩顶部区域 */
+        /* 熔岩效果 */
         .lava-top {
             position: absolute;
             top: 0;
@@ -116,10 +125,8 @@
             width: 100%;
             height: 30px;
             background: transparent;
-            /* 改为透明 */
             z-index: 5;
             pointer-events: none;
-            /* 确保不会阻挡游戏交互 */
         }
 
         /* 熔岩气泡动画 */
@@ -145,12 +152,10 @@
             border-radius: 50%;
             animation: lavaBubble 2s infinite;
             pointer-events: none;
-            /* 确保不会阻挡游戏交互 */
             z-index: 6;
-            /* 确保在波浪之上 */
         }
 
-        /* 添加开发者工具栏按钮的样式 */
+        /* 开发者工具按钮 */
         .dev-tool-btn:hover {
             transform: scale(1.1);
             transition: transform 0.1s ease;
@@ -160,16 +165,14 @@
             transform: scale(0.95);
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 
-<body
-    class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex flex-col items-center justify-center p-4 text-white overflow-hidden">
+<body class="min-h-screen flex flex-col items-center justify-center p-4 text-white overflow-hidden">
     <div class="relative w-full max-w-md h-full flex flex-col">
         <!-- 顶部标题和控制区 -->
         <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
             <h1
-                class="text-[clamp(1.2rem,5vw,1.8rem)] font-[family='Press Start 2P',cursive] text-left text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 tracking-wider">
+                class="text-[clamp(1.2rem,5vw,1.8rem)] font-['Press_Start_2P'] text-left text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 tracking-wider">
                 就下100层
             </h1>
 
@@ -186,13 +189,15 @@
             </div>
         </div>
 
+        <!-- 游戏主容器 -->
         <div class="relative bg-dark rounded-lg overflow-hidden game-shadow game-container">
             <!-- 熔岩顶部 -->
             <div id="lavaTop" class="lava-top"></div>
 
+            <!-- 游戏画布 -->
             <canvas id="gameCanvas" class="w-full h-full"></canvas>
 
-            <!-- 暂停按钮在右下角 -->
+            <!-- 暂停按钮 -->
             <button id="pauseButton"
                 class="absolute bottom-4 right-4 z-5 bg-dark/70 hover:bg-dark/90 text-white p-2 rounded-full transition-all transform hover:scale-110 active:scale-90 hidden">
                 <i class="fa fa-pause"></i>
@@ -204,9 +209,10 @@
                 <span id="powerUpText"></span>
             </div>
 
+            <!-- 开始菜单 -->
             <div id="startMenu" class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10">
                 <div class="text-center mb-2">
-                    <h2 class="text-2xl font-[family='Press Start 2P',cursive] mb-4 text-primary">准备好了吗？</h2>
+                    <h2 class="text-2xl font-['Press_Start_2P'] mb-4 text-primary">准备好了吗？</h2>
                     <p class="text-gray-300 mb-2">左右移动，躲避危险；下得越深，得分越高</p>
                 </div>
 
@@ -229,11 +235,13 @@
                     </div>
                 </div>
 
+                <!-- 开始按钮 -->
                 <button id="startButton"
                     class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">
                     开始游戏
                 </button>
 
+                <!-- 游戏说明 -->
                 <div id="classicModeInstructions" class="mt-8 grid grid-cols-2 gap-1 w-full">
                     <div class="flex items-center gap-1">
                         <div class="w-5 h-2 bg-blue-500 rounded-sm"></div>
@@ -268,7 +276,7 @@
 
                 <!-- 道具说明 -->
                 <div class="flex text-left items-center gap-2">
-                    <h2 class="text-sm font-[family='Press Start 2P',cursive] mt-4 text-primary">新模式道具：</h2>
+                    <h2 class="text-sm font-['Press_Start_2P'] mt-4 text-primary">新模式道具：</h2>
                 </div>
                 <div class="mt-2 grid grid-cols-2 gap-2 w-full">
                     <div class="flex items-center gap-1">
@@ -330,20 +338,22 @@
                 </div>
             </div>
 
+            <!-- 暂停菜单 -->
             <div id="pauseMenu"
                 class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10 hidden">
-                <h2 class="text-2xl font-[family='Press Start 2P',cursive] mb-6 text-warning">游戏暂停</h2>
+                <h2 class="text-2xl font-['Press_Start_2P'] mb-6 text-warning">游戏暂停</h2>
                 <button id="resumeButton"
                     class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow mb-4">继续游戏</button>
                 <button id="restartFromPauseButton"
                     class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">重新开始</button>
             </div>
 
+            <!-- 游戏结束菜单 -->
             <div id="gameOverMenu"
                 class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10 hidden">
-                <h2 class="text-2xl font-[family='Press Start 2P',cursive] mb-2 text-danger">游戏结束</h2>
+                <h2 class="text-2xl font-['Press_Start_2P'] mb-2 text-danger">游戏结束</h2>
                 <p class="text-xl mb-1">你的成绩</p>
-                <p id="finalScore" class="text-3xl font-[family='Press Start 2P',cursive] mb-6 text-primary">0 层</p>
+                <p id="finalScore" class="text-3xl font-['Press_Start_2P'] mb-6 text-primary">0 层</p>
                 <div class="flex flex-col sm:flex-row gap-4">
                     <button id="restartButton"
                         class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">再来一次</button>
@@ -353,6 +363,7 @@
             </div>
         </div>
 
+        <!-- 移动设备控制按钮 -->
         <div class="mt-4 grid grid-cols-3 gap-4 md:hidden controls-section">
             <button id="leftBtn"
                 class="bg-gray-700/80 text-white h-16 rounded-full flex items-center justify-center control-shadow active:control-active">
@@ -365,6 +376,7 @@
             </button>
         </div>
 
+        <!-- 操作说明 -->
         <div class="mt-4 text-center text-gray-400 text-sm instructions">
             <p class="mb-1">电脑: 方向键左右移动 | 手机: 点击左右按钮</p>
             <p>按回车键或点击暂停按钮可暂停/继续游戏</p>
@@ -372,7 +384,7 @@
     </div>
 
     <script>
-        // 粒子类 - 用于各种特效
+        // ==================== 粒子类 ====================
         class Particle {
             constructor(x, y, options = {}) {
                 this.x = x;
@@ -433,7 +445,7 @@
             }
         }
 
-        // 熔岩气泡类
+        // ==================== 熔岩气泡类 ====================
         class LavaBubble {
             constructor(x, y, size, speed) {
                 this.x = x;
@@ -471,7 +483,7 @@
             }
         }
 
-        // 道具类
+        // ==================== 道具类 ====================
         class PowerUp {
             constructor(x, y, type) {
                 this.id = Date.now() + Math.random();
@@ -487,39 +499,21 @@
                 this.effectTimer = 0;
 
                 // 根据道具类型设置颜色和图标
-                switch (type) {
-                    case 'fullHealth':
-                        this.color = '#10B981';
-                        this.icon = '💗';
-                        break;
-                    case 'smallPlayer':
-                        this.color = '#3B82F6';
-                        this.icon = '🐜';
-                        break;
-                    case 'bigPlayer':
-                        this.color = '#8B5CF6';
-                        this.icon = '🐘';
-                        break;
-                    case 'invincible':
-                        this.color = '#F59E0B';
-                        this.icon = '💪';
-                        break;
-                    case 'allNormal':
-                        this.color = '#EC4899';
-                        this.icon = '🟦';
-                        break;
-                    case 'lifeSaver':
-                        this.color = '#06B6D4';
-                        this.icon = '👼';
-                        break;
-                    case 'gravityChange':
-                        this.color = '#9C27B0';
-                        this.icon = '🌙';
-                        break;
-                    case 'platformSlow':
-                        this.color = '#607D8B';
-                        this.icon = '⏱️';
-                        break;
+                const powerUpConfig = {
+                    'fullHealth': { color: '#10B981', icon: '💗' },
+                    'smallPlayer': { color: '#3B82F6', icon: '🐜' },
+                    'bigPlayer': { color: '#8B5CF6', icon: '🐘' },
+                    'invincible': { color: '#F59E0B', icon: '💪' },
+                    'allNormal': { color: '#EC4899', icon: '🟦' },
+                    'lifeSaver': { color: '#06B6D4', icon: '👼' },
+                    'gravityChange': { color: '#9C27B0', icon: '🌙' },
+                    'platformSlow': { color: '#607D8B', icon: '⏱️' }
+                };
+
+                const config = powerUpConfig[type];
+                if (config) {
+                    this.color = config.color;
+                    this.icon = config.icon;
                 }
             }
 
@@ -563,7 +557,6 @@
                 } else if (!this.collected) {
                     // 绘制道具
                     ctx.scale(this.pulseSize, this.pulseSize);
-                    ctx.rotate(this.rotation);
 
                     // 外环
                     const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius);
@@ -593,29 +586,23 @@
 
             // 颜色加深方法
             darkenColor(color, factor) {
-                if (!/^#[0-9A-F]{6}$/i.test(color)) {
-                    return '#000000';
-                }
+                if (!/^#[0-9A-F]{6}$/i.test(color)) return '#000000';
 
                 const r = parseInt(color.slice(1, 3), 16);
                 const g = parseInt(color.slice(3, 5), 16);
                 const b = parseInt(color.slice(5, 7), 16);
 
                 const darken = (value) => Math.max(0, Math.floor(value * (1 - factor)));
-                const newR = darken(r);
-                const newG = darken(g);
-                const newB = darken(b);
-
                 const toHex = (value) => {
                     const hex = value.toString(16);
                     return hex.length === 1 ? '0' + hex : hex;
                 };
 
-                return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
+                return `#${toHex(darken(r))}${toHex(darken(g))}${toHex(darken(b))}`;
             }
         }
 
-        // 特效管理器
+        // ==================== 特效管理器 ====================
         class EffectManager {
             constructor() {
                 this.particles = [];
@@ -634,10 +621,10 @@
             // 添加熔岩气泡
             addLavaBubble(canvasWidth) {
                 const now = Date.now();
-                if (now - this.lastBubbleTime > 200) { // 每200ms添加一个气泡
+                if (now - this.lastBubbleTime > 200) {
                     this.lavaBubbles.push(new LavaBubble(
                         Math.random() * canvasWidth,
-                        30, // 从熔岩区域底部出现
+                        30,
                         Math.random() * 3 + 2,
                         Math.random() * 0.5 + 0.3
                     ));
@@ -668,7 +655,7 @@
                 });
             }
 
-            // 添加渐进式缩放效果 - 用于死亡放大
+            // 添加渐进式缩放效果
             addProgressiveScaleEffect(target, startScale, endScale, duration) {
                 this.effects.push({
                     type: 'progressive-scale',
@@ -777,7 +764,7 @@
             }
         }
 
-        // 音效管理器
+        // ==================== 音效管理器 ====================
         class SoundManager {
             constructor() {
                 this.audioContext = null;
@@ -927,23 +914,20 @@
                 this.playTone('sine', 523.25, 0.1, 0, { attack: 0.01, decay: 0.03, sustain: 0.5, release: 0.06 });
                 this.playTone('sine', 659.25, 0.1, 0.08, { attack: 0.01, decay: 0.03, sustain: 0.5, release: 0.06 });
             }
-            // 救命道具音效
             playLifeSaverActivateSound() {
                 this.playTone('sine', 523, 0.2, 0, { attack: 0.02, decay: 0.05, sustain: 0.7, release: 0.13 });
                 this.playTone('sine', 659, 0.3, 0.1, { attack: 0.02, decay: 0.1, sustain: 0.7, release: 0.18 });
             }
-            // 传送音效
             playTeleportSound() {
                 this.playTone('sine', 330, 0.15, 0, { attack: 0.01, decay: 0.05, sustain: 0.5, release: 0.09 });
                 this.playTone('sine', 523, 0.15, 0.2, { attack: 0.01, decay: 0.05, sustain: 0.5, release: 0.09 });
             }
-            // 全屏切换音效
             playFullscreenSound() {
                 this.playTone('sine', 440, 0.08, 0, { attack: 0.01, decay: 0.03, sustain: 0.5, release: 0.04 });
             }
         }
 
-        // 游戏主类
+        // ==================== 游戏主类 ====================
         class Game {
             constructor() {
                 this.effectManager = new EffectManager();
@@ -952,22 +936,20 @@
                 this.ctx = this.canvas.getContext('2d');
 
                 // 游戏模式
-                this.gameMode = 'classic'; // classic 或 new
+                this.gameMode = 'classic';
 
                 // 模式选择元素
                 this.modeButton = document.getElementById('modeButton');
                 this.modeDropdown = document.getElementById('modeDropdown');
                 this.currentModeText = document.getElementById('currentModeText');
                 this.modeOptions = document.querySelectorAll('.mode-option');
-                this.classicInstructions = document.getElementById('classicModeInstructions');
-                this.newInstructions = document.getElementById('newModeInstructions');
 
                 // 开发者模式相关属性
                 this.devModeClickCount = 0;
                 this.isDeveloperMode = false;
                 this.lastModeClickTime = 0;
 
-                // 新增全屏按钮元素
+                // 全屏按钮元素
                 this.fullscreenButton = document.getElementById('fullscreenButton');
 
                 // 道具相关元素
@@ -1003,9 +985,8 @@
 
                 // 道具相关设置
                 this.lastPowerUpScore = 0;
-                this.powerUpInterval = 12; // 每12分生成一个道具
-                // 救命道具使用状态
-                this.lifeSaverAvailable = false; // 救命道具是否可用
+                this.powerUpInterval = 12;
+                this.lifeSaverAvailable = false;
 
                 // 玩家属性
                 const bounceForce = this.isMobile ? -9 : -12;
@@ -1021,7 +1002,7 @@
                     speed: 5,
                     jumpForce: -15,
                     gravity: 0.7,
-                    originalGravity: 0.7, // 保存原始重力值
+                    originalGravity: 0.7,
                     onGround: false,
                     direction: 1,
                     health: 10,
@@ -1038,13 +1019,11 @@
                     deathEffectPlayed: false,
                     isGrowing: false,
                     growProgress: 0,
-                    // 手臂相关属性
                     armAngleLeft: 0,
                     armAngleRight: 0,
                     armSwingSpeed: 0.015,
                     armPhaseLeft: 0,
                     armPhaseRight: Math.PI,
-                    // 道具效果
                     isInvincible: false,
                     invincibleTimer: 0,
                     isSmall: false,
@@ -1052,13 +1031,10 @@
                     sizeTimer: 0,
                     allNormalPlatforms: false,
                     allNormalTimer: 0,
-                    // 重力改变效果
                     isGravityChanged: false,
                     gravityChangedTimer: 0,
-                    // 平台速度改变效果
                     isPlatformSpeedChanged: false,
                     platformSpeedChangedTimer: 0,
-                    // 传送状态
                     isTeleporting: false
                 };
 
@@ -1066,10 +1042,8 @@
                 this.platforms = [];
                 this.powerUps = [];
 
-                // 经典模式平台类型
+                // 平台类型
                 this.classicPlatformTypes = ['normal', 'spike', 'normal', 'flip', 'conveyor-left', 'conveyor-right', 'spring', 'spike'];
-
-                // 新模式平台类型（包含移动平台）
                 this.newModePlatformTypes = [
                     'normal', 'moving-normal',
                     'spike', 'moving-spike',
@@ -1078,16 +1052,10 @@
                     'spring'
                 ];
 
-                // 道具类型 - 包含救命道具和新道具
+                // 道具类型
                 this.powerUpTypes = [
-                    'fullHealth',  // 满血道具
-                    'smallPlayer', // 人物变小
-                    'bigPlayer',   // 人物变大
-                    'invincible',  // 不掉血
-                    'allNormal',   // 所有平台变普通
-                    'lifeSaver',   // 救命道具
-                    'gravityChange', // 改变重力道具
-                    'platformSlow'   // 平台减速道具
+                    'fullHealth', 'smallPlayer', 'bigPlayer', 'invincible',
+                    'allNormal', 'lifeSaver', 'gravityChange', 'platformSlow'
                 ];
 
                 // 按键状态
@@ -1103,6 +1071,12 @@
                 this.backToStartButton = document.getElementById('backToStartButton');
 
                 // 事件监听
+                this.setupEventListeners();
+                this.init();
+            }
+
+            // 设置事件监听器
+            setupEventListeners() {
                 this.volumeSlider.addEventListener('input', (e) => this.soundManager.setVolume(parseInt(e.target.value) / 100));
                 document.getElementById('startButton').addEventListener('click', () => this.startGame());
                 document.getElementById('restartButton').addEventListener('click', () => this.startGame());
@@ -1110,8 +1084,6 @@
                 document.getElementById('restartFromPauseButton').addEventListener('click', () => this.startGame());
                 this.pauseButton.addEventListener('click', () => this.togglePause());
                 this.backToStartButton.addEventListener('click', () => this.backToStart());
-
-                // 新增全屏按钮事件监听
                 this.fullscreenButton.addEventListener('click', () => this.toggleFullscreen());
 
                 // 模式选择事件
@@ -1127,14 +1099,8 @@
                         // 开发者模式激活逻辑
                         if (mode === 'new') {
                             const now = Date.now();
-                            // 检查是否在2秒内连续点击
                             if (now - this.lastModeClickTime < 2000) {
                                 this.devModeClickCount++;
-
-                                // 显示点击计数提示
-                                // this.showTempMessage(`开发者模式: ${this.devModeClickCount}/7`, 1000);
-
-                                // 达到7次激活开发者模式
                                 if (this.devModeClickCount >= 7 && !this.isDeveloperMode) {
                                     this.isDeveloperMode = true;
                                     this.showTempMessage("开发者模式已激活!", 2000);
@@ -1143,9 +1109,7 @@
                                 }
                             } else {
                                 this.devModeClickCount = 1;
-                                // this.showTempMessage(`开发者模式: 1/7`, 1000);
                             }
-
                             this.lastModeClickTime = now;
                         }
 
@@ -1162,155 +1126,6 @@
                         }
                     });
                 });
-
-                // 添加显示临时消息的方法
-                Game.prototype.showTempMessage = function (text, duration) {
-                    // 创建或获取消息元素
-                    let messageEl = document.getElementById('devModeMessage');
-                    if (!messageEl) {
-                        messageEl = document.createElement('div');
-                        messageEl.id = 'devModeMessage';
-                        messageEl.style.position = 'fixed';
-                        messageEl.style.top = '50%';
-                        messageEl.style.left = '50%';
-                        messageEl.style.transform = 'translate(-50%, -50%)';
-                        messageEl.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-                        messageEl.style.color = 'white';
-                        messageEl.style.padding = '10px 20px';
-                        messageEl.style.borderRadius = '5px';
-                        messageEl.style.zIndex = '1000';
-                        messageEl.style.fontFamily = '"Press Start 2P", cursive';
-                        messageEl.style.fontSize = '14px';
-                        document.body.appendChild(messageEl);
-                    }
-
-                    // 显示消息
-                    messageEl.textContent = text;
-                    messageEl.style.display = 'block';
-
-                    // 定时隐藏
-                    setTimeout(() => {
-                        messageEl.style.display = 'none';
-                    }, duration);
-                };
-
-                // 创建开发者工具栏
-                Game.prototype.createDeveloperToolbar = function () {
-                    // 检查是否已存在工具栏
-                    if (document.getElementById('developerToolbar')) {
-                        return;
-                    }
-
-                    // 创建工具栏容器
-                    const toolbar = document.createElement('div');
-                    toolbar.id = 'developerToolbar';
-                    toolbar.style.position = 'fixed';
-                    toolbar.style.bottom = '20px';
-                    toolbar.style.left = '50%';
-                    toolbar.style.transform = 'translateX(-50%)';
-                    toolbar.style.display = 'flex';
-                    toolbar.style.flexWrap = 'wrap';
-                    toolbar.style.justifyContent = 'center';
-                    toolbar.style.gap = '10px';
-                    toolbar.style.padding = '10px';
-                    toolbar.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-                    toolbar.style.borderRadius = '10px';
-                    toolbar.style.zIndex = '1000';
-                    toolbar.style.maxWidth = '80%';
-
-                    // 添加关闭按钮
-                    const closeButton = document.createElement('button');
-                    closeButton.textContent = '×';
-                    closeButton.style.position = 'absolute';
-                    closeButton.style.top = '-10px';
-                    closeButton.style.right = '-10px';
-                    closeButton.style.width = '25px';
-                    closeButton.style.height = '25px';
-                    closeButton.style.borderRadius = '50%';
-                    closeButton.style.backgroundColor = '#EF4444';
-                    closeButton.style.color = 'white';
-                    closeButton.style.border = 'none';
-                    closeButton.style.cursor = 'pointer';
-                    closeButton.style.fontWeight = 'bold';
-                    closeButton.addEventListener('click', () => {
-                        this.toggleDeveloperToolbar(false);
-                    });
-                    toolbar.appendChild(closeButton);
-
-                    // 添加道具按钮
-                    this.powerUpTypes.forEach(type => {
-                        const button = document.createElement('button');
-                        button.className = 'dev-tool-btn';
-                        button.setAttribute('data-type', type);
-
-                        // 设置按钮样式
-                        button.style.padding = '8px 12px';
-                        button.style.border = 'none';
-                        button.style.borderRadius = '5px';
-                        button.style.cursor = 'pointer';
-                        button.style.fontSize = '20px';
-                        button.style.display = 'flex';
-                        button.style.flexDirection = 'column';
-                        button.style.alignItems = 'center';
-                        button.style.justifyContent = 'center';
-                        button.style.minWidth = '60px';
-
-                        // 设置按钮颜色和图标
-                        switch (type) {
-                            case 'fullHealth':
-                                button.style.backgroundColor = '#10B981';
-                                button.innerHTML = '💗<span style="font-size:12px">满血</span>';
-                                break;
-                            case 'smallPlayer':
-                                button.style.backgroundColor = '#3B82F6';
-                                button.innerHTML = '🐜<span style="font-size:12px">变小</span>';
-                                break;
-                            case 'bigPlayer':
-                                button.style.backgroundColor = '#8B5CF6';
-                                button.innerHTML = '🐘<span style="font-size:12px">变大</span>';
-                                break;
-                            case 'invincible':
-                                button.style.backgroundColor = '#F59E0B';
-                                button.innerHTML = '💪<span style="font-size:12px">金身</span>';
-                                break;
-                            case 'allNormal':
-                                button.style.backgroundColor = '#EC4899';
-                                button.innerHTML = '🟦<span style="font-size:12px">普通</span>';
-                                break;
-                            case 'lifeSaver':
-                                button.style.backgroundColor = '#06B6D4';
-                                button.innerHTML = '👼<span style="font-size:12px">救命</span>';
-                                break;
-                            case 'gravityChange':
-                                button.style.backgroundColor = '#9C27B0';
-                                button.innerHTML = '🌙<span style="font-size:12px">重力</span>';
-                                break;
-                            case 'platformSlow':
-                                button.style.backgroundColor = '#607D8B';
-                                button.innerHTML = '⏱️<span style="font-size:12px">减速</span>';
-                                break;
-                        }
-
-                        // 添加点击事件
-                        button.addEventListener('click', () => {
-                            this.applyPowerUpEffect(type);
-                            this.showTempMessage(`已使用: ${button.textContent}`, 1000);
-                        });
-
-                        toolbar.appendChild(button);
-                    });
-
-                    // 添加到页面
-                    document.body.appendChild(toolbar);
-                };
-
-                // 显示/隐藏开发者工具栏
-                Game.prototype.toggleDeveloperToolbar = function (show) {
-                    const toolbar = document.getElementById('developerToolbar');
-                    if (toolbar) {
-                        toolbar.style.display = show ? 'flex' : 'none';
-                    }
-                };
 
                 // 点击其他地方关闭下拉菜单
                 document.addEventListener('click', (e) => {
@@ -1334,11 +1149,9 @@
                 };
                 setupControl('leftBtn', 'left');
                 setupControl('rightBtn', 'right');
-
-                this.init();
             }
 
-            // 新增全屏切换方法
+            // 全屏切换方法
             toggleFullscreen() {
                 const docEl = document.documentElement;
 
@@ -1346,11 +1159,11 @@
                     // 进入全屏
                     if (docEl.requestFullscreen) {
                         docEl.requestFullscreen();
-                    } else if (docEl.mozRequestFullScreen) { // Firefox
+                    } else if (docEl.mozRequestFullScreen) {
                         docEl.mozRequestFullScreen();
-                    } else if (docEl.webkitRequestFullscreen) { // Chrome, Safari
+                    } else if (docEl.webkitRequestFullscreen) {
                         docEl.webkitRequestFullscreen();
-                    } else if (docEl.msRequestFullscreen) { // IE/Edge
+                    } else if (docEl.msRequestFullscreen) {
                         docEl.msRequestFullscreen();
                     }
                     this.fullscreenButton.innerHTML = '<i class="fa fa-compress"></i>';
@@ -1358,11 +1171,11 @@
                     // 退出全屏
                     if (document.exitFullscreen) {
                         document.exitFullscreen();
-                    } else if (document.mozCancelFullScreen) { // Firefox
+                    } else if (document.mozCancelFullScreen) {
                         document.mozCancelFullScreen();
-                    } else if (document.webkitExitFullscreen) { // Chrome, Safari
+                    } else if (document.webkitExitFullscreen) {
                         document.webkitExitFullscreen();
-                    } else if (document.msExitFullscreen) { // IE/Edge
+                    } else if (document.msExitFullscreen) {
                         document.msExitFullscreen();
                     }
                     this.fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
@@ -1390,7 +1203,6 @@
 
                 // 调整游戏参数以适应新的画布高度
                 if (this.player) {
-                    // 调整玩家位置
                     if (this.player.y > this.canvas.height * 0.8) {
                         this.player.y = this.canvas.height * 0.5;
                     }
@@ -1447,7 +1259,6 @@
                     armAngleRight: 0,
                     armPhaseLeft: 0,
                     armPhaseRight: Math.PI,
-                    // 道具效果重置
                     isInvincible: false,
                     invincibleTimer: 0,
                     isSmall: false,
@@ -1455,13 +1266,11 @@
                     sizeTimer: 0,
                     allNormalPlatforms: false,
                     allNormalTimer: 0,
-                    // 新道具效果重置
                     isGravityChanged: false,
                     gravityChangedTimer: 0,
                     isPlatformSpeedChanged: false,
                     platformSpeedChangedTimer: 0,
                     isTeleporting: false,
-                    // 恢复原始重力
                     gravity: this.player.originalGravity
                 };
 
@@ -1510,26 +1319,24 @@
                 let movePosition = 0;
 
                 if (type.startsWith('moving-')) {
-                    moveSpeed = (Math.random() * 1.5) + 1; // 移动速度
-                    moveRange = Math.random() * 100 + 80; // 移动范围
-                    moveDirection = Math.random() > 0.5 ? 1 : -1; // 初始移动方向
+                    moveSpeed = (Math.random() * 1.5) + 1;
+                    moveRange = Math.random() * 100 + 80;
+                    moveDirection = Math.random() > 0.5 ? 1 : -1;
                 }
 
                 this.platforms.push({
                     id: Date.now() + Math.random(),
                     x, y, width, height: 14,
-                    type: type.replace('moving-', ''), // 存储基础类型
-                    originalType: type, // 存储原始类型（包含moving-前缀）
+                    type: type.replace('moving-', ''),
+                    originalType: type,
                     flipped: false,
                     flipTimer: 0,
                     conveyorSpeed: type.includes('conveyor') ? (type === 'conveyor-left' ? 3 : -3) : 0,
                     effectTimer: 0,
-                    // 移动平台属性
                     moveSpeed,
                     moveRange,
                     moveDirection,
                     movePosition,
-                    // 平台原始速度（用于减速效果）
                     originalMoveSpeed: moveSpeed
                 });
             }
@@ -1554,9 +1361,7 @@
                     flipTimer: 0,
                     conveyorSpeed: 0,
                     effectTimer: 0,
-                    // 标记为救命平台，显示特殊效果
                     isLifeSaver: true,
-                    // 特效计时器
                     glowTimer: 60
                 };
 
@@ -1651,48 +1456,60 @@
                 if (this.player.y > this.canvas.height) {
                     if (this.lifeSaverAvailable) {
                         this.useLifeSaverAtBottom();
-                        return true; // 已使用道具
+                        return true;
                     }
                 }
                 // 玩家超出顶部
                 else if (this.player.y + this.player.velocityY < 0) {
                     if (this.lifeSaverAvailable) {
                         this.useLifeSaverAtTop();
-                        return true; // 已使用道具
+                        return true;
                     }
                 }
 
-                return false; // 未使用道具
+                return false;
             }
 
             // 在底部使用救命道具
             useLifeSaverAtBottom() {
+                // 记录起点位置用于特效
+                const startX = this.player.x + this.player.width / 2;
+                const startY = this.player.y + this.player.height / 2;
+
                 // 创建救命平台
                 const platform = this.createLifeSaverPlatform();
 
-                // 将玩家放置在平台上
-                this.player.y = platform.y - this.player.height - 50;
+                // 传送终点位置
+                const endX = platform.x + platform.width / 2 - this.player.width / 2;
+                const endY = platform.y - this.player.height - 50;
+
+                // 标记为传送中
+                this.player.isTeleporting = true;
+                this.player.velocityX = 0;
                 this.player.velocityY = 0;
-                this.player.onGround = true;
-                this.player.standingPlatform = platform;
 
-                // 播放特效和音效
-                this.soundManager.playLifeSaverActivateSound();
-                this.effectManager.addParticles(20,
-                    platform.x + platform.width / 2, platform.y, {
-                    speedX: (Math.random() - 0.5) * 6,
-                    speedY: (Math.random() - 0.5) * 6,
-                    color: '#06B6D4',
-                    life: 50,
-                    gravity: 0.1,
-                    explosive: true
-                });
+                // 播放传送音效
+                this.soundManager.playTeleportSound();
 
-                // 消耗救命道具
-                this.lifeSaverAvailable = false;
+                // 显示传送特效
+                this.effectManager.addTeleportEffect(startX, startY, endX + this.player.width / 2, endY + this.player.height / 2);
 
-                // 显示提示
-                this.showPowerUpMessage("救命平台已激活!");
+                // 短暂延迟后执行传送
+                setTimeout(() => {
+                    // 传送玩家
+                    this.player.x = endX;
+                    this.player.y = endY;
+                    this.player.velocityY = 0;
+                    this.player.onGround = true;
+                    this.player.standingPlatform = platform;
+                    this.player.isTeleporting = false;
+
+                    // 消耗救命道具
+                    this.lifeSaverAvailable = false;
+
+                    // 显示提示
+                    this.showPowerUpMessage("已传送至安全位置!");
+                }, 300);
             }
 
             // 在顶部使用救命道具（传送）
@@ -1733,7 +1550,7 @@
                     this.lifeSaverAvailable = false;
 
                     // 显示提示
-                    this.showPowerUpMessage("已传送至底部!");
+                    this.showPowerUpMessage("已传送至安全位置!");
                 }, 300);
             }
 
@@ -1936,7 +1753,7 @@
                         // 恢复原始大小时调整位置，保持在平台上
                         if (this.player.isBig) {
                             const heightDecrease = this.player.originalHeight * 0.5;
-                            this.player.y += heightDecrease * 0.7; // 恢复时向下调整
+                            this.player.y += heightDecrease * 0.7;
                         }
 
                         // 恢复原始大小
@@ -1996,14 +1813,13 @@
                     // 移动速度影响摆动速度和幅度
                     const speedFactor = Math.abs(this.player.velocityX) / 3;
                     const swingSpeed = this.player.armSwingSpeed * speedFactor;
-                    const swingAmount = 0.7 * speedFactor; // 摆动幅度随速度增加
+                    const swingAmount = 0.7 * speedFactor;
 
                     // 更新相位，使摆动更连贯
                     this.player.armPhaseLeft += swingSpeed * this.player.direction;
                     this.player.armPhaseRight += swingSpeed * this.player.direction;
 
                     // 更复杂的摆动曲线，结合正弦和余弦函数使动作更自然
-                    // 加入二次谐波使摆动更接近真实手臂运动
                     this.player.armAngleLeft =
                         Math.sin(this.player.armPhaseLeft) * swingAmount * 0.8 +
                         Math.sin(this.player.armPhaseLeft * 2) * swingAmount * 0.2;
@@ -2014,25 +1830,25 @@
                 }
                 // 跳跃时手臂向上伸展
                 else if (!this.player.onGround) {
-                    const jumpArmAngle = 0.8; // 跳跃时手臂角度
+                    const jumpArmAngle = 0.8;
                     this.player.armAngleLeft = jumpArmAngle;
                     this.player.armAngleRight = jumpArmAngle;
                 }
                 // 跳板上时手臂向前伸展
                 else if (this.player.isBouncing) {
-                    const bounceArmAngle = -0.3; // 弹跳时手臂角度
+                    const bounceArmAngle = -0.3;
                     this.player.armAngleLeft = bounceArmAngle;
                     this.player.armAngleRight = bounceArmAngle;
                 }
                 // 受伤时手臂向后
                 else if (this.player.flashTimer > 0) {
-                    const hurtArmAngle = -0.6; // 受伤时手臂角度
+                    const hurtArmAngle = -0.6;
                     this.player.armAngleLeft = hurtArmAngle;
                     this.player.armAngleRight = hurtArmAngle;
                 }
                 // 站立时手臂轻微摆动
                 else {
-                    const idleSwing = 0.1; // 静止时轻微摆动
+                    const idleSwing = 0.1;
                     this.player.armAngleLeft = Math.sin(Date.now() * 0.003) * idleSwing;
                     this.player.armAngleRight = Math.sin(Date.now() * 0.003 + Math.PI) * idleSwing;
                 }
@@ -2153,7 +1969,7 @@
                         if (platform.flipTimer > 120) {
                             this.platforms.splice(i, 1);
                             this.score++;
-                            this.checkPowerUpSpawn(); // 检查是否生成道具
+                            this.checkPowerUpSpawn();
                             continue;
                         }
                     }
@@ -2162,7 +1978,7 @@
                     if (platform.y + platform.height < 0 && !(platform.type === 'flip' && platform.flipped)) {
                         this.platforms.splice(i, 1);
                         this.score++;
-                        this.checkPowerUpSpawn(); // 检查是否生成道具
+                        this.checkPowerUpSpawn();
 
                         // 速度递增
                         if (this.score % this.speedIncreaseInterval === 0) {
@@ -2186,6 +2002,7 @@
                 // 检测道具与玩家的碰撞
                 this.checkPowerUpCollisions();
             }
+
             // 检查是否需要生成道具
             checkPowerUpSpawn() {
                 if (this.gameMode === 'new' && (this.score == 2 || this.score >= this.lastPowerUpScore + this.powerUpInterval)) {
@@ -2250,8 +2067,9 @@
                 if (!this.player || !this.isRunning || this.gameOver) {
                     return;
                 }
-                switch (type) {
-                    case 'fullHealth':
+
+                const powerUpEffects = {
+                    'fullHealth': () => {
                         this.player.health = this.player.maxHealth;
                         this.showPowerUpMessage("生命值全满!");
                         this.effectManager.addParticles(15,
@@ -2262,14 +2080,13 @@
                             life: 40,
                             gravity: 0.1
                         });
-                        break;
-
-                    case 'smallPlayer':
+                    },
+                    'smallPlayer': () => {
                         this.player.width = this.player.originalWidth * 0.5;
                         this.player.height = this.player.originalHeight * 0.5;
                         this.player.isSmall = true;
                         this.player.isBig = false;
-                        this.player.sizeTimer = 20 * 60; // 20秒
+                        this.player.sizeTimer = 20 * 60;
                         this.showPowerUpMessage("体型变小 (20秒) - 免疫钉板，重力减小，翻转平台不会翻转");
                         this.effectManager.addParticles(10,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
@@ -2279,18 +2096,16 @@
                             life: 30,
                             gravity: 0
                         });
-                        break;
-
-                    case 'bigPlayer':
-                        // 变大时向上调整位置，防止超出平台
+                    },
+                    'bigPlayer': () => {
                         const heightIncrease = this.player.originalHeight * 0.5;
-                        this.player.y -= heightIncrease * 0.7; // 向上调整70%的高度增量
+                        this.player.y -= heightIncrease * 0.7;
 
                         this.player.width = this.player.originalWidth * 1.5;
                         this.player.height = this.player.originalHeight * 1.5;
                         this.player.isBig = true;
                         this.player.isSmall = false;
-                        this.player.sizeTimer = 20 * 60; // 20秒
+                        this.player.sizeTimer = 20 * 60;
                         this.showPowerUpMessage("体型变大 (20秒) - 免疫传送带，固定移动平台");
                         this.effectManager.addParticles(10,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
@@ -2300,11 +2115,10 @@
                             life: 30,
                             gravity: 0
                         });
-                        break;
-
-                    case 'invincible':
+                    },
+                    'invincible': () => {
                         this.player.isInvincible = true;
-                        this.player.invincibleTimer = 20 * 60; // 20秒
+                        this.player.invincibleTimer = 20 * 60;
                         this.showPowerUpMessage("金身状态 (20秒)");
                         this.effectManager.addParticles(15,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
@@ -2315,12 +2129,10 @@
                             gravity: 0,
                             explosive: true
                         });
-                        break;
-
-                    case 'allNormal':
+                    },
+                    'allNormal': () => {
                         this.player.allNormalPlatforms = true;
-                        this.player.allNormalTimer = 20 * 60; // 20秒
-                        // 暂时将所有平台变为普通平台
+                        this.player.allNormalTimer = 20 * 60;
                         this.platforms.forEach(platform => {
                             platform.type = 'normal';
                         });
@@ -2333,10 +2145,8 @@
                             life: 40,
                             gravity: 0.1
                         });
-                        break;
-
-                    // 救命道具效果
-                    case 'lifeSaver':
+                    },
+                    'lifeSaver': () => {
                         this.lifeSaverAvailable = true;
                         this.showPowerUpMessage("获得救命道具! 濒死时自动回血");
                         this.effectManager.addParticles(20,
@@ -2348,13 +2158,11 @@
                             gravity: 0.1,
                             explosive: true
                         });
-                        break;
-
-                    // 重力改变道具
-                    case 'gravityChange':
+                    },
+                    'gravityChange': () => {
                         this.player.isGravityChanged = true;
-                        this.player.gravityChangedTimer = 15 * 60; // 15秒
-                        this.player.gravity = this.player.originalGravity * 0.35; // 重力0.35
+                        this.player.gravityChangedTimer = 15 * 60;
+                        this.player.gravity = this.player.originalGravity * 0.35;
                         this.showPowerUpMessage("重力减小 (15秒)");
                         this.effectManager.addParticles(15,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
@@ -2362,16 +2170,13 @@
                             speedY: (Math.random() - 0.5) * 4,
                             color: '#9C27B0',
                             life: 40,
-                            gravity: -0.1, // 负重力使粒子向上飘
+                            gravity: -0.1,
                             explosive: true
                         });
-                        break;
-
-                    // 平台减速道具
-                    case 'platformSlow':
+                    },
+                    'platformSlow': () => {
                         this.player.isPlatformSpeedChanged = true;
-                        this.player.platformSpeedChangedTimer = 15 * 60; // 15秒
-                        // 所有移动平台速度减慢30%
+                        this.player.platformSpeedChangedTimer = 15 * 60;
                         this.platforms.forEach(platform => {
                             if (platform.originalMoveSpeed) {
                                 platform.moveSpeed = platform.originalMoveSpeed * 0.7;
@@ -2386,7 +2191,11 @@
                             life: 40,
                             gravity: 0.1
                         });
-                        break;
+                    }
+                };
+
+                if (powerUpEffects[type]) {
+                    powerUpEffects[type]();
                 }
             }
 
@@ -2607,49 +2416,43 @@
             drawArms() {
                 const armLength = this.player.height * 0.6;
                 const armWidth = 6;
-                const forearmLength = armLength * 0.6; // 前臂长度
-                const upperArmLength = armLength * 0.4; // 上臂长度
+                const forearmLength = armLength * 0.6;
+                const upperArmLength = armLength * 0.4;
 
-                // 左臂 - 分上臂和前臂，增加肘部细节
+                // 左臂
                 this.ctx.save();
-                // 上臂
                 this.ctx.translate(this.player.width * 0.2, this.player.height * 0.2);
-                const upperArmAngleLeft = this.player.armAngleLeft * 0.7; // 上臂角度
+                const upperArmAngleLeft = this.player.armAngleLeft * 0.7;
                 this.ctx.rotate(upperArmAngleLeft);
                 this.ctx.fillStyle = '#6F2937';
                 this.ctx.fillRect(-armWidth / 2, 0, armWidth, upperArmLength);
 
-                // 前臂（相对于上臂末端）
                 this.ctx.translate(0, upperArmLength);
-                const forearmAngleLeft = this.player.armAngleLeft * 1.3; // 前臂角度，与上臂形成角度
+                const forearmAngleLeft = this.player.armAngleLeft * 1.3;
                 this.ctx.rotate(forearmAngleLeft);
                 this.ctx.fillStyle = '#6F2937';
                 this.ctx.fillRect(-armWidth / 2, 0, armWidth, forearmLength);
 
-                // 左手
                 this.ctx.fillStyle = '#F59E0B';
                 this.ctx.beginPath();
                 this.ctx.arc(0, forearmLength, 5, 0, Math.PI * 2);
                 this.ctx.fill();
                 this.ctx.restore();
 
-                // 右臂 - 分上臂和前臂，增加肘部细节
+                // 右臂
                 this.ctx.save();
-                // 上臂
                 this.ctx.translate(this.player.width * 0.8, this.player.height * 0.2);
-                const upperArmAngleRight = this.player.armAngleRight * 0.7; // 上臂角度
+                const upperArmAngleRight = this.player.armAngleRight * 0.7;
                 this.ctx.rotate(upperArmAngleRight);
                 this.ctx.fillStyle = '#6F2937';
                 this.ctx.fillRect(-armWidth / 2, 0, armWidth, upperArmLength);
 
-                // 前臂（相对于上臂末端）
                 this.ctx.translate(0, upperArmLength);
-                const forearmAngleRight = this.player.armAngleRight * 1.3; // 前臂角度，与上臂形成角度
+                const forearmAngleRight = this.player.armAngleRight * 1.3;
                 this.ctx.rotate(forearmAngleRight);
                 this.ctx.fillStyle = '#6F2937';
                 this.ctx.fillRect(-armWidth / 2, 0, armWidth, forearmLength);
 
-                // 右手
                 this.ctx.fillStyle = '#F59E0B';
                 this.ctx.beginPath();
                 this.ctx.arc(0, forearmLength, 5, 0, Math.PI * 2);
@@ -2743,7 +2546,6 @@
 
                 // 玩家身体
                 const flashColor = this.effectManager.getFlashColor('player');
-                // 金身状态下的颜色变化
                 const bodyColor = this.player.isInvincible ? '#F59E0B' : (flashColor || '#3B82F6');
                 this.ctx.fillStyle = bodyColor;
                 this.ctx.fillRect(0, 0, this.player.width, this.player.height);
@@ -2915,7 +2717,6 @@
 
                 for (let x = 10; x < platform.width - 10; x += spacing) {
                     this.ctx.beginPath();
-                    // 绘制箭头主体
                     this.ctx.moveTo(x, platform.height / 2);
                     this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 - arrowSize / 2);
                     this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 + arrowSize / 2);
@@ -2945,7 +2746,6 @@
                     this.ctx.moveTo(x, 0);
                     this.ctx.lineTo(x + spikeWidth / 2, -spikeHeight);
                     this.ctx.lineTo(x + spikeWidth, 0);
-                    // 添加底部线条使钉板更完整
                     this.ctx.lineTo(x, 0);
                     this.ctx.closePath();
                     this.ctx.fill();
@@ -2967,7 +2767,7 @@
                 const heartSize = 12;
                 const heartSpacing = 2;
                 const startX = 10;
-                const startY = 40; // 下移以避免与熔岩区域重叠
+                const startY = 40;
 
                 // 背景半透明矩形
                 const totalWidth = this.player.maxHealth * (heartSize + heartSpacing) - heartSpacing;
@@ -2993,8 +2793,7 @@
                         x + heartSize / 2, y + heartSize / 4
                     );
 
-                    // 填充颜色 - 健康的为红色，失去的为灰色
-                    // 金身状态下生命值图标变色
+                    // 填充颜色
                     const heartColor = this.player.isInvincible ? '#F59E0B' : (i < this.player.health ? '#EF4444' : '#6B7280');
                     this.ctx.fillStyle = heartColor;
                     this.ctx.fill();
@@ -3005,7 +2804,7 @@
 
                 // 右侧区域：分数和救命道具状态
                 const scoreX = this.canvas.width - 80;
-                const scoreY = 60; // 下移以避免与熔岩区域重叠
+                const scoreY = 60;
 
                 // 分数背景
                 this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -3017,7 +2816,7 @@
                 this.ctx.textAlign = 'center';
                 this.ctx.fillText(this.score, scoreX + 30, scoreY);
 
-                // 绘制救命道具待命状态（整合到HUD）
+                // 绘制救命道具待命状态
                 if (this.lifeSaverAvailable) {
                     const lifesaverX = scoreX - 30;
                     const lifesaverY = scoreY - 10;
@@ -3170,12 +2969,142 @@
 
                 requestAnimationFrame((nextTimestamp) => this.gameLoop(nextTimestamp));
             }
+
+            // 显示临时消息
+            showTempMessage(text, duration) {
+                let messageEl = document.getElementById('devModeMessage');
+                if (!messageEl) {
+                    messageEl = document.createElement('div');
+                    messageEl.id = 'devModeMessage';
+                    messageEl.style.position = 'fixed';
+                    messageEl.style.top = '50%';
+                    messageEl.style.left = '50%';
+                    messageEl.style.transform = 'translate(-50%, -50%)';
+                    messageEl.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                    messageEl.style.color = 'white';
+                    messageEl.style.padding = '10px 20px';
+                    messageEl.style.borderRadius = '5px';
+                    messageEl.style.zIndex = '1000';
+                    messageEl.style.fontFamily = '"Press Start 2P", cursive';
+                    messageEl.style.fontSize = '14px';
+                    document.body.appendChild(messageEl);
+                }
+
+                // 显示消息
+                messageEl.textContent = text;
+                messageEl.style.display = 'block';
+
+                // 定时隐藏
+                setTimeout(() => {
+                    messageEl.style.display = 'none';
+                }, duration);
+            }
+
+            // 创建开发者工具栏
+            createDeveloperToolbar() {
+                // 检查是否已存在工具栏
+                if (document.getElementById('developerToolbar')) {
+                    return;
+                }
+
+                // 创建工具栏容器
+                const toolbar = document.createElement('div');
+                toolbar.id = 'developerToolbar';
+                toolbar.style.position = 'fixed';
+                toolbar.style.bottom = '8px';
+                toolbar.style.left = '50%';
+                toolbar.style.transform = 'translateX(-50%)';
+                toolbar.style.display = 'flex';
+                toolbar.style.flexWrap = 'wrap';
+                toolbar.style.justifyContent = 'center';
+                toolbar.style.gap = '10px';
+                toolbar.style.padding = '10px';
+                toolbar.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                toolbar.style.borderRadius = '10px';
+                toolbar.style.zIndex = '1000';
+                toolbar.style.maxWidth = '90%';
+
+                // 添加关闭按钮
+                const closeButton = document.createElement('button');
+                closeButton.textContent = '×';
+                closeButton.style.position = 'absolute';
+                closeButton.style.top = '-10px';
+                closeButton.style.right = '-10px';
+                closeButton.style.width = '25px';
+                closeButton.style.height = '25px';
+                closeButton.style.borderRadius = '50%';
+                closeButton.style.backgroundColor = '#EF4444';
+                closeButton.style.color = 'white';
+                closeButton.style.border = 'none';
+                closeButton.style.cursor = 'pointer';
+                closeButton.style.fontWeight = 'bold';
+                closeButton.addEventListener('click', () => {
+                    this.toggleDeveloperToolbar(false);
+                });
+                toolbar.appendChild(closeButton);
+
+                // 添加道具按钮
+                this.powerUpTypes.forEach(type => {
+                    const button = document.createElement('button');
+                    button.className = 'dev-tool-btn';
+                    button.setAttribute('data-type', type);
+
+                    // 设置按钮样式
+                    button.style.padding = '4px 6px';
+                    button.style.border = 'none';
+                    button.style.borderRadius = '5px';
+                    button.style.cursor = 'pointer';
+                    button.style.fontSize = '8px';
+                    button.style.display = 'flex';
+                    button.style.flexDirection = 'column';
+                    button.style.alignItems = 'center';
+                    button.style.justifyContent = 'center';
+                    button.style.minWidth = '10px';
+
+                    // 设置按钮颜色和图标<span style="font-size:12px">减速</span>
+                    const buttonConfig = {
+                        'fullHealth': { bg: '#10B981', html: '💗' },
+                        'smallPlayer': { bg: '#3B82F6', html: '🐜' },
+                        'bigPlayer': { bg: '#8B5CF6', html: '🐘' },
+                        'invincible': { bg: '#F59E0B', html: '💪' },
+                        'allNormal': { bg: '#EC4899', html: '🟦' },
+                        'lifeSaver': { bg: '#06B6D4', html: '👼' },
+                        'gravityChange': { bg: '#9C27B0', html: '🌙' },
+                        'platformSlow': { bg: '#607D8B', html: '⏱️' }
+                    };
+
+                    const config = buttonConfig[type];
+                    if (config) {
+                        button.style.backgroundColor = config.bg;
+                        button.innerHTML = config.html;
+                    }
+
+                    // 添加点击事件
+                    button.addEventListener('click', () => {
+                        this.applyPowerUpEffect(type);
+                        this.showTempMessage(`已使用: ${button.textContent}`, 1000);
+                    });
+
+                    toolbar.appendChild(button);
+                });
+
+                // 添加到页面
+                document.body.appendChild(toolbar);
+            }
+
+            // 显示/隐藏开发者工具栏
+            toggleDeveloperToolbar(show) {
+                const toolbar = document.getElementById('developerToolbar');
+                if (toolbar) {
+                    toolbar.style.display = show ? 'flex' : 'none';
+                }
+            }
         }
 
         // 页面加载完成后初始化游戏
         window.addEventListener('load', () => new Game());
 
-        // 创建熔岩气泡效果 - 修改版
+        // 创建熔岩气泡效果
         function createLavaBubbles() {
             const gameContainer = document.querySelector('.gameCanvas');
             const createBubble = () => {
@@ -3205,29 +3134,6 @@
             setInterval(createBubble, 200);
         }
 
-        // 页面加载后启动熔岩效果
-        window.addEventListener('load', () => {
-            // 创建波浪Canvas并添加到熔岩区域
-            const lavaTop = document.getElementById('lavaTop');
-            const waveCanvas = document.createElement('canvas');
-            waveCanvas.id = 'lavaWaveCanvas';
-            waveCanvas.className = 'lava-top';
-            waveCanvas.style.position = 'absolute';
-            waveCanvas.style.top = '0';
-            waveCanvas.style.left = '0';
-
-            // 替换原有的lavaTop内容
-            lavaTop.innerHTML = '';
-            lavaTop.appendChild(waveCanvas);
-
-            // 初始化波浪动画
-            const lavaWave = new LavaWave('lavaWaveCanvas');
-            lavaWave.animate();
-
-            // 启动气泡效果
-            createLavaBubbles();
-        });
-
         // 波浪动画类
         class LavaWave {
             constructor(canvasId) {
@@ -3245,9 +3151,9 @@
 
                 // 熔岩颜色
                 this.colors = [
-                    '#ff3300', // 红色
-                    '#ff5500', // 橙红色
-                    '#ff7700'  // 橙色
+                    '#ff3300',
+                    '#ff5500',
+                    '#ff7700'
                 ];
 
                 this.resize();
@@ -3257,7 +3163,7 @@
             resize() {
                 const container = this.canvas.parentElement;
                 this.canvas.width = container.clientWidth;
-                this.canvas.height = 30; // 熔岩区域高度
+                this.canvas.height = 30;
 
                 this.width = this.canvas.width;
                 this.height = this.canvas.height;
@@ -3319,6 +3225,28 @@
             }
         }
 
+        // 页面加载后启动熔岩效果
+        window.addEventListener('load', () => {
+            // 创建波浪Canvas并添加到熔岩区域
+            const lavaTop = document.getElementById('lavaTop');
+            const waveCanvas = document.createElement('canvas');
+            waveCanvas.id = 'lavaWaveCanvas';
+            waveCanvas.className = 'lava-top';
+            waveCanvas.style.position = 'absolute';
+            waveCanvas.style.top = '0';
+            waveCanvas.style.left = '0';
+
+            // 替换原有的lavaTop内容
+            lavaTop.innerHTML = '';
+            lavaTop.appendChild(waveCanvas);
+
+            // 初始化波浪动画
+            const lavaWave = new LavaWave('lavaWaveCanvas');
+            lavaWave.animate();
+
+            // 启动气泡效果
+            createLavaBubbles();
+        });
     </script>
 </body>
 
