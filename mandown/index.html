@@ -1035,7 +1035,20 @@
                     gravityChangedTimer: 0,
                     isPlatformSpeedChanged: false,
                     platformSpeedChangedTimer: 0,
-                    isTeleporting: false
+                    isTeleporting: false,
+
+                    // 新增动画属性
+                    walkCycle: 0,
+                    isJumping: false,
+                    isFalling: false,
+                    landing: false,
+                    expression: 'normal',
+                    bodySquash: 1,
+                    bodyStretch: 1,
+                    shadowSize: 20,
+                    shadowOpacity: 0.3,
+                    legAngleLeft: 0,
+                    legAngleRight: 0
                 };
 
                 // 游戏元素
@@ -1271,7 +1284,20 @@
                     isPlatformSpeedChanged: false,
                     platformSpeedChangedTimer: 0,
                     isTeleporting: false,
-                    gravity: this.player.originalGravity
+                    gravity: this.player.originalGravity,
+
+                    // 重置动画属性
+                    walkCycle: 0,
+                    isJumping: false,
+                    isFalling: false,
+                    landing: false,
+                    expression: 'normal',
+                    bodySquash: 1,
+                    bodyStretch: 1,
+                    shadowSize: 20,
+                    shadowOpacity: 0.3,
+                    legAngleLeft: 0,
+                    legAngleRight: 0
                 };
 
                 this.score = 0;
@@ -1620,6 +1646,9 @@
                     }
                 }
 
+                // 更新动画状态
+                this.updatePlayerAnimation();
+
                 // 更新道具效果
                 this.updatePowerUpEffects(timeFactor);
 
@@ -1733,6 +1762,97 @@
                 }
 
                 this.effectManager.update(this.canvas.width);
+            }
+
+            // 更新玩家动画状态
+            updatePlayerAnimation() {
+                // 行走动画
+                if ((this.keys.left || this.keys.right) && this.player.onGround) {
+                    this.player.walkCycle += 0.2;
+                    if (this.player.walkCycle > Math.PI * 2) this.player.walkCycle = 0;
+
+                    // 腿部摆动
+                    this.player.legAngleLeft = Math.sin(this.player.walkCycle) * 0.5;
+                    this.player.legAngleRight = Math.sin(this.player.walkCycle + Math.PI) * 0.5;
+
+                    // 身体上下轻微移动
+                    this.player.y += Math.sin(this.player.walkCycle * 2) * 0.5;
+                } else {
+                    // 重置腿部角度
+                    this.player.legAngleLeft = 0;
+                    this.player.legAngleRight = 0;
+                }
+
+                // 跳跃和落地动画
+                if (!this.player.onGround && this.player.velocityY < 0) {
+                    // 跳跃状态
+                    this.player.isJumping = true;
+                    this.player.isFalling = false;
+                    this.player.landing = false;
+                    this.player.bodyStretch = 1.1; // 跳跃时身体稍微拉伸
+                    this.player.bodySquash = 0.9;
+                } else if (!this.player.onGround && this.player.velocityY > 0) {
+                    // 下落状态
+                    this.player.isJumping = false;
+                    this.player.isFalling = true;
+                    this.player.landing = false;
+                    this.player.bodyStretch = 0.9; // 下落时身体稍微压缩
+                    this.player.bodySquash = 1.1;
+                } else if (this.player.onGround && (this.player.isJumping || this.player.isFalling)) {
+                    // 落地状态
+                    this.player.isJumping = false;
+                    this.player.isFalling = false;
+                    this.player.landing = true;
+                    this.player.bodyStretch = 0.8; // 落地时身体压缩
+                    this.player.bodySquash = 1.2;
+
+                    // 落地特效
+                    this.effectManager.addParticles(5,
+                        this.player.x + this.player.width / 2,
+                        this.player.y + this.player.height,
+                        {
+                            speedX: (Math.random() - 0.5) * 3,
+                            speedY: -2,
+                            color: '#A0AEC0',
+                            size: Math.random() * 2 + 1,
+                            life: 20,
+                            gravity: 0.2
+                        }
+                    );
+
+                    // 逐渐恢复身体形状
+                    setTimeout(() => {
+                        this.player.bodyStretch = 1;
+                        this.player.bodySquash = 1;
+                        this.player.landing = false;
+                    }, 200);
+                } else {
+                    // 正常状态
+                    this.player.bodyStretch = 1;
+                    this.player.bodySquash = 1;
+                }
+
+                // 更新表情
+                if (this.player.health <= 3) {
+                    this.player.expression = 'hurt';
+                } else if (this.player.isDead) {
+                    this.player.expression = 'dead';
+                } else if (this.player.isInvincible) {
+                    this.player.expression = 'power';
+                } else {
+                    this.player.expression = 'normal';
+                }
+
+                // 更新阴影
+                if (this.player.onGround) {
+                    this.player.shadowSize = 20 + Math.sin(Date.now() * 0.01) * 2;
+                    this.player.shadowOpacity = 0.3;
+                } else {
+                    // 离地越高，阴影越小越淡
+                    const heightFactor = Math.min(1, Math.max(0, 1 - (this.player.y / this.canvas.height) * 2));
+                    this.player.shadowSize = 20 * heightFactor;
+                    this.player.shadowOpacity = 0.3 * heightFactor;
+                }
             }
 
             // 更新道具效果
@@ -2460,9 +2580,115 @@
                 this.ctx.restore();
             }
 
+            // 绘制腿部
+            drawLegs() {
+                const legWidth = 6;
+                const legLength = this.player.height * 0.4;
+
+                // 左腿
+                this.ctx.save();
+                this.ctx.translate(this.player.width * 0.3, this.player.height * 0.8);
+                this.ctx.rotate(this.player.legAngleLeft);
+                this.ctx.fillStyle = '#6F2937';
+                this.ctx.fillRect(-legWidth / 2, 0, legWidth, legLength);
+                this.ctx.restore();
+
+                // 右腿
+                this.ctx.save();
+                this.ctx.translate(this.player.width * 0.7, this.player.height * 0.8);
+                this.ctx.rotate(this.player.legAngleRight);
+                this.ctx.fillStyle = '#6F2937';
+                this.ctx.fillRect(-legWidth / 2, 0, legWidth, legLength);
+                this.ctx.restore();
+            }
+
+            // 绘制面部表情
+            drawFace() {
+                const headRadius = this.player.width / 2;
+
+                // 眼睛
+                this.ctx.fillStyle = 'white';
+                const eyeOffset = this.player.direction * 5;
+                this.ctx.beginPath();
+                this.ctx.arc(this.player.width / 2 + eyeOffset, -headRadius, 3, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // 嘴巴 - 根据表情变化
+                this.ctx.strokeStyle = 'white';
+                this.ctx.lineWidth = 1.5;
+
+                switch (this.player.expression) {
+                    case 'normal':
+                        // 微笑
+                        this.ctx.beginPath();
+                        this.ctx.arc(this.player.width / 2, -headRadius + 3, 4, 0.2, Math.PI - 0.2, false);
+                        this.ctx.stroke();
+                        break;
+                    case 'hurt':
+                        // 痛苦表情
+                        this.ctx.beginPath();
+                        this.ctx.arc(this.player.width / 2, -headRadius + 5, 3, Math.PI * 0.2, Math.PI * 0.8);
+                        this.ctx.stroke();
+
+                        // 添加皱眉线
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(this.player.width / 2 - 5, -headRadius - 2);
+                        this.ctx.lineTo(this.player.width / 2 + 5, -headRadius - 2);
+                        this.ctx.stroke();
+                        break;
+                    case 'dead':
+                        // X眼睛和下垂嘴
+                        this.ctx.strokeStyle = '#EF4444';
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(this.player.width / 2 + eyeOffset - 2, -headRadius - 2);
+                        this.ctx.lineTo(this.player.width / 2 + eyeOffset + 2, -headRadius + 2);
+                        this.ctx.moveTo(this.player.width / 2 + eyeOffset + 2, -headRadius - 2);
+                        this.ctx.lineTo(this.player.width / 2 + eyeOffset - 2, -headRadius + 2);
+                        this.ctx.stroke();
+
+                        this.ctx.beginPath();
+                        this.ctx.arc(this.player.width / 2, -headRadius + 5, 4, Math.PI * 0.8, Math.PI * 1.2, false);
+                        this.ctx.stroke();
+                        break;
+                    case 'power':
+                        // 兴奋表情
+                        this.ctx.beginPath();
+                        this.ctx.arc(this.player.width / 2, -headRadius + 3, 5, 0, Math.PI, false);
+                        this.ctx.stroke();
+
+                        // 添加闪亮眼睛
+                        this.ctx.fillStyle = '#F59E0B';
+                        this.ctx.beginPath();
+                        this.ctx.arc(this.player.width / 2 + eyeOffset, -headRadius, 1.5, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        break;
+                }
+            }
+
+            // 绘制玩家阴影
+            drawShadow() {
+                if (this.player.shadowOpacity > 0) {
+                    this.ctx.save();
+                    this.ctx.fillStyle = `rgba(0, 0, 0, ${this.player.shadowOpacity})`;
+                    this.ctx.beginPath();
+                    this.ctx.ellipse(
+                        this.player.x + this.player.width / 2,
+                        this.player.y + this.player.height + 5,
+                        this.player.shadowSize,
+                        this.player.shadowSize * 0.3,
+                        0, 0, Math.PI * 2
+                    );
+                    this.ctx.fill();
+                    this.ctx.restore();
+                }
+            }
+
             // 绘制玩家
             drawPlayer() {
                 if (this.player.isDead && (this.player.deathEffectPlayed || this.deathTimer >= this.deathDelay)) return;
+
+                // 先绘制阴影
+                this.drawShadow();
 
                 this.ctx.save();
 
@@ -2471,13 +2697,18 @@
                 const hurtFlashVisible = this.player.flashTimer > 0 ?
                     (Math.floor(this.player.flashTimer / 3) % 2 === 0) : true;
 
-                // 应用缩放
-                const scale = this.effectManager.getScale('player');
+                // 应用缩放和形变
                 this.ctx.translate(
                     this.player.x + this.player.width / 2,
                     this.player.y + this.player.height / 2
                 );
-                this.ctx.scale(scale, scale);
+
+                // 应用身体形变（拉伸和压缩）
+                this.ctx.scale(
+                    this.player.bodySquash * this.effectManager.getScale('player'),
+                    this.player.bodyStretch * this.effectManager.getScale('player')
+                );
+
                 this.ctx.translate(
                     -this.player.width / 2,
                     -this.player.height / 2
@@ -2550,6 +2781,9 @@
                 this.ctx.fillStyle = bodyColor;
                 this.ctx.fillRect(0, 0, this.player.width, this.player.height);
 
+                // 绘制腿部
+                this.drawLegs();
+
                 // 玩家头部
                 this.ctx.fillStyle = '#F59E0B';
                 const headRadius = this.player.width / 2;
@@ -2557,23 +2791,8 @@
                 this.ctx.arc(this.player.width / 2, -headRadius, headRadius, 0, Math.PI * 2);
                 this.ctx.fill();
 
-                // 眼睛
-                this.ctx.fillStyle = 'white';
-                const eyeOffset = this.player.direction * 5;
-                this.ctx.beginPath();
-                this.ctx.arc(this.player.width / 2 + eyeOffset, -headRadius, 3, 0, Math.PI * 2);
-                this.ctx.fill();
-
-                // 腿部动画
-                this.ctx.fillStyle = '#6F2937';
-                if (this.player.velocityX !== 0) {
-                    const legPhase = Math.sin(Date.now() * 0.01) * 3;
-                    this.ctx.fillRect(5, this.player.height, 8, 10 + legPhase);
-                    this.ctx.fillRect(this.player.width - 13, this.player.height, 8, 10 - legPhase);
-                } else {
-                    this.ctx.fillRect(5, this.player.height, 8, 10);
-                    this.ctx.fillRect(this.player.width - 13, this.player.height, 8, 10);
-                }
+                // 绘制面部表情
+                this.drawFace();
 
                 this.ctx.restore();
             }
