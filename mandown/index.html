@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>就下100层 - 道具增强版</title>
+    <title>就下100层 - 背景优化版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script>
@@ -80,7 +79,6 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
         }
 
-        /* 新增样式：使游戏区域填满屏幕 */
         .game-container {
             height: calc(100vh - 180px);
             min-height: 500px;
@@ -108,23 +106,53 @@
                 display: none;
             }
         }
+        
+        /* 熔岩顶部区域 */
+        .lava-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 30px;
+            background: linear-gradient(to bottom, #ff3300, #ff5500);
+            z-index: 5;
+            box-shadow: 0 2px 10px rgba(255, 50, 0, 0.6);
+        }
+        
+        /* 熔岩气泡动画 */
+        @keyframes lavaBubble {
+            0% {
+                transform: translateY(0) scale(0.5);
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-20px) scale(1.2);
+                opacity: 0;
+            }
+        }
+        
+        .lava-bubble {
+            position: absolute;
+            background: rgba(255, 150, 50, 0.7);
+            border-radius: 50%;
+            animation: lavaBubble 2s infinite;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
-
-<body
-    class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex flex-col items-center justify-center p-4 text-white overflow-hidden">
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex flex-col items-center justify-center p-4 text-white overflow-hidden">
     <div class="relative w-full max-w-md h-full flex flex-col">
         <!-- 顶部标题和控制区 -->
         <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
-            <h1
-                class="text-[clamp(1.2rem,5vw,1.8rem)] font-[family='Press Start 2P',cursive] text-left text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 tracking-wider">
+            <h1 class="text-[clamp(1.2rem,5vw,1.8rem)] font-[family='Press Start 2P',cursive] text-left text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 tracking-wider">
                 就下100层
             </h1>
 
             <div class="flex items-center gap-2">
-                <button id="fullscreenButton"
-                    class="bg-dark/70 hover:bg-dark/90 text-white p-2 rounded-full transition-all transform hover:scale-110 active:scale-90">
+                <button id="fullscreenButton" class="bg-dark/70 hover:bg-dark/90 text-white p-2 rounded-full transition-all transform hover:scale-110 active:scale-90">
                     <i class="fa fa-expand"></i>
                 </button>
 
@@ -136,17 +164,18 @@
         </div>
 
         <div class="relative bg-dark rounded-lg overflow-hidden game-shadow game-container">
+            <!-- 熔岩顶部 -->
+            <div id="lavaTop" class="lava-top"></div>
+            
             <canvas id="gameCanvas" class="w-full h-full"></canvas>
 
             <!-- 暂停按钮在右下角 -->
-            <button id="pauseButton"
-                class="absolute bottom-4 right-4 z-5 bg-dark/70 hover:bg-dark/90 text-white p-2 rounded-full transition-all transform hover:scale-110 active:scale-90 hidden">
+            <button id="pauseButton" class="absolute bottom-4 right-4 z-5 bg-dark/70 hover:bg-dark/90 text-white p-2 rounded-full transition-all transform hover:scale-110 active:scale-90 hidden">
                 <i class="fa fa-pause"></i>
             </button>
 
             <!-- 道具效果提示 -->
-            <div id="powerUpIndicator"
-                class="hidden absolute top-4 left-1/2 transform -translate-x-1/2 bg-dark/80 px-3 py-2 rounded-full text-sm z-40">
+            <div id="powerUpIndicator" class="hidden absolute top-10 left-1/2 transform -translate-x-1/2 bg-dark/80 px-3 py-2 rounded-full text-sm z-40">
                 <span id="powerUpText"></span>
             </div>
 
@@ -158,25 +187,20 @@
 
                 <!-- 模式选择下拉菜单 -->
                 <div class="relative inline-block mb-6">
-                    <button id="modeButton"
-                        class="bg-dark/70 hover:bg-dark/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all">
+                    <button id="modeButton" class="bg-dark/70 hover:bg-dark/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all">
                         <i class="fa fa-gamepad"></i>
                         <span id="currentModeText">经典模式</span>
                         <i class="fa fa-chevron-down text-xs"></i>
                     </button>
-                    <div id="modeDropdown"
-                        class="hidden absolute right-0 mt-2 w-48 bg-dark/95 rounded-lg dropdown-shadow z-20">
+                    <div id="modeDropdown" class="hidden absolute right-0 mt-2 w-48 bg-dark/95 rounded-lg dropdown-shadow z-20">
                         <div class="py-1">
-                            <a href="#" class="mode-option block px-4 py-2 hover:bg-primary/20 transition-colors"
-                                data-mode="classic">经典模式</a>
-                            <a href="#" class="mode-option block px-4 py-2 hover:bg-primary/20 transition-colors"
-                                data-mode="new">新模式</a>
+                            <a href="#" class="mode-option block px-4 py-2 hover:bg-primary/20 transition-colors" data-mode="classic">经典模式</a>
+                            <a href="#" class="mode-option block px-4 py-2 hover:bg-primary/20 transition-colors" data-mode="new">新模式</a>
                         </div>
                     </div>
                 </div>
 
-                <button id="startButton"
-                    class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">
+                <button id="startButton" class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">
                     开始游戏
                 </button>
 
@@ -214,101 +238,83 @@
 
                 <!-- 道具说明 -->
                 <div class="flex text-left items-center gap-2">
-                    <h2 class="text-sm font-[family='Press Start 2P',cursive]  mt-4 text-primary">新模式道具：
-                    </h2>
+                    <h2 class="text-sm font-[family='Press Start 2P',cursive] mt-4 text-primary">新模式道具：</h2>
                 </div>
                 <div class="mt-2 grid grid-cols-2 gap-2 w-full">
                     <div class="flex items-center gap-1">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🐜
-                            </div>
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🐜</div>
                         </div>
                         <span class="text-sm text-gray-300">变小/免疫钉板，重力减小</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">💗
-                            </div>
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">💗</div>
                         </div>
                         <span class="text-sm text-gray-300">生命全满</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🐘
-                            </div>
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🐘</div>
                         </div>
                         <span class="text-sm text-gray-300">变大/免疫传送带，固定移动平台</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">👼
-                            </div>
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">👼</div>
                         </div>
                         <span class="text-sm text-gray-300">濒死回血</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🟦
-                            </div>
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🟦</div>
                         </div>
                         <span class="text-sm text-gray-300">所有平台变普通平台</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🌙
-                            </div>
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🌙</div>
                         </div>
                         <span class="text-sm text-gray-300">重力减小</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">💪
-                            </div>
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">💪</div>
                         </div>
                         <span class="text-sm text-gray-300">金身状态</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">⏱️
-                            </div>
+                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">⏱️</div>
                         </div>
                         <span class="text-sm text-gray-300">平台减速</span>
                     </div>
-
                 </div>
             </div>
 
-            <div id="pauseMenu"
-                class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10 hidden">
+            <div id="pauseMenu" class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10 hidden">
                 <h2 class="text-2xl font-[family='Press Start 2P',cursive] mb-6 text-warning">游戏暂停</h2>
-                <button id="resumeButton"
-                    class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow mb-4">继续游戏</button>
-                <button id="restartFromPauseButton"
-                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">重新开始</button>
+                <button id="resumeButton" class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow mb-4">继续游戏</button>
+                <button id="restartFromPauseButton" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">重新开始</button>
             </div>
 
-            <div id="gameOverMenu"
-                class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10 hidden">
+            <div id="gameOverMenu" class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10 hidden">
                 <h2 class="text-2xl font-[family='Press Start 2P',cursive] mb-2 text-danger">游戏结束</h2>
                 <p class="text-xl mb-1">你的成绩</p>
                 <p id="finalScore" class="text-3xl font-[family='Press Start 2P',cursive] mb-6 text-primary">0 层</p>
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <button id="restartButton"
-                        class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">再来一次</button>
-                    <button id="backToStartButton"
-                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">返回开始</button>
+                    <button id="restartButton" class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">再来一次</button>
+                    <button id="backToStartButton" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">返回开始</button>
                 </div>
             </div>
         </div>
 
         <div class="mt-4 grid grid-cols-3 gap-4 md:hidden controls-section">
-            <button id="leftBtn"
-                class="bg-gray-700/80 text-white h-16 rounded-full flex items-center justify-center control-shadow active:control-active">
+            <button id="leftBtn" class="bg-gray-700/80 text-white h-16 rounded-full flex items-center justify-center control-shadow active:control-active">
                 <i class="fa fa-arrow-left text-2xl"></i>
             </button>
             <div></div>
-            <button id="rightBtn"
-                class="bg-gray-700/80 text-white h-16 rounded-full flex items-center justify-center control-shadow active:control-active">
+            <button id="rightBtn" class="bg-gray-700/80 text-white h-16 rounded-full flex items-center justify-center control-shadow active:control-active">
                 <i class="fa fa-arrow-right text-2xl"></i>
             </button>
         </div>
@@ -377,6 +383,44 @@
                     ctx.fill();
                 }
 
+                ctx.restore();
+            }
+        }
+
+        // 熔岩气泡类
+        class LavaBubble {
+            constructor(x, y, size, speed) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.speed = speed;
+                this.life = 100;
+                this.maxLife = 100;
+            }
+            
+            update() {
+                this.y -= this.speed;
+                this.life--;
+                return this.life > 0 && this.y > 0;
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                const alpha = this.life / this.maxLife;
+                ctx.globalAlpha = alpha;
+                
+                // 气泡内部
+                ctx.fillStyle = `rgba(255, ${100 + Math.random() * 100}, 0, ${0.5 + alpha * 0.5})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 气泡高光
+                ctx.fillStyle = `rgba(255, 255, 200, ${0.3 + alpha * 0.2})`;
+                ctx.beginPath();
+                ctx.arc(this.x - this.size * 0.3, this.y - this.size * 0.3, this.size * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                
                 ctx.restore();
             }
         }
@@ -530,12 +574,28 @@
             constructor() {
                 this.particles = [];
                 this.effects = [];
+                this.lavaBubbles = [];
+                this.lastBubbleTime = 0;
             }
 
             // 添加粒子
             addParticles(count, x, y, options = {}) {
                 for (let i = 0; i < count; i++) {
                     this.particles.push(new Particle(x, y, options));
+                }
+            }
+            
+            // 添加熔岩气泡
+            addLavaBubble(canvasWidth) {
+                const now = Date.now();
+                if (now - this.lastBubbleTime > 200) { // 每200ms添加一个气泡
+                    this.lavaBubbles.push(new LavaBubble(
+                        Math.random() * canvasWidth,
+                        30, // 从熔岩区域底部出现
+                        Math.random() * 3 + 2,
+                        Math.random() * 0.5 + 0.3
+                    ));
+                    this.lastBubbleTime = now;
                 }
             }
 
@@ -621,8 +681,12 @@
             }
 
             // 更新所有特效
-            update() {
+            update(canvasWidth) {
                 this.particles = this.particles.filter(particle => particle.update());
+                this.lavaBubbles = this.lavaBubbles.filter(bubble => bubble.update());
+                
+                // 添加新的熔岩气泡
+                this.addLavaBubble(canvasWidth);
 
                 this.effects = this.effects.filter(effect => {
                     effect.remaining--;
@@ -642,6 +706,7 @@
             // 绘制所有特效
             draw(ctx) {
                 this.particles.forEach(particle => particle.draw(ctx));
+                this.lavaBubbles.forEach(bubble => bubble.draw(ctx));
             }
 
             // 获取目标的闪烁颜色
@@ -881,6 +946,9 @@
                 this.speedIncreaseInterval = 50;
                 this.platformSpawnRate = 50;
                 this.spawnCounter = 0;
+                
+                // 背景偏移量
+                this.backgroundOffset = 0;
 
                 // 道具相关设置
                 this.lastPowerUpScore = 0;
@@ -940,16 +1008,7 @@
                     isPlatformSpeedChanged: false,
                     platformSpeedChangedTimer: 0,
                     // 传送状态
-                    isTeleporting: false,
-                    // 新增动画状态
-                    animationState: 'idle', // idle, walking, jumping, falling
-                    animationFrame: 0,
-                    expression: 'normal', // normal, happy, hurt
-                    expressionTimer: 0,
-                    // 身体倾斜
-                    bodyTilt: 0,
-                    // 腿部动画
-                    legOffset: 0
+                    isTeleporting: false
                 };
 
                 // 游戏元素
@@ -1125,6 +1184,9 @@
                 this.platforms = [];
                 this.powerUps = [];
                 this.createInitialPlatforms();
+                
+                // 重置背景偏移
+                this.backgroundOffset = 0;
 
                 // 重置道具生成记录
                 this.lastPowerUpScore = 0;
@@ -1174,14 +1236,7 @@
                     platformSpeedChangedTimer: 0,
                     isTeleporting: false,
                     // 恢复原始重力
-                    gravity: this.player.originalGravity,
-                    // 动画状态重置
-                    animationState: 'idle',
-                    animationFrame: 0,
-                    expression: 'normal',
-                    expressionTimer: 0,
-                    bodyTilt: 0,
-                    legOffset: 0
+                    gravity: this.player.originalGravity
                 };
 
                 this.score = 0;
@@ -1522,9 +1577,6 @@
                     }
                 }
 
-                // 更新动画状态
-                this.updateAnimationState(timeFactor);
-
                 // 更新道具效果
                 this.updatePowerUpEffects(timeFactor);
 
@@ -1637,50 +1689,7 @@
                     this.player.previousPlatform = previousPlatform;
                 }
 
-                this.effectManager.update();
-            }
-
-            // 更新动画状态
-            updateAnimationState(timeFactor) {
-                // 更新动画帧
-                this.player.animationFrame += timeFactor;
-
-                // 更新表情计时器
-                if (this.player.expressionTimer > 0) {
-                    this.player.expressionTimer -= timeFactor;
-                    if (this.player.expressionTimer <= 0) {
-                        this.player.expression = 'normal';
-                    }
-                }
-
-                // 确定动画状态
-                if (!this.player.onGround) {
-                    if (this.player.velocityY < 0) {
-                        this.player.animationState = 'jumping';
-                    } else {
-                        this.player.animationState = 'falling';
-                    }
-                } else if (Math.abs(this.player.velocityX) > 0.1) {
-                    this.player.animationState = 'walking';
-                } else {
-                    this.player.animationState = 'idle';
-                }
-
-                // 更新腿部动画
-                if (this.player.animationState === 'walking') {
-                    this.player.legOffset = Math.sin(this.player.animationFrame * 0.2) * 5;
-                } else {
-                    this.player.legOffset = 0;
-                }
-
-                // 更新身体倾斜
-                if (this.player.animationState === 'walking') {
-                    this.player.bodyTilt = this.player.direction * 0.1;
-                } else if (this.player.animationState === 'jumping') {
-                    this.player.bodyTilt = this.player.direction * 0.05;
-                } else {
-                    this.player.bodyTilt *= 0.9; // 逐渐恢复直立
-                }
+                this.effectManager.update(this.canvas.width);
             }
 
             // 更新道具效果
@@ -1860,6 +1869,9 @@
                 // 计算速度倍数（考虑平台减速道具效果）
                 const speedMultiplier = this.player.isPlatformSpeedChanged ? 0.7 : 1;
                 const timeFactor = this.deltaTime / (1000 / 60);
+                
+                // 更新背景偏移
+                this.backgroundOffset += this.speed * timeFactor * 0.2;
 
                 // 移动并更新平台
                 for (let i = this.platforms.length - 1; i >= 0; i--) {
@@ -2137,7 +2149,7 @@
                         });
                         this.showPowerUpMessage("平台速度减慢30% (15秒)");
                         this.effectManager.addParticles(15,
-                            this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
+                            this.player.x + this.player.width / 2, this.player.y + this.height / 2, {
                             speedX: (Math.random() - 0.5) * 3,
                             speedY: (Math.random() - 0.5) * 3,
                             color: '#607D8B',
@@ -2298,8 +2310,6 @@
                             });
 
                             this.player.flashTimer = 20;
-                            this.player.expression = 'hurt';
-                            this.player.expressionTimer = 30;
 
                             if (this.player.health <= 0) {
                                 this.player.isDead = true;
@@ -2359,12 +2369,6 @@
                             color: '#10B981',
                             life: 30
                         });
-                        
-                        // 回血时显示高兴表情
-                        if (this.player.health === this.player.maxHealth) {
-                            this.player.expression = 'happy';
-                            this.player.expressionTimer = 45;
-                        }
                     }
                 }
             }
@@ -2441,10 +2445,6 @@
                     this.player.y + this.player.height / 2
                 );
                 this.ctx.scale(scale, scale);
-                
-                // 应用身体倾斜
-                this.ctx.rotate(this.player.bodyTilt);
-                
                 this.ctx.translate(
                     -this.player.width / 2,
                     -this.player.height / 2
@@ -2516,97 +2516,31 @@
                 // 金身状态下的颜色变化
                 const bodyColor = this.player.isInvincible ? '#F59E0B' : (flashColor || '#3B82F6');
                 this.ctx.fillStyle = bodyColor;
-                
-                // 根据动画状态调整身体形状
-                let bodyHeight = this.player.height;
-                let bodyY = 0;
-                
-                if (this.player.animationState === 'jumping') {
-                    // 跳跃时身体稍微压缩
-                    bodyHeight = this.player.height * 0.9;
-                    bodyY = this.player.height * 0.05;
-                } else if (this.player.animationState === 'falling') {
-                    // 下落时身体稍微拉伸
-                    bodyHeight = this.player.height * 1.1;
-                    bodyY = -this.player.height * 0.05;
-                }
-                
-                this.ctx.fillRect(0, bodyY, this.player.width, bodyHeight);
+                this.ctx.fillRect(0, 0, this.player.width, this.player.height);
 
                 // 玩家头部
                 this.ctx.fillStyle = '#F59E0B';
                 const headRadius = this.player.width / 2;
                 this.ctx.beginPath();
-                this.ctx.arc(this.player.width / 2, -headRadius + bodyY, headRadius, 0, Math.PI * 2);
+                this.ctx.arc(this.player.width / 2, -headRadius, headRadius, 0, Math.PI * 2);
                 this.ctx.fill();
 
                 // 眼睛
                 this.ctx.fillStyle = 'white';
                 const eyeOffset = this.player.direction * 5;
                 this.ctx.beginPath();
-                this.ctx.arc(this.player.width / 2 + eyeOffset, -headRadius + bodyY, 3, 0, Math.PI * 2);
+                this.ctx.arc(this.player.width / 2 + eyeOffset, -headRadius, 3, 0, Math.PI * 2);
                 this.ctx.fill();
-
-                // 嘴巴表情
-                this.ctx.strokeStyle = 'white';
-                this.ctx.lineWidth = 1.5;
-                this.ctx.beginPath();
-                
-                if (this.player.expression === 'happy') {
-                    // 笑脸
-                    this.ctx.arc(this.player.width / 2, -headRadius + bodyY + 5, 5, 0.2 * Math.PI, 0.8 * Math.PI);
-                } else if (this.player.expression === 'hurt') {
-                    // 痛苦表情
-                    this.ctx.moveTo(this.player.width / 2 - 4, -headRadius + bodyY + 3);
-                    this.ctx.lineTo(this.player.width / 2 + 4, -headRadius + bodyY + 7);
-                    this.ctx.moveTo(this.player.width / 2 + 4, -headRadius + bodyY + 3);
-                    this.ctx.lineTo(this.player.width / 2 - 4, -headRadius + bodyY + 7);
-                } else {
-                    // 普通表情
-                    this.ctx.moveTo(this.player.width / 2 - 4, -headRadius + bodyY + 5);
-                    this.ctx.lineTo(this.player.width / 2 + 4, -headRadius + bodyY + 5);
-                }
-                this.ctx.stroke();
 
                 // 腿部动画
                 this.ctx.fillStyle = '#6F2937';
-                const legWidth = 8;
-                const legHeight = 10;
-                
-                if (this.player.animationState === 'walking') {
-                    // 行走动画
-                    this.ctx.fillRect(5, this.player.height, legWidth, legHeight + this.player.legOffset);
-                    this.ctx.fillRect(this.player.width - 13, this.player.height, legWidth, legHeight - this.player.legOffset);
-                } else if (this.player.animationState === 'jumping') {
-                    // 跳跃时腿部收缩
-                    this.ctx.fillRect(5, this.player.height, legWidth, legHeight * 0.7);
-                    this.ctx.fillRect(this.player.width - 13, this.player.height, legWidth, legHeight * 0.7);
-                } else if (this.player.animationState === 'falling') {
-                    // 下落时腿部伸展
-                    this.ctx.fillRect(5, this.player.height, legWidth, legHeight * 1.2);
-                    this.ctx.fillRect(this.player.width - 13, this.player.height, legWidth, legHeight * 1.2);
+                if (this.player.velocityX !== 0) {
+                    const legPhase = Math.sin(Date.now() * 0.01) * 3;
+                    this.ctx.fillRect(5, this.player.height, 8, 10 + legPhase);
+                    this.ctx.fillRect(this.player.width - 13, this.player.height, 8, 10 - legPhase);
                 } else {
-                    // 站立状态
-                    this.ctx.fillRect(5, this.player.height, legWidth, legHeight);
-                    this.ctx.fillRect(this.player.width - 13, this.player.height, legWidth, legHeight);
-                }
-
-                // 行走特效 - 脚印
-                if (this.player.animationState === 'walking' && this.player.onGround && 
-                    Math.floor(this.player.animationFrame) % 10 === 0) {
-                    const footX = this.player.direction > 0 ? 
-                        this.player.width - 9 : 5;
-                    
-                    this.effectManager.addParticles(1, 
-                        this.player.x + footX, this.player.y + this.player.height + 5, {
-                        speedX: 0,
-                        speedY: 0,
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        size: 3,
-                        life: 20,
-                        gravity: 0,
-                        fade: true
-                    });
+                    this.ctx.fillRect(5, this.player.height, 8, 10);
+                    this.ctx.fillRect(this.player.width - 13, this.player.height, 8, 10);
                 }
 
                 this.ctx.restore();
@@ -2644,24 +2578,12 @@
 
                     // 绘制平台主体
                     if (platform.type === 'spring') {
-                        // 跳板绘制 - 修改为三层结构
+                        // 跳板绘制
                         const layerHeight = platform.height / 3;
-                        
-                        // 上层绿色
                         this.ctx.fillStyle = flashColor || '#10B981';
                         this.ctx.fillRect(0, 0, platform.width, layerHeight);
-                        
-                        // 中层灰白色，由多个小矩形组成，中间有间隔
                         this.ctx.fillStyle = flashColor || '#F3F4F6';
-                        const segmentWidth = platform.width / 6; // 分为6段，每段之间有间隔
-                        const gap = 2; // 间隔
-                        for (let i = 0; i < 6; i++) {
-                            const x = i * segmentWidth + gap/2;
-                            const width = segmentWidth - gap;
-                            this.ctx.fillRect(x, layerHeight, width, layerHeight);
-                        }
-                        
-                        // 下层绿色
+                        this.ctx.fillRect(0, layerHeight, platform.width, layerHeight);
                         this.ctx.fillStyle = flashColor || '#10B981';
                         this.ctx.fillRect(0, layerHeight * 2, platform.width, layerHeight);
 
@@ -2793,6 +2715,8 @@
                     this.ctx.moveTo(x, 0);
                     this.ctx.lineTo(x + spikeWidth / 2, -spikeHeight);
                     this.ctx.lineTo(x + spikeWidth, 0);
+                    // 添加底部线条使钉板更完整
+                    this.ctx.lineTo(x, 0);
                     this.ctx.closePath();
                     this.ctx.fill();
                 }
@@ -2813,7 +2737,7 @@
                 const heartSize = 12;
                 const heartSpacing = 2;
                 const startX = 10;
-                const startY = 10;
+                const startY = 40; // 下移以避免与熔岩区域重叠
 
                 // 背景半透明矩形
                 const totalWidth = this.player.maxHealth * (heartSize + heartSpacing) - heartSpacing;
@@ -2851,7 +2775,7 @@
 
                 // 右侧区域：分数和救命道具状态
                 const scoreX = this.canvas.width - 80;
-                const scoreY = 30;
+                const scoreY = 60; // 下移以避免与熔岩区域重叠
 
                 // 分数背景
                 this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -2927,7 +2851,7 @@
                 if (this.player.isPlatformSpeedChanged) {
                     const timeLeft = Math.ceil(this.player.platformSpeedChangedTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
-                        timeLeft, 15, '#607D8B', '平台减速: ' + timeLeft + 's');
+                        timeTimeLeft, 15, '#607D8B', '平台减速: ' + timeLeft + 's');
                     currentY += spacing;
                 }
             }
@@ -2957,8 +2881,8 @@
 
                 const gridSize = 30;
 
-                // 水平线
-                for (let y = 0; y < this.canvas.height; y += gridSize) {
+                // 水平线 - 使用背景偏移实现缓慢上移效果
+                for (let y = -(this.backgroundOffset % gridSize); y < this.canvas.height; y += gridSize) {
                     this.ctx.beginPath();
                     this.ctx.moveTo(0, y);
                     this.ctx.lineTo(this.canvas.width, y);
@@ -2971,19 +2895,6 @@
                     this.ctx.moveTo(x, 0);
                     this.ctx.lineTo(x, this.canvas.height);
                     this.ctx.stroke();
-                }
-
-                // 新模式背景特效
-                if (this.gameMode === 'new') {
-                    this.ctx.fillStyle = 'rgba(139, 92, 246, 0.03)';
-                    for (let i = 0; i < 10; i++) {
-                        const x = Math.random() * this.canvas.width;
-                        const y = Math.random() * this.canvas.height;
-                        const size = Math.random() * 100 + 50;
-                        this.ctx.beginPath();
-                        this.ctx.arc(x, y, size, 0, Math.PI * 2);
-                        this.ctx.fill();
-                    }
                 }
 
                 this.ctx.restore();
@@ -3033,7 +2944,39 @@
 
         // 页面加载完成后初始化游戏
         window.addEventListener('load', () => new Game());
+        
+        // 创建熔岩气泡效果
+        function createLavaBubbles() {
+            const lavaTop = document.getElementById('lavaTop');
+            const createBubble = () => {
+                const bubble = document.createElement('div');
+                bubble.className = 'lava-bubble';
+                
+                // 随机大小和位置
+                const size = Math.random() * 6 + 2;
+                const left = Math.random() * 100;
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${left}%`;
+                bubble.style.bottom = '0';
+                bubble.style.animationDuration = `${Math.random() * 2 + 1}s`;
+                bubble.style.animationDelay = `${Math.random() * 1}s`;
+                
+                lavaTop.appendChild(bubble);
+                
+                // 动画结束后移除元素
+                setTimeout(() => {
+                    bubble.remove();
+                }, 3000);
+            };
+            
+            // 定期创建气泡
+            setInterval(createBubble, 200);
+        }
+        
+        // 页面加载后启动熔岩效果
+        window.addEventListener('load', createLavaBubbles);
     </script>
 </body>
-
 </html>
