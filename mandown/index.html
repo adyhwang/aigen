@@ -965,6 +965,12 @@
                 this.lastTime = 0;
                 this.deltaTime = 0;
                 this.maxDeltaTime = 1000 / 30;
+                // 帧率计算
+                this.frameCount = 0;
+                this.lastFpsUpdate = 0;
+                this.currentFps = 0;
+                // 开发者模式
+                this.developerMode = false;
 
                 // 游戏状态
                 this.isRunning = false;
@@ -1121,6 +1127,7 @@
                                 this.devModeClickCount++;
                                 if (this.devModeClickCount >= 7 && !this.isDeveloperMode) {
                                     this.isDeveloperMode = true;
+                                    this.developerMode = true;
                                     this.showTempMessage("开发者模式已激活!", 2000);
                                     this.createDeveloperToolbar();
                                     this.toggleDeveloperToolbar(true);
@@ -3148,6 +3155,14 @@
                     this.ctx.fillText('👼', lifesaverX, lifesaverY + 3);
                 }
 
+                // 开发者模式：显示帧率
+                if (this.developerMode) {
+                    this.ctx.font = '12px Arial';
+                    this.ctx.fillStyle = '#00FF00';
+                    this.ctx.textAlign = 'left';
+                    this.ctx.fillText('FPS: ' + this.currentFps, 10, 20);
+                }
+
                 this.ctx.restore();
             }
 
@@ -3269,20 +3284,40 @@
             gameLoop(timestamp) {
                 if (!this.isRunning || this.isPaused) return;
 
-                if (this.lastTime) {
-                    this.deltaTime = Math.min(timestamp - this.lastTime, this.maxDeltaTime);
+                // 限制游戏以60Hz运行 (约16.67ms每帧)
+                const targetFrameTime = 1000 / 60;
+                
+                if (this.lastTime === 0) {
+                    this.lastTime = timestamp;
                 }
-                else {
-                    this.deltaTime = 0;
-                }
+                
+                this.accumulator = (this.accumulator || 0) + Math.min(timestamp - this.lastTime, this.maxDeltaTime);
                 this.lastTime = timestamp;
-
-                // 执行顺序：先检测碰撞更新站立平台 → 再更新平台移动
-                this.updatePlayer();
-                this.checkCollisions();
-                this.updatePlatforms();
-                this.draw();
-
+                
+                // 帧率计算
+                this.frameCount++;
+                if (timestamp - this.lastFpsUpdate >= 1000) {
+                    this.currentFps = Math.round((this.frameCount * 1000) / (timestamp - this.lastFpsUpdate));
+                    this.frameCount = 0;
+                    this.lastFpsUpdate = timestamp;
+                }
+                
+                // 只有当累积时间超过目标帧时间时才更新游戏
+                while (this.accumulator >= targetFrameTime) {
+                    this.deltaTime = targetFrameTime;
+                    
+                    // 执行顺序：先检测碰撞更新站立平台 → 再更新平台移动
+                    this.updatePlayer();
+                    this.checkCollisions();
+                    this.updatePlatforms();
+                    this.draw();
+                    
+                    this.accumulator -= targetFrameTime;
+                }
+                
+                // 如果还有剩余时间，进行插值绘制
+                const alpha = this.accumulator / targetFrameTime;
+                
                 requestAnimationFrame((nextTimestamp) => this.gameLoop(nextTimestamp));
             }
 
@@ -3341,23 +3376,23 @@
                 toolbar.style.maxWidth = '90%';
 
                 // 添加关闭按钮
-                const closeButton = document.createElement('button');
-                closeButton.textContent = '×';
-                closeButton.style.position = 'absolute';
-                closeButton.style.top = '-10px';
-                closeButton.style.right = '-10px';
-                closeButton.style.width = '25px';
-                closeButton.style.height = '25px';
-                closeButton.style.borderRadius = '50%';
-                closeButton.style.backgroundColor = '#EF4444';
-                closeButton.style.color = 'white';
-                closeButton.style.border = 'none';
-                closeButton.style.cursor = 'pointer';
-                closeButton.style.fontWeight = 'bold';
-                closeButton.addEventListener('click', () => {
-                    this.toggleDeveloperToolbar(false);
-                });
-                toolbar.appendChild(closeButton);
+                // const closeButton = document.createElement('button');
+                // closeButton.textContent = '×';
+                // closeButton.style.position = 'absolute';
+                // closeButton.style.top = '-10px';
+                // closeButton.style.right = '-10px';
+                // closeButton.style.width = '25px';
+                // closeButton.style.height = '25px';
+                // closeButton.style.borderRadius = '50%';
+                // closeButton.style.backgroundColor = '#EF4444';
+                // closeButton.style.color = 'white';
+                // closeButton.style.border = 'none';
+                // closeButton.style.cursor = 'pointer';
+                // closeButton.style.fontWeight = 'bold';
+                // closeButton.addEventListener('click', () => {
+                //     this.toggleDeveloperToolbar(false);
+                // });
+                // toolbar.appendChild(closeButton);
 
                 // 添加道具按钮
                 this.powerUpTypes.forEach(type => {
