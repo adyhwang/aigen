@@ -1802,8 +1802,8 @@
                 // 弹跳逻辑
                 if (this.player.isBouncing) {
                     if (this.player.standingPlatform && this.player.standingPlatform.type === 'spring') {
-                        this.player.bounceCounter++;
-                        if (this.player.bounceCounter * this.deltaTime > 500) {
+                        this.player.bounceCounter += this.deltaTime;
+                        if (this.player.bounceCounter > 500) {
                             this.player.velocityY = this.player.bounceForce;
                             this.player.bounceCounter = 0;
                             this.soundManager.playBounceSound();
@@ -2303,7 +2303,7 @@
                         this.player.height = this.player.originalHeight * 0.5;
                         this.player.isSmall = true;
                         this.player.isBig = false;
-                        this.player.sizeTimer = 20 * 60;
+                        this.player.sizeTimer = 20 *60;
                         this.showPowerUpMessage("体型变小 (20秒) - 免疫钉板，重力减小，翻转平台不会翻转");
                         this.effectManager.addParticles(10,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
@@ -2322,7 +2322,7 @@
                         this.player.height = this.player.originalHeight * 1.5;
                         this.player.isBig = true;
                         this.player.isSmall = false;
-                        this.player.sizeTimer = 20 * 60;
+                        this.player.sizeTimer = 20 *60;
                         this.showPowerUpMessage("体型变大 (20秒) - 免疫传送带，固定移动平台");
                         this.effectManager.addParticles(10,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
@@ -2335,7 +2335,7 @@
                     },
                     'invincible': () => {
                         this.player.isInvincible = true;
-                        this.player.invincibleTimer = 20 * 60;
+                        this.player.invincibleTimer = 20*60 ;
                         this.showPowerUpMessage("金身状态 (20秒)");
                         this.effectManager.addParticles(15,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
@@ -2349,7 +2349,7 @@
                     },
                     'allNormal': () => {
                         this.player.allNormalPlatforms = true;
-                        this.player.allNormalTimer = 20 * 60;
+                        this.player.allNormalTimer = 20 *60;
                         this.platforms.forEach(platform => {
                             platform.type = 'normal';
                         });
@@ -2378,7 +2378,7 @@
                     },
                     'gravityChange': () => {
                         this.player.isGravityChanged = true;
-                        this.player.gravityChangedTimer = 15 * 60;
+                        this.player.gravityChangedTimer = 15 *60;
                         this.player.gravity = this.player.originalGravity * 0.35;
                         this.showPowerUpMessage("重力减小 (15秒)");
                         this.effectManager.addParticles(15,
