@@ -1796,7 +1796,7 @@
 
                 // 重力应用（考虑重力改变道具效果）
                 const currentGravity = this.player.isGravityChanged ?
-                    this.player.originalGravity * 0.5 : this.player.originalGravity;
+                    this.player.originalGravity * 0.3 : this.player.originalGravity;
                 this.player.velocityY += currentGravity * timeFactor;
 
                 // 弹跳逻辑
@@ -2552,7 +2552,7 @@
                             !this.player.isInvincible && !this.player.isSmall) {
                             this.damagePlayer(3);
                             this.player.damagedPlatforms.add(platform.id);
-                            this.player.velocityY = -8;
+                            // this.player.velocityY = -2;
                             this.player.onGround = false;
                             this.soundManager.playDamageSound();
 
