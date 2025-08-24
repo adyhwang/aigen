@@ -1083,6 +1083,11 @@
                 this.volumeSlider = document.getElementById('volumeSlider');
                 this.backToStartButton = document.getElementById('backToStartButton');
 
+                // 在构造函数中添加触屏状态
+                this.touchStartX = 0;
+                this.touchActive = false;
+                this.touchSide = null; // 'left' 或 'right'
+
                 // 事件监听
                 this.setupEventListeners();
                 this.init();
@@ -1162,7 +1167,99 @@
                 };
                 setupControl('leftBtn', 'left');
                 setupControl('rightBtn', 'right');
+                // 添加触屏控制事件
+                this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
+                this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e));
+                this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+                this.canvas.addEventListener('touchcancel', (e) => this.handleTouchEnd(e));
+
+                // 添加鼠标控制事件（用于支持桌面设备的鼠标点击）
+                this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+                this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+                this.canvas.addEventListener('mouseleave', (e) => this.handleMouseUp(e));
             }
+
+            // 处理触摸开始事件
+            handleTouchStart(e) {
+                if (this.isPaused || this.gameOver) return;
+
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = this.canvas.getBoundingClientRect();
+                this.touchStartX = touch.clientX - rect.left;
+                this.touchActive = true;
+
+                // 判断点击的是左半边还是右半边
+                const canvasCenter = this.canvas.width / 2;
+                this.touchSide = this.touchStartX < canvasCenter ? 'left' : 'right';
+
+                // 设置对应的按键状态
+                this.keys[this.touchSide === 'left' ? 'left' : 'right'] = true;
+
+                // 更新玩家方向
+                this.player.direction = this.touchSide === 'left' ? -1 : 1;
+            }
+
+            // 处理触摸移动事件（防止滑动时误操作）
+            handleTouchMove(e) {
+                if (!this.touchActive) return;
+                e.preventDefault();
+
+                const touch = e.touches[0];
+                const rect = this.canvas.getBoundingClientRect();
+                const currentX = touch.clientX - rect.left;
+                const canvasCenter = this.canvas.width / 2;
+
+                // 如果手指移动到另一侧，切换控制方向
+                const newSide = currentX < canvasCenter ? 'left' : 'right';
+                if (newSide !== this.touchSide) {
+                    // 清除之前的按键状态
+                    this.keys[this.touchSide === 'left' ? 'left' : 'right'] = false;
+
+                    // 设置新的按键状态
+                    this.touchSide = newSide;
+                    this.keys[this.touchSide === 'left' ? 'left' : 'right'] = true;
+
+                    // 更新玩家方向
+                    this.player.direction = this.touchSide === 'left' ? -1 : 1;
+                }
+            }
+
+            // 处理触摸结束事件
+            handleTouchEnd(e) {
+                e.preventDefault();
+                this.touchActive = false;
+
+                // 清除所有按键状态
+                this.keys.left = false;
+                this.keys.right = false;
+            }
+
+            // 处理鼠标按下事件（用于桌面设备）
+            handleMouseDown(e) {
+                if (this.isPaused || this.gameOver) return;
+
+                const rect = this.canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+
+                // 判断点击的是左半边还是右半边
+                const canvasCenter = this.canvas.width / 2;
+                const side = mouseX < canvasCenter ? 'left' : 'right';
+
+                // 设置对应的按键状态
+                this.keys[side === 'left' ? 'left' : 'right'] = true;
+
+                // 更新玩家方向
+                this.player.direction = side === 'left' ? -1 : 1;
+            }
+
+            // 处理鼠标释放事件
+            handleMouseUp(e) {
+                // 清除所有按键状态
+                this.keys.left = false;
+                this.keys.right = false;
+            }
+
 
             // 全屏切换方法
             toggleFullscreen() {
