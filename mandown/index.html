@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>就下100层 - 优化版 1.1</title>
+    <title>就下100层 - 优化版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -1795,8 +1795,8 @@
                 }
 
                 // 重力应用（考虑重力改变道具效果）
-                // const currentGravity = this.player.isGravityChanged ?
-                //     this.player.originalGravity * 0.5 : this.player.originalGravity;
+                const currentGravity = this.player.isGravityChanged ?
+                    this.player.originalGravity * 0.9 : this.player.originalGravity;
                 this.player.velocityY += currentGravity * timeFactor;
 
                 // 弹跳逻辑
