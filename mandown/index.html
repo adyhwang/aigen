@@ -146,6 +146,24 @@
             }
         }
 
+        /* 传送带动画 */
+        @keyframes conveyorMove {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 20px 0;
+            }
+        }
+
+        .conveyor-left, .conveyor-right {
+            animation: conveyorMove 0.5s linear infinite;
+        }
+
+        .conveyor-left {
+            animation-direction: reverse;
+        }
+
         .lava-bubble {
             position: absolute;
             background: rgba(255, 150, 50, 0.7);
@@ -345,7 +363,9 @@
                 <button id="resumeButton"
                     class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow mb-4">继续游戏</button>
                 <button id="restartFromPauseButton"
-                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">重新开始</button>
+                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow mb-4">重新开始</button>
+                <button id="backToStartFromPauseButton"
+                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">返回开始</button>                
             </div>
 
             <!-- 游戏结束菜单 -->
@@ -984,6 +1004,8 @@
                 this.speedIncreaseInterval = 50;
                 this.platformSpawnRate = 50;
                 this.spawnCounter = 0;
+                this.lastPlatformY = 0;
+                this.platformDistanceThreshold = 100;
 
                 // 背景偏移量
                 this.backgroundOffset = 0;
@@ -1086,6 +1108,7 @@
                 this.pauseButton = document.getElementById('pauseButton');
                 this.volumeSlider = document.getElementById('volumeSlider');
                 this.backToStartButton = document.getElementById('backToStartButton');
+                this.backToStartFromPauseButton = document.getElementById('backToStartFromPauseButton');
 
                 // 触屏状态
                 this.touchStartX = 0;
@@ -1106,6 +1129,7 @@
                 document.getElementById('restartFromPauseButton').addEventListener('click', () => this.startGame());
                 this.pauseButton.addEventListener('click', () => this.togglePause());
                 this.backToStartButton.addEventListener('click', () => this.backToStart());
+                this.backToStartFromPauseButton.addEventListener('click', () => this.backToStart());
                 this.fullscreenButton.addEventListener('click', () => this.toggleFullscreen());
 
                 // 模式选择事件
@@ -1265,7 +1289,6 @@
                 this.keys.right = false;
             }
 
-
             // 全屏切换方法
             toggleFullscreen() {
                 const docEl = document.documentElement;
@@ -1307,6 +1330,7 @@
                 this.gameOverMenu.classList.add('hidden');
                 this.startMenu.classList.remove('hidden');
                 this.pauseButton.classList.add('hidden');
+                this.pauseMenu.classList.add('hidden');
                 this.init();
             }
 
@@ -1775,6 +1799,7 @@
                     ['conveyor-left', 'conveyor-right'].includes(this.player.standingPlatform.type) &&
                     !this.player.isBig) {
                     conveyorEffect = this.player.standingPlatform.conveyorSpeed * timeFactor;
+                    
                 }
 
                 this.player.velocityX = moveSpeed + conveyorEffect;
@@ -2212,10 +2237,21 @@
 
                 // 生成新平台（玩家未死亡且未传送时）
                 if (!this.player.isDead && !this.player.isTeleporting) {
-                    this.spawnCounter += timeFactor;
-                    if (this.spawnCounter >= this.platformSpawnRate) {
-                        this.createPlatform();
-                        this.spawnCounter = 0;
+                    // 基于距离生成平台
+                    if (this.platforms.length > 0) {
+                        const lastPlatform = this.platforms[this.platforms.length - 1];
+                        const distanceFromLastPlatform = this.canvas.height - lastPlatform.y;
+                        
+                        if (distanceFromLastPlatform >= this.platformDistanceThreshold) {
+                            this.createPlatform();
+                        }
+                    } else {
+                        // 如果没有平台，使用原来的时间生成方式作为备用
+                        this.spawnCounter += timeFactor;
+                        if (this.spawnCounter >= this.platformSpawnRate) {
+                            this.createPlatform();
+                            this.spawnCounter = 0;
+                        }
                     }
                 }
 
@@ -3004,7 +3040,7 @@
                     switch (platform.type) {
                         case 'conveyor-left':
                         case 'conveyor-right':
-                            this.drawConveyorArrows(platform, platform.type === 'conveyor-left' ? -1 : 1);
+                            this.drawConveyor(platform, platform.type === 'conveyor-left' ? -1 : 1);
                             break;
                         case 'spike':
                             this.drawSpikes(platform);
@@ -3031,27 +3067,62 @@
                 this.ctx.restore();
             }
 
-            // 绘制传送带箭头
-            drawConveyorArrows(platform, direction) {
+            // 绘制传送带
+            drawConveyor(platform, direction) {
+                // 绘制传送带主体（机械白色中间区域）
+                this.ctx.fillStyle = '#F3F4F6';
+                this.ctx.fillRect(0, 0, platform.width, platform.height);
+
+                // 绘制左右半圆
+                this.ctx.beginPath();
+                this.ctx.fillStyle = '#E5E7EB';
+                this.ctx.arc(0, platform.height / 2, platform.height / 2, 0, Math.PI * 2);
+                this.ctx.arc(platform.width, platform.height / 2, platform.height / 2, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // 绘制传送带皮带
+                this.ctx.fillStyle = '#9CA3AF';
+                const beltHeight = platform.height * 0.3;
+                const beltY = (platform.height - beltHeight) / 2;
+                
+                //绘制传送带箭头
                 this.ctx.fillStyle = '#D1D5DB';
                 const arrowSize = 8;
                 const spacing = 20;
+                
+                // 计算箭头偏移量实现循环位移动画
+                const offset = (Date.now() * 0.05 * direction) % spacing;
+                
+                // 检查是否有玩家站在传送带上且使用了变大道具
+                const isPlayerOnConveyor = this.player.standingPlatform && 
+                    this.player.standingPlatform.id === platform.id && 
+                    this.player.isBig;
+                
+                // 如果玩家站在传送带上且使用了变大道具，则不绘制动画
+                if (!isPlayerOnConveyor) {
+                    // 限制箭头在传送带主体范围内，不超出左右半圆
+                    const startX = platform.height / 2;  // 左侧半圆的右侧边界
+                    const endX = platform.width - platform.height / 2;  // 右侧半圆的左侧边界
+                    
+                    for (let x = startX - offset; x < endX; x += spacing) {
+                        // 确保箭头在传送带主体范围内
+                        if (x >= startX && x <= endX - arrowSize) {
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(x, platform.height / 2);
+                            this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 - arrowSize / 2);
+                            this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 + arrowSize / 2);
+                            this.ctx.closePath();
+                            this.ctx.fill();
 
-                for (let x = 10; x < platform.width - 10; x += spacing) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(x, platform.height / 2);
-                    this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 - arrowSize / 2);
-                    this.ctx.lineTo(x + direction * arrowSize, platform.height / 2 + arrowSize / 2);
-                    this.ctx.closePath();
-                    this.ctx.fill();
-
-                    // 添加箭头尾部线条
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(x, platform.height / 2);
-                    this.ctx.lineTo(x - direction * 5, platform.height / 2);
-                    this.ctx.strokeStyle = '#9CA3AF';
-                    this.ctx.lineWidth = 2;
-                    this.ctx.stroke();
+                            // 添加箭头尾部线条
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(x, platform.height / 2);
+                            this.ctx.lineTo(x - direction * 5, platform.height / 2);
+                            this.ctx.strokeStyle = '#9CA3AF';
+                            this.ctx.lineWidth = 2;
+                            this.ctx.stroke();
+                        }
+                    }
                 }
             }
 
