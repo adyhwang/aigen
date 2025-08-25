@@ -1800,7 +1800,7 @@
 
                 // 重力应用（考虑重力改变道具效果）
                 const currentGravity = this.player.isGravityChanged ?
-                    this.player.originalGravity * 0.3 : this.player.originalGravity;
+                    this.player.originalGravity * 0.35 : this.player.originalGravity;
                 this.player.velocityY += currentGravity * timeFactor;
 
                 // 弹跳逻辑
@@ -1808,7 +1808,9 @@
                     if (this.player.standingPlatform && this.player.standingPlatform.type === 'spring') {
                         this.player.bounceCounter += this.deltaTime;
                         if (this.player.bounceCounter > 500) {
-                            this.player.velocityY = this.player.bounceForce;
+                            // 根据当前重力调整弹跳力，保持弹跳高度一致
+                            const bounceForceMultiplier = this.player.isGravityChanged ? 0.35 : 1;
+                            this.player.velocityY = this.player.bounceForce * bounceForceMultiplier;
                             this.player.bounceCounter = 0;
                             this.soundManager.playBounceSound();
 
