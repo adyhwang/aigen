@@ -956,8 +956,7 @@
                 this.powerUpIndicator = document.getElementById('powerUpIndicator');
                 this.powerUpText = document.getElementById('powerUpText');
 
-                // 设备检测与画布设置
-                this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                // 画布设置
                 this.resizeCanvas();
                 window.addEventListener('resize', () => this.resizeCanvas());
 
@@ -995,7 +994,6 @@
                 this.lifeSaverAvailable = false;
 
                 // 玩家属性
-                const bounceForce = this.isMobile ? -9 : -12;
                 this.player = {
                     x: this.canvas.width / 2,
                     y: this.canvas.height / 2,
@@ -1014,7 +1012,7 @@
                     health: 10,
                     maxHealth: 10,
                     isBouncing: false,
-                    bounceForce,
+                    bounceForce:-10,
                     bounceCounter: 0,
                     standingPlatform: null,
                     previousPlatform: null,
@@ -1043,7 +1041,7 @@
                     platformSpeedChangedTimer: 0,
                     isTeleporting: false,
 
-                    // 新增动画属性
+                    // 动画属性
                     walkCycle: 0,
                     isJumping: false,
                     isFalling: false,
@@ -1089,7 +1087,7 @@
                 this.volumeSlider = document.getElementById('volumeSlider');
                 this.backToStartButton = document.getElementById('backToStartButton');
 
-                // 在构造函数中添加触屏状态
+                // 触屏状态
                 this.touchStartX = 0;
                 this.touchActive = false;
                 this.touchSide = null; // 'left' 或 'right'
@@ -1349,7 +1347,6 @@
                 // 新模式开始时自动获得一个救命道具
                 this.lifeSaverAvailable = this.gameMode === 'new';
 
-                const bounceForce = this.isMobile ? -9 : -12;
                 this.player = {
                     ...this.player,
                     x: this.canvas.width / 2,
@@ -1366,7 +1363,7 @@
                     previousPlatform: null,
                     healedPlatforms: new Set(),
                     damagedPlatforms: new Set(),
-                    bounceForce,
+                    bounceForce : -10,
                     flashTimer: 0,
                     isDead: false,
                     deathEffectPlayed: false,
@@ -1765,10 +1762,10 @@
                 // 移动控制
                 let moveSpeed = 0;
                 if (this.keys.left) {
-                    moveSpeed = -this.player.speed * timeFactor;
+                    moveSpeed = -this.player.speed //* timeFactor;
                     this.player.direction = -1;
                 } else if (this.keys.right) {
-                    moveSpeed = this.player.speed * timeFactor;
+                    moveSpeed = this.player.speed// * timeFactor;
                     this.player.direction = 1;
                 }
 
@@ -1777,7 +1774,7 @@
                 if (this.player.standingPlatform &&
                     ['conveyor-left', 'conveyor-right'].includes(this.player.standingPlatform.type) &&
                     !this.player.isBig) {
-                    conveyorEffect = this.player.standingPlatform.conveyorSpeed * timeFactor;
+                    conveyorEffect = this.player.standingPlatform.conveyorSpeed// * timeFactor;
                 }
 
                 this.player.velocityX = moveSpeed + conveyorEffect;
@@ -1804,7 +1801,7 @@
                 // 重力应用（考虑重力改变道具效果）
                 const currentGravity = this.player.isGravityChanged ?
                     this.player.originalGravity * 0.3 : this.player.originalGravity;
-                this.player.velocityY += currentGravity * timeFactor;
+                this.player.velocityY += currentGravity// * timeFactor;
 
                 // 弹跳逻辑
                 if (this.player.isBouncing) {
@@ -1840,7 +1837,7 @@
                     this.player.standingPlatform.flipTimer > 42) {
                     this.player.onGround = false;
                     this.player.standingPlatform = null;
-                    this.player.velocityY = 5 * timeFactor;
+                    this.player.velocityY = 5// * timeFactor;
                 }
 
                 // 更新位置
