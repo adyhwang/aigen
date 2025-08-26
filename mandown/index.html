@@ -2528,7 +2528,7 @@
                             platform.flipped = true;
                             platform.flipTimer = 0;
                             if (isNewPlatform) {
-                                this.soundManager.playFlipPlatformSound();
+                                this.soundManager.playNormalPlatformSound();
                                 this.effectManager.addParticles(10,
                                     platform.x + platform.width / 2, platform.y + platform.height / 2, {
                                     speedX: (Math.random() - 0.5) * 3,
@@ -2547,7 +2547,10 @@
                             this.healPlayer(1);
                             this.player.healedPlatforms.add(platform.id);
                         }
-                        
+                        if (isNewPlatform)
+                            if (this.player.isBig) { 
+                                this.soundManager.playNormalPlatformSound(); }
+                            else { this.soundManager.playConveyorSound(); }
                         break;
 
                     case 'spring':
@@ -2602,6 +2605,7 @@
                             !this.player.damagedPlatforms.has(platform.id)) {
                             // 免疫状态下碰到钉板的特效
                             this.player.damagedPlatforms.add(platform.id);
+                            this.soundManager.playNormalPlatformSound();
                             this.effectManager.addParticles(8,
                                 this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
                                 speedX: (Math.random() - 0.5) * 4,
