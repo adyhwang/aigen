@@ -2522,8 +2522,8 @@
                         if (!this.player.healedPlatforms.has(platform.id)) {
                             this.healPlayer(1);
                             this.player.healedPlatforms.add(platform.id);
+                            this.soundManager.playNormalPlatformSound();
                         }
-                        this.soundManager.playNormalPlatformSound();
                         // 变小道具效果：翻转平台不会被翻转
                         if (!platform.flipped && !this.player.isSmall) {
                             platform.flipped = true;
