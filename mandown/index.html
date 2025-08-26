@@ -2523,12 +2523,12 @@
                             this.healPlayer(1);
                             this.player.healedPlatforms.add(platform.id);
                         }
+                        this.soundManager.playNormalPlatformSound();
                         // 变小道具效果：翻转平台不会被翻转
                         if (!platform.flipped && !this.player.isSmall) {
                             platform.flipped = true;
                             platform.flipTimer = 0;
                             if (isNewPlatform) {
-                                this.soundManager.playNormalPlatformSound();
                                 this.effectManager.addParticles(10,
                                     platform.x + platform.width / 2, platform.y + platform.height / 2, {
                                     speedX: (Math.random() - 0.5) * 3,
