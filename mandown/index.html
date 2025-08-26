@@ -151,12 +151,14 @@
             0% {
                 background-position: 0 0;
             }
+
             100% {
                 background-position: 20px 0;
             }
         }
 
-        .conveyor-left, .conveyor-right {
+        .conveyor-left,
+        .conveyor-right {
             animation: conveyorMove 0.5s linear infinite;
         }
 
@@ -298,60 +300,60 @@
                 </div>
                 <div class="mt-2 grid grid-cols-2 gap-2 w-full">
                     <div class="flex items-center gap-1">
-                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🐜
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🐜
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">变小/免疫钉板，重力减小</span>
+                        <span class="text-sm text-gray-300">变小</span>
                     </div>
                     <div class="flex items-center gap-1">
-                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">💗
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">💗
                             </div>
                         </div>
                         <span class="text-sm text-gray-300">生命全满</span>
                     </div>
                     <div class="flex items-center gap-1">
-                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🐘
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🐘
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">变大/免疫传送带，固定移动平台</span>
+                        <span class="text-sm text-gray-300">变大</span>
                     </div>
                     <div class="flex items-center gap-1">
-                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">👼
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">👼
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">濒死回血</span>
+                        <span class="text-sm text-gray-300">濒死回血/传送</span>
                     </div>
                     <div class="flex items-center gap-1">
-                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🟦
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">所有平台变普通平台</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">🌙
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🌙
                             </div>
                         </div>
                         <span class="text-sm text-gray-300">重力减小</span>
                     </div>
                     <div class="flex items-center gap-1">
-                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">💪
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🟦
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">金身状态</span>
+                        <span class="text-sm text-gray-300">变普通平台</span>
                     </div>
                     <div class="flex items-center gap-1">
-                        <div class="w-5 h-5 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[10px] text-white">⏱️
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">⏱️
                             </div>
                         </div>
                         <span class="text-sm text-gray-300">平台减速</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">💪
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">金身状态</span>
                     </div>
                 </div>
             </div>
@@ -365,7 +367,7 @@
                 <button id="restartFromPauseButton"
                     class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow mb-4">重新开始</button>
                 <button id="backToStartFromPauseButton"
-                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">返回开始</button>                
+                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">返回开始</button>
             </div>
 
             <!-- 游戏结束菜单 -->
@@ -789,7 +791,7 @@
             constructor() {
                 this.audioContext = null;
                 this.initAudioContext();
-                this.mainVolume = 0.7;
+                this.mainVolume = 0.9;
                 this.setupUserInteractionListener();
             }
 
@@ -1034,7 +1036,7 @@
                     health: 10,
                     maxHealth: 10,
                     isBouncing: false,
-                    bounceForce:-10,
+                    bounceForce: -10,
                     bounceCounter: 0,
                     standingPlatform: null,
                     previousPlatform: null,
@@ -1387,7 +1389,7 @@
                     previousPlatform: null,
                     healedPlatforms: new Set(),
                     damagedPlatforms: new Set(),
-                    bounceForce : -10,
+                    bounceForce: -10,
                     flashTimer: 0,
                     isDead: false,
                     deathEffectPlayed: false,
@@ -1799,7 +1801,7 @@
                     ['conveyor-left', 'conveyor-right'].includes(this.player.standingPlatform.type) &&
                     !this.player.isBig) {
                     conveyorEffect = this.player.standingPlatform.conveyorSpeed * timeFactor;
-                    
+
                 }
 
                 this.player.velocityX = moveSpeed + conveyorEffect;
@@ -1810,15 +1812,14 @@
                     Math.random() > 0.9) {
                     const headX = this.player.x + this.player.width / 2;
                     const headY = this.player.y - this.player.width / 2;
-                    const dir = this.player.standingPlatform.type === 'conveyor-left' ? -1 : 1;
 
                     this.effectManager.addParticles(1, headX, headY, {
-                        speedX: dir * 1.5,
-                        speedY: 2,
+                        speedX: 0,
+                        speedY: -5,
                         color: '#DBEAFE',
                         size: 2,
                         life: 30,
-                        gravity: 0.2,
+                        gravity: 0.5,
                         droplet: true
                     });
                 }
@@ -1905,10 +1906,13 @@
 
                     // 身体上下轻微移动
                     this.player.y += Math.sin(this.player.walkCycle * 2) * 0.5;
+
+                    this.player.bodyRotation = this.keys.right ? 0.15 : this.keys.left ? -0.15 : 0;
                 } else {
                     // 重置腿部角度
                     this.player.legAngleLeft = 0;
                     this.player.legAngleRight = 0;
+                    this.player.bodyRotation = 0;
                 }
 
                 // 跳跃和落地动画
@@ -2003,7 +2007,6 @@
                             const heightDecrease = this.player.originalHeight * 0.5;
                             this.player.y += heightDecrease * 0.7;
                         }
-
                         // 恢复原始大小
                         this.player.width = this.player.originalWidth;
                         this.player.height = this.player.originalHeight;
@@ -2078,13 +2081,13 @@
                 }
                 // 跳跃时手臂向上伸展
                 else if (!this.player.onGround) {
-                    const jumpArmAngle = 0.8;
+                    const jumpArmAngle = 5;
                     this.player.armAngleLeft = jumpArmAngle;
                     this.player.armAngleRight = jumpArmAngle;
                 }
                 // 跳板上时手臂向前伸展
                 else if (this.player.isBouncing) {
-                    const bounceArmAngle = -0.3;
+                    const bounceArmAngle = 5;
                     this.player.armAngleLeft = bounceArmAngle;
                     this.player.armAngleRight = bounceArmAngle;
                 }
@@ -2241,7 +2244,7 @@
                     if (this.platforms.length > 0) {
                         const lastPlatform = this.platforms[this.platforms.length - 1];
                         const distanceFromLastPlatform = this.canvas.height - lastPlatform.y;
-                        
+
                         if (distanceFromLastPlatform >= this.platformDistanceThreshold) {
                             this.createPlatform();
                         }
@@ -2345,7 +2348,7 @@
                         this.player.height = this.player.originalHeight * 0.5;
                         this.player.isSmall = true;
                         this.player.isBig = false;
-                        this.player.sizeTimer = 20 *60;
+                        this.player.sizeTimer = 20 * 60;
                         this.showPowerUpMessage("体型变小 (20秒) - 免疫钉板，重力减小，翻转平台不会翻转");
                         this.effectManager.addParticles(10,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
@@ -2364,7 +2367,7 @@
                         this.player.height = this.player.originalHeight * 1.5;
                         this.player.isBig = true;
                         this.player.isSmall = false;
-                        this.player.sizeTimer = 20 *60;
+                        this.player.sizeTimer = 20 * 60;
                         this.showPowerUpMessage("体型变大 (20秒) - 免疫传送带，固定移动平台");
                         this.effectManager.addParticles(10,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
@@ -2377,7 +2380,7 @@
                     },
                     'invincible': () => {
                         this.player.isInvincible = true;
-                        this.player.invincibleTimer = 20*60 ;
+                        this.player.invincibleTimer = 20 * 60;
                         this.showPowerUpMessage("金身状态 (20秒)");
                         this.effectManager.addParticles(15,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
@@ -2391,7 +2394,7 @@
                     },
                     'allNormal': () => {
                         this.player.allNormalPlatforms = true;
-                        this.player.allNormalTimer = 20 *60;
+                        this.player.allNormalTimer = 20 * 60;
                         this.platforms.forEach(platform => {
                             platform.type = 'normal';
                         });
@@ -2420,7 +2423,7 @@
                     },
                     'gravityChange': () => {
                         this.player.isGravityChanged = true;
-                        this.player.gravityChangedTimer = 15 *60;
+                        this.player.gravityChangedTimer = 15 * 60;
                         this.player.gravity = this.player.originalGravity * 0.35;
                         this.showPowerUpMessage("重力减小 (15秒)");
                         this.effectManager.addParticles(15,
@@ -2501,9 +2504,7 @@
 
             // 处理平台效果
             handlePlatformEffect(platform) {
-                const isNewPlatform = !this.player.previousPlatform ||
-                    this.player.previousPlatform.id !== platform.id;
-
+                const isNewPlatform = !this.player.previousPlatform || this.player.previousPlatform.id !== platform.id;
                 this.player.isBouncing = false;
 
                 switch (platform.type) {
@@ -2546,22 +2547,7 @@
                             this.healPlayer(1);
                             this.player.healedPlatforms.add(platform.id);
                         }
-                        if (isNewPlatform) {
-                            this.soundManager.playConveyorSound();
-                            const dir = platform.type === 'conveyor-left' ? -1 : 1;
-                            const headX = this.player.x + this.player.width / 2;
-                            const headY = this.player.y - this.player.width / 2;
-
-                            this.effectManager.addParticles(1, headX, headY, {
-                                speedX: dir * 1.5,
-                                speedY: 2,
-                                color: '#DBEAFE',
-                                size: 2,
-                                life: 30,
-                                gravity: 0.2,
-                                droplet: true
-                            });
-                        }
+                        
                         break;
 
                     case 'spring':
@@ -2841,6 +2827,7 @@
                     this.player.x + this.player.width / 2,
                     this.player.y + this.player.height / 2
                 );
+                this.ctx.rotate(this.player.bodyRotation);
 
                 // 应用身体形变（拉伸和压缩）
                 this.ctx.scale(
@@ -3048,6 +3035,15 @@
                         case 'flip':
                             if (platform.flipped && platform.flipTimer > 0 && platform.flipTimer <= 42) {
                                 this.ctx.save();
+
+                                // 垂直翻转动画
+                                const flipProgress = platform.flipTimer / 42;
+                                const scaleY = 1 - flipProgress * 2; // 从1到-1
+
+                                this.ctx.translate(platform.width / 2, platform.height / 2);
+                                this.ctx.scale(1, scaleY);
+                                this.ctx.translate(-platform.width / 2, -platform.height / 2);
+
                                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
                                 this.ctx.font = '10px Arial';
                                 this.ctx.textAlign = 'center';
@@ -3084,26 +3080,26 @@
                 this.ctx.fillStyle = '#9CA3AF';
                 const beltHeight = platform.height * 0.3;
                 const beltY = (platform.height - beltHeight) / 2;
-                
+
                 //绘制传送带箭头
                 this.ctx.fillStyle = '#D1D5DB';
                 const arrowSize = 8;
                 const spacing = 20;
-                
+
                 // 计算箭头偏移量实现循环位移动画
                 const offset = (Date.now() * 0.05 * direction) % spacing;
-                
+
                 // 检查是否有玩家站在传送带上且使用了变大道具
-                const isPlayerOnConveyor = this.player.standingPlatform && 
-                    this.player.standingPlatform.id === platform.id && 
+                const isPlayerOnConveyor = this.player.standingPlatform &&
+                    this.player.standingPlatform.id === platform.id &&
                     this.player.isBig;
-                
+
                 // 如果玩家站在传送带上且使用了变大道具，则不绘制动画
                 if (!isPlayerOnConveyor) {
                     // 限制箭头在传送带主体范围内，不超出左右半圆
                     const startX = platform.height / 2;  // 左侧半圆的右侧边界
                     const endX = platform.width - platform.height / 2;  // 右侧半圆的左侧边界
-                    
+
                     for (let x = startX - offset; x < endX; x += spacing) {
                         // 确保箭头在传送带主体范围内
                         if (x >= startX && x <= endX - arrowSize) {
@@ -3152,7 +3148,10 @@
                 });
             }
 
-            // 绘制HUD（整合生命值、道具计时器和救命道具状态）
+            // 绘制HUD（整合生命值、道具计时器和救命道具）
+            //位置跟踪属性
+            lifeSaverTarget = { x: 0, y: 0 };
+            lifeSaverCurrent = { x: 0, y: 0 };
             drawHUD() {
                 this.ctx.save();
 
@@ -3195,28 +3194,38 @@
                 // 绘制道具效果剩余时间
                 this.drawPowerUpTimers(startX, startY + heartSize + 10);
 
-                // 右侧区域：分数和救命道具状态
-                const scoreX = this.canvas.width - 80;
-                const scoreY = 60;
+                // 右侧区域：分数
+                const scoreX = this.canvas.width - 40;
+                const scoreY = 40;
+                const scoreText = this.score.toString();
+                const scoreTextWidth = this.ctx.measureText(scoreText).width;
 
                 // 分数背景
+                const scoreBgWidth = scoreTextWidth + 25;
+                const scoreBgHeight = 30;
                 this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                this.ctx.fillRect(scoreX - 10, scoreY - 20, 80, 30);
+                this.ctx.fillRect(scoreX - scoreBgWidth / 2, scoreY - scoreBgHeight / 2, scoreBgWidth, scoreBgHeight);
 
-                // 绘制分数
+                // 绘制分数（水平居中和垂直居中）
                 this.ctx.font = '16px "Press Start 2P", cursive';
                 this.ctx.fillStyle = '#F59E0B';
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText(this.score, scoreX + 30, scoreY);
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText(scoreText, scoreX, scoreY);
 
                 // 绘制救命道具待命状态
                 if (this.lifeSaverAvailable) {
-                    const lifesaverX = scoreX - 30;
-                    const lifesaverY = scoreY - 10;
+                    // 更新目标位置
+                    this.lifeSaverTarget.x = this.player.x + this.player.width + 10;
+                    this.lifeSaverTarget.y = this.player.y - 60;
 
-                    // 背景
-                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                    this.ctx.fillRect(lifesaverX - 15, lifesaverY - 10, 30, 20);
+                    // 应用缓动公式
+                    const lerpFactor = 0.15;
+                    this.lifeSaverCurrent.x += (this.lifeSaverTarget.x - this.lifeSaverCurrent.x) * lerpFactor;
+                    this.lifeSaverCurrent.y += (this.lifeSaverTarget.y - this.lifeSaverCurrent.y) * lerpFactor;
+
+                    const lifesaverX = this.lifeSaverCurrent.x;
+                    const lifesaverY = this.lifeSaverCurrent.y;
 
                     // 图标和文字
                     this.ctx.fillStyle = '#06B6D4';
@@ -3356,14 +3365,14 @@
 
                 // 限制游戏以60Hz运行 (约16.67ms每帧)
                 const targetFrameTime = 1000 / 60;
-                
+
                 if (this.lastTime === 0) {
                     this.lastTime = timestamp;
                 }
-                
+
                 this.accumulator = (this.accumulator || 0) + Math.min(timestamp - this.lastTime, this.maxDeltaTime);
                 this.lastTime = timestamp;
-                
+
                 // 帧率计算
                 this.frameCount++;
                 if (timestamp - this.lastFpsUpdate >= 1000) {
@@ -3371,23 +3380,23 @@
                     this.frameCount = 0;
                     this.lastFpsUpdate = timestamp;
                 }
-                
+
                 // 只有当累积时间超过目标帧时间时才更新游戏
                 while (this.accumulator >= targetFrameTime) {
                     this.deltaTime = targetFrameTime;
-                    
+
                     // 执行顺序：先检测碰撞更新站立平台 → 再更新平台移动
                     this.updatePlayer();
                     this.checkCollisions();
                     this.updatePlatforms();
                     this.draw();
-                    
+
                     this.accumulator -= targetFrameTime;
                 }
-                
+
                 // 如果还有剩余时间，进行插值绘制
                 const alpha = this.accumulator / targetFrameTime;
-                
+
                 requestAnimationFrame((nextTimestamp) => this.gameLoop(nextTimestamp));
             }
 
@@ -3572,9 +3581,9 @@
 
                 // 熔岩颜色
                 this.colors = [
-                    '#ff3300',
+                    '#ff7700',
                     '#ff5500',
-                    '#ff7700'
+                    '#ff3300'
                 ];
 
                 this.resize();
