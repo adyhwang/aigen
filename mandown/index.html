@@ -2004,8 +2004,9 @@
                     if (this.player.sizeTimer <= 0) {
                         // 恢复原始大小时调整位置，保持在平台上
                         if (this.player.isBig) {
-                            const heightDecrease = this.player.originalHeight * 0.5;
-                            this.player.y += heightDecrease * 0.7;
+                            this.player.y += this.player.originalHeight * 0.35;
+                        }else if (this.player.isSmall) {
+                            this.player.y -= this.player.originalHeight
                         }
                         // 恢复原始大小
                         this.player.width = this.player.originalWidth;
