@@ -350,10 +350,24 @@
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">💪
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🧘
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">金身状态</span>
+                        <span class="text-sm text-gray-300">金身</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🦶
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">金腿</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">😬
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">金头</span>
                     </div>
                 </div>
             </div>
@@ -525,11 +539,13 @@
                     'fullHealth': { color: '#10B981', icon: '💗' },
                     'smallPlayer': { color: '#3B82F6', icon: '🐜' },
                     'bigPlayer': { color: '#8B5CF6', icon: '🐘' },
-                    'invincible': { color: '#F59E0B', icon: '💪' },
+                    'invincible': { color: '#F59E0B', icon: '🧘' },
                     'allNormal': { color: '#EC4899', icon: '🟦' },
                     'lifeSaver': { color: '#06B6D4', icon: '👼' },
                     'gravityChange': { color: '#9C27B0', icon: '🌙' },
-                    'platformSlow': { color: '#607D8B', icon: '⏱️' }
+                    'platformSlow': { color: '#607D8B', icon: '⏱️' },
+                    'goldenLeg': { color: '#F59E0B', icon: '🦶' },
+                    'goldenHead': { color: '#F59E0B', icon: '😬' }
                 };
 
                 const config = powerUpConfig[type];
@@ -581,13 +597,13 @@
                     ctx.scale(this.pulseSize, this.pulseSize);
 
                     // 外环
-                    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius);
-                    gradient.addColorStop(0, this.color);
-                    gradient.addColorStop(1, this.darkenColor(this.color, 0.3));
-                    ctx.fillStyle = gradient;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-                    ctx.fill();
+                    // const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius);
+                    // gradient.addColorStop(0, this.color);
+                    // gradient.addColorStop(1, this.darkenColor(this.color, 0.3));
+                    // ctx.fillStyle = gradient;
+                    // ctx.beginPath();
+                    // ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                    // ctx.fill();
 
                     // 发光效果
                     ctx.fillStyle = `${this.color}80`;
@@ -1064,6 +1080,10 @@
                     isPlatformSpeedChanged: false,
                     platformSpeedChangedTimer: 0,
                     isTeleporting: false,
+                    goldenLegUses: 0,
+                    goldenHeadUses: 0,
+                    hasGoldenLeg: false,
+                    hasGoldenHead: false,
 
                     // 动画属性
                     walkCycle: 0,
@@ -1096,7 +1116,8 @@
                 // 道具类型
                 this.powerUpTypes = [
                     'fullHealth', 'smallPlayer', 'bigPlayer', 'invincible',
-                    'allNormal', 'lifeSaver', 'gravityChange', 'platformSlow'
+                    'allNormal', 'lifeSaver', 'gravityChange', 'platformSlow',
+                    'goldenLeg', 'goldenHead'
                 ];
 
                 // 按键状态
@@ -1412,6 +1433,10 @@
                     platformSpeedChangedTimer: 0,
                     isTeleporting: false,
                     gravity: this.player.originalGravity,
+                    goldenLegUses: 0,
+                    goldenHeadUses: 0,
+                    hasGoldenLeg: false,
+                    hasGoldenHead: false,
 
                     // 重置动画属性
                     walkCycle: 0,
@@ -1614,6 +1639,39 @@
                 }
                 // 玩家超出顶部
                 else if (this.player.y + this.player.velocityY < 0) {
+
+                    if (this.player.hasGoldenHead || this.player.isInvincible) {
+
+                        // 金头或金身状态下，向下位移
+                        if (this.player.isInvincible) {
+                            this.player.y = 100;
+                            this.showPowerUpMessage("金身保护! 已下移");
+                        }
+                        else if (this.player.hasGoldenHead) {
+                            // 金头使用次数减少
+                            this.player.y = 100;
+                            this.player.goldenHeadUses--;
+                            if (this.player.goldenHeadUses <= 0) {
+                                this.player.hasGoldenHead = false;
+                                this.showPowerUpMessage("金头道具已用完");
+                            } else {
+                                this.showPowerUpMessage(`金头保护! 已下移，剩余: ${this.player.goldenHeadUses}次`);
+                            }
+                        }
+
+                        // 添加位移特效
+                        this.effectManager.addParticles(15,
+                            this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
+                            speedX: (Math.random() - 0.5) * 5,
+                            speedY: (Math.random() - 0.5) * 5,
+                            color: '#F59E0B',
+                            life: 40,
+                            gravity: 0.1
+                        });
+                        return true;
+
+                    }
+
                     if (this.lifeSaverAvailable) {
                         this.useLifeSaverAtTop();
                         return true;
@@ -2005,7 +2063,7 @@
                         // 恢复原始大小时调整位置，保持在平台上
                         if (this.player.isBig) {
                             this.player.y += this.player.originalHeight * 0.35;
-                        }else if (this.player.isSmall) {
+                        } else if (this.player.isSmall) {
                             this.player.y -= this.player.originalHeight
                         }
                         // 恢复原始大小
@@ -2454,6 +2512,32 @@
                             life: 40,
                             gravity: 0.1
                         });
+                    },
+                    'goldenLeg': () => {
+                        this.player.goldenLegUses = 3;
+                        this.player.hasGoldenLeg = true;
+                        this.showPowerUpMessage("获得金腿道具! 可免疫3次钉板伤害");
+                        this.effectManager.addParticles(15,
+                            this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
+                            speedX: (Math.random() - 0.5) * 4,
+                            speedY: (Math.random() - 0.5) * 4,
+                            color: '#F59E0B',
+                            life: 40,
+                            gravity: 0.1
+                        });
+                    },
+                    'goldenHead': () => {
+                        this.player.goldenHeadUses = 3;
+                        this.player.hasGoldenHead = true;
+                        this.showPowerUpMessage("获得金头道具! 顶部越界时自动下移 (3次)");
+                        this.effectManager.addParticles(15,
+                            this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
+                            speedX: (Math.random() - 0.5) * 4,
+                            speedY: (Math.random() - 0.5) * 4,
+                            color: '#F59E0B',
+                            life: 40,
+                            gravity: 0
+                        });
                     }
                 };
 
@@ -2549,8 +2633,9 @@
                             this.player.healedPlatforms.add(platform.id);
                         }
                         if (isNewPlatform)
-                            if (this.player.isBig) { 
-                                this.soundManager.playNormalPlatformSound(); }
+                            if (this.player.isBig) {
+                                this.soundManager.playNormalPlatformSound();
+                            }
                             else { this.soundManager.playConveyorSound(); }
                         break;
 
@@ -2579,9 +2664,8 @@
                         break;
 
                     case 'spike':
-                        // 钉板伤害（金身状态或变小状态下不受伤害）
-                        if (!this.player.damagedPlatforms.has(platform.id) &&
-                            !this.player.isInvincible && !this.player.isSmall) {
+                        // 钉板伤害（金身状态或变小状态或金腿状态下不受伤害）
+                        if (!this.player.damagedPlatforms.has(platform.id) && !this.player.isInvincible && !this.player.isSmall && !this.player.hasGoldenLeg) {
                             this.damagePlayer(3);
                             this.player.damagedPlatforms.add(platform.id);
                             // this.player.velocityY = -2;
@@ -2602,11 +2686,22 @@
                             if (this.player.health <= 0) {
                                 this.player.isDead = true;
                             }
-                        } else if ((this.player.isInvincible || this.player.isSmall) &&
-                            !this.player.damagedPlatforms.has(platform.id)) {
+                        } else if ((this.player.isInvincible || this.player.isSmall || this.player.hasGoldenLeg) && !this.player.damagedPlatforms.has(platform.id)) {
                             // 免疫状态下碰到钉板的特效
                             this.player.damagedPlatforms.add(platform.id);
                             this.soundManager.playNormalPlatformSound();
+
+                            // 金腿使用次数减少
+                            if (!this.player.isInvincible && !this.player.isSmall && this.player.hasGoldenLeg) {
+                                this.player.goldenLegUses--;
+                                if (this.player.goldenLegUses <= 0) {
+                                    this.player.hasGoldenLeg = false;
+                                    this.showPowerUpMessage("金腿道具已用完");
+                                } else {
+                                    this.showPowerUpMessage(`金腿剩余: ${this.player.goldenLegUses}次`);
+                                }
+                            }
+
                             this.effectManager.addParticles(8,
                                 this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
                                 speedX: (Math.random() - 0.5) * 4,
@@ -2719,7 +2814,7 @@
                 this.ctx.save();
                 this.ctx.translate(this.player.width * 0.3, this.player.height * 0.8);
                 this.ctx.rotate(this.player.legAngleLeft);
-                this.ctx.fillStyle = '#6F2937';
+                this.ctx.fillStyle = (this.player.hasGoldenLeg || this.player.isInvincible) ? '#D4AF37' : '#6F2937';
                 this.ctx.fillRect(-legWidth / 2, 0, legWidth, legLength);
                 this.ctx.restore();
 
@@ -2727,7 +2822,7 @@
                 this.ctx.save();
                 this.ctx.translate(this.player.width * 0.7, this.player.height * 0.8);
                 this.ctx.rotate(this.player.legAngleRight);
-                this.ctx.fillStyle = '#6F2937';
+                this.ctx.fillStyle = (this.player.hasGoldenLeg || this.player.isInvincible) ? '#D4AF37' : '#6F2937';
                 this.ctx.fillRect(-legWidth / 2, 0, legWidth, legLength);
                 this.ctx.restore();
             }
@@ -2908,7 +3003,7 @@
 
                 // 玩家身体
                 const flashColor = this.effectManager.getFlashColor('player');
-                const bodyColor = this.player.isInvincible ? '#F59E0B' : (flashColor || '#3B82F6');
+                const bodyColor = this.player.isInvincible ? '#D4AF37' : (flashColor || '#3B82F6');
                 this.ctx.fillStyle = bodyColor;
                 this.ctx.fillRect(0, 0, this.player.width, this.player.height);
 
@@ -2916,11 +3011,27 @@
                 this.drawLegs();
 
                 // 玩家头部
-                this.ctx.fillStyle = '#F59E0B';
+                this.ctx.fillStyle = (this.player.hasGoldenHead || this.player.isInvincible) ? '#D4AF37' : '#FFDAB9';
                 const headRadius = this.player.width / 2;
                 this.ctx.beginPath();
                 this.ctx.arc(this.player.width / 2, -headRadius, headRadius, 0, Math.PI * 2);
                 this.ctx.fill();
+
+                // 金头特效
+                if (this.player.hasGoldenHead) {
+                    const glowSize = headRadius * 1.2;
+                    const gradient = this.ctx.createRadialGradient(
+                        this.player.width / 2, -headRadius, 0,
+                        this.player.width / 2, -headRadius, glowSize
+                    );
+                    gradient.addColorStop(0, 'rgba(245, 158, 11, 0.5)');
+                    gradient.addColorStop(1, 'rgba(245, 158, 11, 0)');
+
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.player.width / 2, -headRadius, glowSize, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
 
                 // 绘制面部表情
                 this.drawFace();
@@ -3501,11 +3612,13 @@
                         'fullHealth': { bg: '#10B981', html: '💗' },
                         'smallPlayer': { bg: '#3B82F6', html: '🐜' },
                         'bigPlayer': { bg: '#8B5CF6', html: '🐘' },
-                        'invincible': { bg: '#F59E0B', html: '💪' },
+                        'invincible': { bg: '#F59E0B', html: '🧘' },
                         'allNormal': { bg: '#EC4899', html: '🟦' },
                         'lifeSaver': { bg: '#06B6D4', html: '👼' },
                         'gravityChange': { bg: '#9C27B0', html: '🌙' },
-                        'platformSlow': { bg: '#607D8B', html: '⏱️' }
+                        'platformSlow': { bg: '#607D8B', html: '⏱️' },
+                        'goldenLeg': { bg: '#F59E0B', html: '🦶' },
+                        'goldenHead': { bg: '#F59E0B', html: '😬' }
                     };
 
                     const config = buttonConfig[type];
