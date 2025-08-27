@@ -1784,13 +1784,10 @@
                         }
 
                         // 添加位移特效
-                        this.effectManager.addParticles(15,
+                        this.createParticleEffect(15,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 5,
-                            speedY: (Math.random() - 0.5) * 5,
                             color: '#F59E0B',
-                            life: 40,
-                            gravity: 0.1
+                            life: 40
                         });
                         return true;
 
@@ -1994,13 +1991,10 @@
                     const headX = this.player.x + this.player.width / 2;
                     const headY = this.player.y - this.player.width / 2;
 
-                    this.effectManager.addParticles(1, headX, headY, {
-                        speedX: 0,
-                        speedY: -5,
+                    this.createParticleEffect(1, headX, headY, {
                         color: '#DBEAFE',
                         size: 2,
                         life: 30,
-                        gravity: 0.5,
                         droplet: true
                     });
                 }
@@ -2028,13 +2022,10 @@
                             // 跳板特效
                             const platform = this.player.standingPlatform;
                             this.effectManager.addScaleEffect(platform.id, 0.2, 10);
-                            this.effectManager.addParticles(8,
+                            this.createParticleEffect(8,
                                 platform.x + platform.width / 2, platform.y, {
-                                speedX: (Math.random() - 0.5) * 5,
-                                speedY: -4,
                                 color: '#FBBF24',
-                                life: 40,
-                                gravity: 0.2
+                                life: 40
                             });
                         }
                     } else {
@@ -2124,16 +2115,13 @@
                     this.player.bodySquash = 1.2;
 
                     // 落地特效
-                    this.effectManager.addParticles(5,
+                    this.createParticleEffect(5,
                         this.player.x + this.player.width / 2,
                         this.player.y + this.player.height,
                         {
-                            speedX: (Math.random() - 0.5) * 3,
-                            speedY: -2,
                             color: '#A0AEC0',
                             size: Math.random() * 2 + 1,
-                            life: 20,
-                            gravity: 0.2
+                            life: 20
                         }
                     );
 
@@ -2517,13 +2505,10 @@
                     'fullHealth': () => {
                         this.player.health = this.player.maxHealth;
                         this.showPowerUpMessage("生命值全满!");
-                        this.effectManager.addParticles(15,
+                        this.createParticleEffect(15,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 4,
-                            speedY: (Math.random() - 0.5) * 4,
                             color: '#10B981',
-                            life: 40,
-                            gravity: 0.1
+                            life: 40
                         });
                     },
                     'smallPlayer': () => {
@@ -2533,13 +2518,10 @@
                         this.player.isBig = false;
                         this.player.sizeTimer = 20 * 60;
                         this.showPowerUpMessage("体型变小 (20秒) - 免疫钉板，重力减小，翻转平台不会翻转");
-                        this.effectManager.addParticles(10,
+                        this.createParticleEffect(10,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 3,
-                            speedY: (Math.random() - 0.5) * 3,
                             color: '#3B82F6',
-                            life: 30,
-                            gravity: 0
+                            life: 30
                         });
                     },
                     'bigPlayer': () => {
@@ -2552,26 +2534,20 @@
                         this.player.isSmall = false;
                         this.player.sizeTimer = 20 * 60;
                         this.showPowerUpMessage("体型变大 (20秒) - 免疫传送带，固定移动平台");
-                        this.effectManager.addParticles(10,
+                        this.createParticleEffect(10,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 3,
-                            speedY: (Math.random() - 0.5) * 3,
                             color: '#8B5CF6',
-                            life: 30,
-                            gravity: 0
+                            life: 30
                         });
                     },
                     'invincible': () => {
                         this.player.isInvincible = true;
                         this.player.invincibleTimer = 20 * 60;
                         this.showPowerUpMessage("金身状态 (20秒)");
-                        this.effectManager.addParticles(15,
+                        this.createParticleEffect(15,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 5,
-                            speedY: (Math.random() - 0.5) * 5,
                             color: '#F59E0B',
                             life: 40,
-                            gravity: 0,
                             explosive: true
                         });
                     },
@@ -2582,25 +2558,19 @@
                             platform.type = 'normal';
                         });
                         this.showPowerUpMessage("所有平台变为普通平台 (20秒)");
-                        this.effectManager.addParticles(20,
+                        this.createParticleEffect(20,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 4,
-                            speedY: (Math.random() - 0.5) * 4,
                             color: '#EC4899',
-                            life: 40,
-                            gravity: 0.1
+                            life: 40
                         });
                     },
                     'lifeSaver': () => {
                         this.lifeSaverAvailable = true;
                         this.showPowerUpMessage("获得救命道具! ");
-                        this.effectManager.addParticles(20,
+                        this.createParticleEffect(20,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 5,
-                            speedY: (Math.random() - 0.5) * 5,
                             color: '#06B6D4',
                             life: 50,
-                            gravity: 0.1,
                             explosive: true
                         });
                     },
@@ -2610,13 +2580,10 @@
                         this.player.gravityChangedTimer = 15 * 60;
                         this.player.gravity = this.player.originalGravity * 0.35;
                         this.showPowerUpMessage("重力减小 (15秒)");
-                        this.effectManager.addParticles(15,
+                        this.createParticleEffect(15,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 4,
-                            speedY: (Math.random() - 0.5) * 4,
                             color: '#9C27B0',
                             life: 40,
-                            gravity: -0.1,
                             explosive: true
                         });
                     },
@@ -2626,13 +2593,10 @@
                         this.player.increasedGravityTimer = 15 * 60; 
                         this.player.gravity = this.player.originalGravity * 1.5;
                         this.showPowerUpMessage("重力增强! 落得更快了!");
-                        this.effectManager.addParticles(20,
+                        this.createParticleEffect(20,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 3,
-                            speedY: 1 + Math.random() * 3,
                             color: '#DC2626',
-                            life: 40,
-                            gravity: 0.2
+                            life: 40
                         });
                     },
                     'platformSlow': () => {
@@ -2646,13 +2610,10 @@
                             this.player.platformSpeed = this.player.originalplatformSpeed * 0.5;
                         });
                         this.showPowerUpMessage("平台速度减慢30% (15秒)");
-                        this.effectManager.addParticles(15,
-                            this.player.x + this.player.width / 2, this.player.y + this.height / 2, {
-                            speedX: (Math.random() - 0.5) * 3,
-                            speedY: (Math.random() - 0.5) * 3,
+                        this.createParticleEffect(15,
+                            this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
                             color: '#607D8B',
-                            life: 40,
-                            gravity: 0.1
+                            life: 40
                         });
                     },
                     'platformSpeedUp': () => {
@@ -2666,52 +2627,40 @@
                             this.player.platformSpeed = this.player.originalplatformSpeed * 2;
                         });
                         this.showPowerUpMessage("平台加速! 注意躲避!");
-                        this.effectManager.addParticles(20,
+                        this.createParticleEffect(20,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 6,
-                            speedY: (Math.random() - 0.5) * 4,
                             color: '#EF4444',
-                            life: 40,
-                            gravity: 0.1
+                            life: 40
                         });
                     },
                     'goldenLeg': () => {
                         this.player.goldenLegUses = 3;
                         this.player.hasGoldenLeg = true;
                         this.showPowerUpMessage("获得金腿道具! 可免疫3次钉板伤害");
-                        this.effectManager.addParticles(15,
+                        this.createParticleEffect(15,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 4,
-                            speedY: (Math.random() - 0.5) * 4,
                             color: '#F59E0B',
-                            life: 40,
-                            gravity: 0.1
+                            life: 40
                         });
                     },
                     'goldenHead': () => {
                         this.player.goldenHeadUses = 3;
                         this.player.hasGoldenHead = true;
                         this.showPowerUpMessage("获得金头道具! 顶部越界时自动下移 (3次)");
-                        this.effectManager.addParticles(15,
+                        this.createParticleEffect(15,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 4,
-                            speedY: (Math.random() - 0.5) * 4,
                             color: '#F59E0B',
-                            life: 40,
-                            gravity: 0
+                            life: 40
                         });
                     },
                     'reverseControls': () => {
                         this.player.isControlReversed = true;
                         this.player.reverseControlsTimer = 15 * 60; // 15秒
                         this.showPowerUpMessage("反向控制! 左右方向颠倒了!");
-                        this.effectManager.addParticles(20,
+                        this.createParticleEffect(20,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 5,
-                            speedY: (Math.random() - 0.5) * 5,
                             color: '#8B5CF6',
                             life: 40,
-                            gravity: 0.1,
                             explosive: true
                         });
                     },
@@ -2719,13 +2668,10 @@
                         this.player.isNarrowVision = true;
                         this.player.narrowVisionTimer = 15 * 60; // 15秒
                         this.showPowerUpMessage("视野缩小! 注意观察!");
-                        this.effectManager.addParticles(20,
+                        this.createParticleEffect(20,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                            speedX: (Math.random() - 0.5) * 4,
-                            speedY: (Math.random() - 0.5) * 4,
                             color: '#6B7280',
-                            life: 40,
-                            gravity: 0.1
+                            life: 40
                         });
                     }
                 };
@@ -2801,10 +2747,8 @@
                             platform.flipped = true;
                             platform.flipTimer = 0;
                             if (isNewPlatform) {
-                                this.effectManager.addParticles(10,
+                                this.createParticleEffect(10,
                                     platform.x + platform.width / 2, platform.y + platform.height / 2, {
-                                    speedX: (Math.random() - 0.5) * 3,
-                                    speedY: (Math.random() - 0.5) * 3,
                                     color: '#10B981',
                                     life: 40
                                 });
@@ -2837,9 +2781,8 @@
                         if (isNewPlatform) {
                             this.soundManager.playBounceSound();
                             this.effectManager.addScaleEffect(platform.id, 0.3, 15);
-                            this.effectManager.addParticles(12,
+                            this.createParticleEffect(12,
                                 platform.x + platform.width / 2, platform.y, {
-                                speedX: (Math.random() - 0.5) * 5,
                                 speedY: -4,
                                 color: '#FBBF24',
                                 life: 40,
@@ -2857,13 +2800,10 @@
                             this.player.onGround = false;
                             this.soundManager.playDamageSound();
 
-                            this.effectManager.addParticles(15,
+                            this.createParticleEffect(15,
                                 this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                                speedX: (Math.random() - 0.5) * 6,
-                                speedY: (Math.random() - 0.5) * 6,
                                 color: '#EF4444',
-                                life: 30,
-                                gravity: 0.1
+                                life: 30
                             });
 
                             this.player.flashTimer = 20;
@@ -2887,17 +2827,28 @@
                                 }
                             }
 
-                            this.effectManager.addParticles(8,
+                            this.createParticleEffect(8,
                                 this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                                speedX: (Math.random() - 0.5) * 4,
-                                speedY: (Math.random() - 0.5) * 4,
                                 color: this.player.isSmall ? '#3B82F6' : '#F59E0B',
-                                life: 20,
-                                gravity: 0.1
+                                life: 20
                             });
                         }
                         break;
                 }
+            }
+
+            // 通用粒子效果生成器
+            createParticleEffect(count, x, y, options = {}) {
+                const defaultOptions = {
+                    speedX: (Math.random() - 0.5) * 4,
+                    speedY: (Math.random() - 0.5) * 4,
+                    color: '#ffffff',
+                    life: 30,
+                    gravity: 0.1,
+                    explosive: false
+                };
+                
+                this.effectManager.addParticles(count, x, y, { ...defaultOptions, ...options });
             }
 
             // 玩家受伤
@@ -2912,13 +2863,10 @@
                     this.showPowerUpMessage("救命道具生效! +5生命值");
                     this.soundManager.playHealSound();
 
-                    this.effectManager.addParticles(15,
+                    this.createParticleEffect(15,
                         this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
-                        speedX: (Math.random() - 0.5) * 4,
-                        speedY: (Math.random() - 0.5) * 4,
                         color: '#06B6D4',
                         life: 40,
-                        gravity: 0.1,
                         explosive: true
                     });
                 }
@@ -2931,12 +2879,9 @@
                     this.player.health = Math.min(this.player.maxHealth, this.player.health + amount);
                     if (this.player.health > previousHealth) {
                         this.soundManager.playHealSound();
-                        this.effectManager.addParticles(8,
+                        this.createParticleEffect(8,
                             this.player.x + this.player.width / 2, this.player.y, {
-                            speedX: (Math.random() - 0.5) * 3,
-                            speedY: (Math.random() - 0.5) * 3,
-                            color: '#10B981',
-                            life: 30
+                            color: '#10B981'
                         });
                     }
                 }
