@@ -197,15 +197,14 @@
             </h1>
 
             <div class="flex items-center gap-2">
-                <button id="fullscreenButton"
-                    class="bg-dark/70 hover:bg-dark/90 text-white p-2 rounded-full transition-all transform hover:scale-110 active:scale-90">
-                    <i class="fa fa-expand"></i>
-                </button>
-
                 <div class="bg-dark/70 px-3 py-2 rounded-full">
                     <i class="fa fa-volume-up text-gray-300"></i>
                     <input type="range" id="volumeSlider" class="volume-slider w-24" min="0" max="100" value="70">
                 </div>
+                <button id="fullscreenButton"
+                    class="bg-dark/70 hover:bg-dark/90 text-white p-2 rounded-full transition-all transform hover:scale-110 active:scale-90">
+                    <i class="fa fa-expand"></i>
+                </button>
             </div>
         </div>
 
@@ -322,17 +321,38 @@
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">👼
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🛸
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">濒死回血/传送</span>
+                        <span class="text-sm text-gray-300">濒死救命</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🌙
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🔺
                             </div>
                         </div>
                         <span class="text-sm text-gray-300">重力减小</span>
+                    </div>                    
+                    <div class="flex items-center gap-1">
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🔻
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">重力变大</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🐌
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">平台减速</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🚀
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">平台加速</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-7 h-7 rounded-full bg-blue-400 relative">
@@ -340,13 +360,6 @@
                             </div>
                         </div>
                         <span class="text-sm text-gray-300">变普通平台</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">⏱️
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">平台减速</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-7 h-7 rounded-full bg-blue-400 relative">
@@ -368,6 +381,20 @@
                             </div>
                         </div>
                         <span class="text-sm text-gray-300">金头</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">💫
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">反向控制</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">👁️
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">缩小视野</span>
                     </div>
                 </div>
             </div>
@@ -481,7 +508,7 @@
             }
         }
 
-        // ==================== 熔岩气泡类 ====================
+        // ==================== 熔岩气泡类 ====================        
         class LavaBubble {
             constructor(x, y, size, speed) {
                 this.x = x;
@@ -490,6 +517,10 @@
                 this.speed = speed;
                 this.life = 100;
                 this.maxLife = 100;
+                this.radius = size; 
+                this.pulseSize = 1; 
+                this.color = '#ff7700'; 
+                this.icon = ''; 
             }
 
             update() {
@@ -500,20 +531,38 @@
 
             draw(ctx) {
                 ctx.save();
-                const alpha = this.life / this.maxLife;
-                ctx.globalAlpha = alpha;
+                // 应用透明度
+                ctx.globalAlpha = this.opacity || 1;
 
-                // 气泡内部
-                ctx.fillStyle = `rgba(255, ${100 + Math.random() * 100}, 0, ${0.5 + alpha * 0.5})`;
+                // 脉冲效果
+                const pulse = this.pulseSize || 1; // Fallback to 1 if undefined
+
+                // 绘制发光效果
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.radius * pulse
+                );
+                gradient.addColorStop(0, (this.color || '#ff7700') + 'AA');
+                gradient.addColorStop(1, (this.color || '#ff7700') + '00');
+                ctx.fillStyle = gradient;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, this.radius * pulse, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 气泡高光
-                ctx.fillStyle = `rgba(255, 255, 200, ${0.3 + alpha * 0.2})`;
+                // 绘制主体圆形
+                ctx.fillStyle = this.color || '#ff7700';
                 ctx.beginPath();
-                ctx.arc(this.x - this.size * 0.3, this.y - this.size * 0.3, this.size * 0.3, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                 ctx.fill();
+
+                // 绘制图标
+                if (this.icon) {
+                    ctx.font = '20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = 'white';
+                    ctx.fillText(this.icon, this.x, this.y + 2);
+                }
 
                 ctx.restore();
             }
@@ -525,7 +574,7 @@
                 this.id = Date.now() + Math.random();
                 this.x = x;
                 this.y = y;
-                this.radius = 12;
+                this.radius = 16; 
                 this.type = type;
                 this.pulseSize = 1;
                 this.pulseSpeed = 0.05;
@@ -533,19 +582,28 @@
                 this.collected = false;
                 this.collectedEffect = false;
                 this.effectTimer = 0;
+                // debuff道具生命周期管理
+                this.spawnTime = Date.now();
+                this.lifeDuration = 10000; // 10秒
+                this.isDebuff = ['reverseControls', 'increasedGravity', 'platformSpeedUp', 'narrowVision'].includes(type);
+                this.attractionSpeed = 3; // 吸附速度
 
                 // 根据道具类型设置颜色和图标
                 const powerUpConfig = {
+                    'lifeSaver': { color: '#06B6D4', icon: '🛸' },
                     'fullHealth': { color: '#10B981', icon: '💗' },
+                    'allNormal': { color: '#EC4899', icon: '🟦' },
                     'smallPlayer': { color: '#3B82F6', icon: '🐜' },
                     'bigPlayer': { color: '#8B5CF6', icon: '🐘' },
                     'invincible': { color: '#F59E0B', icon: '🧘' },
-                    'allNormal': { color: '#EC4899', icon: '🟦' },
-                    'lifeSaver': { color: '#06B6D4', icon: '👼' },
-                    'gravityChange': { color: '#9C27B0', icon: '🌙' },
-                    'platformSlow': { color: '#607D8B', icon: '⏱️' },
                     'goldenLeg': { color: '#F59E0B', icon: '🦶' },
-                    'goldenHead': { color: '#F59E0B', icon: '😬' }
+                    'goldenHead': { color: '#F59E0B', icon: '😬' },
+                    'gravityChange': { color: '#9C27B0', icon: '🔺' },
+                    'increasedGravity': { color: '#DC2626', icon: '🔻' },
+                    'platformSlow': { color: '#607D8B', icon: '🐌' },
+                    'platformSpeedUp': { color: '#EF4444', icon: '🚀' },
+                    'reverseControls': { color: '#8B5CF6', icon: '💫' },
+                    'narrowVision': { color: '#6B7280', icon: '👁️' }
                 };
 
                 const config = powerUpConfig[type];
@@ -555,7 +613,7 @@
                 }
             }
 
-            update() {
+            update(game) {
                 this.currentPulse += this.pulseSpeed;
                 this.pulseSize = 1 + Math.sin(this.currentPulse) * 0.2;
 
@@ -567,6 +625,39 @@
                 if (this.collectedEffect) {
                     this.effectTimer--;
                     return this.effectTimer > 0;
+                }
+
+                // 处理debuff道具的自动吸附
+                if (this.isDebuff && !game.player.isDead && !game.player.isTeleporting) {
+                    const elapsedTime = Date.now() - this.spawnTime;
+                    
+                    // 10秒后开始淡出
+                    if (elapsedTime > this.lifeDuration - 2000) {
+                        this.opacity = 1 - (elapsedTime - (this.lifeDuration - 2000)) / 2000;
+                    } else {
+                        this.opacity = 1;
+                    }
+                    
+                    // 10秒后销毁
+                    if (elapsedTime > this.lifeDuration) {
+                        return false;
+                    }
+                    
+                    // 自动向玩家吸附（速度略快于平台生成速度）
+                    if (elapsedTime > 1000) { // 1秒后开始吸附
+                        const playerCenterX = game.player.x + game.player.width / 2;
+                        const playerCenterY = game.player.y + game.player.height / 2;
+                        const dx = playerCenterX - this.x;
+                        const dy = playerCenterY - this.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance > this.radius) {
+                            this.x += (dx / distance) * this.attractionSpeed;
+                            this.y += (dy / distance) * this.attractionSpeed;
+                        }
+                    }
+                } else {
+                    this.opacity = 1;
                 }
 
                 return true;
@@ -963,6 +1054,11 @@
             playFullscreenSound() {
                 this.playTone('sine', 440, 0.08, 0, { attack: 0.01, decay: 0.03, sustain: 0.5, release: 0.04 });
             }
+            playDeathSound() {
+                this.playTone('sawtooth', 110, 0.4, 0, { attack: 0.01, decay: 0.2, sustain: 0.6, release: 0.19 });
+                this.playTone('sawtooth', 87, 0.3, 0.1, { attack: 0.01, decay: 0.15, sustain: 0.5, release: 0.14 });
+                this.playTone('sawtooth', 73, 0.2, 0.2, { attack: 0.01, decay: 0.1, sustain: 0.4, release: 0.09 });
+            }
         }
 
         // ==================== 游戏主类 ====================
@@ -1014,7 +1110,7 @@
                 this.isPaused = false;
                 this.gameOver = false;
                 this.deathTimer = 0;
-                this.deathDelay = 45;
+                this.deathDelay = 60;
                 this.growDuration = 30;
                 this.score = 0;
                 this.speed = 2;
@@ -1061,7 +1157,6 @@
                     flashTimer: 0,
                     isDead: false,
                     deathEffectPlayed: false,
-                    isGrowing: false,
                     growProgress: 0,
                     armAngleLeft: 0,
                     armAngleRight: 0,
@@ -1078,12 +1173,25 @@
                     isGravityChanged: false,
                     gravityChangedTimer: 0,
                     isPlatformSpeedChanged: false,
+                    originalplatformSpeed:1,
+                    platformSpeed: 1,
                     platformSpeedChangedTimer: 0,
                     isTeleporting: false,
                     goldenLegUses: 0,
                     goldenHeadUses: 0,
                     hasGoldenLeg: false,
                     hasGoldenHead: false,
+                    
+                    // debuff道具相关属性
+                    isControlReversed: false,
+                    reverseControlsTimer: 0,
+                    isIncreasedGravity: false,
+                    increasedGravityTimer: 0,
+                    isPlatformSpeedUp: false,
+                    platformSpeedUpTimer: 0,
+                    isNarrowVision: false,
+                    narrowVisionTimer: 0,
+                    visionRadius: 450,
 
                     // 动画属性
                     walkCycle: 0,
@@ -1096,7 +1204,8 @@
                     shadowSize: 20,
                     shadowOpacity: 0.3,
                     legAngleLeft: 0,
-                    legAngleRight: 0
+                    legAngleRight: 0,
+                    alpha:1
                 };
 
                 // 游戏元素
@@ -1115,10 +1224,12 @@
 
                 // 道具类型
                 this.powerUpTypes = [
-                    'fullHealth', 'smallPlayer', 'bigPlayer', 'invincible',
-                    'allNormal', 'lifeSaver', 'gravityChange', 'platformSlow',
-                    'goldenLeg', 'goldenHead'
+                    'lifeSaver','fullHealth', 'smallPlayer', 'bigPlayer', 
+                    'allNormal', 'invincible', 'goldenLeg', 'goldenHead', 
+                    'gravityChange','increasedGravity', 'platformSpeedUp', 'platformSlow',
+                   'reverseControls','narrowVision'
                 ];
+
 
                 // 按键状态
                 this.keys = { left: false, right: false };
@@ -1414,7 +1525,6 @@
                     flashTimer: 0,
                     isDead: false,
                     deathEffectPlayed: false,
-                    isGrowing: false,
                     growProgress: 0,
                     armAngleLeft: 0,
                     armAngleRight: 0,
@@ -1430,6 +1540,8 @@
                     isGravityChanged: false,
                     gravityChangedTimer: 0,
                     isPlatformSpeedChanged: false,
+                    originalplatformSpeed:1,
+                    platformSpeed: 1,
                     platformSpeedChangedTimer: 0,
                     isTeleporting: false,
                     gravity: this.player.originalGravity,
@@ -1437,6 +1549,17 @@
                     goldenHeadUses: 0,
                     hasGoldenLeg: false,
                     hasGoldenHead: false,
+
+                    // debuff道具相关属性
+                    isControlReversed: false,
+                    reverseControlsTimer: 0,
+                    isIncreasedGravity: false,
+                    increasedGravityTimer: 0,
+                    isPlatformSpeedUp: false,
+                    platformSpeedUpTimer: 0,
+                    isNarrowVision: false,
+                    narrowVisionTimer: 0,
+                    visionRadius: 450,
 
                     // 重置动画属性
                     walkCycle: 0,
@@ -1449,7 +1572,8 @@
                     shadowSize: 20,
                     shadowOpacity: 0.3,
                     legAngleLeft: 0,
-                    legAngleRight: 0
+                    legAngleRight: 0,
+                    alpha:1
                 };
 
                 this.score = 0;
@@ -1768,50 +1892,39 @@
             // 更新玩家
             updatePlayer() {
                 const timeFactor = this.deltaTime / (1000 / 60);
-
                 if (this.player.isDead) {
-                    if (!this.player.isGrowing) {
-                        this.player.isGrowing = true;
-                        this.player.growProgress = 0;
-                        this.effectManager.addProgressiveScaleEffect('player', 1, 3, this.growDuration);
-                        this.soundManager.playGrowSound();
-                    } else {
-                        this.player.growProgress++;
-
-                        // 放大过程中的能量聚集特效
-                        if (this.player.growProgress % 3 === 0) {
-                            const scale = this.effectManager.getScale('player');
-                            const offset = Math.max(10, this.player.width * scale * 0.5);
-                            const angle = Math.random() * Math.PI * 2;
-                            const centerX = this.player.x + this.player.width / 2;
-                            const centerY = this.player.y + this.player.height / 2;
-                            const x = centerX + Math.cos(angle) * offset;
-                            const y = centerY + Math.sin(angle) * offset;
-
-                            this.effectManager.addParticles(1, x, y, {
-                                speedX: (centerX - x) / 10,
-                                speedY: (centerY - y) / 10,
-                                color: `hsl(${Math.random() * 60}, 100%, 60%)`,
-                                size: Math.random() * 2 + 1,
-                                life: 20,
-                                gravity: 0,
-                                fade: false
-                            });
-                        }
-
-                        // 放大完成，触发爆炸
-                        if (this.player.growProgress >= this.growDuration) {
-                            if (!this.player.deathEffectPlayed) {
-                                this.triggerDeathEffects();
-                                this.player.deathEffectPlayed = true;
-                            }
-                        }
-
-                        this.deathTimer++;
-                        if (this.deathTimer >= this.deathDelay) {
-                            this.endGame();
-                        }
+                    // 超级马里奥兄弟风格死亡特效
+                    if (this.deathTimer === 0) {
+                        // 死亡瞬间：玩家变大3倍，面向正面，双手向上伸展
+                        this.player.originalWidth = this.player.width;
+                        this.player.originalHeight = this.player.height;
+                        this.player.width = this.player.width * 3;
+                        this.player.height = this.player.height * 3;
+                        this.player.direction = 1;
+                        this.player.armAngleLeft = -Math.PI / 2; // 左手向上伸展
+                        this.player.armAngleRight = -Math.PI / 2; // 右手向上伸展
+                        this.player.expression = 'dead';
+                        this.player.velocityY = -10; // 初始向上弹跳速度
+                        this.player.alpha = 1; // 初始完全不透明
+                        this.soundManager.playDeathSound();
                     }
+                    
+                    // 逐渐透明化效果
+                    if (this.player.alpha > 0) {
+                        this.player.alpha -= 0.02 * timeFactor;
+                        if (this.player.alpha < 0) this.player.alpha = 0;
+                    }
+                    
+                    this.deathTimer++;
+                    
+                    // 死亡动画：向上弹跳然后下落
+                    this.player.velocityY += this.player.originalGravity * timeFactor;
+                    this.player.y += this.player.velocityY * timeFactor;
+                    
+                    if (this.deathTimer >= this.deathDelay) {
+                        this.soundManager.playGrowSound();
+                        this.endGame();
+                    }                    
                     return;
                 }
 
@@ -1846,11 +1959,21 @@
                 // 移动控制
                 let moveSpeed = 0;
                 if (this.keys.left) {
-                    moveSpeed = -this.player.speed * timeFactor;
-                    this.player.direction = -1;
+                    if (this.player.isControlReversed) {
+                        moveSpeed = this.player.speed * timeFactor;
+                        this.player.direction = 1;
+                    } else {
+                        moveSpeed = -this.player.speed * timeFactor;
+                        this.player.direction = -1;
+                    }
                 } else if (this.keys.right) {
-                    moveSpeed = this.player.speed * timeFactor;
-                    this.player.direction = 1;
+                    if (this.player.isControlReversed) {
+                        moveSpeed = -this.player.speed * timeFactor;
+                        this.player.direction = -1;
+                    } else {
+                        moveSpeed = this.player.speed * timeFactor;
+                        this.player.direction = 1;
+                    }
                 }
 
                 // 变大道具效果：免疫传送带位移
@@ -1882,9 +2005,13 @@
                     });
                 }
 
-                // 重力应用（考虑重力改变道具效果）
-                const currentGravity = this.player.isGravityChanged ?
-                    this.player.originalGravity * 0.35 : this.player.originalGravity;
+                // 重力应用
+                let currentGravity = this.player.originalGravity;
+                if (this.player.isGravityChanged) {
+                    currentGravity = this.player.originalGravity * 0.35;
+                } else if (this.player.isIncreasedGravity) {
+                    currentGravity = this.player.originalGravity * 1.5;
+                }
                 this.player.velocityY += currentGravity * timeFactor;
 
                 // 弹跳逻辑
@@ -2090,7 +2217,7 @@
                     }
                 }
 
-                // 重力改变效果
+                // 重力变小效果
                 if (this.player.isGravityChanged) {
                     this.player.gravityChangedTimer -= timeFactor;
                     if (this.player.gravityChangedTimer <= 0) {
@@ -2099,8 +2226,17 @@
                         this.showPowerUpMessage("重力恢复正常");
                     }
                 }
-
-                // 平台速度改变效果
+                // 重力增强效果
+                if (this.player.isIncreasedGravity) {
+                    this.player.increasedGravityTimer -= timeFactor;
+                    if (this.player.increasedGravityTimer <= 0) {
+                        this.player.isIncreasedGravity = false;
+                        this.player.gravity = this.player.originalGravity;
+                        this.showPowerUpMessage("重力恢复正常");
+                    }
+                }
+                
+                // 平台减速效果
                 if (this.player.isPlatformSpeedChanged) {
                     this.player.platformSpeedChangedTimer -= timeFactor;
                     if (this.player.platformSpeedChangedTimer <= 0) {
@@ -2109,9 +2245,45 @@
                         this.platforms.forEach(platform => {
                             if (platform.originalMoveSpeed) {
                                 platform.moveSpeed = platform.originalMoveSpeed;
-                            }
+                            }  
+                            this.player.platformSpeed = this.player.originalplatformSpeed;
                         });
                         this.showPowerUpMessage("平台速度恢复正常");
+                    }
+                }
+                // 平台加速效果
+                if (this.player.isPlatformSpeedUp) {
+                    this.player.platformSpeedUpTimer -= timeFactor;
+                    if (this.player.platformSpeedUpTimer <= 0) {
+                        this.player.isPlatformSpeedUp = false;
+                        // 恢复平台原始速度
+                        this.platforms.forEach(platform => {
+                            if (platform.originalMoveSpeed) {
+                                platform.moveSpeed = platform.originalMoveSpeed;
+                            } 
+                            this.player.platformSpeed = this.player.originalplatformSpeed;
+                        });
+                        this.showPowerUpMessage("平台速度恢复正常");
+                    }
+                }
+                // 反向控制效果
+                if (this.player.isControlReversed) {
+                    this.player.reverseControlsTimer -= timeFactor;
+                    if (this.player.reverseControlsTimer <= 0) {
+                        this.player.isControlReversed = false;
+                        this.showPowerUpMessage("控制恢复正常");
+                    }
+                }
+                
+             
+                
+                
+                // 缩小视野效果
+                if (this.player.isNarrowVision) {
+                    this.player.narrowVisionTimer -= timeFactor;
+                    if (this.player.narrowVisionTimer <= 0) {
+                        this.player.isNarrowVision = false;
+                        this.showPowerUpMessage("视野恢复正常");
                     }
                 }
             }
@@ -2166,60 +2338,12 @@
 
             // 触发死亡特效
             triggerDeathEffects() {
-                const centerX = this.player.x + this.player.width / 2;
-                const centerY = this.player.y + this.player.height / 2;
-                const scale = this.effectManager.getScale('player');
-
-                this.soundManager.playExplosionSound();
-
-                // 爆炸粒子系统
-                this.effectManager.addParticles(40, centerX, centerY, {
-                    speedX: (Math.random() - 0.5) * 15 * scale,
-                    speedY: (Math.random() - 0.5) * 15 * scale,
-                    color: '#FF5722',
-                    size: Math.random() * 4 + 2,
-                    life: 40,
-                    gravity: 0.2,
-                    explosive: true,
-                    pulseSize: 2
-                });
-
-                this.effectManager.addParticles(30, centerX, centerY, {
-                    speedX: (Math.random() - 0.5) * 10 * scale,
-                    speedY: (Math.random() - 0.5) * 10 * scale,
-                    color: '#FFB74D',
-                    size: Math.random() * 3 + 1,
-                    life: 50,
-                    gravity: 0.15,
-                    explosive: true,
-                    pulseSize: 1.5
-                });
-
-                this.effectManager.addParticles(25, centerX, centerY, {
-                    speedX: (Math.random() - 0.5) * 12 * scale,
-                    speedY: (Math.random() - 0.5) * 12 * scale,
-                    color: '#FFECB3',
-                    size: Math.random() * 2 + 0.5,
-                    life: 30,
-                    gravity: 0.1,
-                    fade: true
-                });
-
-                this.effectManager.addParticles(15, centerX, centerY, {
-                    speedX: (Math.random() - 0.5) * 6 * scale,
-                    speedY: (Math.random() - 0.5) * 6 * scale,
-                    color: '#BDBDBD',
-                    size: Math.random() * 5 + 3,
-                    life: 60,
-                    gravity: -0.05,
-                    fade: true
-                });
+                
             }
 
             // 更新平台
             updatePlatforms() {
-                // 计算速度倍数（考虑平台减速道具效果）
-                const speedMultiplier = this.player.isPlatformSpeedChanged ? 0.7 : 1;
+
                 const timeFactor = this.deltaTime / (1000 / 60);
 
                 // 更新背景偏移
@@ -2228,7 +2352,7 @@
                 // 移动并更新平台
                 for (let i = this.platforms.length - 1; i >= 0; i--) {
                     const platform = this.platforms[i];
-                    platform.y -= this.speed * timeFactor * speedMultiplier;
+                    platform.y -= this.speed * timeFactor * this.player.platformSpeed;
 
                     // 移动平台逻辑（核心修复：变大+落地+站在当前平台 → 停止移动）
                     if (this.gameMode === 'new' && platform.originalType && platform.originalType.startsWith('moving-')) {
@@ -2347,7 +2471,7 @@
                     powerUp.y -= this.speed * timeFactor * speedMultiplier;
 
                     // 更新道具状态
-                    if (!powerUp.update()) {
+                    if (!powerUp.update(this)) {
                         this.powerUps.splice(i, 1);
                     }
 
@@ -2469,7 +2593,7 @@
                     },
                     'lifeSaver': () => {
                         this.lifeSaverAvailable = true;
-                        this.showPowerUpMessage("获得救命道具! 濒死时自动回血");
+                        this.showPowerUpMessage("获得救命道具! ");
                         this.effectManager.addParticles(20,
                             this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
                             speedX: (Math.random() - 0.5) * 5,
@@ -2481,6 +2605,7 @@
                         });
                     },
                     'gravityChange': () => {
+                        this.player.isIncreasedGravity = false;
                         this.player.isGravityChanged = true;
                         this.player.gravityChangedTimer = 15 * 60;
                         this.player.gravity = this.player.originalGravity * 0.35;
@@ -2495,13 +2620,30 @@
                             explosive: true
                         });
                     },
+                    'increasedGravity': () => {
+                        this.player.isGravityChanged = false; 
+                        this.player.isIncreasedGravity = true;
+                        this.player.increasedGravityTimer = 15 * 60; 
+                        this.player.gravity = this.player.originalGravity * 1.5;
+                        this.showPowerUpMessage("重力增强! 落得更快了!");
+                        this.effectManager.addParticles(20,
+                            this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
+                            speedX: (Math.random() - 0.5) * 3,
+                            speedY: 1 + Math.random() * 3,
+                            color: '#DC2626',
+                            life: 40,
+                            gravity: 0.2
+                        });
+                    },
                     'platformSlow': () => {
+                        this.player.isPlatformSpeedUp = false;
                         this.player.isPlatformSpeedChanged = true;
                         this.player.platformSpeedChangedTimer = 15 * 60;
                         this.platforms.forEach(platform => {
                             if (platform.originalMoveSpeed) {
-                                platform.moveSpeed = platform.originalMoveSpeed * 0.7;
+                                platform.moveSpeed = platform.originalMoveSpeed * 0.5;
                             }
+                            this.player.platformSpeed = this.player.originalplatformSpeed * 0.5;
                         });
                         this.showPowerUpMessage("平台速度减慢30% (15秒)");
                         this.effectManager.addParticles(15,
@@ -2509,6 +2651,26 @@
                             speedX: (Math.random() - 0.5) * 3,
                             speedY: (Math.random() - 0.5) * 3,
                             color: '#607D8B',
+                            life: 40,
+                            gravity: 0.1
+                        });
+                    },
+                    'platformSpeedUp': () => {
+                        this.player.isPlatformSpeedChanged = false; // 取消平台减速效果
+                        this.player.isPlatformSpeedUp = true;
+                        this.player.platformSpeedUpTimer = 15 * 60; // 15秒
+                        this.platforms.forEach(platform => {
+                            if (platform.originalMoveSpeed) {
+                                platform.moveSpeed = platform.originalMoveSpeed * 2;
+                            }
+                            this.player.platformSpeed = this.player.originalplatformSpeed * 2;
+                        });
+                        this.showPowerUpMessage("平台加速! 注意躲避!");
+                        this.effectManager.addParticles(20,
+                            this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
+                            speedX: (Math.random() - 0.5) * 6,
+                            speedY: (Math.random() - 0.5) * 4,
+                            color: '#EF4444',
                             life: 40,
                             gravity: 0.1
                         });
@@ -2537,6 +2699,33 @@
                             color: '#F59E0B',
                             life: 40,
                             gravity: 0
+                        });
+                    },
+                    'reverseControls': () => {
+                        this.player.isControlReversed = true;
+                        this.player.reverseControlsTimer = 15 * 60; // 15秒
+                        this.showPowerUpMessage("反向控制! 左右方向颠倒了!");
+                        this.effectManager.addParticles(20,
+                            this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
+                            speedX: (Math.random() - 0.5) * 5,
+                            speedY: (Math.random() - 0.5) * 5,
+                            color: '#8B5CF6',
+                            life: 40,
+                            gravity: 0.1,
+                            explosive: true
+                        });
+                    },
+                    'narrowVision': () => {
+                        this.player.isNarrowVision = true;
+                        this.player.narrowVisionTimer = 15 * 60; // 15秒
+                        this.showPowerUpMessage("视野缩小! 注意观察!");
+                        this.effectManager.addParticles(20,
+                            this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, {
+                            speedX: (Math.random() - 0.5) * 4,
+                            speedY: (Math.random() - 0.5) * 4,
+                            color: '#6B7280',
+                            life: 40,
+                            gravity: 0.1
                         });
                     }
                 };
@@ -2594,7 +2783,6 @@
 
                 switch (platform.type) {
                     case 'normal':
-                        // 普通平台回血
                         if (!this.player.healedPlatforms.has(platform.id)) {
                             this.healPlayer(1);
                             this.player.healedPlatforms.add(platform.id);
@@ -2603,7 +2791,6 @@
                         break;
 
                     case 'flip':
-                        // 翻转平台回血
                         if (!this.player.healedPlatforms.has(platform.id)) {
                             this.healPlayer(1);
                             this.player.healedPlatforms.add(platform.id);
@@ -2627,7 +2814,6 @@
 
                     case 'conveyor-left':
                     case 'conveyor-right':
-                        // 传送带回血
                         if (!this.player.healedPlatforms.has(platform.id)) {
                             this.healPlayer(1);
                             this.player.healedPlatforms.add(platform.id);
@@ -2640,7 +2826,6 @@
                         break;
 
                     case 'spring':
-                        // 跳板回血
                         if (!this.player.healedPlatforms.has(platform.id)) {
                             this.healPlayer(1);
                             this.player.healedPlatforms.add(platform.id);
@@ -2922,6 +3107,11 @@
                 const hurtFlashVisible = this.player.flashTimer > 0 ?
                     (Math.floor(this.player.flashTimer / 3) % 2 === 0) : true;
 
+                // 应用透明度（死亡特效）
+                if (this.player.alpha !== undefined) {
+                    this.ctx.globalAlpha = this.player.alpha;
+                }
+
                 // 应用缩放和形变
                 this.ctx.translate(
                     this.player.x + this.player.width / 2,
@@ -2980,23 +3170,23 @@
                 }
 
                 // 放大过程中的能量效果
-                if (this.player.isGrowing) {
-                    const glowSize = this.player.width * 0.8 * (this.player.growProgress / this.growDuration);
-                    const gradient = this.ctx.createRadialGradient(
-                        this.player.width / 2, this.player.height / 2, 0,
-                        this.player.width / 2, this.player.height / 2, glowSize
-                    );
-                    gradient.addColorStop(0, 'rgba(255, 153, 0, 0.5)');
-                    gradient.addColorStop(0.5, 'rgba(255, 69, 0, 0.3)');
-                    gradient.addColorStop(1, 'rgba(255, 69, 0, 0)');
+                // if (this.player.isGrowing) {
+                //     const glowSize = this.player.width * 0.8 * (this.player.growProgress / this.growDuration);
+                //     const gradient = this.ctx.createRadialGradient(
+                //         this.player.width / 2, this.player.height / 2, 0,
+                //         this.player.width / 2, this.player.height / 2, glowSize
+                //     );
+                //     gradient.addColorStop(0, 'rgba(255, 153, 0, 0.5)');
+                //     gradient.addColorStop(0.5, 'rgba(255, 69, 0, 0.3)');
+                //     gradient.addColorStop(1, 'rgba(255, 69, 0, 0)');
 
-                    this.ctx.fillStyle = gradient;
-                    this.ctx.beginPath();
-                    this.ctx.arc(
-                        this.player.width / 2, this.player.height / 2, glowSize, 0, Math.PI * 2
-                    );
-                    this.ctx.fill();
-                }
+                //     this.ctx.fillStyle = gradient;
+                //     this.ctx.beginPath();
+                //     this.ctx.arc(
+                //         this.player.width / 2, this.player.height / 2, glowSize, 0, Math.PI * 2
+                //     );
+                //     this.ctx.fill();
+                // }
 
                 // 绘制手臂（在身体下方，营造层次感）
                 this.drawArms();
@@ -3264,10 +3454,10 @@
                 });
             }
 
-            // 绘制HUD（整合生命值、道具计时器和救命道具）
-            //位置跟踪属性
+            //救命道具位置跟踪属性
             lifeSaverTarget = { x: 0, y: 0 };
             lifeSaverCurrent = { x: 0, y: 0 };
+            //绘制HUD（整合生命值、道具计时器和救命道具）
             drawHUD() {
                 this.ctx.save();
 
@@ -3345,9 +3535,9 @@
 
                     // 图标和文字
                     this.ctx.fillStyle = '#06B6D4';
-                    this.ctx.font = '12px Arial';
+                    this.ctx.font = '20px Arial';
                     this.ctx.textAlign = 'center';
-                    this.ctx.fillText('👼', lifesaverX, lifesaverY + 3);
+                    this.ctx.fillText('🛸', lifesaverX, lifesaverY + 3);
                 }
 
                 // 开发者模式：显示帧率
@@ -3409,6 +3599,39 @@
                         timeLeft, 15, '#607D8B', '平台减速: ' + timeLeft + 's');
                     currentY += spacing;
                 }
+
+                // 反向控制计时器
+                if (this.player.isControlReversed) {
+                    const timeLeft = Math.ceil(this.player.reverseControlsTimer / 60);
+                    this.drawTimerBar(x, currentY, timerWidth, timerHeight,
+                        timeLeft, 15, '#EF4444', '反向控制: ' + timeLeft + 's');
+                    currentY += spacing;
+                }
+
+                // 重力增强计时器
+                if (this.player.isIncreasedGravity) {
+                    const timeLeft = Math.ceil(this.player.increasedGravityTimer / 60);
+                    this.drawTimerBar(x, currentY, timerWidth, timerHeight,
+                        timeLeft, 15, '#F97316', '重力增强: ' + timeLeft + 's');
+                    currentY += spacing;
+                }
+
+                // 平台加速计时器
+                if (this.player.isPlatformSpeedUp) {
+                    const timeLeft = Math.ceil(this.player.platformSpeedUpTimer / 60);
+                    this.drawTimerBar(x, currentY, timerWidth, timerHeight,
+                        timeLeft, 15, '#EC4899', '平台加速: ' + timeLeft + 's');
+                    currentY += spacing;
+                }
+
+                // 缩小视野计时器
+                if (this.player.isNarrowVision) {
+                    const timeLeft = Math.ceil(this.player.narrowVisionTimer / 60);
+                    this.drawTimerBar(x, currentY, timerWidth, timerHeight,
+                        timeLeft, 15, '#8B5CF6', '视野缩小: ' + timeLeft + 's');
+                    currentY += spacing;
+                }
+                
             }
 
             // 绘制计时器进度条
@@ -3467,12 +3690,42 @@
                 this.drawPlayer();
                 this.drawHUD();
 
+                // 缩小视野效果
+                if (this.player.isNarrowVision) {
+                    this.drawNarrowVisionMask();
+                }
+
                 if (this.isPaused) {
                     this.ctx.save();
                     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                     this.ctx.restore();
                 }
+            }
+
+            // 绘制缩小视野的遮罩
+            drawNarrowVisionMask() {
+                this.ctx.save();
+                
+                // 创建径向渐变 - 玩家周围清晰，边缘模糊
+                const centerX = this.player.x + this.player.width / 2;
+                const centerY = this.player.y + this.player.height / 2;
+                const clearRadius = 100; // 清晰区域半径
+                const blurRadius = 150; // 模糊区域半径
+                
+                const gradient = this.ctx.createRadialGradient(
+                    centerX, centerY, clearRadius,
+                    centerX, centerY, blurRadius
+                );
+                gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+                gradient.addColorStop(0.8, 'rgba(0, 0, 0, 0.7)');
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');
+                
+                // 绘制遮罩
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.ctx.restore();
             }
 
             // 游戏主循环
@@ -3600,25 +3853,29 @@
                     button.style.border = 'none';
                     button.style.borderRadius = '5px';
                     button.style.cursor = 'pointer';
-                    button.style.fontSize = '8px';
+                    button.style.fontSize = '15px';
                     button.style.display = 'flex';
                     button.style.flexDirection = 'column';
                     button.style.alignItems = 'center';
                     button.style.justifyContent = 'center';
                     button.style.minWidth = '10px';
 
-                    // 设置按钮颜色和图标<span style="font-size:12px">减速</span>
+                    // 设置按钮颜色和图标
                     const buttonConfig = {
+                        'lifeSaver': { bg: '#06B6D4', html: '🛸' },
                         'fullHealth': { bg: '#10B981', html: '💗' },
                         'smallPlayer': { bg: '#3B82F6', html: '🐜' },
                         'bigPlayer': { bg: '#8B5CF6', html: '🐘' },
                         'invincible': { bg: '#F59E0B', html: '🧘' },
-                        'allNormal': { bg: '#EC4899', html: '🟦' },
-                        'lifeSaver': { bg: '#06B6D4', html: '👼' },
-                        'gravityChange': { bg: '#9C27B0', html: '🌙' },
-                        'platformSlow': { bg: '#607D8B', html: '⏱️' },
                         'goldenLeg': { bg: '#F59E0B', html: '🦶' },
-                        'goldenHead': { bg: '#F59E0B', html: '😬' }
+                        'goldenHead': { bg: '#F59E0B', html: '😬' },
+                        'allNormal': { bg: '#EC4899', html: '🟦' },
+                        'gravityChange': { bg: '#9C27B0', html: '🔺' },
+                        'increasedGravity': { bg: '#DC2626', html: '🔻' },
+                        'platformSlow': { bg: '#607D8B', html: '🐌' },
+                        'platformSpeedUp': { bg: '#EF4444', html: '🚀' },                        
+                        'reverseControls': { bg: '#8B5CF6', html: '💫' },
+                        'narrowVision': { bg: '#6B7280', html: '👁️' }
                     };
 
                     const config = buttonConfig[type];
