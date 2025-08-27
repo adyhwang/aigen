@@ -598,7 +598,7 @@
                     'invincible': { color: '#F59E0B', icon: '🧘' },
                     'goldenLeg': { color: '#F59E0B', icon: '🦶' },
                     'goldenHead': { color: '#F59E0B', icon: '😬' },
-                    'gravityChange': { color: '#9C27B0', icon: '🔺' },
+                    'reducedGravity': { color: '#9C27B0', icon: '🔺' },
                     'increasedGravity': { color: '#DC2626', icon: '🔻' },
                     'platformSlow': { color: '#607D8B', icon: '🐌' },
                     'platformSpeedUp': { color: '#EF4444', icon: '🚀' },
@@ -1168,14 +1168,14 @@
                     isSmall: false,
                     isBig: false,
                     sizeTimer: 0,
-                    allNormalPlatforms: false,
+                    isAllNormal: false,
                     allNormalTimer: 0,
-                    isGravityChanged: false,
-                    gravityChangedTimer: 0,
-                    isPlatformSpeedChanged: false,
+                    isReducedGravity: false,
+                    reducedGravityTimer: 0,
+                    isPlatformSlow: false,
                     originalplatformSpeed:1,
                     platformSpeed: 1,
-                    platformSpeedChangedTimer: 0,
+                    platformSlowTimer: 0,
                     isTeleporting: false,
                     goldenLegUses: 0,
                     goldenHeadUses: 0,
@@ -1226,7 +1226,7 @@
                 this.powerUpTypes = [
                     'lifeSaver','fullHealth', 'smallPlayer', 'bigPlayer', 
                     'allNormal', 'invincible', 'goldenLeg', 'goldenHead', 
-                    'gravityChange','increasedGravity', 'platformSpeedUp', 'platformSlow',
+                    'reducedGravity','increasedGravity', 'platformSpeedUp', 'platformSlow',
                    'reverseControls','narrowVision'
                 ];
 
@@ -1535,14 +1535,14 @@
                     isSmall: false,
                     isBig: false,
                     sizeTimer: 0,
-                    allNormalPlatforms: false,
+                    isAllNormal: false,
                     allNormalTimer: 0,
-                    isGravityChanged: false,
-                    gravityChangedTimer: 0,
-                    isPlatformSpeedChanged: false,
+                    isReducedGravity: false,
+                    reducedGravityTimer: 0,
+                    isPlatformSlow: false,
                     originalplatformSpeed:1,
                     platformSpeed: 1,
-                    platformSpeedChangedTimer: 0,
+                    platformSlowTimer: 0,
                     isTeleporting: false,
                     gravity: this.player.originalGravity,
                     goldenLegUses: 0,
@@ -2001,7 +2001,7 @@
 
                 // 重力应用
                 let currentGravity = this.player.originalGravity;
-                if (this.player.isGravityChanged) {
+                if (this.player.isReducedGravity) {
                     currentGravity = this.player.originalGravity * 0.35;
                 } else if (this.player.isIncreasedGravity) {
                     currentGravity = this.player.originalGravity * 1.5;
@@ -2014,7 +2014,7 @@
                         this.player.bounceCounter += this.deltaTime;
                         if (this.player.bounceCounter > 500) {
                             // 根据当前重力调整弹跳力，保持弹跳高度一致
-                            const bounceForceMultiplier = this.player.isGravityChanged ? 0.35 : 1;
+                            const bounceForceMultiplier = this.player.isReducedGravity ? 0.35 : 1;
                             this.player.velocityY = this.player.bounceForce * bounceForceMultiplier;
                             this.player.bounceCounter = 0;
                             this.soundManager.playBounceSound();
@@ -2191,10 +2191,10 @@
                 }
 
                 // 全普通平台效果
-                if (this.player.allNormalPlatforms) {
+                if (this.player.isAllNormal) {
                     this.player.allNormalTimer -= timeFactor;
                     if (this.player.allNormalTimer <= 0) {
-                        this.player.allNormalPlatforms = false;
+                        this.player.isAllNormal = false;
                         // 恢复平台原始类型
                         this.platforms.forEach(platform => {
                             if (platform.originalType && platform.originalType.startsWith('moving-')) {
@@ -2206,10 +2206,10 @@
                 }
 
                 // 重力变小效果
-                if (this.player.isGravityChanged) {
-                    this.player.gravityChangedTimer -= timeFactor;
-                    if (this.player.gravityChangedTimer <= 0) {
-                        this.player.isGravityChanged = false;
+                if (this.player.isReducedGravity) {
+                    this.player.reducedGravityTimer -= timeFactor;
+                    if (this.player.reducedGravityTimer <= 0) {
+                        this.player.isReducedGravity = false;
                         this.player.gravity = this.player.originalGravity;
                         this.showPowerUpMessage("重力恢复正常");
                     }
@@ -2225,10 +2225,10 @@
                 }
                 
                 // 平台减速效果
-                if (this.player.isPlatformSpeedChanged) {
-                    this.player.platformSpeedChangedTimer -= timeFactor;
-                    if (this.player.platformSpeedChangedTimer <= 0) {
-                        this.player.isPlatformSpeedChanged = false;
+                if (this.player.isPlatformSlow) {
+                    this.player.platformSlowTimer -= timeFactor;
+                    if (this.player.platformSlowTimer <= 0) {
+                        this.player.isPlatformSlow = false;
                         // 恢复平台原始速度
                         this.platforms.forEach(platform => {
                             if (platform.originalMoveSpeed) {
@@ -2369,7 +2369,7 @@
                     }
 
                     // 全普通平台效果处理
-                    if (this.player.allNormalPlatforms) {
+                    if (this.player.isAllNormal) {
                         platform.type = 'normal';
                     }
 
@@ -2552,7 +2552,7 @@
                         });
                     },
                     'allNormal': () => {
-                        this.player.allNormalPlatforms = true;
+                        this.player.isAllNormal = true;
                         this.player.allNormalTimer = 20 * 60;
                         this.platforms.forEach(platform => {
                             platform.type = 'normal';
@@ -2574,10 +2574,10 @@
                             explosive: true
                         });
                     },
-                    'gravityChange': () => {
+                    'reducedGravity': () => {
                         this.player.isIncreasedGravity = false;
-                        this.player.isGravityChanged = true;
-                        this.player.gravityChangedTimer = 15 * 60;
+                        this.player.isReducedGravity = true;
+                        this.player.reducedGravityTimer = 15 * 60;
                         this.player.gravity = this.player.originalGravity * 0.35;
                         this.showPowerUpMessage("重力减小 (15秒)");
                         this.createParticleEffect(15,
@@ -2588,7 +2588,7 @@
                         });
                     },
                     'increasedGravity': () => {
-                        this.player.isGravityChanged = false; 
+                        this.player.isReducedGravity = false; 
                         this.player.isIncreasedGravity = true;
                         this.player.increasedGravityTimer = 15 * 60; 
                         this.player.gravity = this.player.originalGravity * 1.5;
@@ -2601,8 +2601,8 @@
                     },
                     'platformSlow': () => {
                         this.player.isPlatformSpeedUp = false;
-                        this.player.isPlatformSpeedChanged = true;
-                        this.player.platformSpeedChangedTimer = 15 * 60;
+                        this.player.isPlatformSlow = true;
+                        this.player.platformSlowTimer = 15 * 60;
                         this.platforms.forEach(platform => {
                             if (platform.originalMoveSpeed) {
                                 platform.moveSpeed = platform.originalMoveSpeed * 0.5;
@@ -2617,7 +2617,7 @@
                         });
                     },
                     'platformSpeedUp': () => {
-                        this.player.isPlatformSpeedChanged = false; // 取消平台减速效果
+                        this.player.isPlatformSlow = false; // 取消平台减速效果
                         this.player.isPlatformSpeedUp = true;
                         this.player.platformSpeedUpTimer = 15 * 60; // 15秒
                         this.platforms.forEach(platform => {
@@ -3522,7 +3522,7 @@
                 }
 
                 // 全普通平台计时器
-                if (this.player.allNormalPlatforms) {
+                if (this.player.isAllNormal) {
                     const timeLeft = Math.ceil(this.player.allNormalTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 20, '#EC4899', '普通平台: ' + timeLeft + 's');
@@ -3530,16 +3530,16 @@
                 }
 
                 // 重力改变计时器
-                if (this.player.isGravityChanged) {
-                    const timeLeft = Math.ceil(this.player.gravityChangedTimer / 60);
+                if (this.player.isReducedGravity) {
+                    const timeLeft = Math.ceil(this.player.reducedGravityTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 15, '#9C27B0', '重力减小: ' + timeLeft + 's');
                     currentY += spacing;
                 }
 
                 // 平台减速计时器
-                if (this.player.isPlatformSpeedChanged) {
-                    const timeLeft = Math.ceil(this.player.platformSpeedChangedTimer / 60);
+                if (this.player.isPlatformSlow) {
+                    const timeLeft = Math.ceil(this.player.platformSlowTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 15, '#607D8B', '平台减速: ' + timeLeft + 's');
                     currentY += spacing;
@@ -3815,7 +3815,7 @@
                         'goldenLeg': { bg: '#F59E0B', html: '🦶' },
                         'goldenHead': { bg: '#F59E0B', html: '😬' },
                         'allNormal': { bg: '#EC4899', html: '🟦' },
-                        'gravityChange': { bg: '#9C27B0', html: '🔺' },
+                        'reducedGravity': { bg: '#9C27B0', html: '🔺' },
                         'increasedGravity': { bg: '#DC2626', html: '🔻' },
                         'platformSlow': { bg: '#607D8B', html: '🐌' },
                         'platformSpeedUp': { bg: '#EF4444', html: '🚀' },                        
