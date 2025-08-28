@@ -3529,7 +3529,7 @@
                     currentY += spacing;
                 }
 
-                // 重力改变计时器
+                // 重力减小计时器
                 if (this.player.isReducedGravity) {
                     const timeLeft = Math.ceil(this.player.reducedGravityTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
