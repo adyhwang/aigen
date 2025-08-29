@@ -1804,6 +1804,12 @@
 
             // 在底部使用救命道具
             useLifeSaverAtBottom() {
+                this.useLifeSaver(-50);
+            }
+
+            // 在顶部使用救命道具（传送）
+            // 通用救命道具使用方法
+            useLifeSaver(endYOffset = -50) {
                 // 记录起点位置用于特效
                 const startX = this.player.x + this.player.width / 2;
                 const startY = this.player.y + this.player.height / 2;
@@ -1813,7 +1819,7 @@
 
                 // 传送终点位置
                 const endX = platform.x + platform.width / 2 - this.player.width / 2;
-                const endY = platform.y - this.player.height - 50;
+                const endY = platform.y - this.player.height + endYOffset;
 
                 // 标记为传送中
                 this.player.isTeleporting = true;
@@ -1846,44 +1852,7 @@
 
             // 在顶部使用救命道具（传送）
             useLifeSaverAtTop() {
-                // 记录起点位置用于特效
-                const startX = this.player.x + this.player.width / 2;
-                const startY = this.player.y + this.player.height / 2;
-
-                // 创建救命平台
-                const platform = this.createLifeSaverPlatform();
-
-                // 传送终点位置
-                const endX = platform.x + platform.width / 2 - this.player.width / 2;
-                const endY = platform.y - this.player.height - 50;
-
-                // 标记为传送中
-                this.player.isTeleporting = true;
-                this.player.velocityX = 0;
-                this.player.velocityY = 0;
-
-                // 播放传送音效
-                this.soundManager.playTeleportSound();
-
-                // 显示传送特效
-                this.effectManager.addTeleportEffect(startX, startY, endX + this.player.width / 2, endY + this.player.height / 2);
-
-                // 短暂延迟后执行传送
-                setTimeout(() => {
-                    // 传送玩家
-                    this.player.x = endX;
-                    this.player.y = endY;
-                    this.player.velocityY = 0;
-                    this.player.onGround = true;
-                    this.player.standingPlatform = platform;
-                    this.player.isTeleporting = false;
-
-                    // 消耗救命道具
-                    this.lifeSaverAvailable = false;
-
-                    // 显示提示
-                    this.showPowerUpMessage("已传送至安全位置!");
-                }, 300);
+                this.useLifeSaver(-50);
             }
 
             // 更新玩家
