@@ -492,10 +492,10 @@
         </div>
 
         <!-- 操作说明 -->
-        <div class="mt-4 text-center text-gray-400 text-sm instructions">
+        <!-- <div class="mt-4 text-center text-gray-400 text-sm instructions">
             <p class="mb-1">电脑: 方向键左右移动 | 手机: 点击左右按钮</p>
             <p>按回车键或点击暂停按钮可暂停/继续游戏</p>
-        </div>
+        </div> -->
     </div>
 
     <script>
@@ -2183,36 +2183,85 @@
 
                 if (this.isPaused) return;
 
-                // 单人模式或双人模式下的玩家1控制
-                if (e.key === 'ArrowLeft' || (this.playerMode === 'single' && (e.key === 'a' || e.key === 'A'))) {
-                    this.keys.left = true;
-                    this.player.direction = -1;
-                } else if (e.key === 'ArrowRight' || (this.playerMode === 'single' && (e.key === 'd' || e.key === 'D'))) {
-                    this.keys.right = true;
-                    this.player.direction = 1;
-                }
-
-                // 双人模式下的玩家2控制
-                if (this.playerMode === 'multiplayer') {
-                    if (e.key === 'a' || e.key === 'A') {
-                        this.p2Keys.left = true;
-                        this.players.p2.direction = -1;
-                    } else if (e.key === 'd' || e.key === 'D') {
-                        this.p2Keys.right = true;
-                        this.players.p2.direction = 1;
-                    }
+                // 键盘控制
+                switch (this.playerMode) {
+                    case 'multiplayer':
+                        switch (e.key) {
+                            case 'a':
+                            case 'A':
+                                this.keys.left = true;
+                                this.player.direction = -1;
+                                break;
+                            case 'd':
+                            case 'D':
+                                this.keys.right = true;
+                                this.player.direction = 1;
+                                break;
+                            case 'ArrowLeft':
+                                this.p2Keys.left = true;
+                                this.players.p2.direction = -1;
+                                break;
+                            case 'ArrowRight':
+                                this.p2Keys.right = true;
+                                this.players.p2.direction = 1;
+                                break;
+                        }
+                        break;
+                    case 'single':
+                        switch (e.key) {
+                            case 'a':
+                            case 'A':
+                            case 'ArrowLeft':
+                                this.keys.left = true;
+                                this.player.direction = -1;
+                                break;
+                            case 'd':
+                            case 'D':
+                            case 'ArrowRight':
+                                this.keys.right = true;
+                                this.player.direction = 1;
+                                break;
+                        }
+                        break;
                 }
             }
 
             handleKeyUp(e) {
                 if (this.isPaused) return;
-                if (e.key === 'ArrowLeft' || (this.playerMode === 'single' && (e.key === 'a' || e.key === 'A'))) this.keys.left = false;
-                else if (e.key === 'ArrowRight' || (this.playerMode === 'single' && (e.key === 'd' || e.key === 'D'))) this.keys.right = false;
-
-                // 双人模式下的玩家2控制
-                if (this.playerMode === 'multiplayer') {
-                    if (e.key === 'a' || e.key === 'A') this.p2Keys.left = false;
-                    else if (e.key === 'd' || e.key === 'D') this.p2Keys.right = false;
+                
+                switch (this.playerMode) {
+                    case 'multiplayer':
+                        switch (e.key) {
+                            case 'a':
+                            case 'A':
+                                this.keys.left = false;
+                                break;
+                            case 'd':
+                            case 'D':
+                                this.keys.right = false;
+                                break;
+                            case 'ArrowLeft':
+                                this.p2Keys.left = false;
+                                break;
+                            case 'ArrowRight':
+                                this.p2Keys.right = false;
+                                break;
+                        }
+                        break;
+                    case 'single':
+                        switch (e.key) {
+                            case 'a':
+                            case 'A':
+                            case 'ArrowLeft':
+                                this.keys.left = false;
+                                break;
+                            case 'd':
+                            case 'D':
+                            case 'ArrowRight':
+                                this.keys.right = false;
+                                break;
+                        }
+                        break;
                 }
             }
 
@@ -2381,8 +2430,8 @@
                     // 超级马里奥兄弟风格死亡特效
                     if (player.deathTimer === 0) {
                         // 死亡瞬间：玩家变大3倍，面向正面，双手向上伸展
-                        player.originalWidth = player.width;
-                        player.originalHeight = player.height;
+                        // player.originalWidth = player.width;
+                        // player.originalHeight = player.height;
                         player.width = player.width * 3;
                         player.height = player.height * 3;
                         player.direction = 1;
@@ -4446,28 +4495,45 @@
                 
                 // 为所有有缩小视野效果的玩家绘制遮罩
                 const players = this.playerMode === 'multiplayer' ? [this.players.p1, this.players.p2] : [this.player];
+                const narrowVisionPlayers = players.filter(player => player.isNarrowVision);
                 
-                for (const player of players) {
-                    if (player.isNarrowVision) {
-                        // 创建径向渐变 - 玩家周围清晰，边缘模糊
-                        const centerX = player.x + player.width / 2;
-                        const centerY = player.y + player.height / 2;
-                        const clearRadius = 100; // 清晰区域半径
-                        const blurRadius = 150; // 模糊区域半径
-                        
-                        const gradient = this.ctx.createRadialGradient(
-                            centerX, centerY, clearRadius,
-                            centerX, centerY, blurRadius
-                        );
-                        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-                        gradient.addColorStop(0.8, 'rgba(0, 0, 0, 0.7)');
-                        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');
-                        
-                        // 绘制遮罩
-                        this.ctx.fillStyle = gradient;
-                        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                    }
+                if (narrowVisionPlayers.length === 0) {
+                    this.ctx.restore();
+                    return;
                 }
+                
+                // 创建一个离屏canvas来绘制组合遮罩
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = this.canvas.width;
+                tempCanvas.height = this.canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // 第一步：绘制所有玩家的清晰区域（使用destination-out模式清除模糊区域）
+                tempCtx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                
+                tempCtx.globalCompositeOperation = 'destination-out';
+                
+                for (const player of narrowVisionPlayers) {
+                    const centerX = player.x + player.width / 2;
+                    const centerY = player.y + player.height / 2;
+                    const clearRadius = 100; // 清晰区域半径
+                    
+                    // 创建径向渐变 - 玩家周围清晰
+                    const gradient = tempCtx.createRadialGradient(
+                        centerX, centerY, 0,
+                        centerX, centerY, clearRadius
+                    );
+                    gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+                    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                    
+                    tempCtx.fillStyle = gradient;
+                    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                }
+                
+                // 第二步：在主canvas上绘制组合遮罩
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.drawImage(tempCanvas, 0, 0);
                 
                 this.ctx.restore();
             }
