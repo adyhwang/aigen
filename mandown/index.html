@@ -2559,6 +2559,14 @@
                 } else if (player.isIncreasedGravity) {
                     currentGravity = player.originalGravity * 1.5;
                 }
+                
+                // 全局重力效果 - 持续应用
+                if (this.isReducedGravity) {
+                    currentGravity = player.originalGravity * 0.35;
+                } else if (this.isIncreasedGravity) {
+                    currentGravity = player.originalGravity * 1.5;
+                }
+                
                 player.velocityY += currentGravity * timeFactor;
 
                 // 弹跳逻辑
@@ -2948,9 +2956,23 @@
                         }
                     }
 
-                    // 全普通平台效果处理
-                    if (this.player.isAllNormal) {
+                    // 全普通平台效果处理 - 持续应用效果
+                    if (this.isAllNormal) {
                         platform.type = 'normal';
+                    }
+
+                    // 平台减速效果 - 持续应用
+                    if (this.isPlatformSlow) {
+                        if (platform.originalMoveSpeed) {
+                            platform.moveSpeed = platform.originalMoveSpeed * 0.5;
+                        }
+                    }
+
+                    // 平台加速效果 - 持续应用
+                    if (this.isPlatformSpeedUp) {
+                        if (platform.originalMoveSpeed) {
+                            platform.moveSpeed = platform.originalMoveSpeed * 2;
+                        }
                     }
 
                     if (platform.effectTimer > 0) platform.effectTimer--;
@@ -4134,31 +4156,41 @@
                     const p1StartX = 10;
                     const p1StartY = 40;
                     
-                    // 绘制1P生命值
+                    // 绘制1P生命值或GAME OVER
                     const p1TotalWidth = this.players.p1.maxHealth * (heartSize + heartSpacing) - heartSpacing;
                     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
                     this.ctx.fillRect(p1StartX - 3, p1StartY - 3, p1TotalWidth + 6, heartSize + 6);
                     
-                    for (let i = 0; i < this.players.p1.maxHealth; i++) {
-                        const x = p1StartX + i * (heartSize + heartSpacing);
-                        const y = p1StartY;
+                    if (this.players.p1.isDead) {
+                        // 玩家1死亡，显示GAME OVER
+                        this.ctx.font = '10px "Press Start 2P", cursive';
+                        this.ctx.fillStyle = '#EF4444';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.textBaseline = 'middle';
+                        this.ctx.fillText('GAME OVER', p1StartX + p1TotalWidth / 2, p1StartY + heartSize / 2);
+                    } else {
+                        // 正常绘制心形图标
+                        for (let i = 0; i < this.players.p1.maxHealth; i++) {
+                            const x = p1StartX + i * (heartSize + heartSpacing);
+                            const y = p1StartY;
 
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(x + heartSize / 2, y + heartSize / 4);
-                        this.ctx.bezierCurveTo(
-                            x, y,
-                            x, y + heartSize / 2,
-                            x + heartSize / 2, y + heartSize
-                        );
-                        this.ctx.bezierCurveTo(
-                            x + heartSize, y + heartSize / 2,
-                            x + heartSize, y,
-                            x + heartSize / 2, y + heartSize / 4
-                        );
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(x + heartSize / 2, y + heartSize / 4);
+                            this.ctx.bezierCurveTo(
+                                x, y,
+                                x, y + heartSize / 2,
+                                x + heartSize / 2, y + heartSize
+                            );
+                            this.ctx.bezierCurveTo(
+                                x + heartSize, y + heartSize / 2,
+                                x + heartSize, y,
+                                x + heartSize / 2, y + heartSize / 4
+                            );
 
-                        const heartColor = this.players.p1.isInvincible ? '#F59E0B' : (i < this.players.p1.health ? '#EF4444' : '#6B7280');
-                        this.ctx.fillStyle = heartColor;
-                        this.ctx.fill();
+                            const heartColor = this.players.p1.isInvincible ? '#F59E0B' : (i < this.players.p1.health ? '#EF4444' : '#6B7280');
+                            this.ctx.fillStyle = heartColor;
+                            this.ctx.fill();
+                        }
                     }
                     
                     // 绘制1P道具计时器
@@ -4168,31 +4200,41 @@
                     const p2StartX = this.canvas.width - 10 - (this.players.p2.maxHealth * (heartSize + heartSpacing) - heartSpacing);
                     const p2StartY = 40;
                     
-                    // 绘制2P生命值
+                    // 绘制2P生命值或GAME OVER
                     const p2TotalWidth = this.players.p2.maxHealth * (heartSize + heartSpacing) - heartSpacing;
                     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
                     this.ctx.fillRect(p2StartX - 3, p2StartY - 3, p2TotalWidth + 6, heartSize + 6);
                     
-                    for (let i = 0; i < this.players.p2.maxHealth; i++) {
-                        const x = p2StartX + i * (heartSize + heartSpacing);
-                        const y = p2StartY;
+                    if (this.players.p2.isDead) {
+                        // 玩家2死亡，显示GAME OVER
+                        this.ctx.font = '10px "Press Start 2P", cursive';
+                        this.ctx.fillStyle = '#EF4444';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.textBaseline = 'middle';
+                        this.ctx.fillText('GAME OVER', p2StartX + p2TotalWidth / 2, p2StartY + heartSize / 2);
+                    } else {
+                        // 正常绘制心形图标
+                        for (let i = 0; i < this.players.p2.maxHealth; i++) {
+                            const x = p2StartX + i * (heartSize + heartSpacing);
+                            const y = p2StartY;
 
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(x + heartSize / 2, y + heartSize / 4);
-                        this.ctx.bezierCurveTo(
-                            x, y,
-                            x, y + heartSize / 2,
-                            x + heartSize / 2, y + heartSize
-                        );
-                        this.ctx.bezierCurveTo(
-                            x + heartSize, y + heartSize / 2,
-                            x + heartSize, y,
-                            x + heartSize / 2, y + heartSize / 4
-                        );
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(x + heartSize / 2, y + heartSize / 4);
+                            this.ctx.bezierCurveTo(
+                                x, y,
+                                x, y + heartSize / 2,
+                                x + heartSize / 2, y + heartSize
+                            );
+                            this.ctx.bezierCurveTo(
+                                x + heartSize, y + heartSize / 2,
+                                x + heartSize, y,
+                                x + heartSize / 2, y + heartSize / 4
+                            );
 
-                        const heartColor = this.players.p2.isInvincible ? '#F59E0B' : (i < this.players.p2.health ? '#EF4444' : '#6B7280');
-                        this.ctx.fillStyle = heartColor;
-                        this.ctx.fill();
+                            const heartColor = this.players.p2.isInvincible ? '#F59E0B' : (i < this.players.p2.health ? '#EF4444' : '#6B7280');
+                            this.ctx.fillStyle = heartColor;
+                            this.ctx.fill();
+                        }
                     }
                     
                     // 绘制2P道具计时器
@@ -4370,25 +4412,25 @@
                     currentY += spacing;
                 }
 
-                // 全普通平台计时器
-                if (player.isAllNormal) {
-                    const timeLeft = Math.ceil(player.allNormalTimer / 60);
+                // 全普通平台计时器（全局）
+                if (this.isAllNormal) {
+                    const timeLeft = Math.ceil(this.allNormalTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 20, '#EC4899', '普通平台: ' + timeLeft + 's');
                     currentY += spacing;
                 }
 
-                // 重力减小计时器
-                if (player.isReducedGravity) {
-                    const timeLeft = Math.ceil(player.reducedGravityTimer / 60);
+                // 重力减小计时器（全局）
+                if (this.isReducedGravity) {
+                    const timeLeft = Math.ceil(this.reducedGravityTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 15, '#9C27B0', '重力减小: ' + timeLeft + 's');
                     currentY += spacing;
                 }
 
-                // 平台减速计时器
-                if (player.isPlatformSlow) {
-                    const timeLeft = Math.ceil(player.platformSlowTimer / 60);
+                // 平台减速计时器（全局）
+                if (this.isPlatformSlow) {
+                    const timeLeft = Math.ceil(this.platformSlowTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 15, '#607D8B', '平台减速: ' + timeLeft + 's');
                     currentY += spacing;
@@ -4402,17 +4444,17 @@
                     currentY += spacing;
                 }
 
-                // 重力增强计时器
-                if (player.isIncreasedGravity) {
-                    const timeLeft = Math.ceil(player.increasedGravityTimer / 60);
+                // 重力增强计时器（全局）
+                if (this.isIncreasedGravity) {
+                    const timeLeft = Math.ceil(this.increasedGravityTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 15, '#F97316', '重力增强: ' + timeLeft + 's');
                     currentY += spacing;
                 }
 
-                // 平台加速计时器
-                if (player.isPlatformSpeedUp) {
-                    const timeLeft = Math.ceil(player.platformSpeedUpTimer / 60);
+                // 平台加速计时器（全局）
+                if (this.isPlatformSpeedUp) {
+                    const timeLeft = Math.ceil(this.platformSpeedUpTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 15, '#EC4899', '平台加速: ' + timeLeft + 's');
                     currentY += spacing;
@@ -4433,16 +4475,16 @@
                 // 背景
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
                 this.ctx.fillRect(x, y, width, height);
-
-                // 进度
-                const progress = timeLeft / totalTime;
-                this.ctx.fillStyle = color;
-                this.ctx.fillRect(x, y, width * progress, height);
-
-                // 标签
+                 // 标签
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
                 this.ctx.font = '10px Arial';
                 this.ctx.fillText(label, x + width + 5, y + height);
+                // 进度
+                const progress = timeLeft / totalTime;
+                this.ctx.fillStyle = color;
+                this.ctx.fillRect(x, y, width * progress, height);      
+
+                
             }
 
             // 绘制背景
