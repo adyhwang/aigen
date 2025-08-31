@@ -1715,7 +1715,8 @@
                     } else if (docEl.mozRequestFullScreen) {
                         docEl.mozRequestFullScreen();
                     } else if (docEl.webkitRequestFullscreen) {
-                        docEl.webkitRequestFullscreen();
+                        // iOS Safari需要添加参数
+                        docEl.webkitRequestFullscreen({ navigationUI: 'hide' });
                     } else if (docEl.msRequestFullscreen) {
                         docEl.msRequestFullscreen();
                     }
@@ -1775,29 +1776,8 @@
                 }
             }
 
-            // 初始化游戏
-            init() {
-                this.effectManager = new EffectManager();
-                this.platforms = [];
-                this.powerUps = [];
-                this.createInitialPlatforms();
-
-                // 重置背景偏移
-                this.backgroundOffset = 0;
-
-                // 重置道具生成记录
-                this.lastPowerUpScore = 0;
-
-                // 新模式开始时自动获得一个救命道具
-                this.lifeSaverAvailable = this.gameMode === 'new';
-                
-                // 双人模式下两个玩家都获得救命道具
-                if (this.playerMode === 'multiplayer') {
-                    this.players.p1.lifeSaverAvailable = true;
-                    this.players.p2.lifeSaverAvailable = true;
-                }
-
-                // 重置玩家对象
+            // 重置玩家对象
+            resetPlayers() {
                 if (this.playerMode === 'multiplayer') {
                     // 双人模式下重置两个玩家
                     this.players.p1 = {
@@ -1860,7 +1840,8 @@
                         shadowOpacity: 0.3,
                         legAngleLeft: 0,
                         legAngleRight: 0,
-                        alpha: 1
+                        alpha: 1,
+                        lifeSaverAvailable: this.gameMode === 'new'
                     };
 
                     this.players.p2 = {
@@ -1923,7 +1904,8 @@
                         shadowOpacity: 0.3,
                         legAngleLeft: 0,
                         legAngleRight: 0,
-                        alpha: 1
+                        alpha: 1,
+                        lifeSaverAvailable: this.gameMode === 'new'
                     };
                 } else {
                     // 单人模式下重置玩家
@@ -1965,8 +1947,6 @@
                         goldenHeadUses: 0,
                         hasGoldenLeg: false,
                         hasGoldenHead: false,
-
-                        // debuff道具相关属性
                         isControlReversed: false,
                         reverseControlsTimer: 0,
                         isIncreasedGravity: false,
@@ -1976,8 +1956,6 @@
                         isNarrowVision: false,
                         narrowVisionTimer: 0,
                         visionRadius: 450,
-
-                        // 重置动画属性
                         walkCycle: 0,
                         isJumping: false,
                         isFalling: false,
@@ -1989,9 +1967,30 @@
                         shadowOpacity: 0.3,
                         legAngleLeft: 0,
                         legAngleRight: 0,
-                        alpha:1
+                        alpha:1,
+                        lifeSaverAvailable: this.gameMode === 'new'
                     };
                 }
+            }
+
+            // 初始化游戏
+            init() {
+                this.effectManager = new EffectManager();
+                this.platforms = [];
+                this.powerUps = [];
+                this.createInitialPlatforms();
+
+                // 重置背景偏移
+                this.backgroundOffset = 0;
+
+                // 重置道具生成记录
+                this.lastPowerUpScore = 0;
+
+                // 新模式开始时自动获得一个救命道具
+                this.lifeSaverAvailable = this.gameMode === 'new';
+
+                // 重置玩家对象
+                this.resetPlayers();
 
                 this.score = 0;
                 this.speed = this.baseSpeed;
