@@ -1928,6 +1928,7 @@
                         flashTimer: 0,
                         isDead: false,
                         deathEffectPlayed: false,
+                        deathTimer: 0,
                         growProgress: 0,
                         armAngleLeft: 0,
                         armAngleRight: 0,
@@ -2165,6 +2166,9 @@
                     if (!bothPlayersDead) {
                         return; // 还有一个玩家存活，不结束游戏
                     }
+                } else {
+                    // 单人模式下，直接标记玩家死亡
+                    player.deathEffectPlayed = true;
                 }
                 
                 this.isRunning = false;
