@@ -1710,29 +1710,63 @@
 
                 if (!document.fullscreenElement) {
                     // 进入全屏
+                    let requestPromise;
                     if (docEl.requestFullscreen) {
-                        docEl.requestFullscreen();
+                        requestPromise = docEl.requestFullscreen();
                     } else if (docEl.mozRequestFullScreen) {
-                        docEl.mozRequestFullScreen();
+                        requestPromise = docEl.mozRequestFullScreen();
                     } else if (docEl.webkitRequestFullscreen) {
                         // iOS Safari需要添加参数
-                        docEl.webkitRequestFullscreen({ navigationUI: 'hide' });
+                        requestPromise = docEl.webkitRequestFullscreen({ navigationUI: 'hide' });
                     } else if (docEl.msRequestFullscreen) {
-                        docEl.msRequestFullscreen();
+                        requestPromise = docEl.msRequestFullscreen();
                     }
-                    this.fullscreenButton.innerHTML = '<i class="fa fa-compress"></i>';
+                    
+                    // 处理Promise以捕获可能的错误
+                    if (requestPromise) {
+                        requestPromise.then(() => {
+                            this.fullscreenButton.innerHTML = '<i class="fa fa-compress"></i>';
+                        }).catch((error) => {
+                            console.error('全屏请求失败:', error);
+                            // 在iOS Safari上可能需要特殊处理
+                            if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
+                                // 尝试使用body元素而不是documentElement
+                                const bodyEl = document.body;
+                                if (bodyEl.webkitRequestFullscreen) {
+                                    bodyEl.webkitRequestFullscreen({ navigationUI: 'hide' }).then(() => {
+                                        this.fullscreenButton.innerHTML = '<i class="fa fa-compress"></i>';
+                                    }).catch((err) => {
+                                        console.error('使用body元素全屏请求失败:', err);
+                                    });
+                                }
+                            }
+                        });
+                    } else {
+                        this.fullscreenButton.innerHTML = '<i class="fa fa-compress"></i>';
+                    }
                 } else {
                     // 退出全屏
+                    let exitPromise;
                     if (document.exitFullscreen) {
-                        document.exitFullscreen();
+                        exitPromise = document.exitFullscreen();
                     } else if (document.mozCancelFullScreen) {
-                        document.mozCancelFullScreen();
+                        exitPromise = document.mozCancelFullScreen();
                     } else if (document.webkitExitFullscreen) {
-                        document.webkitExitFullscreen();
+                        exitPromise = document.webkitExitFullscreen();
                     } else if (document.msExitFullscreen) {
-                        document.msExitFullscreen();
+                        exitPromise = document.msExitFullscreen();
                     }
-                    this.fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
+                    
+                    // 处理Promise以捕获可能的错误
+                    if (exitPromise) {
+                        exitPromise.then(() => {
+                            this.fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
+                        }).catch((error) => {
+                            console.error('退出全屏失败:', error);
+                        });
+                    } else {
+                        this.fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
+                    }
                 }
 
                 // 播放全屏切换音效
