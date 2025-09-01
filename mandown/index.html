@@ -2341,8 +2341,7 @@
             useLifeSaverAtBottom(player = this.player) {
                 this.useLifeSaver(player, -50);
             }
-
-            // 在顶部使用救命道具（传送）
+            
             // 通用救命道具使用方法
             useLifeSaver(player = this.player, endYOffset = -50) {
                 // 检查玩家是否有救命道具可用
@@ -2435,8 +2434,6 @@
                     // 超级马里奥兄弟风格死亡特效
                     if (player.deathTimer === 0) {
                         // 死亡瞬间：玩家变大3倍，面向正面，双手向上伸展
-                        // player.originalWidth = player.width;
-                        // player.originalHeight = player.height;
                         player.width = player.width * 3;
                         player.height = player.height * 3;
                         player.direction = 1;
@@ -3855,31 +3852,12 @@
                     this.ctx.fill();
                 }
 
-                // 放大过程中的能量效果
-                // if (this.player.isGrowing) {
-                //     const glowSize = this.player.width * 0.8 * (this.player.growProgress / this.growDuration);
-                //     const gradient = this.ctx.createRadialGradient(
-                //         this.player.width / 2, this.player.height / 2, 0,
-                //         this.player.width / 2, this.player.height / 2, glowSize
-                //     );
-                //     gradient.addColorStop(0, 'rgba(255, 153, 0, 0.5)');
-                //     gradient.addColorStop(0.5, 'rgba(255, 69, 0, 0.3)');
-                //     gradient.addColorStop(1, 'rgba(255, 69, 0, 0)');
-
-                //     this.ctx.fillStyle = gradient;
-                //     this.ctx.beginPath();
-                //     this.ctx.arc(
-                //         this.player.width / 2, this.player.height / 2, glowSize, 0, Math.PI * 2
-                //     );
-                //     this.ctx.fill();
-                // }
-
                 // 绘制手臂（在身体下方，营造层次感）
                 this.drawArms(player);
 
                 // 玩家身体
                 const flashColor = this.effectManager.getFlashColor(player === this.players.p1 ? 'player' : 'player2');
-                const bodyColor = player.isInvincible ? '#D4AF37' : (flashColor || (player === this.players.p1 ? '#3B82F6' : '#EF4444'));
+                const bodyColor = player.isInvincible ? '#D4AF37' : (flashColor || (player === this.players.p1 ? '#FF2732' : '#33931C'));
                 this.ctx.fillStyle = bodyColor;
                 this.ctx.fillRect(0, 0, player.width, player.height);
 
