@@ -2930,7 +2930,18 @@
                     // 移动平台逻辑（核心修复：变大+落地+站在当前平台 → 停止移动）
                     if (this.gameMode === 'new' && platform.originalType && platform.originalType.startsWith('moving-')) {
                         // 关键条件：玩家未变大 OR 未落地 OR 没站在当前平台 → 才执行移动
-                        if (!(this.player.isBig && this.player.onGround && this.player.standingPlatform?.id === platform.id)) {
+                        let shouldStopMoving = false;
+                        
+                        // 单人模式检查
+                        if (this.playerMode !== 'multiplayer') {
+                            shouldStopMoving = this.player.isBig && this.player.onGround && this.player.standingPlatform?.id === platform.id;
+                        } else {
+                            // 双人模式检查两个玩家
+                            shouldStopMoving = (this.players.p1.isBig && this.players.p1.onGround && this.players.p1.standingPlatform?.id === platform.id) ||
+                                              (this.players.p2.isBig && this.players.p2.onGround && this.players.p2.standingPlatform?.id === platform.id);
+                        }
+                        
+                        if (!shouldStopMoving) {
                             platform.movePosition += platform.moveSpeed * platform.moveDirection * timeFactor;
 
                             // 到达移动边界，改变方向
@@ -4060,9 +4071,22 @@
                 const offset = (Date.now() * 0.05 * direction) % spacing;
 
                 // 检查是否有玩家站在传送带上且使用了变大道具
-                const isPlayerOnConveyor = this.player.standingPlatform &&
-                    this.player.standingPlatform.id === platform.id &&
-                    this.player.isBig;
+                let isPlayerOnConveyor = false;
+                
+                if (this.playerMode !== 'multiplayer') {
+                    // 单人模式检查
+                    isPlayerOnConveyor = this.player.standingPlatform &&
+                        this.player.standingPlatform.id === platform.id &&
+                        this.player.isBig;
+                } else {
+                    // 双人模式检查两个玩家
+                    isPlayerOnConveyor = (this.players.p1.standingPlatform &&
+                        this.players.p1.standingPlatform.id === platform.id &&
+                        this.players.p1.isBig) ||
+                        (this.players.p2.standingPlatform &&
+                        this.players.p2.standingPlatform.id === platform.id &&
+                        this.players.p2.isBig);
+                }
 
                 // 如果玩家站在传送带上且使用了变大道具，则不绘制动画
                 if (!isPlayerOnConveyor) {
