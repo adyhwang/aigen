@@ -4176,7 +4176,7 @@
             drawPowerUpTimers(x, y, player) {
                 const timerHeight = 4;
                 const timerWidth = 80;
-                const spacing = 8; // 减小间距以避免重叠
+                const spacing = 12;
                 let currentY = y;
 
                 // 金身状态计时器
@@ -4260,7 +4260,7 @@
                 // 标签
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
                 this.ctx.font = '10px Arial';
-                this.ctx.fillText(label, x + width + 5, y + height / 2 + 3);
+                this.ctx.fillText(label, x + width + 5, y + height);
 
                 // 背景
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
