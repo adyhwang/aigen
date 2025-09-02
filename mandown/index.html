@@ -1194,6 +1194,7 @@
                 this.deathDelay = 60;
                 this.growDuration = 30;
                 this.score = 0;
+                this.platformsRemoved = 0;
                 this.speed = 2;
                 this.baseSpeed = 2;
                 this.speedIncreaseInterval = 50;
@@ -2894,7 +2895,10 @@
                         // 移除过期翻转平台
                         if (platform.flipTimer > 120) {
                             this.platforms.splice(i, 1);
-                            this.score++;
+                            this.platformsRemoved++;
+                            if (this.platformsRemoved % 5 === 0) {
+                                this.score++;
+                            }
                             this.checkPowerUpSpawn();
                             continue;
                         }
@@ -2903,7 +2907,10 @@
                     // 移除超出屏幕的平台
                     if (platform.y + platform.height < 0 && !(platform.type === 'flip' && platform.flipped)) {
                         this.platforms.splice(i, 1);
-                        this.score++;
+                        this.platformsRemoved++;
+                        if (this.platformsRemoved % 5 === 0) {
+                            this.score++;
+                        }
                         this.checkPowerUpSpawn();
 
                         // 速度递增
@@ -2945,7 +2952,7 @@
 
             // 检查是否需要生成道具
             checkPowerUpSpawn() {
-                if (this.gameMode === 'new' && (this.score == 2 || this.score >= this.lastPowerUpScore + this.powerUpInterval)) {
+                if (this.gameMode === 'new' && (this.score >= this.lastPowerUpScore + 5)) {
                     // 在最新生成的平台上生成道具
                     if (this.platforms.length > 0) {
                         const lastPlatform = this.platforms[this.platforms.length - 1];
@@ -4655,7 +4662,7 @@
                     setTimeout(() => {
                         if (document.body.contains(dialog)) {
                             // 模拟点击P1+P2按钮
-                            const p1p2Button = dialog.querySelector('button:nth-child(3)');
+                            const p1p2Button = dialog.querySelector('button:nth-child(4)');
                             if (p1p2Button) {
                                 p1p2Button.click();
                             }
