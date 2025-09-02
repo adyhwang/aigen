@@ -1256,7 +1256,7 @@
                         isDead: false,
                         deathEffectPlayed: false,
                         deathTimer: 0,
-                        growProgress: 0,
+
                         armAngleLeft: 0,
                         armAngleRight: 0,
                         armSwingSpeed: 0.015,
@@ -1267,8 +1267,6 @@
                         isSmall: false,
                         isBig: false,
                         sizeTimer: 0,
-                        originalplatformSpeed: 1,
-                        platformSpeed: 1,
                         isTeleporting: false,
                         goldenLegUses: 0,
                         goldenHeadUses: 0,
@@ -1277,7 +1275,7 @@
                         lifeSaverAvailable: this.gameMode === 'new',
                         isControlReversed: false,
                         reverseControlsTimer: 0,
-                        visionRadius: 450,
+
                         collisionDisabledTimer: 0,
                         walkCycle: 0,
                         isJumping: false,
@@ -1321,7 +1319,6 @@
                         isDead: false,
                         deathEffectPlayed: false,
                         deathTimer: 0,
-                        growProgress: 0,
                         armAngleLeft: 0,
                         armAngleRight: 0,
                         armSwingSpeed: 0.015,
@@ -1332,8 +1329,6 @@
                         isSmall: false,
                         isBig: false,
                         sizeTimer: 0,
-                        originalplatformSpeed: 1,
-                        platformSpeed: 1,
                         isTeleporting: false,
                         goldenLegUses: 0,
                         goldenHeadUses: 0,
@@ -1344,11 +1339,8 @@
                         reverseControlsTimer: 0,
                         isIncreasedGravity: false,
                         increasedGravityTimer: 0,
-                        isPlatformSpeedUp: false,
-                        platformSpeedUpTimer: 0,
                         isNarrowVision: false,
                         narrowVisionTimer: 0,
-                        visionRadius: 450,
                         collisionDisabledTimer: 0,
                         walkCycle: 0,
                         isJumping: false,
@@ -1810,7 +1802,6 @@
                         isDead: false,
                         deathEffectPlayed: false,
                         deathTimer: 0,
-                        growProgress: 0,
                         armAngleLeft: 0,
                         armAngleRight: 0,
                         armSwingSpeed: 0.015,
@@ -1824,14 +1815,13 @@
                         originalplatformSpeed: 1,
                         platformSpeed: 1,
                         isTeleporting: false,
-                        goldenLegUuses: 0,
+                        goldenLegUses: 0,
                         goldenHeadUses: 0,
                         hasGoldenLeg: false,
                         hasGoldenHead: false,
                         lifeSaverAvailable: this.gameMode === 'new',
                         isControlReversed: false,
                         reverseControlsTimer: 0,
-                        visionRadius: 450,
                         collisionDisabledTimer: 0,
                         walkCycle: 0,
                         isJumping: false,
@@ -1875,7 +1865,6 @@
                         isDead: false,
                         deathEffectPlayed: false,
                         deathTimer: 0,
-                        growProgress: 0,
                         armAngleLeft: 0,
                         armAngleRight: 0,
                         armSwingSpeed: 0.015,
@@ -1902,7 +1891,6 @@
                         platformSpeedUpTimer: 0,
                         isNarrowVision: false,
                         narrowVisionTimer: 0,
-                        visionRadius: 450,
                         collisionDisabledTimer: 0,
                         walkCycle: 0,
                         isJumping: false,
@@ -2712,7 +2700,7 @@
                         // 恢复所有活跃玩家的平台速度
                         const activePlayers = this.getActivePlayers();
                         activePlayers.forEach(player => {
-                            player.platformSpeed = player.originalplatformSpeed;
+                            player.platformSpeed = player.originalPlatformSpeed;
                         });
                         this.showPowerUpMessage("平台速度恢复正常");
                     }
@@ -2731,7 +2719,7 @@
                         // 恢复所有活跃玩家的平台速度
                         const activePlayers = this.getActivePlayers();
                         activePlayers.forEach(player => {
-                            player.platformSpeed = player.originalplatformSpeed;
+                            player.platformSpeed = player.originalPlatformSpeed;
                         });
                         this.showPowerUpMessage("平台速度恢复正常");
                     }
@@ -2819,12 +2807,31 @@
                 const timeFactor = this.deltaTime / (1000 / 60);
 
                 // 更新背景偏移
-                this.backgroundOffset += this.speed * timeFactor * 0.2;
+                // 应用平台加速减速效果到背景移动
+                let effectiveSpeed = this.speed;
+                if (this.isPlatformSlow) {
+                    effectiveSpeed *= 0.5;
+                }
+                if (this.isPlatformSpeedUp) {
+                    effectiveSpeed *= 2;
+                }
+                
+                this.backgroundOffset += effectiveSpeed * timeFactor * 0.2;
 
                 // 移动并更新平台
                 for (let i = this.platforms.length - 1; i >= 0; i--) {
                     const platform = this.platforms[i];
-                    platform.y -= this.speed * timeFactor;
+                    
+                    // 应用平台加速减速效果到游戏速度
+                    let effectiveSpeed = this.speed;
+                    if (this.isPlatformSlow) {
+                        effectiveSpeed *= 0.5;
+                    }
+                    if (this.isPlatformSpeedUp) {
+                        effectiveSpeed *= 2;
+                    }
+                    
+                    platform.y -= effectiveSpeed * timeFactor;
 
                     // 移动平台逻辑（核心修复：变大+落地+站在当前平台 → 停止移动）
                     if (this.gameMode === 'new' && platform.originalType && platform.originalType.startsWith('moving-')) {
@@ -2868,19 +2875,7 @@
                         platform.type = 'normal';
                     }
 
-                    // 平台减速效果 - 持续应用
-                    if (this.isPlatformSlow) {
-                        if (platform.originalMoveSpeed) {
-                            platform.moveSpeed = platform.originalMoveSpeed * 0.5;
-                        }
-                    }
 
-                    // 平台加速效果 - 持续应用
-                    if (this.isPlatformSpeedUp) {
-                        if (platform.originalMoveSpeed) {
-                            platform.moveSpeed = platform.originalMoveSpeed * 2;
-                        }
-                    }
 
                     if (platform.effectTimer > 0) platform.effectTimer--;
 
@@ -2969,8 +2964,16 @@
                 for (let i = this.powerUps.length - 1; i >= 0; i--) {
                     const powerUp = this.powerUps[i];
 
-                    // 随平台一起移动
-                    powerUp.y -= this.speed * timeFactor * speedMultiplier;
+                    // 随平台一起移动（应用平台加速减速效果）
+                    let effectiveSpeed = this.speed;
+                    if (this.isPlatformSlow) {
+                        effectiveSpeed *= 0.5;
+                    }
+                    if (this.isPlatformSpeedUp) {
+                        effectiveSpeed *= 2;
+                    }
+                    
+                    powerUp.y -= effectiveSpeed * timeFactor * speedMultiplier;
 
                     // 更新道具状态
                     if (!powerUp.update(this)) {
@@ -3059,7 +3062,12 @@
                 }
 
                 // 绘制道具计时器
-                this.drawPowerUpTimers(startX, startY + heartSize + 10, player);
+                let timerX = startX;
+                if (align === 'right') {
+                    // 右对齐时，道具计时器始终靠右边缘
+                    timerX = this.canvas.width - 90; // 靠近右边缘，留10px边距
+                }
+                this.drawPowerUpTimers(timerX, startY + heartSize + 10, player, align);
             }
 
             // 检查单个玩家的道具收集
@@ -3211,7 +3219,7 @@
                         // 更新所有活跃玩家的平台速度
                         const activePlayers = this.getActivePlayers();
                         activePlayers.forEach(player => {
-                            player.platformSpeed = player.originalplatformSpeed * 0.5;
+                            player.platformSpeed = player.originalPlatformSpeed * 0.5;
                         });
                         this.showPowerUpMessage("平台速度减慢30% (15秒)");
                         this.createParticleEffect(15,
@@ -3232,7 +3240,7 @@
                         // 更新所有活跃玩家的平台速度
                         const activePlayers = this.getActivePlayers();
                         activePlayers.forEach(player => {
-                            player.platformSpeed = player.originalplatformSpeed * 2;
+                            player.platformSpeed = player.originalPlatformSpeed * 2;
                         });
                         this.showPowerUpMessage("平台加速! 注意躲避!");
                         this.createParticleEffect(20,
@@ -4088,20 +4096,26 @@
 
             // 绘制HUD（整合生命值、道具计时器和救命道具）
             drawHUD() {
-                this.ctx.save();
+                this.ctx.save();    
 
                 // UI布局
                 const heartSize = 12;
                 const heartSpacing = 2;
 
-                // 左侧：1P生命值和道具计时器
-                this.drawPlayerHealthBar(10, 40, this.players.p1, 'left');
+                // 获取活跃玩家
+                const activePlayers = this.getActivePlayers();
 
-                // 双人模式下绘制2P生命值和道具计时器
-                if (this.playerMode !== 'single') {
+                // 左侧：1P生命值和道具计时器（如果玩家未死亡）
+                if (!this.players.p1.isDead) {
+                    this.drawPlayerHealthBar(10, 40, this.players.p1, 'left');
+                }
+
+                // 双人模式下绘制2P生命值和道具计时器（如果玩家未死亡）
+                if (this.playerMode !== 'single' && !this.players.p2.isDead) {
                     const p2StartX = this.canvas.width - 10 - (this.players.p2.maxHealth * (12 + 2) - 2);
                     this.drawPlayerHealthBar(p2StartX, 40, this.players.p2, 'right');
                 }
+
 
                 // 中间：分数
                 const scoreX = this.canvas.width / 2;
@@ -4173,7 +4187,8 @@
             }
 
             // 绘制道具效果剩余时间
-            drawPowerUpTimers(x, y, player) {
+            drawPowerUpTimers(x, y, player, align = 'left') {
+                if(player.isDead) return
                 const timerHeight = 4;
                 const timerWidth = 80;
                 const spacing = 12;
@@ -4183,7 +4198,7 @@
                 if (player.isInvincible) {
                     const timeLeft = Math.ceil(player.invincibleTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
-                        timeLeft, 20, '#F59E0B', '金身: ' + timeLeft + 's');
+                        timeLeft, 20, '#F59E0B', '金身: ' + timeLeft + 's', align);
                     currentY += spacing;
                 }
 
@@ -4193,7 +4208,7 @@
                     const type = player.isSmall ? '变小' : '变大';
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 20, player.isSmall ? '#3B82F6' : '#8B5CF6',
-                        type + ': ' + timeLeft + 's');
+                        type + ': ' + timeLeft + 's', align);
                     currentY += spacing;
                 }
 
@@ -4201,7 +4216,7 @@
                 if (this.isAllNormal) {
                     const timeLeft = Math.ceil(this.allNormalTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
-                        timeLeft, 20, '#EC4899', '普通平台: ' + timeLeft + 's');
+                        timeLeft, 20, '#EC4899', '普通平台: ' + timeLeft + 's', align);
                     currentY += spacing;
                 }
 
@@ -4209,7 +4224,7 @@
                 if (this.isReducedGravity) {
                     const timeLeft = Math.ceil(this.reducedGravityTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
-                        timeLeft, 15, '#9C27B0', '重力减小: ' + timeLeft + 's');
+                        timeLeft, 15, '#9C27B0', '重力减小: ' + timeLeft + 's', align);
                     currentY += spacing;
                 }
 
@@ -4217,7 +4232,7 @@
                 if (this.isPlatformSlow) {
                     const timeLeft = Math.ceil(this.platformSlowTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
-                        timeLeft, 15, '#607D8B', '平台减速: ' + timeLeft + 's');
+                        timeLeft, 15, '#607D8B', '平台减速: ' + timeLeft + 's', align);
                     currentY += spacing;
                 }
 
@@ -4225,7 +4240,7 @@
                 if (player.isControlReversed) {
                     const timeLeft = Math.ceil(player.reverseControlsTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
-                        timeLeft, 15, '#EF4444', '反向控制: ' + timeLeft + 's');
+                        timeLeft, 15, '#EF4444', '反向控制: ' + timeLeft + 's', align);
                     currentY += spacing;
                 }
 
@@ -4233,7 +4248,7 @@
                 if (this.isIncreasedGravity) {
                     const timeLeft = Math.ceil(this.increasedGravityTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
-                        timeLeft, 15, '#F97316', '重力增强: ' + timeLeft + 's');
+                        timeLeft, 15, '#F97316', '重力增强: ' + timeLeft + 's', align);
                     currentY += spacing;
                 }
 
@@ -4241,7 +4256,7 @@
                 if (this.isPlatformSpeedUp) {
                     const timeLeft = Math.ceil(this.platformSpeedUpTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
-                        timeLeft, 15, '#EC4899', '平台加速: ' + timeLeft + 's');
+                        timeLeft, 15, '#EC4899', '平台加速: ' + timeLeft + 's', align);
                     currentY += spacing;
                 }
 
@@ -4249,18 +4264,26 @@
                 if (player.isNarrowVision) {
                     const timeLeft = Math.ceil(player.narrowVisionTimer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
-                        timeLeft, 15, '#8B5CF6', '视野缩小: ' + timeLeft + 's');
+                        timeLeft, 15, '#8B5CF6', '视野缩小: ' + timeLeft + 's', align);
                     currentY += spacing;
                 }
 
             }
 
             // 绘制计时器进度条
-            drawTimerBar(x, y, width, height, timeLeft, totalTime, color, label) {
+            drawTimerBar(x, y, width, height, timeLeft, totalTime, color, label, align = 'left') {
                 // 标签
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
                 this.ctx.font = '10px Arial';
-                this.ctx.fillText(label, x + width + 5, y + height);
+                
+                let labelX = x + width + 5;
+                if (align === 'right') {
+                    // 右对齐时，标签在进度条左侧
+                    const labelWidth = this.ctx.measureText(label).width;
+                    labelX = x - labelWidth - 5 ;
+                }
+                
+                this.ctx.fillText(label, labelX, y + height);
 
                 // 背景
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
@@ -4478,25 +4501,6 @@
                 toolbar.style.zIndex = '1000';
                 toolbar.style.maxWidth = '90%';
 
-                // 添加关闭按钮
-                // const closeButton = document.createElement('button');
-                // closeButton.textContent = '×';
-                // closeButton.style.position = 'absolute';
-                // closeButton.style.top = '-10px';
-                // closeButton.style.right = '-10px';
-                // closeButton.style.width = '25px';
-                // closeButton.style.height = '25px';
-                // closeButton.style.borderRadius = '50%';
-                // closeButton.style.backgroundColor = '#EF4444';
-                // closeButton.style.color = 'white';
-                // closeButton.style.border = 'none';
-                // closeButton.style.cursor = 'pointer';
-                // closeButton.style.fontWeight = 'bold';
-                // closeButton.addEventListener('click', () => {
-                //     this.toggleDeveloperToolbar(false);
-                // });
-                // toolbar.appendChild(closeButton);
-
                 // 添加道具按钮
                 this.powerUpTypes.forEach(type => {
                     const button = document.createElement('button');
@@ -4645,6 +4649,19 @@
                         dialog.remove();
                     }
                 });
+
+                // 开发者模式：0.8秒后自动选择P1+P2
+                if (this.isDeveloperMode) {
+                    setTimeout(() => {
+                        if (document.body.contains(dialog)) {
+                            // 模拟点击P1+P2按钮
+                            const p1p2Button = dialog.querySelector('button:nth-child(3)');
+                            if (p1p2Button) {
+                                p1p2Button.click();
+                            }
+                        }
+                    }, 800);
+                }
             }
         }
 
