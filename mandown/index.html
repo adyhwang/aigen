@@ -1190,6 +1190,9 @@
                 this.devModeClickCount = 0;
                 this.isDeveloperMode = false;
                 this.lastModeClickTime = 0;
+                
+                // 自动选择玩家设置（仅当前会话有效）
+                this.autoSelectPlayer = null;
 
                 // 全屏按钮元素
                 this.fullscreenButton = document.getElementById('fullscreenButton');
@@ -1800,142 +1803,85 @@
                 }
             }
 
+            // 玩家属性模板
+            createPlayerTemplate(x, y, bodyColor, lifeSaverAvailable = this.gameMode === 'new') {
+                return {
+                    x: x,
+                    y: y,
+                    width: 30,
+                    height: 40,
+                    originalWidth: 30,
+                    originalHeight: 40,
+                    velocityX: 0,
+                    velocityY: 0,
+                    speed: 5,
+                    jumpForce: -15,
+                    gravity: 0.7,
+                    originalGravity: 0.7,
+                    onGround: false,
+                    direction: 1,
+                    health: 10,
+                    maxHealth: 10,
+                    isBouncing: false,
+                    bounceForce: -10,
+                    bounceCounter: 0,
+                    standingPlatform: null,
+                    previousPlatform: null,
+                    healedPlatforms: new Set(),
+                    damagedPlatforms: new Set(),
+                    flashTimer: 0,
+                    isDead: false,
+                    deathEffectPlayed: false,
+                    deathTimer: 0,
+                    armAngleLeft: 0,
+                    armAngleRight: 0,
+                    armSwingSpeed: 0.015,
+                    armPhaseLeft: 0,
+                    armPhaseRight: Math.PI,
+                    isInvincible: false,
+                    invincibleTimer: 0,
+                    isSmall: false,
+                    isBig: false,
+                    sizeTimer: 0,
+                    originalplatformSpeed: 1,
+                    platformSpeed: 1,
+                    isTeleporting: false,
+                    goldenLegUses: 0,
+                    goldenHeadUses: 0,
+                    hasGoldenLeg: false,
+                    hasGoldenHead: false,
+                    lifeSaverAvailable: lifeSaverAvailable,
+                    isControlReversed: false,
+                    reverseControlsTimer: 0,
+                    isIncreasedGravity: false,
+                    increasedGravityTimer: 0,
+                    isPlatformSpeedUp: false,
+                    platformSpeedUpTimer: 0,
+                    isNarrowVision: false,
+                    narrowVisionTimer: 0,
+                    collisionDisabledTimer: 0,
+                    walkCycle: 0,
+                    isJumping: false,
+                    isFalling: false,
+                    landing: false,
+                    expression: 'normal',
+                    bodySquash: 1,
+                    bodyStretch: 1,
+                    shadowSize: 20,
+                    shadowOpacity: 0.3,
+                    legAngleLeft: 0,
+                    legAngleRight: 0,
+                    alpha: 1,
+                    bodyColor: bodyColor
+                };
+            }
+
             // 重置玩家对象
             resetPlayers() {
                 // 根据玩家模式初始化players对象
                 this.players = {
-                    p1: {
-                        x: this.canvas.width / 2 - 50,
-                        y: 10,
-                        width: 30,
-                        height: 40,
-                        originalWidth: 30,
-                        originalHeight: 40,
-                        velocityX: 0,
-                        velocityY: 0,
-                        speed: 5,
-                        jumpForce: -15,
-                        gravity: 0.7,
-                        originalGravity: 0.7,
-                        onGround: false,
-                        direction: 1,
-                        health: 10,
-                        maxHealth: 10,
-                        isBouncing: false,
-                        bounceForce: -10,
-                        bounceCounter: 0,
-                        standingPlatform: null,
-                        previousPlatform: null,
-                        healedPlatforms: new Set(),
-                        damagedPlatforms: new Set(),
-                        flashTimer: 0,
-                        isDead: false,
-                        deathEffectPlayed: false,
-                        deathTimer: 0,
-                        armAngleLeft: 0,
-                        armAngleRight: 0,
-                        armSwingSpeed: 0.015,
-                        armPhaseLeft: 0,
-                        armPhaseRight: Math.PI,
-                        isInvincible: false,
-                        invincibleTimer: 0,
-                        isSmall: false,
-                        isBig: false,
-                        sizeTimer: 0,
-                        originalplatformSpeed: 1,
-                        platformSpeed: 1,
-                        isTeleporting: false,
-                        goldenLegUses: 0,
-                        goldenHeadUses: 0,
-                        hasGoldenLeg: false,
-                        hasGoldenHead: false,
-                        lifeSaverAvailable: this.gameMode === 'new',
-                        isControlReversed: false,
-                        reverseControlsTimer: 0,
-                        collisionDisabledTimer: 0,
-                        walkCycle: 0,
-                        isJumping: false,
-                        isFalling: false,
-                        landing: false,
-                        expression: 'normal',
-                        bodySquash: 1,
-                        bodyStretch: 1,
-                        shadowSize: 20,
-                        shadowOpacity: 0.3,
-                        legAngleLeft: 0,
-                        legAngleRight: 0,
-                        alpha: 1,
-                        bodyColor: '#FF2732'
-                    },
-                    p2: {
-                        x: this.canvas.width / 2 + 50,
-                        y: 10,
-                        width: 30,
-                        height: 40,
-                        originalWidth: 30,
-                        originalHeight: 40,
-                        velocityX: 0,
-                        velocityY: 0,
-                        speed: 5,
-                        jumpForce: -15,
-                        gravity: 0.7,
-                        originalGravity: 0.7,
-                        onGround: false,
-                        direction: 1,
-                        health: 10,
-                        maxHealth: 10,
-                        isBouncing: false,
-                        bounceForce: -10,
-                        bounceCounter: 0,
-                        standingPlatform: null,
-                        previousPlatform: null,
-                        healedPlatforms: new Set(),
-                        damagedPlatforms: new Set(),
-                        flashTimer: 0,
-                        isDead: false,
-                        deathEffectPlayed: false,
-                        deathTimer: 0,
-                        armAngleLeft: 0,
-                        armAngleRight: 0,
-                        armSwingSpeed: 0.015,
-                        armPhaseLeft: 0,
-                        armPhaseRight: Math.PI,
-                        isInvincible: false,
-                        invincibleTimer: 0,
-                        isSmall: false,
-                        isBig: false,
-                        sizeTimer: 0,
-                        originalplatformSpeed: 1,
-                        platformSpeed: 1,
-                        isTeleporting: false,
-                        goldenLegUses: 0,
-                        goldenHeadUses: 0,
-                        hasGoldenLeg: false,
-                        hasGoldenHead: false,
-                        lifeSaverAvailable: this.gameMode === 'new',
-                        isControlReversed: false,
-                        reverseControlsTimer: 0,
-                        isIncreasedGravity: false,
-                        increasedGravityTimer: 0,
-                        isPlatformSpeedUp: false,
-                        platformSpeedUpTimer: 0,
-                        isNarrowVision: false,
-                        narrowVisionTimer: 0,
-                        collisionDisabledTimer: 0,
-                        walkCycle: 0,
-                        isJumping: false,
-                        isFalling: false,
-                        landing: false,
-                        expression: 'normal',
-                        bodySquash: 1,
-                        bodyStretch: 1,
-                        shadowSize: 20,
-                        shadowOpacity: 0.3,
-                        legAngleLeft: 0,
-                        legAngleRight: 0,
-                        alpha: 1,
-                        bodyColor: '#33931C'
-                    }
+                    p1: this.createPlayerTemplate(this.canvas.width / 2 - 50, 10, '#FF2732'),
+                    p2: this.createPlayerTemplate(this.canvas.width / 2 + 50, 10, '#33931C')
                 }
             }
 
@@ -2341,7 +2287,7 @@
 
                     // 显示提示
                     this.showPowerUpMessage("已传送至安全位置!");
-                }, 300);
+                }, 150);
             }
 
             // 在顶部使用救命道具（传送）
@@ -2667,6 +2613,73 @@
            
             }
 
+            // 统一处理平台速度效果
+            handlePlatformSpeedEffects(timeFactor) {
+                // 平台减速效果（全局）
+                if (this.isPlatformSlow) {
+                    this.platformSlowTimer -= timeFactor;
+                    if (this.platformSlowTimer <= 0) {
+                        this.isPlatformSlow = false;
+                        this.restorePlatformSpeed();
+                        this.showPowerUpMessage("平台速度恢复正常");
+                    }
+                }
+                // 平台加速效果（全局）
+                if (this.isPlatformSpeedUp) {
+                    this.platformSpeedUpTimer -= timeFactor;
+                    if (this.platformSpeedUpTimer <= 0) {
+                        this.isPlatformSpeedUp = false;
+                        this.restorePlatformSpeed();
+                        this.showPowerUpMessage("平台速度恢复正常");
+                    }
+                }
+            }
+
+            // 恢复平台原始速度
+            restorePlatformSpeed() {
+                // 恢复平台原始速度
+                this.platforms.forEach(platform => {
+                    if (platform.originalMoveSpeed) {
+                        platform.moveSpeed = platform.originalMoveSpeed;
+                    }
+                });
+                // 恢复所有活跃玩家的平台速度
+                const activePlayers = this.getActivePlayers();
+                activePlayers.forEach(player => {
+                    player.platformSpeed = player.originalPlatformSpeed;
+                });
+            }
+
+            // 统一处理重力效果
+            handleGravityEffects(timeFactor) {
+                // 重力变小效果（全局）
+                if (this.isReducedGravity) {
+                    this.reducedGravityTimer -= timeFactor;
+                    if (this.reducedGravityTimer <= 0) {
+                        this.isReducedGravity = false;
+                        this.restoreGravity();
+                        this.showPowerUpMessage("重力恢复正常");
+                    }
+                }
+                // 重力增强效果（全局）
+                if (this.isIncreasedGravity) {
+                    this.increasedGravityTimer -= timeFactor;
+                    if (this.increasedGravityTimer <= 0) {
+                        this.isIncreasedGravity = false;
+                        this.restoreGravity();
+                        this.showPowerUpMessage("重力恢复正常");
+                    }
+                }
+            }
+
+            // 恢复玩家原始重力
+            restoreGravity() {
+                // 恢复所有活跃玩家的重力
+                const activePlayers = this.getActivePlayers();
+                activePlayers.forEach(player => {
+                    player.gravity = player.originalGravity;
+                });
+            }
 
                 // 更新道具效果
             updatePowerUpEffects(player, timeFactor) {
@@ -2685,9 +2698,7 @@
                     }
                 }
                 
-                // 泥巴平台效果：移动速度减半（持续生效）
-                // 当玩家离开泥巴平台时，isInMud会在碰撞检测中被重置
-                
+                            
                 // 金身效果
                 if (player.isInvincible) {
                     player.invincibleTimer -= timeFactor;
@@ -2731,71 +2742,11 @@
                     }
                 }
 
-                // 重力变小效果（全局）
-                if (this.isReducedGravity) {
-                    this.reducedGravityTimer -= timeFactor;
-                    if (this.reducedGravityTimer <= 0) {
-                        this.isReducedGravity = false;
-                        // 恢复所有活跃玩家的重力
-                        const activePlayers = this.getActivePlayers();
-                        activePlayers.forEach(player => {
-                            player.gravity = player.originalGravity;
-                        });
-                        this.showPowerUpMessage("重力恢复正常");
-                    }
-                }
-                // 重力增强效果（全局）
-                if (this.isIncreasedGravity) {
-                    this.increasedGravityTimer -= timeFactor;
-                    if (this.increasedGravityTimer <= 0) {
-                        this.isIncreasedGravity = false;
-                        // 恢复所有活跃玩家的重力
-                        const activePlayers = this.getActivePlayers();
-                        activePlayers.forEach(player => {
-                            player.gravity = player.originalGravity;
-                        });
-                        this.showPowerUpMessage("重力恢复正常");
-                    }
-                }
+                // 统一处理重力效果
+                this.handleGravityEffects(timeFactor);
 
-                // 平台减速效果（全局）
-                if (this.isPlatformSlow) {
-                    this.platformSlowTimer -= timeFactor;
-                    if (this.platformSlowTimer <= 0) {
-                        this.isPlatformSlow = false;
-                        // 恢复平台原始速度
-                        this.platforms.forEach(platform => {
-                            if (platform.originalMoveSpeed) {
-                                platform.moveSpeed = platform.originalMoveSpeed;
-                            }
-                        });
-                        // 恢复所有活跃玩家的平台速度
-                        const activePlayers = this.getActivePlayers();
-                        activePlayers.forEach(player => {
-                            player.platformSpeed = player.originalPlatformSpeed;
-                        });
-                        this.showPowerUpMessage("平台速度恢复正常");
-                    }
-                }
-                // 平台加速效果（全局）
-                if (this.isPlatformSpeedUp) {
-                    this.platformSpeedUpTimer -= timeFactor;
-                    if (this.platformSpeedUpTimer <= 0) {
-                        this.isPlatformSpeedUp = false;
-                        // 恢复平台原始速度
-                        this.platforms.forEach(platform => {
-                            if (platform.originalMoveSpeed) {
-                                platform.moveSpeed = platform.originalMoveSpeed;
-                            }
-                        });
-                        // 恢复所有活跃玩家的平台速度
-                        const activePlayers = this.getActivePlayers();
-                        activePlayers.forEach(player => {
-                            player.platformSpeed = player.originalPlatformSpeed;
-                        });
-                        this.showPowerUpMessage("平台速度恢复正常");
-                    }
-                }
+                // 统一处理平台速度效果
+                this.handlePlatformSpeedEffects(timeFactor);
                 // 反向控制效果
                 if (player.isControlReversed) {
                     player.reverseControlsTimer -= timeFactor;
@@ -3091,10 +3042,28 @@
             hasLifeSaver(player) {
                 return player.lifeSaverAvailable;
             }
-
             // 消耗玩家的救命道具（通用函数）
             consumeLifeSaver(player) {
                 player.lifeSaverAvailable = false;
+            }
+            // 统一处理救命道具效果
+            handleLifeSaverEffect(player) {
+                if (this.hasLifeSaver(player)) {
+                    // 救命道具效果：血量即将为0时，增加5滴血
+                    player.health = Math.min(player.maxHealth, 5);
+                    this.consumeLifeSaver(player);
+                    this.showPowerUpMessage("救命道具生效! +5生命值");
+                    this.soundManager.playHealSound();
+
+                    this.createParticleEffect(15,
+                        player.x + player.width / 2, player.y + player.height / 2, {
+                        color: '#06B6D4',
+                        life: 40,
+                        explosive: true
+                    });
+                    return true;
+                }
+                return false;
             }
 
             // 绘制玩家生命值条（通用函数）
@@ -3250,39 +3219,32 @@
                 for (const player of activePlayers) {
                     if (ghost.damagedPlayers.includes(player) && !player.isDead && !player.isInvincible) {
                         // 玩家受到持续伤害
-                        player.health -= 1;
-                        this.soundManager.playHurtSound();
-                        
-                        // 检查玩家是否死亡，如果有救命道具则触发救命效果
-                        if (player.health <= 0) {
-                            if (this.hasLifeSaver(player)) {
-                                // 救命道具效果：血量即将为0时，增加5滴血
-                                player.health = Math.min(player.maxHealth, 5);
-                                this.consumeLifeSaver(player);
-                                this.showPowerUpMessage("救命道具生效! +5生命值");
-                                this.soundManager.playHealSound();
-
-                                this.createParticleEffect(15,
-                                    player.x + player.width / 2, player.y + player.height / 2, {
-                                    color: '#06B6D4',
-                                    life: 40,
-                                    explosive: true
-                                });
-                            } else {
-                                player.isDead = true;
-                            }
-                        }
-                        
-                        // 显示伤害效果
-                        this.createParticleEffect(5, player.x + player.width / 2, player.y + player.height / 2, {
-                            color: '#DC2626',
-                            life: 20
-                        });
+                        this.applyGhostDamageToPlayer(player);
                         
                         // 调试信息
                         // console.log('幽灵持续伤害:', player.health, 'damagedPlayers count:', ghost.damagedPlayers.length);
                     }
                 }
+            }
+
+            // 统一处理幽灵伤害
+            applyGhostDamageToPlayer(player) {
+                // 玩家受到伤害
+                player.health -= 1;
+                this.soundManager.playHurtSound();
+                
+                // 检查玩家是否死亡，如果有救命道具则触发救命效果
+                if (player.health <= 0) {
+                    if (!this.handleLifeSaverEffect(player)) {
+                        player.isDead = true;
+                    }
+                }
+                
+                // 显示伤害效果
+                this.createParticleEffect(10, player.x + player.width / 2, player.y + player.height / 2, {
+                    color: '#DC2626',
+                    life: 30
+                });
             }
 
             // 绘制幽灵
@@ -3371,35 +3333,8 @@
                                 
                                 // 立即造成一次伤害（如果玩家不是无敌状态）
                                 if (!player.isInvincible) {
-                                    player.health -= 1;
-                                    this.soundManager.playHurtSound();
-                                    
-                                    // 检查玩家是否死亡，如果有救命道具则触发救命效果
-                                    if (player.health <= 0) {
-                                        if (this.hasLifeSaver(player)) {
-                                            // 救命道具效果：血量即将为0时，增加5滴血
-                                            player.health = Math.min(player.maxHealth, 5);
-                                            this.consumeLifeSaver(player);
-                                            this.showPowerUpMessage("救命道具生效! +5生命值");
-                                            this.soundManager.playHealSound();
-
-                                            this.createParticleEffect(15,
-                                                player.x + player.width / 2, player.y + player.height / 2, {
-                                                color: '#06B6D4',
-                                                life: 40,
-                                                explosive: true
-                                            });
-                                        } else {
-                                            player.isDead = true;
-                                        }
-                                    }
+                                    this.applyGhostDamageToPlayer(player);
                                 }
-                                
-                                // 显示伤害效果
-                                this.createParticleEffect(10, player.x + player.width / 2, player.y + player.height / 2, {
-                                    color: '#DC2626',
-                                    life: 30
-                                });
                                 
                                 break;
                             }
@@ -3492,6 +3427,14 @@
                     },
                     'reducedGravity': () => {
                         // 全局效果：应用到游戏而不是单个玩家
+                        if (this.isIncreasedGravity) {
+                            const activePlayers = this.getActivePlayers();
+                            activePlayers.forEach(player => {
+                                player.gravity = player.originalGravity;
+                            });
+                            this.isIncreasedGravity = false;
+                        }
+                        
                         this.isReducedGravity = true;
                         this.reducedGravityTimer = 15 * 60;
                         // 更新所有活跃玩家的重力
@@ -3509,6 +3452,14 @@
                     },
                     'increasedGravity': () => {
                         // 全局效果：应用到游戏而不是单个玩家
+                        if (this.isReducedGravity) {
+                            const activePlayers = this.getActivePlayers();
+                            activePlayers.forEach(player => {
+                                player.gravity = player.originalGravity;
+                            });
+                            this.isReducedGravity = false;
+                        }
+                        
                         this.isIncreasedGravity = true;
                         this.increasedGravityTimer = 15 * 60;
                         // 更新所有活跃玩家的重力
@@ -3525,6 +3476,19 @@
                     },
                     'platformSlow': () => {
                         // 全局效果：应用到游戏而不是单个玩家
+                        if (this.isPlatformSpeedUp) {
+                            this.platforms.forEach(platform => {
+                                if (platform.originalMoveSpeed) {
+                                    platform.moveSpeed = platform.originalMoveSpeed;
+                                }
+                            });
+                            const activePlayers = this.getActivePlayers();
+                            activePlayers.forEach(player => {
+                                player.platformSpeed = player.originalPlatformSpeed;
+                            });
+                            this.isPlatformSpeedUp = false;
+                        }
+                        
                         this.isPlatformSlow = true;
                         this.platformSlowTimer = 15 * 60;
                         this.platforms.forEach(platform => {
@@ -3546,6 +3510,19 @@
                     },
                     'platformSpeedUp': () => {
                         // 全局效果：应用到游戏而不是单个玩家
+                        if (this.isPlatformSlow) {
+                            this.platforms.forEach(platform => {
+                                if (platform.originalMoveSpeed) {
+                                    platform.moveSpeed = platform.originalMoveSpeed;
+                                }
+                            });
+                            const activePlayers = this.getActivePlayers();
+                            activePlayers.forEach(player => {
+                                player.platformSpeed = player.originalPlatformSpeed;
+                            });
+                            this.isPlatformSlow = false;
+                        }
+                        
                         this.isPlatformSpeedUp = true;
                         this.platformSpeedUpTimer = 15 * 60;
                         this.platforms.forEach(platform => {
@@ -3836,9 +3813,6 @@
                             });
                         }
                         break;
-
-
-
                     case 'mud':
                         if (!player.healedPlatforms.has(platform.id)) {
                             this.healPlayer(1, player);
@@ -3963,18 +3937,8 @@
                 player.health = Math.max(0, player.health - amount);
 
                 // 救命道具效果：血量即将为0时，增加5滴血
-                if (previousHealth > 0 && player.health <= 0 && this.hasLifeSaver(player)) {
-                    player.health = Math.min(player.maxHealth, 5);
-                    this.consumeLifeSaver(player);
-                    this.showPowerUpMessage("救命道具生效! +5生命值");
-                    this.soundManager.playHealSound();
-
-                    this.createParticleEffect(15,
-                        player.x + player.width / 2, player.y + player.height / 2, {
-                        color: '#06B6D4',
-                        life: 40,
-                        explosive: true
-                    });
+                if (previousHealth > 0 && player.health <= 0) {
+                    this.handleLifeSaverEffect(player);
                 }
             }
 
@@ -4979,8 +4943,28 @@
 
                     // 添加点击事件
                     button.addEventListener('click', () => {
-                        // 显示玩家选择对话框
-                        this.showPlayerSelectionDialog(type, button.textContent);
+                        // 检查是否有自动选择设置
+                        if (this.autoSelectPlayer) {
+                            // 根据自动选择设置直接应用效果
+                            switch (this.autoSelectPlayer) {
+                                case 'p1':
+                                    this.applyPowerUpEffect(type, this.players.p1);
+                                    this.showTempMessage(`已使用: ${button.textContent} (P1)`, 1000);
+                                    break;
+                                case 'p2':
+                                    this.applyPowerUpEffect(type, this.players.p2);
+                                    this.showTempMessage(`已使用: ${button.textContent} (P2)`, 1000);
+                                    break;
+                                case 'both':
+                                    this.applyPowerUpEffect(type, this.players.p1);
+                                    this.applyPowerUpEffect(type, this.players.p2);
+                                    this.showTempMessage(`已使用: ${button.textContent} (P1+P2)`, 1000);
+                                    break;
+                            }
+                        } else {
+                            // 显示玩家选择对话框
+                            this.showPlayerSelectionDialog(type, button.textContent);
+                        }
                     });
 
                     toolbar.appendChild(button);
@@ -5048,6 +5032,12 @@
                             this.applyPowerUpEffect(type, player);
                             this.showTempMessage(`已使用: ${buttonText} (${text})`, 1000);
                         }
+                        
+                        // 如果勾选了"下次自动选择"，记住选择
+                        if (autoSelectCheckbox && autoSelectCheckbox.checked) {
+                            this.autoSelectPlayer = isBoth ? 'both' : (player === this.players.p1 ? 'p1' : 'p2');
+                        }
+                        
                         dialog.remove();
                     });
                     return btn;
@@ -5057,6 +5047,31 @@
                 dialog.appendChild(createButton('P1', this.players.p1));
                 dialog.appendChild(createButton('P2', this.players.p2));
                 dialog.appendChild(createButton('P1+P2', null, true));
+                
+                // 添加"下次自动选择"复选框
+                const checkboxContainer = document.createElement('div');
+                checkboxContainer.style.display = 'flex';
+                checkboxContainer.style.alignItems = 'center';
+                checkboxContainer.style.gap = '8px';
+                checkboxContainer.style.marginTop = '5px';
+                
+                const autoSelectCheckbox = document.createElement('input');
+                autoSelectCheckbox.type = 'checkbox';
+                autoSelectCheckbox.id = 'autoSelectCheckbox';
+                autoSelectCheckbox.style.width = '16px';
+                autoSelectCheckbox.style.height = '16px';
+                
+                const checkboxLabel = document.createElement('label');
+                checkboxLabel.htmlFor = 'autoSelectCheckbox';
+                checkboxLabel.textContent = '下次自动选择';
+                checkboxLabel.style.color = 'white';
+                checkboxLabel.style.fontFamily = '"Press Start 2P", cursive';
+                checkboxLabel.style.fontSize = '10px';
+                checkboxLabel.style.cursor = 'pointer';
+                
+                checkboxContainer.appendChild(autoSelectCheckbox);
+                checkboxContainer.appendChild(checkboxLabel);
+                dialog.appendChild(checkboxContainer);
 
                 // 添加取消按钮
                 const cancelBtn = document.createElement('button');
@@ -5084,18 +5099,6 @@
                     }
                 });
 
-                // 开发者模式：0.8秒后自动选择P1+P2
-                if (this.isDeveloperMode) {
-                    setTimeout(() => {
-                        if (document.body.contains(dialog)) {
-                            // 模拟点击P1+P2按钮
-                            const p1p2Button = dialog.querySelector('button:nth-child(4)');
-                            if (p1p2Button) {
-                                p1p2Button.click();
-                            }
-                        }
-                    }, 800);
-                }
             }
         }
 
