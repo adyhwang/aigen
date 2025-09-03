@@ -1202,7 +1202,7 @@
             setBackgroundMusicVolume(volume) {
                 try {
                     if (this.backgroundMusic) {
-                        this.backgroundMusic.volume = volume - 0.7;
+                        this.backgroundMusic.volume = volume * 0.3;
                     }
                 } catch (error) {
                     console.warn('设置背景音乐音量失败:', error);
