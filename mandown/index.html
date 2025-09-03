@@ -424,6 +424,20 @@
                         </div>
                         <span class="text-sm text-gray-300">缩小视野</span>
                     </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-7 h-7 rounded-full bg-yellow-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">❓
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">随机道具</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-7 h-7 rounded-full bg-gray-600 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">👻
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">幽灵道具</span>
+                    </div>
                 </div>
             </div>
 
@@ -653,13 +667,19 @@
                     'platformSlow': { color: '#607D8B', icon: '🐌' },
                     'platformSpeedUp': { color: '#EF4444', icon: '🚀' },
                     'reverseControls': { color: '#8B5CF6', icon: '💫' },
-                    'narrowVision': { color: '#6B7280', icon: '👁️' }
+                    'narrowVision': { color: '#6B7280', icon: '👁️' },
+                    'randomPowerUp': { color: '#FFD700', icon: '❓' },
+                    'ghost': { color: '#DC2626', icon: '👻' }
                 };
 
                 const config = powerUpConfig[type];
                 if (config) {
                     this.color = config.color;
                     this.icon = config.icon;
+                } else {
+                    // 默认颜色和图标，防止undefined
+                    this.color = '#FFFFFF';
+                    this.icon = 'X';
                 }
             }
 
@@ -1139,6 +1159,11 @@
                 this.playTone('sawtooth', 87, 0.3, 0.1, { attack: 0.01, decay: 0.15, sustain: 0.5, release: 0.14 });
                 this.playTone('sawtooth', 73, 0.2, 0.2, { attack: 0.01, decay: 0.1, sustain: 0.4, release: 0.09 });
             }
+            
+            playHurtSound() {
+                this.playTone('sawtooth', 220, 0.2, 0, { attack: 0.01, decay: 0.1, sustain: 0.7, release: 0.09 });
+                this.playTone('sawtooth', 165, 0.15, 0.05, { attack: 0.01, decay: 0.08, sustain: 0.6, release: 0.06 });
+            }
         }
 
         // ==================== 游戏主类 ====================
@@ -1278,6 +1303,8 @@
                         reverseControlsTimer: 0,
 
                         collisionDisabledTimer: 0,
+                        isElectrocuted: false,
+                        electrocuteTimer: 0,
                         walkCycle: 0,
                         isJumping: false,
                         isFalling: false,
@@ -1370,7 +1397,9 @@
                     'spike', 'moving-spike',
                     'flip', 'moving-flip',
                     'conveyor-left', 'conveyor-right',
-                    'spring'
+                    'spring', 'moving-spring',
+                    'mud', 'moving-mud',
+                    'electric', 'moving-electric'
                 ];
 
                 // 道具类型
@@ -1378,7 +1407,7 @@
                     'lifeSaver', 'fullHealth', 'smallPlayer', 'bigPlayer',
                     'allNormal', 'invincible', 'goldenLeg', 'goldenHead',
                     'reducedGravity', 'increasedGravity', 'platformSpeedUp', 'platformSlow',
-                    'reverseControls', 'narrowVision'
+                    'reverseControls', 'narrowVision', 'randomPowerUp', 'ghost'
                 ];
 
 
@@ -1916,6 +1945,7 @@
                 this.effectManager = new EffectManager();
                 this.platforms = [];
                 this.powerUps = [];
+                this.ghosts = [];
                 this.createInitialPlatforms();
 
                 // 重置背景偏移
@@ -1923,6 +1953,9 @@
 
                 // 重置道具生成记录
                 this.lastPowerUpScore = 0;
+                
+                // 重置幽灵数组
+                this.ghosts = [];
 
                 // 重置玩家对象
                 this.resetPlayers();
@@ -2012,7 +2045,10 @@
                     moveRange,
                     moveDirection,
                     movePosition,
-                    originalMoveSpeed: moveSpeed
+                    originalMoveSpeed: moveSpeed,
+                    isMud: type.includes('mud'),
+                    isElectric: type.includes('electric'),
+                    electricTimer: 0
                 });
             }
 
@@ -2396,26 +2432,38 @@
                 // 移动控制
                 let moveSpeed = 0;
 
+                // 泥巴平台效果：移动速度减半
+                let speedMultiplier = 1;
+                if (player.isInMud) {
+                    speedMultiplier = 0.5;
+                }
+
                 // 碰撞禁用时无法操作
                 if (player.collisionDisabledTimer > 0) {
                     keys.left = false;
                     keys.right = false;
                 }
 
+                // 电击状态：无法操作
+                if (player.isElectrocuted) {
+                    keys.left = false;
+                    keys.right = false;
+                }
+
                 if (keys.left) {
                     if (player.isControlReversed) {
-                        moveSpeed = player.speed * timeFactor;
+                        moveSpeed = player.speed * timeFactor * speedMultiplier;
                         player.direction = 1;
                     } else {
-                        moveSpeed = -player.speed * timeFactor;
+                        moveSpeed = -player.speed * timeFactor * speedMultiplier;
                         player.direction = -1;
                     }
                 } else if (keys.right) {
                     if (player.isControlReversed) {
-                        moveSpeed = -player.speed * timeFactor;
+                        moveSpeed = -player.speed * timeFactor * speedMultiplier;
                         player.direction = -1;
                     } else {
-                        moveSpeed = player.speed * timeFactor;
+                        moveSpeed = player.speed * timeFactor * speedMultiplier;
                         player.direction = 1;
                     }
                 }
@@ -2513,6 +2561,9 @@
                 const previousPlatform = player.standingPlatform;
                 player.onGround = false;
                 player.standingPlatform = null;
+                
+                // 重置泥巴平台效果（当玩家离开平台时）
+                player.isInMud = false;
 
                 if (previousPlatform && player.standingPlatform &&
                     previousPlatform.id !== player.standingPlatform.id) {
@@ -2613,10 +2664,30 @@
                     player.shadowSize = 20 * heightFactor;
                     player.shadowOpacity = 0.3 * heightFactor;
                 }
+           
             }
 
-            // 更新道具效果
+
+                // 更新道具效果
             updatePowerUpEffects(player, timeFactor) {
+                 // 更新电击状态
+                if (player.isElectrocuted) {
+                    player.electrocuteTimer -= timeFactor;
+                    player.electrocuteShake += timeFactor;
+                    
+                    // 电击颤动效果：左右快速抖动
+                    const shakeIntensity = 2;
+                    const shakeSpeed = 1.5;
+                    player.x += Math.sin(player.electrocuteShake * shakeSpeed) * shakeIntensity;
+                    
+                    if (player.electrocuteTimer <= 0) {
+                        player.isElectrocuted = false;
+                    }
+                }
+                
+                // 泥巴平台效果：移动速度减半（持续生效）
+                // 当玩家离开泥巴平台时，isInMud会在碰撞检测中被重置
+                
                 // 金身效果
                 if (player.isInvincible) {
                     player.invincibleTimer -= timeFactor;
@@ -3099,6 +3170,244 @@
                 }
             }
 
+            // 幽灵类定义
+            Ghost(targetPlayer) {
+                return {
+                    targetPlayer: targetPlayer,
+                    x: targetPlayer.x,
+                    y: targetPlayer.y,
+                    width: 25,
+                    height: 35,
+                    speed: 2.5, // 比普通跟随速度略快
+                    lifeTimer: 8 * 60, // 8秒
+                    damageTimer: 0, // 伤害计时器
+                    damageInterval: 60, // 每1秒伤害一次 (60fps * 1s)
+                    alpha: 0.8,
+                    color: '#4B5563',
+                    damagedPlayers: [] // 记录正在受到伤害的玩家
+                };
+            }
+
+            // 更新所有幽灵
+            updateGhosts() {
+                for (let i = this.ghosts.length - 1; i >= 0; i--) {
+                    const ghost = this.ghosts[i];
+                    if (!this.updateGhost(ghost)) {
+                        // 幽灵生命周期结束，移除
+                        this.ghosts.splice(i, 1);
+                    }
+                }
+            }
+
+            // 绘制所有幽灵
+            drawGhosts() {
+                this.ghosts.forEach(ghost => {
+                    this.drawGhost(ghost, this.ctx);
+                });
+            }
+
+            // 更新幽灵位置
+            updateGhost(ghost) {
+                // 计算到目标玩家的方向
+                const dx = ghost.targetPlayer.x - ghost.x;
+                const dy = ghost.targetPlayer.y - ghost.y;
+                
+                // 计算距离
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 0) {
+                    // 标准化方向向量
+                    const vx = dx / distance;
+                    const vy = dy / distance;
+                    
+                    // 移动幽灵
+                    ghost.x += vx * ghost.speed;
+                    ghost.y += vy * ghost.speed;
+                }
+                
+                // 更新生命计时器
+                ghost.lifeTimer--;
+                
+                // 更新伤害计时器并处理持续伤害
+                ghost.damageTimer++;
+                if (ghost.damageTimer >= ghost.damageInterval) {
+                    ghost.damageTimer = 0;
+                    this.applyGhostDamage(ghost);
+                }
+                
+                // 如果时间到，移除幽灵
+                if (ghost.lifeTimer <= 0) {
+                    return false;
+                }
+                
+                return true;
+            }
+
+            // 应用幽灵持续伤害
+            applyGhostDamage(ghost) {
+                const activePlayers = this.getActivePlayers();
+                
+                for (const player of activePlayers) {
+                    if (ghost.damagedPlayers.includes(player) && !player.isDead && !player.isInvincible) {
+                        // 玩家受到持续伤害
+                        player.health -= 1;
+                        this.soundManager.playHurtSound();
+                        
+                        // 检查玩家是否死亡，如果有救命道具则触发救命效果
+                        if (player.health <= 0) {
+                            if (this.hasLifeSaver(player)) {
+                                // 救命道具效果：血量即将为0时，增加5滴血
+                                player.health = Math.min(player.maxHealth, 5);
+                                this.consumeLifeSaver(player);
+                                this.showPowerUpMessage("救命道具生效! +5生命值");
+                                this.soundManager.playHealSound();
+
+                                this.createParticleEffect(15,
+                                    player.x + player.width / 2, player.y + player.height / 2, {
+                                    color: '#06B6D4',
+                                    life: 40,
+                                    explosive: true
+                                });
+                            } else {
+                                player.isDead = true;
+                            }
+                        }
+                        
+                        // 显示伤害效果
+                        this.createParticleEffect(5, player.x + player.width / 2, player.y + player.height / 2, {
+                            color: '#DC2626',
+                            life: 20
+                        });
+                        
+                        // 调试信息
+                        // console.log('幽灵持续伤害:', player.health, 'damagedPlayers count:', ghost.damagedPlayers.length);
+                    }
+                }
+            }
+
+            // 绘制幽灵
+            drawGhost(ghost, ctx) {
+                ctx.save();
+                ctx.globalAlpha = ghost.alpha;
+                
+                // 绘制幽灵身体（圆形主体）
+                ctx.fillStyle = ghost.color;
+                ctx.beginPath();
+                ctx.arc(ghost.x + ghost.width / 2, ghost.y + ghost.height / 2, ghost.width / 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 绘制幽灵尾巴（底部多个波浪形尾巴）
+                ctx.fillStyle = ghost.color;
+                const tailCount = 3;
+                const tailWidth = ghost.width / tailCount;
+                
+                for (let i = 0; i < tailCount; i++) {
+                    ctx.beginPath();
+                    const startX = ghost.x + i * tailWidth;
+                    const endX = startX + tailWidth;
+                    const midX = (startX + endX) / 2;
+                    const midY = ghost.y + ghost.height + 10;
+                    
+                    ctx.moveTo(startX, ghost.y + ghost.height);
+                    ctx.quadraticCurveTo(midX, midY, endX, ghost.y + ghost.height);
+                    ctx.lineTo(endX, ghost.y + ghost.height / 2);
+                    ctx.lineTo(startX, ghost.y + ghost.height / 2);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                // 绘制幽灵眼睛（大而圆）
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(ghost.x + ghost.width / 3, ghost.y + ghost.height / 3, 4, 0, Math.PI * 2);
+                ctx.arc(ghost.x + 2 * ghost.width / 3, ghost.y + ghost.height / 3, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 绘制幽灵嘴巴（惊讶的O形）
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(ghost.x + ghost.width / 2, ghost.y + 2 * ghost.height / 3, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+
+            // 检查幽灵与玩家碰撞
+            checkGhostCollisions() {
+                const activePlayers = this.getActivePlayers();
+                
+                for (let i = this.ghosts.length - 1; i >= 0; i--) {
+                    const ghost = this.ghosts[i];
+                    
+                    // 先检查之前碰撞的玩家是否还在碰撞范围内
+                    const playersToRemove = [];
+                    for (const player of ghost.damagedPlayers) {
+                        if (player.isDead || 
+                            player.x >= ghost.x + ghost.width ||
+                            player.x + player.width <= ghost.x ||
+                            player.y >= ghost.y + ghost.height ||
+                            player.y + player.height <= ghost.y) {
+                            playersToRemove.push(player);
+                        }
+                    }
+                    
+                    // 移除不再碰撞的玩家
+                    ghost.damagedPlayers = ghost.damagedPlayers.filter(player => !playersToRemove.includes(player));
+                    
+                    // 检查新的碰撞
+                    for (const player of activePlayers) {
+                        if (!player.isDead && !ghost.damagedPlayers.includes(player)) {
+                            // 检查碰撞
+                            if (player.x < ghost.x + ghost.width &&
+                                player.x + player.width > ghost.x &&
+                                player.y < ghost.y + ghost.height &&
+                                player.y + player.height > ghost.y) {
+                                
+                                // 记录碰撞的玩家，开始持续伤害
+                                if (!ghost.damagedPlayers.includes(player)) {
+                                    ghost.damagedPlayers.push(player);
+                                    // console.log('玩家添加到damagedPlayers:', player, '当前数量:', ghost.damagedPlayers.length);
+                                }
+                                
+                                // 立即造成一次伤害（如果玩家不是无敌状态）
+                                if (!player.isInvincible) {
+                                    player.health -= 1;
+                                    this.soundManager.playHurtSound();
+                                    
+                                    // 检查玩家是否死亡，如果有救命道具则触发救命效果
+                                    if (player.health <= 0) {
+                                        if (this.hasLifeSaver(player)) {
+                                            // 救命道具效果：血量即将为0时，增加5滴血
+                                            player.health = Math.min(player.maxHealth, 5);
+                                            this.consumeLifeSaver(player);
+                                            this.showPowerUpMessage("救命道具生效! +5生命值");
+                                            this.soundManager.playHealSound();
+
+                                            this.createParticleEffect(15,
+                                                player.x + player.width / 2, player.y + player.height / 2, {
+                                                color: '#06B6D4',
+                                                life: 40,
+                                                explosive: true
+                                            });
+                                        } else {
+                                            player.isDead = true;
+                                        }
+                                    }
+                                }
+                                
+                                // 显示伤害效果
+                                this.createParticleEffect(10, player.x + player.width / 2, player.y + player.height / 2, {
+                                    color: '#DC2626',
+                                    life: 30
+                                });
+                                
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
             // 应用道具效果
             applyPowerUpEffect(type, player) {
                 // 确保玩家存在且游戏运行中
@@ -3297,6 +3606,33 @@
                             color: '#6B7280',
                             life: 40
                         });
+                    },
+                    'ghost': () => {
+                        // 创建幽灵跟随玩家
+                        const ghost = this.Ghost(player);
+                        this.ghosts.push(ghost);
+                        this.showPowerUpMessage("幽灵出现! 小心躲避!");
+                        this.createParticleEffect(15,
+                            player.x + player.width / 2, player.y + player.height / 2, {
+                            color: '#4B5563',
+                            life: 40
+                        });
+                    },
+                    'randomPowerUp': () => {
+                        // 随机选择一个道具效果（排除随机道具本身）
+                        const availablePowerUps = this.powerUpTypes.filter(type => type !== 'randomPowerUp');
+                        const randomType = availablePowerUps[Math.floor(Math.random() * availablePowerUps.length)];
+                        
+                        this.showPowerUpMessage(`随机道具: ${randomType} ❓`);
+                        this.createParticleEffect(25,
+                            player.x + player.width / 2, player.y + player.height / 2, {
+                            color: '#FFD700',
+                            life: 50,
+                            explosive: true
+                        });
+                        
+                        // 应用随机道具效果
+                        this.applyPowerUpEffect(randomType, player);
                     }
                 };
 
@@ -3498,6 +3834,66 @@
                                 life: 40,
                                 gravity: 0.2
                             });
+                        }
+                        break;
+
+
+
+                    case 'mud':
+                        if (!player.healedPlatforms.has(platform.id)) {
+                            this.healPlayer(1, player);
+                            player.healedPlatforms.add(platform.id);
+                            this.soundManager.playNormalPlatformSound();
+                        }
+                        // 泥巴平台效果：移动速度减半（持续生效）
+                        player.isInMud = true;
+                        // 泥巴平台特效
+                        if (isNewPlatform) {
+                            this.createParticleEffect(8,
+                                platform.x + platform.width / 2, platform.y, {
+                                color: '#8B4513',
+                                life: 30,
+                                size: 2
+                            });
+                        }
+                        break;
+
+                    case 'electric':
+                        if (!player.healedPlatforms.has(platform.id)) {
+                            this.healPlayer(1, player);
+                            player.healedPlatforms.add(platform.id);
+                        }
+                        // 带电平台效果：电击并1秒内无法操作，玩家左右颤动
+                        if (!player.damagedPlatforms.has(platform.id) && !player.isInvincible && !player.isSmall) {
+                            player.damagedPlatforms.add(platform.id);
+                            player.isElectrocuted = true;
+                            player.electrocuteTimer = 60; // 1秒
+                            player.electrocuteShake = 0; // 颤动计时器
+                            this.soundManager.playDamageSound();
+                            
+                            // 电击特效：环绕玩家的电光
+                            this.createParticleEffect(20,
+                                player.x + player.width / 2, player.y + player.height / 2, {
+                                color: '#FBBF24',
+                                life: 40,
+                                explosive: true,
+                                speedX: (Math.random() - 0.5) * 8,
+                                speedY: (Math.random() - 0.5) * 8
+                            });
+                            
+                            // 持续电光特效
+                            for (let i = 0; i < 5; i++) {
+                                setTimeout(() => {
+                                    this.createParticleEffect(3,
+                                        player.x + player.width / 2, player.y + player.height / 2, {
+                                        color: '#FFD700',
+                                        life: 20,
+                                        size: 2
+                                    });
+                                }, i * 200);
+                            }
+                            
+                            player.flashTimer = 20;
                         }
                         break;
 
@@ -3931,6 +4327,10 @@
                             case 'conveyor-left':
                             case 'conveyor-right': fillColor = '#F3F4F6'; break;
                             case 'spike': fillColor = '#EF4444'; break;
+    
+                            case 'mud': fillColor = '#8B4513'; break;
+                            case 'electric': fillColor = '#FBBF24'; break;
+                            case 'spring': fillColor = '#10B981'; break;
                         }
 
                         if (flashColor) fillColor = flashColor;
@@ -3996,6 +4396,26 @@
                                 this.ctx.restore();
                             }
                             break;
+                        case 'electric':
+                            // 带电平台特效：闪烁效果
+                            if (Math.floor(Date.now() / 200) % 2 === 0) {
+                                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                                this.ctx.fillRect(0, 0, platform.width, platform.height);
+                            }
+                            break;
+                        case 'mud':
+                            // 泥巴平台特效：泥点图案
+                            this.ctx.fillStyle = 'rgba(139, 69, 19, 0.5)';
+                            for (let i = 0; i < 4; i++) {
+                                const x = Math.random() * platform.width;
+                                const y = Math.random() * platform.height;
+                                const size = Math.random() * 3 + 1;
+                                this.ctx.beginPath();
+                                this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                                this.ctx.fill();
+                            }
+                            break;
+
                     }
 
                     this.ctx.restore();
@@ -4347,6 +4767,9 @@
                     this.drawPlayer(player);
                 });
 
+                // 绘制幽灵
+                this.drawGhosts();
+
                 this.drawHUD();
 
                 // 缩小视野效果 - 检查是否有玩家有缩小视野效果
@@ -4441,7 +4864,9 @@
 
                     // 执行顺序：先检测碰撞更新站立平台 → 再更新平台移动
                     this.updatePlayers();
+                    this.updateGhosts();
                     this.checkCollisions();
+                    this.checkGhostCollisions();
                     this.updatePlatforms();
                     this.draw();
 
@@ -4541,8 +4966,10 @@
                         'platformSlow': { bg: '#607D8B', html: '🐌' },
                         'platformSpeedUp': { bg: '#EF4444', html: '🚀' },
                         'reverseControls': { bg: '#8B5CF6', html: '💫' },
-                        'narrowVision': { bg: '#6B7280', html: '👁️' }
-                    };
+                        'narrowVision': { bg: '#6B7280', html: '👁️' },
+                        'randomPowerUp': { bg: '#FFD700', html: '❓' },
+                        'ghost': { bg: '#4B5563', html: '👻' }
+                };
 
                     const config = buttonConfig[type];
                     if (config) {
