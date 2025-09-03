@@ -8,7 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <script src="https://www.midijs.net/lib/midi.js"></script>
+    <!-- <script src="//www.midijs.net/lib/midi.js"></script> -->
+    <script type='text/javascript' src='//www.midijs.net/lib/midi.js'></script>
+
 
     <script>
         tailwind.config = {
@@ -1046,7 +1048,6 @@
                 
                 // 同时设置MIDI背景音乐音量（如果正在播放）
                 if (typeof MIDIjs !== 'undefined') {
-                    MIDIjs.setVolume(volume * 100); // MIDIjs音量范围是0-100
                 }
             }
 
@@ -1176,16 +1177,11 @@
             playBackgroundMusic() {
                 try {
                     if (typeof MIDIjs !== 'undefined') {
-                        // 使用MIDIjs库播放背景音乐
-                        MIDIjs.player_callback = function(event) {
-                            if (event.status === 'playing') {
-                                console.log('背景音乐播放中:', event.time);
-                            }
-                        };
+                        // 使用midijs.net库播放背景音乐
                         MIDIjs.play('BGM.MID');
-                        console.log('背景音乐开始播放');
+                        // console.log('背景音乐开始播放');
                     } else {
-                        console.warn('MIDIjs库未加载，无法播放背景音乐');
+                        console.warn('midijs库未加载，无法播放背景音乐');
                     }
                 } catch (error) {
                     console.warn('背景音乐播放失败:', error);
@@ -1197,7 +1193,7 @@
                 try {
                     if (typeof MIDIjs !== 'undefined') {
                         MIDIjs.stop();
-                        console.log('背景音乐已停止');
+                        // console.log('背景音乐已停止');
                     }
                 } catch (error) {
                     console.warn('停止背景音乐失败:', error);
