@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="http://www.midijs.net/lib/midi.js"></script>
 
     <script>
         tailwind.config = {
@@ -997,11 +998,10 @@
         class SoundManager {
             constructor() {
                 this.audioContext = null;
+                this.midiPlayer = null;
                 this.initAudioContext();
                 this.mainVolume = 0.9;
                 this.setupUserInteractionListener();
-                this.bgMusic = null;
-                this.bgMusicPlaying = false;
             }
 
             // 初始化音频上下文
@@ -1043,6 +1043,11 @@
             // 设置主音量
             setVolume(volume) {
                 this.mainVolume = Math.max(0, Math.min(1, volume));
+                
+                // 同时设置MIDI背景音乐音量（如果正在播放）
+                if (typeof MIDIjs !== 'undefined') {
+                    MIDIjs.setVolume(volume * 100); // MIDIjs音量范围是0-100
+                }
             }
 
             // 创建音频节点
@@ -1108,51 +1113,6 @@
 
             // 游戏音效集合
             playStartGameSound() { this.playScale([261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]); }
-            
-            // 播放背景音乐
-            playBackgroundMusic() {
-                if (!this.ensureAudioContext()) return;
-                
-                // 如果已经有背景音乐在播放，先停止
-                if (this.bgMusic) {
-                    this.stopBackgroundMusic();
-                }
-                
-                // 创建音频元素播放MIDI文件
-                this.bgMusic = new Audio('BGM.mp3');
-                this.bgMusic.loop = true;
-                this.bgMusic.volume = this.mainVolume * 0.6; // 背景音乐音量稍低
-                
-                // 处理用户交互后开始播放
-                const startMusic = () => {
-                    this.bgMusic.play().catch(e => {
-                        console.warn('背景音乐播放失败:', e);
-                    });
-                    this.bgMusicPlaying = true;
-                    document.removeEventListener('click', startMusic);
-                    document.removeEventListener('touchstart', startMusic);
-                };
-                
-                document.addEventListener('click', startMusic);
-                document.addEventListener('touchstart', startMusic);
-            }
-            
-            // 停止背景音乐
-            stopBackgroundMusic() {
-                if (this.bgMusic) {
-                    this.bgMusic.pause();
-                    this.bgMusic.currentTime = 0;
-                    this.bgMusic = null;
-                }
-                this.bgMusicPlaying = false;
-            }
-            
-            // 设置背景音乐音量
-            setBackgroundMusicVolume(volume) {
-                if (this.bgMusic) {
-                    this.bgMusic.volume = Math.max(0, Math.min(1, volume)) * this.mainVolume;
-                }
-            }
             playNormalPlatformSound() { this.playTone('square', 330, 0.08, 0, { attack: 0.01, decay: 0.03, sustain: 0.3, release: 0.04 }); }
             playBounceSound() { this.playTone('sine', 880, 0.05, 0, { attack: 0.005, decay: 0.02, sustain: 0.2, release: 0.025 }); }
             playFlipPlatformSound() {
@@ -1210,6 +1170,38 @@
             playHurtSound() {
                 this.playTone('sawtooth', 220, 0.2, 0, { attack: 0.01, decay: 0.1, sustain: 0.7, release: 0.09 });
                 this.playTone('sawtooth', 165, 0.15, 0.05, { attack: 0.01, decay: 0.08, sustain: 0.6, release: 0.06 });
+            }
+
+            // MIDI背景音乐播放
+            playBackgroundMusic() {
+                try {
+                    if (typeof MIDIjs !== 'undefined') {
+                        // 使用MIDIjs库播放背景音乐
+                        MIDIjs.player_callback = function(event) {
+                            if (event.status === 'playing') {
+                                console.log('背景音乐播放中:', event.time);
+                            }
+                        };
+                        MIDIjs.play('BGM.MID');
+                        console.log('背景音乐开始播放');
+                    } else {
+                        console.warn('MIDIjs库未加载，无法播放背景音乐');
+                    }
+                } catch (error) {
+                    console.warn('背景音乐播放失败:', error);
+                }
+            }
+
+            // 停止背景音乐
+            stopBackgroundMusic() {
+                try {
+                    if (typeof MIDIjs !== 'undefined') {
+                        MIDIjs.stop();
+                        console.log('背景音乐已停止');
+                    }
+                } catch (error) {
+                    console.warn('停止背景音乐失败:', error);
+                }
             }
         }
 
@@ -1492,11 +1484,7 @@
 
             // 设置事件监听器
             setupEventListeners() {
-                this.volumeSlider.addEventListener('input', (e) => {
-                    const volume = parseInt(e.target.value) / 100;
-                    this.soundManager.setVolume(volume);
-                    this.soundManager.setBackgroundMusicVolume(volume);
-                });
+                this.volumeSlider.addEventListener('input', (e) => this.soundManager.setVolume(parseInt(e.target.value) / 100));
                 document.getElementById('startButton').addEventListener('click', () => this.startGame());
                 document.getElementById('restartButton').addEventListener('click', () => this.startGame());
                 document.getElementById('resumeButton').addEventListener('click', () => this.resumeGame());
