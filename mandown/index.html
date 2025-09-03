@@ -2650,6 +2650,21 @@
                 });
             }
 
+            // 设置平台和玩家速度比例
+            setPlatformSpeed(speedMultiplier) {
+                // 更新平台速度
+                this.platforms.forEach(platform => {
+                    if (platform.originalMoveSpeed) {
+                        platform.moveSpeed = platform.originalMoveSpeed * speedMultiplier;
+                    }
+                });
+                // 更新所有活跃玩家的平台速度
+                const activePlayers = this.getActivePlayers();
+                activePlayers.forEach(player => {
+                    player.platformSpeed = player.originalPlatformSpeed * speedMultiplier;
+                });
+            }
+
             // 统一处理重力效果
             handleGravityEffects(timeFactor) {
                 // 重力变小效果（全局）
@@ -2678,6 +2693,15 @@
                 const activePlayers = this.getActivePlayers();
                 activePlayers.forEach(player => {
                     player.gravity = player.originalGravity;
+                });
+            }
+
+            // 设置玩家重力比例
+            setPlayerGravity(gravityMultiplier) {
+                // 更新所有活跃玩家的重力
+                const activePlayers = this.getActivePlayers();
+                activePlayers.forEach(player => {
+                    player.gravity = player.originalGravity * gravityMultiplier;
                 });
             }
 
@@ -3241,7 +3265,7 @@
                 }
                 
                 // 显示伤害效果
-                this.createParticleEffect(10, player.x + player.width / 2, player.y + player.height / 2, {
+                this.createPlayerParticleEffect(10, {
                     color: '#DC2626',
                     life: 30
                 });
@@ -3354,8 +3378,7 @@
                     'fullHealth': () => {
                         player.health = player.maxHealth;
                         this.showPowerUpMessage("生命值全满!");
-                        this.createParticleEffect(15,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(15, {
                             color: '#10B981',
                             life: 40
                         });
@@ -3367,8 +3390,7 @@
                         player.isBig = false;
                         player.sizeTimer = 20 * 60;
                         this.showPowerUpMessage("体型变小 (20秒) - 免疫钉板，重力减小，翻转平台不会翻转");
-                        this.createParticleEffect(10,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(10, {
                             color: '#3B82F6',
                             life: 30
                         });
@@ -3383,8 +3405,7 @@
                         player.isSmall = false;
                         player.sizeTimer = 20 * 60;
                         this.showPowerUpMessage("体型变大 (20秒) - 免疫传送带，固定移动平台");
-                        this.createParticleEffect(10,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(10, {
                             color: '#8B5CF6',
                             life: 30
                         });
@@ -3393,8 +3414,7 @@
                         player.isInvincible = true;
                         player.invincibleTimer = 20 * 60;
                         this.showPowerUpMessage("金身状态 (20秒)");
-                        this.createParticleEffect(15,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(15, {
                             color: '#F59E0B',
                             life: 40,
                             explosive: true
@@ -3408,8 +3428,7 @@
                             platform.type = 'normal';
                         });
                         this.showPowerUpMessage("所有平台变为普通平台 (20秒)");
-                        this.createParticleEffect(20,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(20, {
                             color: '#EC4899',
                             life: 40
                         });
@@ -3418,8 +3437,7 @@
                         // 为吃到道具的玩家添加lifeSaver
                         player.lifeSaverAvailable = true;
                         this.showPowerUpMessage("获得救命道具! ");
-                        this.createParticleEffect(20,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(20, {
                             color: '#06B6D4',
                             life: 50,
                             explosive: true
@@ -3428,23 +3446,16 @@
                     'reducedGravity': () => {
                         // 全局效果：应用到游戏而不是单个玩家
                         if (this.isIncreasedGravity) {
-                            const activePlayers = this.getActivePlayers();
-                            activePlayers.forEach(player => {
-                                player.gravity = player.originalGravity;
-                            });
+                            this.restoreGravity();
                             this.isIncreasedGravity = false;
                         }
                         
                         this.isReducedGravity = true;
                         this.reducedGravityTimer = 15 * 60;
                         // 更新所有活跃玩家的重力
-                        const activePlayers = this.getActivePlayers();
-                        activePlayers.forEach(player => {
-                            player.gravity = player.originalGravity * 0.35;
-                        });
+                        this.setPlayerGravity(0.35);
                         this.showPowerUpMessage("重力减小 (15秒)");
-                        this.createParticleEffect(15,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(15, {
                             color: '#9C27B0',
                             life: 40,
                             explosive: true
@@ -3453,23 +3464,16 @@
                     'increasedGravity': () => {
                         // 全局效果：应用到游戏而不是单个玩家
                         if (this.isReducedGravity) {
-                            const activePlayers = this.getActivePlayers();
-                            activePlayers.forEach(player => {
-                                player.gravity = player.originalGravity;
-                            });
+                            this.restoreGravity();
                             this.isReducedGravity = false;
                         }
                         
                         this.isIncreasedGravity = true;
                         this.increasedGravityTimer = 15 * 60;
                         // 更新所有活跃玩家的重力
-                        const activePlayers = this.getActivePlayers();
-                        activePlayers.forEach(player => {
-                            player.gravity = player.originalGravity * 1.5;
-                        });
+                        this.setPlayerGravity(1.5);
                         this.showPowerUpMessage("重力增强! 落得更快了!");
-                        this.createParticleEffect(20,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(20, {
                             color: '#DC2626',
                             life: 40
                         });
@@ -3477,33 +3481,15 @@
                     'platformSlow': () => {
                         // 全局效果：应用到游戏而不是单个玩家
                         if (this.isPlatformSpeedUp) {
-                            this.platforms.forEach(platform => {
-                                if (platform.originalMoveSpeed) {
-                                    platform.moveSpeed = platform.originalMoveSpeed;
-                                }
-                            });
-                            const activePlayers = this.getActivePlayers();
-                            activePlayers.forEach(player => {
-                                player.platformSpeed = player.originalPlatformSpeed;
-                            });
+                            this.restorePlatformSpeed();
                             this.isPlatformSpeedUp = false;
                         }
                         
                         this.isPlatformSlow = true;
                         this.platformSlowTimer = 15 * 60;
-                        this.platforms.forEach(platform => {
-                            if (platform.originalMoveSpeed) {
-                                platform.moveSpeed = platform.originalMoveSpeed * 0.5;
-                            }
-                        });
-                        // 更新所有活跃玩家的平台速度
-                        const activePlayers = this.getActivePlayers();
-                        activePlayers.forEach(player => {
-                            player.platformSpeed = player.originalPlatformSpeed * 0.5;
-                        });
+                        this.setPlatformSpeed(0.5);
                         this.showPowerUpMessage("平台速度减慢30% (15秒)");
-                        this.createParticleEffect(15,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(15, {
                             color: '#607D8B',
                             life: 40
                         });
@@ -3511,33 +3497,15 @@
                     'platformSpeedUp': () => {
                         // 全局效果：应用到游戏而不是单个玩家
                         if (this.isPlatformSlow) {
-                            this.platforms.forEach(platform => {
-                                if (platform.originalMoveSpeed) {
-                                    platform.moveSpeed = platform.originalMoveSpeed;
-                                }
-                            });
-                            const activePlayers = this.getActivePlayers();
-                            activePlayers.forEach(player => {
-                                player.platformSpeed = player.originalPlatformSpeed;
-                            });
+                            this.restorePlatformSpeed();
                             this.isPlatformSlow = false;
                         }
                         
                         this.isPlatformSpeedUp = true;
                         this.platformSpeedUpTimer = 15 * 60;
-                        this.platforms.forEach(platform => {
-                            if (platform.originalMoveSpeed) {
-                                platform.moveSpeed = platform.originalMoveSpeed * 2;
-                            }
-                        });
-                        // 更新所有活跃玩家的平台速度
-                        const activePlayers = this.getActivePlayers();
-                        activePlayers.forEach(player => {
-                            player.platformSpeed = player.originalPlatformSpeed * 2;
-                        });
+                        this.setPlatformSpeed(2);
                         this.showPowerUpMessage("平台加速! 注意躲避!");
-                        this.createParticleEffect(20,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(20, {
                             color: '#EF4444',
                             life: 40
                         });
@@ -3546,8 +3514,7 @@
                         player.goldenLegUses = 3;
                         player.hasGoldenLeg = true;
                         this.showPowerUpMessage("获得金腿道具! 可免疫3次钉板伤害");
-                        this.createParticleEffect(15,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(15, {
                             color: '#F59E0B',
                             life: 40
                         });
@@ -3556,8 +3523,7 @@
                         player.goldenHeadUses = 3;
                         player.hasGoldenHead = true;
                         this.showPowerUpMessage("获得金头道具! 顶部越界时自动下移 (3次)");
-                        this.createParticleEffect(15,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(15, {
                             color: '#F59E0B',
                             life: 40
                         });
@@ -3566,8 +3532,7 @@
                         player.isControlReversed = true;
                         player.reverseControlsTimer = 15 * 60; // 15秒
                         this.showPowerUpMessage("反向控制! 左右方向颠倒了!");
-                        this.createParticleEffect(20,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(20, {
                             color: '#8B5CF6',
                             life: 40,
                             explosive: true
@@ -3578,8 +3543,7 @@
                         player.isNarrowVision = true;
                         player.narrowVisionTimer = 15 * 60;
                         this.showPowerUpMessage("视野缩小! 注意观察!");
-                        this.createParticleEffect(20,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(20, {
                             color: '#6B7280',
                             life: 40
                         });
@@ -3589,8 +3553,7 @@
                         const ghost = this.Ghost(player);
                         this.ghosts.push(ghost);
                         this.showPowerUpMessage("幽灵出现! 小心躲避!");
-                        this.createParticleEffect(15,
-                            player.x + player.width / 2, player.y + player.height / 2, {
+                        this.createPlayerParticleEffect(15, {
                             color: '#4B5563',
                             life: 40
                         });
@@ -3627,6 +3590,14 @@
                 setTimeout(() => {
                     this.powerUpIndicator.classList.add('hidden');
                 }, 3000);
+            }
+
+            // 在玩家位置创建粒子效果
+            createPlayerParticleEffect(count, options = {}) {
+                const player = this.getActivePlayers()[0]; // 默认使用第一个活跃玩家
+                if (player) {
+                    this.createParticleEffect(count, player.x + player.width / 2, player.y + player.height / 2, options);
+                }
             }
 
             // 碰撞检测
@@ -3834,7 +3805,7 @@
 
                     case 'electric':
                         if (!player.healedPlatforms.has(platform.id)) {
-                            this.healPlayer(1, player);
+                            // this.healPlayer(1, player);
                             player.healedPlatforms.add(platform.id);
                         }
                         // 带电平台效果：电击并1秒内无法操作，玩家左右颤动
