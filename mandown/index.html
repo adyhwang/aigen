@@ -650,7 +650,7 @@
                 // debuff道具生命周期管理
                 this.spawnTime = Date.now();
                 this.lifeDuration = 10000; // 10秒
-                this.isDebuff = ['reverseControls', 'increasedGravity', 'platformSpeedUp', 'narrowVision'].includes(type);
+                this.isDebuff = ['reverseControls', 'increasedGravity', 'platformSpeedUp', 'narrowVision', 'ghost'].includes(type);
                 this.attractionSpeed = 3; // 吸附速度
 
                 // 根据道具类型设置颜色和图标
@@ -715,7 +715,7 @@
                     }
 
                     // 自动向玩家吸附（速度略快于平台生成速度）
-                    if (elapsedTime > 1000) { // 1秒后开始吸附
+                    if (elapsedTime > 500) { // 0.5秒后开始吸附
                         let targetPlayer = null;
 
                         // 选择距离更近的玩家作为吸附目标
@@ -3050,7 +3050,7 @@
 
             // 检查是否需要生成道具
             checkPowerUpSpawn() {
-                if (this.gameMode === 'new' && (this.score >= this.lastPowerUpScore + 5)) {
+                if (this.gameMode === 'new' && (this.score >= this.lastPowerUpScore + 3)) {
                     // 在最新生成的平台上生成道具
                     if (this.platforms.length > 0) {
                         const lastPlatform = this.platforms[this.platforms.length - 1];
