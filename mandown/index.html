@@ -426,6 +426,13 @@
                         <span class="text-sm text-gray-300">缩小视野</span>
                     </div>
                     <div class="flex items-center gap-1">
+                        <div class="w-7 h-7 rounded-full bg-red-500 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🦸
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">超人</span>
+                    </div>
+                    <div class="flex items-center gap-1">
                         <div class="w-7 h-7 rounded-full bg-yellow-400 relative">
                             <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">❓
                             </div>
@@ -670,7 +677,8 @@
                     'reverseControls': { color: '#8B5CF6', icon: '💫' },
                     'narrowVision': { color: '#6B7280', icon: '👁️' },
                     'randomPowerUp': { color: '#FFD700', icon: '❓' },
-                    'ghost': { color: '#DC2626', icon: '👻' }
+                    'ghost': { color: '#DC2626', icon: '👻' },
+                    'superman': { color: '#FF0000', icon: '🦸' }
                 };
 
                 const config = powerUpConfig[type];
@@ -1167,6 +1175,56 @@
                 this.playTone('sawtooth', 165, 0.15, 0.05, { attack: 0.01, decay: 0.08, sustain: 0.6, release: 0.06 });
             }
 
+            // 风声音效 - 超人状态
+            playWindSound() {
+                // 创建风声效果 - 低频噪音
+                if (!this.ensureAudioContext()) return;
+                
+                const bufferSize = 4096;
+                const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                
+                // 生成白噪音
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                
+                // 创建噪音源
+                const noise = this.audioContext.createBufferSource();
+                noise.buffer = noiseBuffer;
+                noise.loop = true;
+                
+                // 创建滤波器 - 模拟风声的低频特性
+                const filter = this.audioContext.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 300;
+                filter.Q.value = 0.7;
+                
+                // 创建增益节点控制音量
+                const gainNode = this.audioContext.createGain();
+                gainNode.gain.value = 0.7 * this.mainVolume;
+                
+                // 连接节点
+                noise.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                // 开始播放
+                noise.start();
+                
+                return {
+                    stop: () => {
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.0);
+                        setTimeout(() => {
+                            noise.stop();
+                            noise.disconnect();
+                            filter.disconnect();
+                            gainNode.disconnect();
+                        }, 1000);
+                    }
+                };
+            }
+
             // 背景音乐对象
             backgroundMusic = null;
 
@@ -1454,7 +1512,8 @@
                     'lifeSaver', 'fullHealth', 'smallPlayer', 'bigPlayer',
                     'allNormal', 'invincible', 'goldenLeg', 'goldenHead',
                     'reducedGravity', 'increasedGravity', 'platformSpeedUp', 'platformSlow',
-                    'reverseControls', 'narrowVision', 'randomPowerUp', 'ghost'
+                    'reverseControls', 'narrowVision', 'randomPowerUp', 'ghost',
+                    'superman'
                 ];
 
 
@@ -2074,6 +2133,36 @@
                 return platform;
             }
 
+            // 创建普通平台用于降落
+            createNormalPlatformForLanding(player) {
+                // 在玩家下方创建一个普通平台
+                const platformX = player.x + player.width / 2 - 60;
+                const platformY = player.y + player.height + 50;
+                
+                const platform = {
+                    id: Date.now() + Math.random() + 'landing',
+                    x: Math.max(0, Math.min(this.canvas.width - 120, platformX)),
+                    y: platformY,
+                    width: 120,
+                    height: 14,
+                    type: 'normal',
+                    flipped: false,
+                    flipTimer: 0,
+                    conveyorSpeed: 0,
+                    effectTimer: 0,
+                    glowTimer: 60
+                };
+
+                this.platforms.push(platform);
+                
+                // 设置玩家站在新平台上
+                player.onGround = true;
+                player.standingPlatform = platform;
+                player.velocityY = 0;
+                
+                return platform;
+            }
+
             // 创建道具
             createPowerUp(platform) {
                 const type = this.powerUpTypes[Math.floor(Math.random() * this.powerUpTypes.length)];
@@ -2492,9 +2581,11 @@
                     });
                 }
 
-                // 重力应用
+                // 重力应用（超人状态下禁用重力）
                 let currentGravity = player.originalGravity;
-                if (player.isReducedGravity) {
+                if (player.isGravityDisabled) {
+                    currentGravity = 0;
+                } else if (player.isReducedGravity) {
                     currentGravity = player.originalGravity * 0.35;
                 } else if (player.isIncreasedGravity) {
                     currentGravity = player.originalGravity * 1.5;
@@ -2545,9 +2636,11 @@
                     player.velocityY = 5 * timeFactor;
                 }
 
-                // 更新位置
-                player.x += player.velocityX;
-                player.y += player.velocityY;
+                // 更新位置（超人状态下保持绝对静止）
+                if (!player.isGravityDisabled) {
+                    player.x += player.velocityX;
+                    player.y += player.velocityY;
+                }
 
                 // 边界检测（左右）
                 if (player.x < 0) player.x = 0;
@@ -2823,6 +2916,33 @@
 
                 // 统一处理平台速度效果
                 this.handlePlatformSpeedEffects(timeFactor);
+                
+                // 超人效果
+                if (player.isSuperman) {
+                    player.supermanTimer -= timeFactor;
+                    if (player.supermanTimer <= 0) {
+                        // 超人状态结束，恢复正常状态
+                        player.isSuperman = false;
+                        player.isFlying = false;
+                        player.canPassThroughPlatforms = false;
+                        
+                        // 停止风声音效
+                        if (player.windSound) {
+                            player.windSound.stop();
+                            player.windSound = null;
+                        }
+                        
+                        // 恢复重力和碰撞检测
+                        player.isGravityDisabled = false;
+                        player.isCollisionDisabled = false;
+                        
+                        // 生成新平台让玩家降落
+                        this.createNormalPlatformForLanding(player);
+                        
+                        this.showPowerUpMessage("超人状态结束，恢复正常");
+                    }
+                }
+                
                 // 反向控制效果
                 if (player.isControlReversed) {
                     player.reverseControlsTimer -= timeFactor;
@@ -2831,8 +2951,6 @@
                         this.showPowerUpMessage("控制恢复正常");
                     }
                 }
-
-
 
 
                 // 缩小视野效果（针对每个玩家）
@@ -3610,6 +3728,46 @@
                             life: 40
                         });
                     },
+                    'superman': () => {
+                        // 超人效果：恢复生命值 + 绝对静止 + 平台加速 + 穿透平台
+                        player.health = player.maxHealth; // 恢复所有生命值
+                        player.isSuperman = true; // 超人状态标志
+                        player.supermanTimer = 10 * 60; // 10秒超人状态
+                        
+                        // 播放风声音效
+                        player.windSound = this.soundManager.playWindSound();
+                        
+                        // 设置超人飞行姿势：头朝下腿朝上，双手高举过头顶
+                        player.isFlying = true;
+                        player.flyingDirection = -1; // 头朝下
+                        
+                        // 移动到游戏区域底部中间并保持绝对静止
+                        player.x = this.canvas.width / 2 - player.width / 2;
+                        player.y = this.canvas.height - player.height - 100;
+                        player.velocityX = 0;
+                        player.velocityY = 0;
+                        player.onGround = false;
+                        player.standingPlatform = null;
+                        
+                        // 禁用重力和碰撞检测
+                        player.isGravityDisabled = true;
+                        player.isCollisionDisabled = true;
+                        
+                        // 平台速度变快
+                        this.isPlatformSpeedUp = true;
+                        this.platformSpeedUpTimer = 10 * 60;
+                        this.setPlatformSpeed(2);
+                        
+                        // 穿透平台能力
+                        player.canPassThroughPlatforms = true;
+                        
+                        this.showPowerUpMessage("超人模式! 绝对静止、无敌、穿透平台 (10秒)");
+                        this.createPlayerParticleEffect(10, {
+                            color: '#FF0000',
+                            life: 60,
+                            explosive: true
+                        });
+                    },
                     'randomPowerUp': () => {
                         // 随机选择一个道具效果（排除随机道具本身）
                         const availablePowerUps = this.powerUpTypes.filter(type => type !== 'randomPowerUp');
@@ -3748,8 +3906,8 @@
                     // 跳过已翻转且过期的平台
                     if (platform.type === 'flip' && platform.flipped && platform.flipTimer > 42) continue;
 
-                    // AABB碰撞检测
-                    if (
+                    // AABB碰撞检测（超人状态下禁用碰撞）
+                    if (!player.isCollisionDisabled &&
                         player.x < platform.x + platform.width &&
                         player.x + player.width > platform.x &&
                         player.y + player.height > platform.y &&
@@ -3986,6 +4144,27 @@
                 const armWidth = 6;
                 const forearmLength = armLength * 0.6;
                 const upperArmLength = armLength * 0.4;
+                
+                // 超人飞行姿势：双手高举过头顶
+                if (player.isSuperman && player.isFlying) {
+                    // 左臂高举
+                    this.ctx.save();
+                    this.ctx.translate(player.width * 0.2, -player.height * 0.1);
+                    this.ctx.rotate(-Math.PI / 2); // 手臂向上伸直
+                    this.ctx.fillStyle = '#6F2937';
+                    this.ctx.fillRect(-armWidth / 2, 0, armWidth, armLength);
+                    this.ctx.restore();
+                    
+                    // 右臂高举
+                    this.ctx.save();
+                    this.ctx.translate(player.width * 0.8, -player.height * 0.1);
+                    this.ctx.rotate(-Math.PI / 2); // 手臂向上伸直
+                    this.ctx.fillStyle = '#6F2937';
+                    this.ctx.fillRect(-armWidth / 2, 0, armWidth, armLength);
+                    this.ctx.restore();
+                    
+                    return;
+                }
 
                 // 左臂
                 this.ctx.save();
@@ -4155,7 +4334,13 @@
                     player.x + player.width / 2,
                     player.y + player.height / 2
                 );
-                this.ctx.rotate(player.bodyRotation);
+                
+                // 超人飞行姿势：头朝下腿朝上
+                if (player.isSuperman && player.isFlying) {
+                    this.ctx.rotate(Math.PI); // 旋转180度，头朝下
+                } else {
+                    this.ctx.rotate(player.bodyRotation);
+                }
 
                 // 应用身体形变（拉伸和压缩）
                 this.ctx.scale(
@@ -4674,6 +4859,14 @@
                     currentY += spacing;
                 }
 
+                // 超人状态计时器
+                if (player.isSuperman) {
+                    const timeLeft = Math.ceil(player.supermanTimer / 60);
+                    this.drawTimerBar(x, currentY, timerWidth, timerHeight,
+                        timeLeft, 30, '#DC2626', '超人: ' + timeLeft + 's', align);
+                    currentY += spacing;
+                }
+
                 // 缩小视野计时器
                 if (player.isNarrowVision) {
                     const timeLeft = Math.ceil(player.narrowVisionTimer / 60);
@@ -4940,22 +5133,23 @@
 
                     // 设置按钮颜色和图标
                     const buttonConfig = {
-                        'lifeSaver': { bg: '#06B6D4', html: '🛸' },
-                        'fullHealth': { bg: '#10B981', html: '💗' },
-                        'smallPlayer': { bg: '#3B82F6', html: '🐜' },
-                        'bigPlayer': { bg: '#8B5CF6', html: '🐘' },
-                        'invincible': { bg: '#F59E0B', html: '🧘' },
-                        'goldenLeg': { bg: '#F59E0B', html: '🦶' },
-                        'goldenHead': { bg: '#F59E0B', html: '😬' },
-                        'allNormal': { bg: '#EC4899', html: '🟦' },
-                        'reducedGravity': { bg: '#9C27B0', html: '🔺' },
-                        'increasedGravity': { bg: '#DC2626', html: '🔻' },
-                        'platformSlow': { bg: '#607D8B', html: '🐌' },
-                        'platformSpeedUp': { bg: '#EF4444', html: '🚀' },
-                        'reverseControls': { bg: '#8B5CF6', html: '💫' },
-                        'narrowVision': { bg: '#6B7280', html: '👁️' },
-                        'randomPowerUp': { bg: '#FFD700', html: '❓' },
-                        'ghost': { bg: '#4B5563', html: '👻' }
+                    'lifeSaver': { bg: '#06B6D4', html: '🛸' },
+                    'fullHealth': { bg: '#10B981', html: '💗' },
+                    'smallPlayer': { bg: '#3B82F6', html: '🐜' },
+                    'bigPlayer': { bg: '#8B5CF6', html: '🐘' },
+                    'invincible': { bg: '#F59E0B', html: '🧘' },
+                    'goldenLeg': { bg: '#F59E0B', html: '🦶' },
+                    'goldenHead': { bg: '#F59E0B', html: '😬' },
+                    'allNormal': { bg: '#EC4899', html: '🟦' },
+                    'reducedGravity': { bg: '#9C27B0', html: '🔺' },
+                    'increasedGravity': { bg: '#DC2626', html: '🔻' },
+                    'platformSlow': { bg: '#607D8B', html: '🐌' },
+                    'platformSpeedUp': { bg: '#EF4444', html: '🚀' },
+                    'reverseControls': { bg: '#8B5CF6', html: '💫' },
+                    'narrowVision': { bg: '#6B7280', html: '👁️' },
+                    'randomPowerUp': { bg: '#FFD700', html: '❓' },
+                    'ghost': { bg: '#4B5563', html: '👻' },
+                    'superman': { bg: '#FF0000', html: '🦸' }
                 };
 
                     const config = buttonConfig[type];
@@ -5081,6 +5275,7 @@
                 const autoSelectCheckbox = document.createElement('input');
                 autoSelectCheckbox.type = 'checkbox';
                 autoSelectCheckbox.id = 'autoSelectCheckbox';
+                autoSelectCheckbox.checked = true;
                 autoSelectCheckbox.style.width = '16px';
                 autoSelectCheckbox.style.height = '16px';
                 
