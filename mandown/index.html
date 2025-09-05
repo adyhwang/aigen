@@ -8,8 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-
-
     <script>
         tailwind.config = {
             theme: {
@@ -27,7 +25,6 @@
             }
         }
     </script>
-
     <style>
         /* 基础样式 */
         body {
@@ -201,9 +198,12 @@
                 class="text-[clamp(1.2rem,5vw,1.8rem)] font-['Press_Start_2P'] text-left text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 tracking-wider">
                 就下100层
             </h1>
-
             <div class="flex items-center gap-2">
-                <div class="bg-dark/70 px-3 py-2 rounded-full">
+                <div class="bg-dark/70 px-3 py-2 rounded-full flex items-center gap-2">
+                    <button id="bgmToggle" class="text-green-300 hover:text-white transition-colors">
+                        <i class="fa fa-music"></i>
+                    </button>
+                    <div class="h-4 w-px bg-gray-600"></div>
                     <i class="fa fa-volume-up text-gray-300"></i>
                     <input type="range" id="volumeSlider" class="volume-slider w-24" min="0" max="100" value="70">
                 </div>
@@ -273,9 +273,11 @@
                         <div id="playerModeDropdown"
                             class="hidden absolute right-0 mt-2 w-48 bg-dark/95 rounded-lg dropdown-shadow z-20">
                             <div class="py-1">
-                                <a href="#" class="player-mode-option block px-4 py-2 hover:bg-primary/20 transition-colors"
+                                <a href="#"
+                                    class="player-mode-option block px-4 py-2 hover:bg-primary/20 transition-colors"
                                     data-player-mode="single">单人</a>
-                                <a href="#" class="player-mode-option block px-4 py-2 hover:bg-primary/80 transition-colors"
+                                <a href="#"
+                                    class="player-mode-option block px-4 py-2 hover:bg-primary/80 transition-colors"
                                     data-player-mode="multiplayer">双人</a>
                             </div>
                         </div>
@@ -1004,7 +1006,8 @@
 
         // ==================== 音效管理器 ====================
         class SoundManager {
-            constructor() {
+            constructor(game) {
+                this.game = game; // 保存游戏实例引用
                 this.audioContext = null;
                 this.midiPlayer = null;
                 this.initAudioContext();
@@ -1050,7 +1053,7 @@
 
             // 设置主音量
             setVolume(volume) {
-                this.mainVolume = Math.max(0, Math.min(1, volume));   
+                this.mainVolume = Math.max(0, Math.min(1, volume));
             }
 
             // 创建音频节点
@@ -1169,7 +1172,7 @@
                 this.playTone('sawtooth', 87, 0.3, 0.1, { attack: 0.01, decay: 0.15, sustain: 0.5, release: 0.14 });
                 this.playTone('sawtooth', 73, 0.2, 0.2, { attack: 0.01, decay: 0.1, sustain: 0.4, release: 0.09 });
             }
-            
+
             playHurtSound() {
                 this.playTone('sawtooth', 220, 0.2, 0, { attack: 0.01, decay: 0.1, sustain: 0.7, release: 0.09 });
                 this.playTone('sawtooth', 165, 0.15, 0.05, { attack: 0.01, decay: 0.08, sustain: 0.6, release: 0.06 });
@@ -1179,39 +1182,39 @@
             playWindSound() {
                 // 创建风声效果 - 低频噪音
                 if (!this.ensureAudioContext()) return;
-                
+
                 const bufferSize = 4096;
                 const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
                 const output = noiseBuffer.getChannelData(0);
-                
+
                 // 生成白噪音
                 for (let i = 0; i < bufferSize; i++) {
                     output[i] = Math.random() * 2 - 1;
                 }
-                
+
                 // 创建噪音源
                 const noise = this.audioContext.createBufferSource();
                 noise.buffer = noiseBuffer;
                 noise.loop = true;
-                
+
                 // 创建滤波器 - 模拟风声的低频特性
                 const filter = this.audioContext.createBiquadFilter();
                 filter.type = 'lowpass';
                 filter.frequency.value = 300;
                 filter.Q.value = 0.7;
-                
+
                 // 创建增益节点控制音量
                 const gainNode = this.audioContext.createGain();
                 gainNode.gain.value = 0.7 * this.mainVolume;
-                
+
                 // 连接节点
                 noise.connect(filter);
                 filter.connect(gainNode);
                 gainNode.connect(this.audioContext.destination);
-                
+
                 // 开始播放
                 noise.start();
-                
+
                 return {
                     stop: () => {
                         gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1.0);
@@ -1221,6 +1224,16 @@
                             filter.disconnect();
                             gainNode.disconnect();
                         }, 1000);
+                    },
+                    pause: () => {
+                        gainNode.gain.cancelScheduledValues(this.audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(gainNode.gain.value, this.audioContext.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
+                    },
+                    resume: () => {
+                        gainNode.gain.cancelScheduledValues(this.audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.001, this.audioContext.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.7 * this.mainVolume, this.audioContext.currentTime + 0.5);
                     }
                 };
             }
@@ -1230,11 +1243,14 @@
 
             // 播放背景音乐
             playBackgroundMusic() {
+                // 只有在游戏运行时才播放背景音乐
+                if (!this.game.isRunning) return;
+                
                 try {
                     if (!this.backgroundMusic) {
                         this.backgroundMusic = new Audio('bgm.mp3');
                         this.backgroundMusic.loop = true;
-                        this.backgroundMusic.volume = this.mainVolume - 0.7;
+                        this.backgroundMusic.volume = this.mainVolume * 0.5;
                     }
                     this.backgroundMusic.play();
                     // console.log('背景音乐开始播放');
@@ -1260,7 +1276,7 @@
             setBackgroundMusicVolume(volume) {
                 try {
                     if (this.backgroundMusic) {
-                        this.backgroundMusic.volume = volume * 0.3;
+                        this.backgroundMusic.volume = volume * 0.5;
                     }
                 } catch (error) {
                     console.warn('设置背景音乐音量失败:', error);
@@ -1272,7 +1288,7 @@
         class Game {
             constructor() {
                 this.effectManager = new EffectManager();
-                this.soundManager = new SoundManager();
+                this.soundManager = new SoundManager(this); // 传入游戏实例
                 this.canvas = document.getElementById('gameCanvas');
                 this.ctx = this.canvas.getContext('2d');
 
@@ -1292,7 +1308,7 @@
                 this.devModeClickCount = 0;
                 this.isDeveloperMode = false;
                 this.lastModeClickTime = 0;
-                
+
                 // 自动选择玩家设置（仅当前会话有效）
                 this.autoSelectPlayer = null;
 
@@ -1321,6 +1337,9 @@
                 this.isRunning = false;
                 this.isPaused = false;
                 this.gameOver = false;
+                
+                // 背景音乐开关状态（默认开启）
+                this.isBgmEnabled = true;
                 this.deathDelay = 60;
                 this.growDuration = 30;
                 this.score = 0;
@@ -1528,6 +1547,7 @@
                 this.finalScore = document.getElementById('finalScore');
                 this.pauseButton = document.getElementById('pauseButton');
                 this.volumeSlider = document.getElementById('volumeSlider');
+                this.bgmToggle = document.getElementById('bgmToggle');
                 this.backToStartButton = document.getElementById('backToStartButton');
                 this.backToStartFromPauseButton = document.getElementById('backToStartFromPauseButton');
 
@@ -1546,12 +1566,42 @@
                 this.resizeCanvas();
             }
 
+            // 更新背景音乐开关图标
+            updateBgmToggleIcon() {
+                const icon = this.bgmToggle.querySelector('i');
+                if (this.isBgmEnabled) {
+                    icon.classList.remove('text-gray-500');
+                    icon.classList.add('text-green-300');
+                } else {
+                    icon.classList.remove('text-green-300');
+                    icon.classList.add('text-gray-500');
+                }
+            }
+
             // 设置事件监听器
             setupEventListeners() {
+                // 音量滑条事件
                 this.volumeSlider.addEventListener('input', (e) => {
                     const volume = parseInt(e.target.value) / 100;
                     this.soundManager.setVolume(volume);
                     this.soundManager.setBackgroundMusicVolume(volume);
+                    
+                    // 如果背景音乐开关是开启状态，则播放背景音乐
+                    if (this.isBgmEnabled) {
+                        this.soundManager.playBackgroundMusic();
+                    }
+                });
+                
+                // 背景音乐开关事件
+                this.bgmToggle.addEventListener('click', () => {
+                    this.isBgmEnabled = !this.isBgmEnabled;
+                    this.updateBgmToggleIcon();
+                    
+                    if (this.isBgmEnabled) {
+                        this.soundManager.playBackgroundMusic();
+                    } else {
+                        this.soundManager.stopBackgroundMusic();
+                    }
                 });
                 document.getElementById('startButton').addEventListener('click', () => this.startGame());
                 document.getElementById('restartButton').addEventListener('click', () => this.startGame());
@@ -2006,7 +2056,7 @@
 
                 // 重置道具生成记录
                 this.lastPowerUpScore = 0;
-                
+
                 // 重置幽灵数组
                 this.ghosts = [];
 
@@ -2138,7 +2188,7 @@
                 // 在玩家下方创建一个普通平台
                 const platformX = player.x + player.width / 2 - 60;
                 const platformY = player.y + player.height + 50;
-                
+
                 const platform = {
                     id: Date.now() + Math.random() + 'landing',
                     x: Math.max(0, Math.min(this.canvas.width - 120, platformX)),
@@ -2154,12 +2204,12 @@
                 };
 
                 this.platforms.push(platform);
-                
+
                 // 设置玩家站在新平台上
                 player.onGround = true;
                 player.standingPlatform = platform;
                 player.velocityY = 0;
-                
+
                 return platform;
             }
 
@@ -2182,7 +2232,10 @@
                 this.gameOverMenu.classList.add('hidden');
                 this.pauseButton.classList.remove('hidden');
                 this.soundManager.playStartGameSound();
-                this.soundManager.playBackgroundMusic();
+                // 根据背景音乐开关状态决定是否播放背景音乐
+                if (this.isBgmEnabled) {
+                    this.soundManager.playBackgroundMusic();
+                }
 
                 // 根据玩家模式决定是否显示双人控制按钮
                 if (this.playerMode === 'multiplayer') {
@@ -2202,6 +2255,13 @@
                 this.pauseButton.classList.add('hidden');
                 this.soundManager.playPauseSound();
                 this.soundManager.stopBackgroundMusic();
+                
+                // 暂停所有玩家的风声音效
+                Object.values(this.players).forEach(player => {
+                    if (player.windSound && player.windSound.pause) {
+                        player.windSound.pause();
+                    }
+                });
             }
 
             resumeGame() {
@@ -2211,6 +2271,14 @@
                 this.pauseButton.classList.remove('hidden');
                 this.soundManager.playResumeSound();
                 this.soundManager.playBackgroundMusic();
+                
+                // 恢复所有玩家的风声音效
+                Object.values(this.players).forEach(player => {
+                    if (player.windSound && player.windSound.resume) {
+                        player.windSound.resume();
+                    }
+                });
+                
                 this.lastTime = performance.now();
                 requestAnimationFrame((nextTimestamp) => this.gameLoop(nextTimestamp));
             }
@@ -2263,7 +2331,7 @@
                         case 'ArrowRight':
                             this.keys.right = true;
                             this.players.p1.direction = 1;
-                            break;                            
+                            break;
                     }
                 } else if (this.playerMode == 'multiplayer') {
                     switch (e.key) {
@@ -2652,7 +2720,7 @@
                 const previousPlatform = player.standingPlatform;
                 player.onGround = false;
                 player.standingPlatform = null;
-                
+
                 // 重置泥巴平台效果（当玩家离开平台时）
                 player.isInMud = false;
 
@@ -2755,7 +2823,7 @@
                     player.shadowSize = 20 * heightFactor;
                     player.shadowOpacity = 0.3 * heightFactor;
                 }
-           
+
             }
 
             // 统一处理平台速度效果
@@ -2850,24 +2918,24 @@
                 });
             }
 
-                // 更新道具效果
+            // 更新道具效果
             updatePowerUpEffects(player, timeFactor) {
-                 // 更新电击状态
+                // 更新电击状态
                 if (player.isElectrocuted) {
                     player.electrocuteTimer -= timeFactor;
                     player.electrocuteShake += timeFactor;
-                    
+
                     // 电击颤动效果：左右快速抖动
                     const shakeIntensity = 2;
                     const shakeSpeed = 1.5;
                     player.x += Math.sin(player.electrocuteShake * shakeSpeed) * shakeIntensity;
-                    
+
                     if (player.electrocuteTimer <= 0) {
                         player.isElectrocuted = false;
                     }
                 }
-                
-                            
+
+
                 // 金身效果
                 if (player.isInvincible) {
                     player.invincibleTimer -= timeFactor;
@@ -2916,7 +2984,7 @@
 
                 // 统一处理平台速度效果
                 this.handlePlatformSpeedEffects(timeFactor);
-                
+
                 // 超人效果
                 if (player.isSuperman) {
                     player.supermanTimer -= timeFactor;
@@ -2925,24 +2993,24 @@
                         player.isSuperman = false;
                         player.isFlying = false;
                         player.canPassThroughPlatforms = false;
-                        
+
                         // 停止风声音效
                         if (player.windSound) {
                             player.windSound.stop();
                             player.windSound = null;
                         }
-                        
+
                         // 恢复重力和碰撞检测
                         player.isGravityDisabled = false;
                         player.isCollisionDisabled = false;
-                        
+
                         // 生成新平台让玩家降落
                         this.createNormalPlatformForLanding(player);
-                        
+
                         this.showPowerUpMessage("超人状态结束，恢复正常");
                     }
                 }
-                
+
                 // 反向控制效果
                 if (player.isControlReversed) {
                     player.reverseControlsTimer -= timeFactor;
@@ -3032,13 +3100,13 @@
                 if (this.isPlatformSpeedUp) {
                     effectiveSpeed *= 2;
                 }
-                
+
                 this.backgroundOffset += effectiveSpeed * timeFactor * 0.2;
 
                 // 移动并更新平台
                 for (let i = this.platforms.length - 1; i >= 0; i--) {
                     const platform = this.platforms[i];
-                    
+
                     // 应用平台加速减速效果到游戏速度
                     let effectiveSpeed = this.speed;
                     if (this.isPlatformSlow) {
@@ -3047,7 +3115,7 @@
                     if (this.isPlatformSpeedUp) {
                         effectiveSpeed *= 2;
                     }
-                    
+
                     platform.y -= effectiveSpeed * timeFactor;
 
                     // 移动平台逻辑（核心修复：变大+落地+站在当前平台 → 停止移动）
@@ -3057,10 +3125,10 @@
 
                         // 检查活跃玩家
                         shouldStopMoving = (this.players.p1.isBig && this.players.p1.onGround && this.players.p1.standingPlatform?.id === platform.id);
-                        
+
                         // 双人模式下检查p2玩家
                         if (this.playerMode !== 'single') {
-                            shouldStopMoving = shouldStopMoving || 
+                            shouldStopMoving = shouldStopMoving ||
                                 (this.players.p2.isBig && this.players.p2.onGround && this.players.p2.standingPlatform?.id === platform.id);
                         }
 
@@ -3139,7 +3207,7 @@
                 // 生成新平台（至少有一个活跃玩家存活且未传送时）
                 const activePlayers = this.getActivePlayers();
                 const hasActivePlayer = activePlayers.some(player => !player.isDead && !player.isTeleporting);
-                
+
                 if (hasActivePlayer) {
                     // 基于距离生成平台
                     if (this.platforms.length > 0) {
@@ -3195,7 +3263,7 @@
                     if (this.isPlatformSpeedUp) {
                         effectiveSpeed *= 2;
                     }
-                    
+
                     powerUp.y -= effectiveSpeed * timeFactor * speedMultiplier;
 
                     // 更新道具状态
@@ -3374,47 +3442,47 @@
                 // 计算到目标玩家的方向
                 const dx = ghost.targetPlayer.x - ghost.x;
                 const dy = ghost.targetPlayer.y - ghost.y;
-                
+
                 // 计算距离
                 const distance = Math.sqrt(dx * dx + dy * dy);
-                
+
                 if (distance > 0) {
                     // 标准化方向向量
                     const vx = dx / distance;
                     const vy = dy / distance;
-                    
+
                     // 移动幽灵
                     ghost.x += vx * ghost.speed;
                     ghost.y += vy * ghost.speed;
                 }
-                
+
                 // 更新生命计时器
                 ghost.lifeTimer--;
-                
+
                 // 更新伤害计时器并处理持续伤害
                 ghost.damageTimer++;
                 if (ghost.damageTimer >= ghost.damageInterval) {
                     ghost.damageTimer = 0;
                     this.applyGhostDamage(ghost);
                 }
-                
+
                 // 如果时间到，移除幽灵
                 if (ghost.lifeTimer <= 0) {
                     return false;
                 }
-                
+
                 return true;
             }
 
             // 应用幽灵持续伤害
             applyGhostDamage(ghost) {
                 const activePlayers = this.getActivePlayers();
-                
+
                 for (const player of activePlayers) {
                     if (ghost.damagedPlayers.includes(player) && !player.isDead && !player.isInvincible) {
                         // 玩家受到持续伤害
                         this.applyGhostDamageToPlayer(player);
-                        
+
                         // 调试信息
                         // console.log('幽灵持续伤害:', player.health, 'damagedPlayers count:', ghost.damagedPlayers.length);
                     }
@@ -3426,14 +3494,14 @@
                 // 玩家受到伤害
                 player.health -= 1;
                 this.soundManager.playHurtSound();
-                
+
                 // 检查玩家是否死亡，如果有救命道具则触发救命效果
                 if (player.health <= 0) {
                     if (!this.handleLifeSaverEffect(player)) {
                         player.isDead = true;
                     }
                 }
-                
+
                 // 显示伤害效果
                 this.createPlayerParticleEffect(10, {
                     color: '#DC2626',
@@ -3445,25 +3513,25 @@
             drawGhost(ghost, ctx) {
                 ctx.save();
                 ctx.globalAlpha = ghost.alpha;
-                
+
                 // 绘制幽灵身体（圆形主体）
                 ctx.fillStyle = ghost.color;
                 ctx.beginPath();
                 ctx.arc(ghost.x + ghost.width / 2, ghost.y + ghost.height / 2, ghost.width / 2, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // 绘制幽灵尾巴（底部多个波浪形尾巴）
                 ctx.fillStyle = ghost.color;
                 const tailCount = 3;
                 const tailWidth = ghost.width / tailCount;
-                
+
                 for (let i = 0; i < tailCount; i++) {
                     ctx.beginPath();
                     const startX = ghost.x + i * tailWidth;
                     const endX = startX + tailWidth;
                     const midX = (startX + endX) / 2;
                     const midY = ghost.y + ghost.height + 10;
-                    
+
                     ctx.moveTo(startX, ghost.y + ghost.height);
                     ctx.quadraticCurveTo(midX, midY, endX, ghost.y + ghost.height);
                     ctx.lineTo(endX, ghost.y + ghost.height / 2);
@@ -3471,34 +3539,34 @@
                     ctx.closePath();
                     ctx.fill();
                 }
-                
+
                 // 绘制幽灵眼睛（大而圆）
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
                 ctx.arc(ghost.x + ghost.width / 3, ghost.y + ghost.height / 3, 4, 0, Math.PI * 2);
                 ctx.arc(ghost.x + 2 * ghost.width / 3, ghost.y + ghost.height / 3, 4, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // 绘制幽灵嘴巴（惊讶的O形）
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
                 ctx.arc(ghost.x + ghost.width / 2, ghost.y + 2 * ghost.height / 3, 3, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 ctx.restore();
             }
 
             // 检查幽灵与玩家碰撞
             checkGhostCollisions() {
                 const activePlayers = this.getActivePlayers();
-                
+
                 for (let i = this.ghosts.length - 1; i >= 0; i--) {
                     const ghost = this.ghosts[i];
-                    
+
                     // 先检查之前碰撞的玩家是否还在碰撞范围内
                     const playersToRemove = [];
                     for (const player of ghost.damagedPlayers) {
-                        if (player.isDead || 
+                        if (player.isDead ||
                             player.x >= ghost.x + ghost.width ||
                             player.x + player.width <= ghost.x ||
                             player.y >= ghost.y + ghost.height ||
@@ -3506,10 +3574,10 @@
                             playersToRemove.push(player);
                         }
                     }
-                    
+
                     // 移除不再碰撞的玩家
                     ghost.damagedPlayers = ghost.damagedPlayers.filter(player => !playersToRemove.includes(player));
-                    
+
                     // 检查新的碰撞
                     for (const player of activePlayers) {
                         if (!player.isDead && !ghost.damagedPlayers.includes(player)) {
@@ -3518,18 +3586,18 @@
                                 player.x + player.width > ghost.x &&
                                 player.y < ghost.y + ghost.height &&
                                 player.y + player.height > ghost.y) {
-                                
+
                                 // 记录碰撞的玩家，开始持续伤害
                                 if (!ghost.damagedPlayers.includes(player)) {
                                     ghost.damagedPlayers.push(player);
                                     // console.log('玩家添加到damagedPlayers:', player, '当前数量:', ghost.damagedPlayers.length);
                                 }
-                                
+
                                 // 立即造成一次伤害（如果玩家不是无敌状态）
                                 if (!player.isInvincible) {
                                     this.applyGhostDamageToPlayer(player);
                                 }
-                                
+
                                 break;
                             }
                         }
@@ -3619,7 +3687,7 @@
                             this.restoreGravity();
                             this.isIncreasedGravity = false;
                         }
-                        
+
                         this.isReducedGravity = true;
                         this.reducedGravityTimer = 15 * 60;
                         // 更新所有活跃玩家的重力
@@ -3637,7 +3705,7 @@
                             this.restoreGravity();
                             this.isReducedGravity = false;
                         }
-                        
+
                         this.isIncreasedGravity = true;
                         this.increasedGravityTimer = 15 * 60;
                         // 更新所有活跃玩家的重力
@@ -3654,7 +3722,7 @@
                             this.restorePlatformSpeed();
                             this.isPlatformSpeedUp = false;
                         }
-                        
+
                         this.isPlatformSlow = true;
                         this.platformSlowTimer = 15 * 60;
                         this.setPlatformSpeed(0.5);
@@ -3670,7 +3738,7 @@
                             this.restorePlatformSpeed();
                             this.isPlatformSlow = false;
                         }
-                        
+
                         this.isPlatformSpeedUp = true;
                         this.platformSpeedUpTimer = 15 * 60;
                         this.setPlatformSpeed(2);
@@ -3733,14 +3801,14 @@
                         player.health = player.maxHealth; // 恢复所有生命值
                         player.isSuperman = true; // 超人状态标志
                         player.supermanTimer = 10 * 60; // 10秒超人状态
-                        
+
                         // 播放风声音效
                         player.windSound = this.soundManager.playWindSound();
-                        
+
                         // 设置超人飞行姿势：头朝下腿朝上，双手高举过头顶
                         player.isFlying = true;
                         player.flyingDirection = -1; // 头朝下
-                        
+
                         // 移动到游戏区域底部中间并保持绝对静止
                         player.x = this.canvas.width / 2 - player.width / 2;
                         player.y = this.canvas.height - player.height - 100;
@@ -3748,19 +3816,19 @@
                         player.velocityY = 0;
                         player.onGround = false;
                         player.standingPlatform = null;
-                        
+
                         // 禁用重力和碰撞检测
                         player.isGravityDisabled = true;
                         player.isCollisionDisabled = true;
-                        
+
                         // 平台速度变快
                         this.isPlatformSpeedUp = true;
                         this.platformSpeedUpTimer = 10 * 60;
                         this.setPlatformSpeed(2);
-                        
+
                         // 穿透平台能力
                         player.canPassThroughPlatforms = true;
-                        
+
                         this.showPowerUpMessage("超人模式! 绝对静止、无敌、穿透平台 (10秒)");
                         this.createPlayerParticleEffect(10, {
                             color: '#FF0000',
@@ -3772,7 +3840,7 @@
                         // 随机选择一个道具效果（排除随机道具本身）
                         const availablePowerUps = this.powerUpTypes.filter(type => type !== 'randomPowerUp');
                         const randomType = availablePowerUps[Math.floor(Math.random() * availablePowerUps.length)];
-                        
+
                         this.showPowerUpMessage(`随机道具: ${randomType} ❓`);
                         this.createParticleEffect(25,
                             player.x + player.width / 2, player.y + player.height / 2, {
@@ -3780,7 +3848,7 @@
                             life: 50,
                             explosive: true
                         });
-                        
+
                         // 应用随机道具效果
                         this.applyPowerUpEffect(randomType, player);
                     }
@@ -3829,10 +3897,10 @@
             // 检测玩家之间的碰撞
             checkPlayersCollision() {
                 const activePlayers = this.getActivePlayers();
-                
+
                 // 单人模式下不需要检测玩家碰撞
                 if (activePlayers.length < 2) return;
-                
+
                 const p1 = this.players.p1;
                 const p2 = this.players.p2;
 
@@ -4025,7 +4093,7 @@
                             player.electrocuteTimer = 60; // 1秒
                             player.electrocuteShake = 0; // 颤动计时器
                             this.soundManager.playDamageSound();
-                            
+
                             // 电击特效：环绕玩家的电光
                             this.createParticleEffect(20,
                                 player.x + player.width / 2, player.y + player.height / 2, {
@@ -4035,7 +4103,7 @@
                                 speedX: (Math.random() - 0.5) * 8,
                                 speedY: (Math.random() - 0.5) * 8
                             });
-                            
+
                             // 持续电光特效
                             for (let i = 0; i < 5; i++) {
                                 setTimeout(() => {
@@ -4047,7 +4115,7 @@
                                     });
                                 }, i * 200);
                             }
-                            
+
                             player.flashTimer = 20;
                         }
                         break;
@@ -4144,7 +4212,7 @@
                 const armWidth = 6;
                 const forearmLength = armLength * 0.6;
                 const upperArmLength = armLength * 0.4;
-                
+
                 // 超人飞行姿势：双手高举过头顶
                 if (player.isSuperman && player.isFlying) {
                     // 左臂高举
@@ -4154,7 +4222,7 @@
                     this.ctx.fillStyle = '#6F2937';
                     this.ctx.fillRect(-armWidth / 2, 0, armWidth, armLength);
                     this.ctx.restore();
-                    
+
                     // 右臂高举
                     this.ctx.save();
                     this.ctx.translate(player.width * 0.8, -player.height * 0.1);
@@ -4162,7 +4230,7 @@
                     this.ctx.fillStyle = '#6F2937';
                     this.ctx.fillRect(-armWidth / 2, 0, armWidth, armLength);
                     this.ctx.restore();
-                    
+
                     return;
                 }
 
@@ -4334,7 +4402,7 @@
                     player.x + player.width / 2,
                     player.y + player.height / 2
                 );
-                
+
                 // 超人飞行姿势：头朝下腿朝上
                 if (player.isSuperman && player.isFlying) {
                     this.ctx.rotate(Math.PI); // 旋转180度，头朝下
@@ -4499,7 +4567,7 @@
                             case 'conveyor-left':
                             case 'conveyor-right': fillColor = '#F3F4F6'; break;
                             case 'spike': fillColor = '#EF4444'; break;
-    
+
                             case 'mud': fillColor = '#8B4513'; break;
                             case 'electric': fillColor = '#FBBF24'; break;
                             case 'spring': fillColor = '#10B981'; break;
@@ -4630,10 +4698,10 @@
                 isPlayerOnConveyor = (this.players.p1.standingPlatform &&
                     this.players.p1.standingPlatform.id === platform.id &&
                     this.players.p1.isBig);
-                
+
                 // 双人模式下检查p2玩家
                 if (this.playerMode !== 'single') {
-                    isPlayerOnConveyor = isPlayerOnConveyor || 
+                    isPlayerOnConveyor = isPlayerOnConveyor ||
                         (this.players.p2.standingPlatform &&
                             this.players.p2.standingPlatform.id === platform.id &&
                             this.players.p2.isBig);
@@ -4695,7 +4763,7 @@
 
             // 绘制HUD（整合生命值、道具计时器和救命道具）
             drawHUD() {
-                this.ctx.save();    
+                this.ctx.save();
 
                 // UI布局
                 const heartSize = 12;
@@ -4787,7 +4855,7 @@
 
             // 绘制道具效果剩余时间
             drawPowerUpTimers(x, y, player, align = 'left') {
-                if(player.isDead) return
+                if (player.isDead) return
                 const timerHeight = 4;
                 const timerWidth = 80;
                 const spacing = 12;
@@ -4882,14 +4950,14 @@
                 // 标签
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
                 this.ctx.font = '10px Arial';
-                
+
                 let labelX = x + width + 5;
                 if (align === 'right') {
                     // 右对齐时，标签在进度条左侧
                     const labelWidth = this.ctx.measureText(label).width;
-                    labelX = x - labelWidth - 5 ;
+                    labelX = x - labelWidth - 5;
                 }
-                
+
                 this.ctx.fillText(label, labelX, y + height);
 
                 // 背景
@@ -5133,24 +5201,24 @@
 
                     // 设置按钮颜色和图标
                     const buttonConfig = {
-                    'lifeSaver': { bg: '#06B6D4', html: '🛸' },
-                    'fullHealth': { bg: '#10B981', html: '💗' },
-                    'smallPlayer': { bg: '#3B82F6', html: '🐜' },
-                    'bigPlayer': { bg: '#8B5CF6', html: '🐘' },
-                    'invincible': { bg: '#F59E0B', html: '🧘' },
-                    'goldenLeg': { bg: '#F59E0B', html: '🦶' },
-                    'goldenHead': { bg: '#F59E0B', html: '😬' },
-                    'allNormal': { bg: '#EC4899', html: '🟦' },
-                    'reducedGravity': { bg: '#9C27B0', html: '🔺' },
-                    'increasedGravity': { bg: '#DC2626', html: '🔻' },
-                    'platformSlow': { bg: '#607D8B', html: '🐌' },
-                    'platformSpeedUp': { bg: '#EF4444', html: '🚀' },
-                    'reverseControls': { bg: '#8B5CF6', html: '💫' },
-                    'narrowVision': { bg: '#6B7280', html: '👁️' },
-                    'randomPowerUp': { bg: '#FFD700', html: '❓' },
-                    'ghost': { bg: '#4B5563', html: '👻' },
-                    'superman': { bg: '#FF0000', html: '🦸' }
-                };
+                        'lifeSaver': { bg: '#06B6D4', html: '🛸' },
+                        'fullHealth': { bg: '#10B981', html: '💗' },
+                        'smallPlayer': { bg: '#3B82F6', html: '🐜' },
+                        'bigPlayer': { bg: '#8B5CF6', html: '🐘' },
+                        'invincible': { bg: '#F59E0B', html: '🧘' },
+                        'goldenLeg': { bg: '#F59E0B', html: '🦶' },
+                        'goldenHead': { bg: '#F59E0B', html: '😬' },
+                        'allNormal': { bg: '#EC4899', html: '🟦' },
+                        'reducedGravity': { bg: '#9C27B0', html: '🔺' },
+                        'increasedGravity': { bg: '#DC2626', html: '🔻' },
+                        'platformSlow': { bg: '#607D8B', html: '🐌' },
+                        'platformSpeedUp': { bg: '#EF4444', html: '🚀' },
+                        'reverseControls': { bg: '#8B5CF6', html: '💫' },
+                        'narrowVision': { bg: '#6B7280', html: '👁️' },
+                        'randomPowerUp': { bg: '#FFD700', html: '❓' },
+                        'ghost': { bg: '#4B5563', html: '👻' },
+                        'superman': { bg: '#FF0000', html: '🦸' }
+                    };
 
                     const config = buttonConfig[type];
                     if (config) {
@@ -5249,12 +5317,12 @@
                             this.applyPowerUpEffect(type, player);
                             this.showTempMessage(`已使用: ${buttonText} (${text})`, 1000);
                         }
-                        
+
                         // 如果勾选了"下次自动选择"，记住选择
                         if (autoSelectCheckbox && autoSelectCheckbox.checked) {
                             this.autoSelectPlayer = isBoth ? 'both' : (player === this.players.p1 ? 'p1' : 'p2');
                         }
-                        
+
                         dialog.remove();
                     });
                     return btn;
@@ -5264,21 +5332,21 @@
                 dialog.appendChild(createButton('P1', this.players.p1));
                 dialog.appendChild(createButton('P2', this.players.p2));
                 dialog.appendChild(createButton('P1+P2', null, true));
-                
+
                 // 添加"下次自动选择"复选框
                 const checkboxContainer = document.createElement('div');
                 checkboxContainer.style.display = 'flex';
                 checkboxContainer.style.alignItems = 'center';
                 checkboxContainer.style.gap = '8px';
                 checkboxContainer.style.marginTop = '5px';
-                
+
                 const autoSelectCheckbox = document.createElement('input');
                 autoSelectCheckbox.type = 'checkbox';
                 autoSelectCheckbox.id = 'autoSelectCheckbox';
                 autoSelectCheckbox.checked = true;
                 autoSelectCheckbox.style.width = '16px';
                 autoSelectCheckbox.style.height = '16px';
-                
+
                 const checkboxLabel = document.createElement('label');
                 checkboxLabel.htmlFor = 'autoSelectCheckbox';
                 checkboxLabel.textContent = '下次自动选择';
@@ -5286,7 +5354,7 @@
                 checkboxLabel.style.fontFamily = '"Press Start 2P", cursive';
                 checkboxLabel.style.fontSize = '10px';
                 checkboxLabel.style.cursor = 'pointer';
-                
+
                 checkboxContainer.appendChild(autoSelectCheckbox);
                 checkboxContainer.appendChild(checkboxLabel);
                 dialog.appendChild(checkboxContainer);
