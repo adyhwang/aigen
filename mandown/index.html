@@ -338,17 +338,17 @@
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🐘
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">变大</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
                             <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">💗
                             </div>
                         </div>
                         <span class="text-sm text-gray-300">生命全满</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🐘
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">变大</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-7 h-7 rounded-full bg-blue-400 relative">
@@ -435,18 +435,18 @@
                         <span class="text-sm text-gray-300">超人</span>
                     </div>
                     <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-gray-600 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">👻
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">幽灵道具</span>
-                    </div>
-                    <div class="flex items-center gap-1">
                         <div class="w-7 h-7 rounded-full bg-yellow-400 relative">
                             <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">❓
                             </div>
                         </div>
                         <span class="text-sm text-gray-300">随机道具</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-7 h-7 rounded-full bg-gray-600 relative">
+                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">👻
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-300">幽灵道具</span>
                     </div>
                 </div>
             </div>
@@ -479,6 +479,8 @@
         </div>
 
         <!-- 移动设备控制按钮 -->
+
+
         <!-- 双人模式控制按钮 -->
         <div id="multiplayerControls" class="mt-4 flex md:hidden controls-section hidden">
             <!-- 1P 控制 -->
@@ -1243,7 +1245,7 @@
             playBackgroundMusic() {
                 // 只有在游戏运行时才播放背景音乐
                 if (!this.game.isRunning) return;
-                
+
                 try {
                     if (!this.backgroundMusic) {
                         this.backgroundMusic = new Audio('bgm.mp3');
@@ -1335,7 +1337,7 @@
                 this.isRunning = false;
                 this.isPaused = false;
                 this.gameOver = false;
-                
+
                 // 背景音乐开关状态（默认开启）
                 this.isBgmEnabled = true;
                 this.deathDelay = 60;
@@ -1583,18 +1585,18 @@
                     const volume = parseInt(e.target.value) / 100;
                     this.soundManager.setVolume(volume);
                     this.soundManager.setBackgroundMusicVolume(volume);
-                    
+
                     // 如果背景音乐开关是开启状态，则播放背景音乐
                     if (this.isBgmEnabled) {
                         this.soundManager.playBackgroundMusic();
                     }
                 });
-                
+
                 // 背景音乐开关事件
                 this.bgmToggle.addEventListener('click', () => {
                     this.isBgmEnabled = !this.isBgmEnabled;
                     this.updateBgmToggleIcon();
-                    
+
                     if (this.isBgmEnabled) {
                         this.soundManager.playBackgroundMusic();
                     } else {
@@ -2253,7 +2255,7 @@
                 this.pauseButton.classList.add('hidden');
                 this.soundManager.playPauseSound();
                 this.soundManager.stopBackgroundMusic();
-                
+
                 // 暂停所有玩家的风声音效
                 Object.values(this.players).forEach(player => {
                     if (player.windSound && player.windSound.pause) {
@@ -2269,14 +2271,14 @@
                 this.pauseButton.classList.remove('hidden');
                 this.soundManager.playResumeSound();
                 this.soundManager.playBackgroundMusic();
-                
+
                 // 恢复所有玩家的风声音效
                 Object.values(this.players).forEach(player => {
                     if (player.windSound && player.windSound.resume) {
                         player.windSound.resume();
                     }
                 });
-                
+
                 this.lastTime = performance.now();
                 requestAnimationFrame((nextTimestamp) => this.gameLoop(nextTimestamp));
             }
@@ -3758,7 +3760,7 @@
                     'goldenHead': () => {
                         player.goldenHeadUses = 3;
                         player.hasGoldenHead = true;
-                        this.showPowerUpMessage("获得金头道具! 顶部越界时自动下移 (3次)");
+                        this.showPowerUpMessage("获得金头道具! 顶部触碰熔岩时自动下移 (3次)");
                         this.createPlayerParticleEffect(15, {
                             color: '#F59E0B',
                             life: 40
@@ -3827,7 +3829,7 @@
                         // 穿透平台能力
                         player.canPassThroughPlatforms = true;
 
-                        this.showPowerUpMessage("超人模式! 绝对静止、无敌、穿透平台 (10秒)");
+                        this.showPowerUpMessage("超人模式! 飞跃平台，向下飞行 (10秒)");
                         this.createPlayerParticleEffect(10, {
                             color: '#FF0000',
                             life: 60,
