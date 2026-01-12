@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图标大战</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="battle-info-wrapper" id="battleInfoWrapper">
+            <div class="battle-info-filters-left">
+                <button class="filter-tab active" data-filter="player" data-value="all">全部</button>
+                <button class="filter-tab" data-filter="player" data-value="1">玩家1</button>
+                <button class="filter-tab" data-filter="player" data-value="2">玩家2</button>
+            </div>
+            <div class="battle-info" id="battleInfo"></div>
+            <div class="battle-info-filters-right">
+                <button class="filter-tab active" data-filter="action" data-value="all">全部</button>
+                <button class="filter-tab" data-filter="action" data-value="attack">攻击</button>
+                <button class="filter-tab" data-filter="action" data-value="heal">治疗</button>
+                <button class="filter-tab" data-filter="action" data-value="kill">击杀</button>
+                <button class="filter-tab" data-filter="action" data-value="special">其他</button>
+            </div>
+        </div>
+        <header class="game-header">
+            <h1>图标大战</h1>
+        </header>
+
+        <div class="battle-area" id="battleArea">
+            <div class="battle-zone player1-zone" id="player1BattleZone">
+                <div class="zone-label">玩家1领地</div>
+                <div class="stats-info" id="player1Stats">
+                    <div class="stat-item">总击杀: <span id="player1Kills">0</span></div>
+                    <div class="stat-item">总血量: <span id="player1Health">0</span></div>
+                    <div class="stat-item">总攻击力: <span id="player1Attack">0</span></div>
+                    <div class="battle-icons-list" id="player1IconsList"></div>
+                </div>
+            </div>
+            <div class="battle-zone player2-zone" id="player2BattleZone">
+                <div class="zone-label">玩家2领地</div>
+                <div class="stats-info" id="player2Stats">
+                    <div class="stat-item">总击杀: <span id="player2Kills">0</span></div>
+                    <div class="stat-item">总血量: <span id="player2Health">0</span></div>
+                    <div class="stat-item">总攻击力: <span id="player2Attack">0</span></div>
+                    <div class="battle-icons-list" id="player2IconsList"></div>
+                </div>
+            </div>
+            
+            <div class="options-container">
+                <button class="btn-options" onclick="toggleOptions()">选项</button>
+                <div class="options-dropdown" id="optionsDropdown">
+                    <label class="option-item">
+                        <input type="checkbox" id="autoAddRandom" onchange="toggleAutoAddRandom()">
+                        <span>自动添加随机图标</span>
+                    </label>
+                    <label class="option-item">
+                        <input type="checkbox" id="autoDeploy" onchange="toggleAutoDeploy()">
+                        <span>自动参战</span>
+                    </label>
+                    <label class="option-item">
+                        <input type="checkbox" id="hideReadyArea" onchange="toggleHideReadyArea()">
+                        <span>隐藏玩家待命区</span>
+                    </label>
+                    <label class="option-item">
+                        <input type="checkbox" id="hideBattleInfo" onchange="toggleHideBattleInfo()">
+                        <span>隐藏战斗信息</span>
+                    </label>
+                    <label class="option-item">
+                        <input type="checkbox" id="hideStats" onchange="toggleHideStats()">
+                        <span>隐藏玩家状态</span>
+                    </label>
+                    <label class="option-item">
+                        <input type="checkbox" id="pauseGame" onchange="togglePauseGame()">
+                        <span>暂停</span>
+                    </label>
+                    <label class="option-item">
+                        <input type="checkbox" id="fullscreenMode" onchange="toggleFullscreen()">
+                        <span>全屏</span>
+                    </label>
+                    <label class="option-item">
+                        <span id="gameSpeed" onclick="toggleGameSpeed()">1x倍速</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="ready-area" id="readyarea">
+            <div class="ready-zone player1-ready" id="player1Ready">
+                <div class="ready-header">
+                    <h2>玩家1待命区</h2>
+                    <div class="add-buttons">
+                        <button class="btn-upload" onclick="triggerUpload(1)">上传图标</button>
+                        <button class="btn-search" onclick="openSearchModal(1)">图标搜索</button>
+                        <button class="btn-battle" onclick="addRandomIcons(1)">添加随机图标</button>
+                        <button class="btn-battle" onclick="deployAllIcons(1)">全部参战</button>
+                    </div>
+                </div>
+                <div class="ready-content" id="player1ReadyContent" ondrop="handleDrop(event, 1)" ondragover="handleDragOver(event)">
+                    <div class="drop-hint">批量拖入图标到此处</div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="ready-zone player2-ready" id="player2Ready">
+                <div class="ready-header">
+                    <h2>玩家2待命区</h2>
+                    <div class="add-buttons">
+                        <button class="btn-upload" onclick="triggerUpload(2)">上传图标</button>
+                        <button class="btn-search" onclick="openSearchModal(2)">图标搜索</button>
+                        <button class="btn-battle" onclick="addRandomIcons(2)">添加随机图标</button>
+                        <button class="btn-battle" onclick="deployAllIcons(2)">全部参战</button>
+                    </div>
+                </div>
+                <div class="ready-content" id="player2ReadyContent" ondrop="handleDrop(event, 2)" ondragover="handleDragOver(event)">
+                    <div class="drop-hint">批量拖入图标到此处</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*" multiple style="display: none;" onchange="handleFileSelect(event)">
+
+    <div class="search-modal" id="searchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>搜索图标</h3>
+                <button class="close-btn" onclick="closeSearchModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-controls">
+                    <input type="text" id="searchInput" placeholder="输入关键词搜索..." onkeypress="handleSearchKeyPress(event)">
+                    <button class="btn-search-action" onclick="searchIcons()">搜索</button>
+                </div>
+                <div class="search-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="onlineSearch" onchange="handleOnlineSearchChange()">
+                        <span>在线</span>
+                    </label>
+                </div>
+                <div class="search-results" id="searchResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="defaultIcons.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
