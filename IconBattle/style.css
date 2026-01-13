@@ -780,16 +780,121 @@ body {
     animation: legMove 0.5s ease-in-out infinite alternate-reverse;
 }
 
-.battle-icon .weapon {
+.battle-icon .weapon-wrapper {
     position: absolute;
-    width: 40px;
-    height: 40px;
     top: 35px;
     z-index: 4;
+    width: 40px;
+    height: 40px;
+    transition: transform 0.3s ease, left 0.3s ease, right 0.3s ease;
+}
+
+.battle-icon .weapon-inner {
+    width: 40px;
+    height: 40px;
     font-size: 32px;
     line-height: 40px;
     text-align: center;
-    transition: transform 0.3s ease, left 0.3s ease, right 0.3s ease;
+    will-change: transform;
+}
+
+.battle-icon.moving .weapon-inner {
+    animation: weaponBob 0.6s ease-in-out infinite;
+}
+
+.battle-icon.moving .weapon-inner[data-type="melee"] {
+    animation: weaponBobMelee 0.5s ease-in-out infinite;
+}
+
+.battle-icon.moving .weapon-inner[data-type="ranged"] {
+    animation: weaponBobRanged 0.8s ease-in-out infinite;
+}
+
+.battle-icon.moving .weapon-inner[data-type="heal"] {
+    animation: weaponBobHeal 0.7s ease-in-out infinite;
+}
+
+.battle-icon.moving .weapon-inner[data-type="aoe"] {
+    animation: weaponBobAOE 0.6s ease-in-out infinite;
+}
+
+.battle-icon.moving .weapon-inner[data-type="buff"] {
+    animation: weaponBobBuff 0.9s ease-in-out infinite;
+}
+
+@keyframes weaponBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+@keyframes weaponBobMelee {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+@keyframes weaponBobRanged {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+@keyframes weaponBobHeal {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+@keyframes weaponBobAOE {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+@keyframes weaponBobBuff {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}
+
+.battle-icon.moving .weapon-inner[data-effect="lightning"] {
+    animation: weaponBobRanged 0.8s ease-in-out infinite, weaponGlowLightning 0.5s ease-in-out infinite;
+}
+
+.battle-icon.moving .weapon-inner[data-effect="fire"] {
+    animation: weaponBobRanged 0.8s ease-in-out infinite, weaponGlowFire 0.4s ease-in-out infinite;
+}
+
+.battle-icon.moving .weapon-inner[data-effect="ice"] {
+    animation: weaponBobAOE 0.6s ease-in-out infinite, weaponGlowIce 0.6s ease-in-out infinite;
+}
+
+.battle-icon.moving .weapon-inner[data-effect="heal"] {
+    animation: weaponBobHeal 0.7s ease-in-out infinite, weaponGlowHeal 0.8s ease-in-out infinite;
+}
+
+.battle-icon.moving .weapon-inner[data-effect="buff"] {
+    animation: weaponBobBuff 0.9s ease-in-out infinite, weaponGlowBuff 0.7s ease-in-out infinite;
+}
+
+@keyframes weaponGlowLightning {
+    0%, 100% { filter: drop-shadow(0 0 2px rgba(100, 200, 255, 0.5)); }
+    50% { filter: drop-shadow(0 0 8px rgba(100, 200, 255, 0.8)); }
+}
+
+@keyframes weaponGlowFire {
+    0%, 100% { filter: drop-shadow(0 0 2px rgba(255, 100, 50, 0.5)); }
+    50% { filter: drop-shadow(0 0 10px rgba(255, 100, 50, 0.9)); }
+}
+
+@keyframes weaponGlowIce {
+    0%, 100% { filter: drop-shadow(0 0 2px rgba(135, 206, 235, 0.5)); }
+    50% { filter: drop-shadow(0 0 8px rgba(135, 206, 235, 0.8)); }
+}
+
+@keyframes weaponGlowHeal {
+    0%, 100% { filter: drop-shadow(0 0 2px rgba(144, 238, 144, 0.5)); }
+    50% { filter: drop-shadow(0 0 8px rgba(144, 238, 144, 0.8)); }
+}
+
+@keyframes weaponGlowBuff {
+    0%, 100% { filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5)); }
+    50% { filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8)); }
 }
 
 @keyframes armSwingLeft {
@@ -811,6 +916,10 @@ body {
     animation: attack 0.3s ease-in-out;
 }
 
+.battle-icon.attacking .weapon-inner {
+    animation: weaponAttack 0.3s ease-out;
+}
+
 @keyframes attack {
     0% { transform: translateX(0); }
     50% { transform: translateX(30px); }
@@ -826,6 +935,12 @@ body {
     50% { filter: brightness(2) hue-rotate(180deg); }
 }
 
+@keyframes weaponAttack {
+    0% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(15deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+}
+
 .battle-icon.dead {
     animation: dead 0.5s ease-in-out forwards;
 }
@@ -839,7 +954,8 @@ body {
 }
 
 .battle-icon.dead .arm,
-.battle-icon.dead .leg {
+.battle-icon.dead .leg,
+.battle-icon.dead .weapon-inner {
     animation: none !important;
 }
 
@@ -1525,6 +1641,10 @@ body {
 
 .battle-icon.frozen {
     animation: frozen 0.5s ease-in-out infinite alternate;
+}
+
+.battle-icon.frozen .weapon-inner {
+    animation: none !important;
 }
 
 @keyframes frozen {

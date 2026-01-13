@@ -621,21 +621,28 @@ function createBattleIcon(iconUrl, player, x, y, name = '') {
     legRight.className = 'leg right';
     battleIcon.appendChild(legRight);
     
-    const weapon = document.createElement('div');
-    weapon.className = 'weapon';
+    const weaponWrapper = document.createElement('div');
+    weaponWrapper.className = 'weapon-wrapper';
+    
+    const weaponInner = document.createElement('div');
+    weaponInner.className = 'weapon-inner';
+    
     const weaponData = weapons[Math.floor(Math.random() * weapons.length)];
-    weapon.textContent = weaponData.emoji;
-    weapon.dataset.defaultDirection = weaponData.defaultDirection;
+    weaponInner.textContent = weaponData.emoji;
+    weaponInner.dataset.type = weaponData.type;
+    weaponInner.dataset.effect = weaponData.effectType;
+    weaponWrapper.dataset.defaultDirection = weaponData.defaultDirection;
     
     if (player === 1) {
-        weapon.style.right = '-30px';
-        weapon.style.left = 'auto';
+        weaponWrapper.style.right = '-30px';
+        weaponWrapper.style.left = 'auto';
     } else {
-        weapon.style.left = '-30px';
-        weapon.style.right = 'auto';
+        weaponWrapper.style.left = '-30px';
+        weaponWrapper.style.right = 'auto';
     }
     
-    battleIcon.appendChild(weapon);
+    weaponWrapper.appendChild(weaponInner);
+    battleIcon.appendChild(weaponWrapper);
     
     const statsDisplay = document.createElement('div');
     statsDisplay.className = 'stats-display';
@@ -1057,8 +1064,8 @@ function attack(attacker, defender) {
     attacker.element.classList.add('attacking');
     playSound('attack');
     
-    const weapon = attacker.element.querySelector('.weapon');
-    const defaultDirection = weapon.dataset.defaultDirection;
+    const weaponWrapper = attacker.element.querySelector('.weapon-wrapper');
+    const defaultDirection = weaponWrapper.dataset.defaultDirection;
     
     let target = defender;
     
@@ -1084,29 +1091,29 @@ function attack(attacker, defender) {
         attacker.element.classList.remove('facing-left');
         attacker.element.classList.add('facing-right');
         
-        weapon.style.right = '-30px';
-        weapon.style.left = 'auto';
+        weaponWrapper.style.right = '-30px';
+        weaponWrapper.style.left = 'auto';
         
         if (defaultDirection === 'top') {
-            weapon.style.transform = 'rotate(90deg)';
+            weaponWrapper.style.transform = 'rotate(90deg)';
         } else if (defaultDirection === 'right') {
-            weapon.style.transform = 'scaleX(1)';
+            weaponWrapper.style.transform = 'scaleX(1)';
         } else if (defaultDirection === 'left') {
-            weapon.style.transform = 'scaleX(-1)';
+            weaponWrapper.style.transform = 'scaleX(-1)';
         }
     } else if (dx < 0) {
         attacker.element.classList.remove('facing-right');
         attacker.element.classList.add('facing-left');
         
-        weapon.style.left = '-30px';
-        weapon.style.right = 'auto';
+        weaponWrapper.style.left = '-30px';
+        weaponWrapper.style.right = 'auto';
         
         if (defaultDirection === 'top') {
-            weapon.style.transform = 'rotate(-90deg)';
+            weaponWrapper.style.transform = 'rotate(-90deg)';
         } else if (defaultDirection === 'right') {
-            weapon.style.transform = 'scaleX(-1)';
+            weaponWrapper.style.transform = 'scaleX(-1)';
         } else if (defaultDirection === 'left') {
-            weapon.style.transform = 'scaleX(1)';
+            weaponWrapper.style.transform = 'scaleX(1)';
         }
     }
     
@@ -2169,36 +2176,36 @@ function moveTowardsTarget(iconData) {
         
         iconData.element.classList.add('moving');
         
-        const weapon = iconData.element.querySelector('.weapon');
-        const defaultDirection = weapon.dataset.defaultDirection;
+        const weaponWrapper = iconData.element.querySelector('.weapon-wrapper');
+        const defaultDirection = weaponWrapper.dataset.defaultDirection;
         
         if (moveX > 0) {
             iconData.element.classList.remove('facing-left');
             iconData.element.classList.add('facing-right');
             
-            weapon.style.right = '-30px';
-            weapon.style.left = 'auto';
+            weaponWrapper.style.right = '-30px';
+            weaponWrapper.style.left = 'auto';
             
             if (defaultDirection === 'top') {
-                weapon.style.transform = 'rotate(90deg)';
+                weaponWrapper.style.transform = 'rotate(90deg)';
             } else if (defaultDirection === 'right') {
-                weapon.style.transform = 'scaleX(1)';
+                weaponWrapper.style.transform = 'scaleX(1)';
             } else if (defaultDirection === 'left') {
-                weapon.style.transform = 'scaleX(-1)';
+                weaponWrapper.style.transform = 'scaleX(-1)';
             }
         } else if (moveX < 0) {
             iconData.element.classList.remove('facing-right');
             iconData.element.classList.add('facing-left');
             
-            weapon.style.left = '-30px';
-            weapon.style.right = 'auto';
+            weaponWrapper.style.left = '-30px';
+            weaponWrapper.style.right = 'auto';
             
             if (defaultDirection === 'top') {
-                weapon.style.transform = 'rotate(-90deg)';
+                weaponWrapper.style.transform = 'rotate(-90deg)';
             } else if (defaultDirection === 'right') {
-                weapon.style.transform = 'scaleX(-1)';
+                weaponWrapper.style.transform = 'scaleX(-1)';
             } else if (defaultDirection === 'left') {
-                weapon.style.transform = 'scaleX(1)';
+                weaponWrapper.style.transform = 'scaleX(1)';
             }
         }
     } else {
