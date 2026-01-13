@@ -4,22 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI生成项目</title>
-    <!-- 引入Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    
-    <!-- 配置Tailwind自定义颜色和字体 -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#4F46E5', // 主色调：靛蓝色
-                        secondary: '#10B981', // 辅助色：绿色
-                        accent: '#F59E0B', // 强调色：橙色，用于新游戏
-                        dark: '#1E293B',
-                        light: '#F8FAFC'
+                        primary: '#6366F1',
+                        secondary: '#8B5CF6',
+                        dark: '#0F172A',
+                        light: '#F1F5F9'
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -28,156 +23,132 @@
             }
         }
     </script>
-    
-    <!-- 自定义工具类 -->
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .content-auto {
-                content-visibility: auto;
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
             }
-            .card-hover {
-                @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
+        
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        .card-item {
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        .card-item:nth-child(1) { animation-delay: 0.1s; }
+        .card-item:nth-child(2) { animation-delay: 0.2s; }
+        .card-item:nth-child(3) { animation-delay: 0.3s; }
+        .card-item:nth-child(4) { animation-delay: 0.4s; }
+        .card-item:nth-child(5) { animation-delay: 0.5s; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-light to-gray-100 min-h-screen font-sans text-dark">
-    <!-- 页面容器 -->
-    <div class="container mx-auto px-4 py-12 max-w-6xl">
-        <!-- 页面标题 -->
-        <header class="text-center mb-16">
-            <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-primary mb-4 tracking-tight">
+<body class="bg-white min-h-screen font-sans text-dark">
+    <div class="container mx-auto px-6 py-20 max-w-5xl">
+        <header class="text-center mb-20 animate-fade-in-up">
+            <h1 class="text-5xl font-bold text-dark mb-4 tracking-tight">
                 AI生成项目
             </h1>
-            <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-                探索这些由人工智能创建的精彩项目
+            <p class="text-gray-500 text-lg">
+                探索由人工智能创建的创意项目
             </p>
         </header>
         
-        <!-- 项目链接卡片 - 调整为响应式布局 -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-8">
-            <!-- 1. 图标大战 -->
-            <a href="/aigen/IconBattle/" class="block">
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover border border-gray-100 h-full flex flex-col">
-                    <div class="h-48 bg-gradient-to-r from-red-500 to-pink-600 flex items-center justify-center">
-                        <i class="fa fa-android text-white text-6xl"></i>
-                        <i class="fa fa-apple text-white text-6xl ml-4"></i>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <a href="/aigen/IconBattle/" class="card-item block">
+                <div class="group bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border border-transparent hover:border-primary/20">
+                    <div class="w-14 h-14 bg-gradient-to-br from-red-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fa fa-gamepad text-white text-2xl"></i>
                     </div>
-                    <div class="p-6 flex-grow flex flex-col">
-                        <h2 class="text-xl font-bold mb-2 text-dark">图标大战</h2>
-                        <p class="text-gray-600 mb-4 flex-grow">
-                            上传你喜欢的图标，组建你的图标军队，与对手展开激烈的战斗！
-                        </p>
-                        <div class="inline-flex items-center text-accent font-medium">
-                            <span>开始游戏</span>
-                            <i class="fa fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
-                        </div>
+                    <h2 class="text-xl font-semibold text-dark mb-3">图标大战</h2>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        搜索、上传、选择图标组建军队，与对手展开激烈战斗
+                    </p>
+                    <div class="mt-6 flex items-center text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        开始游戏
+                        <i class="fa fa-arrow-right ml-2"></i>
                     </div>
                 </div>
             </a>
             
-            <!-- 2. 就下100层 -->
-            <a href="/aigen/mandown/" class="block">
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover border border-gray-100 h-full flex flex-col">
-                    <div class="h-48 bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center">
-                        <i class="fa fa-male text-white text-6xl"></i>
-                        <i class="fa fa-fast-forward text-white text-6xl fa-rotate-90"></i>
+            <a href="/aigen/mandown/" class="card-item block">
+                <div class="group bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-500 border border-transparent hover:border-amber-500/20">
+                    <div class="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fa fa-male text-white text-2xl"></i>
                     </div>
-                    <div class="p-6 flex-grow flex flex-col">
-                        <h2 class="text-xl font-bold mb-2 text-dark">就下100层</h2>
-                        <p class="text-gray-600 mb-4 flex-grow">
-                            挑战你的反应速度和技巧，不断向下跳跃，看看能否到达100层。
-                        </p>
-                        <div class="inline-flex items-center text-accent font-medium">
-                            <span>开始挑战</span>
-                            <i class="fa fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
-                        </div>
+                    <h2 class="text-xl font-semibold text-dark mb-3">就下100层</h2>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        挑战反应速度，不断向下跳跃到达100层
+                    </p>
+                    <div class="mt-6 flex items-center text-amber-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        开始挑战
+                        <i class="fa fa-arrow-right ml-2"></i>
                     </div>
                 </div>
             </a>
             
-            <!-- 3. 新俄罗斯方块拼图 -->
-            <a href="/aigen/tetris-puzzle/" class="block">
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover border border-gray-100 h-full flex flex-col">
-                    <div class="h-48 bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center">
-                        <i class="fa fa-cubes text-white text-6xl"></i>
+            <a href="/aigen/tetris-puzzle/" class="card-item block">
+                <div class="group bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-500 border border-transparent hover:border-emerald-500/20">
+                    <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fa fa-cubes text-white text-2xl"></i>
                     </div>
-                    <div class="p-6 flex-grow flex flex-col">
-                        <h2 class="text-xl font-bold mb-2 text-dark">新俄罗斯方块拼图</h2>
-                        <p class="text-gray-600 mb-4 flex-grow">
-                            玩这个经典的拼图游戏，带有全新设计的方块，带来新的挑战。
-                        </p>
-                        <div class="inline-flex items-center text-secondary font-medium">
-                            <span>开始游戏</span>
-                            <i class="fa fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
-                        </div>
+                    <h2 class="text-xl font-semibold text-dark mb-3">新俄罗斯方块拼图</h2>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        经典拼图游戏，全新设计的方块带来新挑战
+                    </p>
+                    <div class="mt-6 flex items-center text-emerald-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        开始游戏
+                        <i class="fa fa-arrow-right ml-2"></i>
                     </div>
                 </div>
             </a>
             
-            <!-- 4. 四则运算生成器 -->
-            <a href="/aigen/Math-Problem-Generator/" class="block">
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover border border-gray-100 h-full flex flex-col">
-                    <div class="h-48 bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
-                        <i class="fa fa-calculator text-white text-6xl"></i>
+            <a href="/aigen/Math-Problem-Generator/" class="card-item block">
+                <div class="group bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border border-transparent hover:border-primary/20">
+                    <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fa fa-calculator text-white text-2xl"></i>
                     </div>
-                    <div class="p-6 flex-grow flex flex-col">
-                        <h2 class="text-xl font-bold mb-2 text-dark">四则运算生成器</h2>
-                        <p class="text-gray-600 mb-4 flex-grow">
-                            生成不同难度级别的自定义四则运算问题，用于练习和学习。
-                        </p>
-                        <div class="inline-flex items-center text-primary font-medium">
-                            <span>访问项目</span>
-                            <i class="fa fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
-                        </div>
+                    <h2 class="text-xl font-semibold text-dark mb-3">四则运算生成器</h2>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        生成不同难度的四则运算问题用于练习学习
+                    </p>
+                    <div class="mt-6 flex items-center text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        访问项目
+                        <i class="fa fa-arrow-right ml-2"></i>
                     </div>
                 </div>
             </a>
             
-            <!-- 5. AndyTAB Chrome扩展 -->
-            <a href="https://github.com/adyhwang/AndyTAB" class="block" target="_blank">
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover border border-gray-100 h-full flex flex-col">
-                    <div class="h-48 bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
-                        <i class="fa fa-chrome text-white text-6xl"></i>
+            <a href="https://github.com/adyhwang/AndyTAB" class="card-item block" target="_blank">
+                <div class="group bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-2xl hover:shadow-secondary/10 transition-all duration-500 border border-transparent hover:border-secondary/20">
+                    <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fa fa-chrome text-white text-2xl"></i>
                     </div>
-                    <div class="p-6 flex-grow flex flex-col">
-                        <h2 class="text-xl font-bold mb-2 text-dark">AndyTAB Chrome扩展</h2>
-                        <p class="text-gray-600 mb-4 flex-grow">
-                            自定义Chrome新标签页扩展，支持WebDAV数据同步，个性化你的浏览器体验。
-                        </p>
-                        <div class="inline-flex items-center text-accent font-medium">
-                            <span>查看项目</span>
-                            <i class="fa fa-arrow-right ml-2 transition-transform duration-300 group-hover:translate-x-1"></i>
-                        </div>
+                    <h2 class="text-xl font-semibold text-dark mb-3">AndyTAB Chrome扩展</h2>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        自定义Chrome新标签页，支持WebDAV数据同步
+                    </p>
+                    <div class="mt-6 flex items-center text-secondary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        查看项目
+                        <i class="fa fa-arrow-right ml-2"></i>
                     </div>
                 </div>
             </a>
         </div>
         
-        <!-- 页脚 -->
-        <footer class="mt-16 text-center text-gray-500 text-sm">
-            <p>使用AI技术精心创建 <i class="fa fa-heart text-red-500"></i></p>
+        <footer class="mt-24 text-center">
+            <p class="text-gray-400 text-sm">
+                使用AI技术精心创建
+            </p>
         </footer>
     </div>
-    
-    <!-- 交互脚本 -->
-    <script>
-        // 添加页面加载动画效果
-        document.addEventListener('DOMContentLoaded', () => {
-            const cards = document.querySelectorAll('.card-hover');
-            cards.forEach((card, index) => {
-                // 初始状态
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                
-                // 延迟显示，创建顺序动画
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, 100 * index);
-            });
-        });
-    </script>
 </body>
 </html>
