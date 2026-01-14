@@ -25,6 +25,17 @@ let gamePaused = false;
 let gameSpeed = 1;
 const gameSpeeds = [1, 1.5, 2, 3, 4, 5];
 
+let squadBattleMode = false;
+let squadLeaders = {
+    player1: null,
+    player2: null
+};
+
+// 战斗图标详情面板相关变量
+let currentDetailPanel = null;
+let currentIconData = null;
+let detailPanelUpdateInterval = null;
+
 const MAX_BATTLE_INFO_ITEMS = 500;
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -204,16 +215,16 @@ const weapons = [
     { emoji: '🦴', name: '骨棒', attack: 11, type: 'melee', range: 95, attackSpeed: 600, maxCharges: 999, cooldownTime: 0, defaultDirection: 'top', effectType: 'stab' },
     { emoji: '🔪', name: '菜刀', attack: 13, type: 'melee', range: 80, attackSpeed: 500, maxCharges: 999, cooldownTime: 0, defaultDirection: 'right', effectType: 'slash' },
     { emoji: '🏏', name: '板球拍', attack: 12, type: 'melee', range: 100, attackSpeed: 650, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', effectType: 'smash' },
-    { emoji: '🏹', name: '弓箭', attack: 7, type: 'ranged', range: 300, attackSpeed: 700, maxCharges: 1, cooldownTime: 1000, defaultDirection: 'right', effectType: 'arrow' },
-    { emoji: '🔫', name: '枪', attack: 20, type: 'ranged', range: 350, attackSpeed: 550, maxCharges: 6, cooldownTime: 3000, defaultDirection: 'left', effectType: 'bullet' },
-    { emoji: '🏐', name: '排球', attack: 7, type: 'ranged', range: 280, attackSpeed: 600, maxCharges: 3, cooldownTime: 1500, defaultDirection: 'right', knockbackDistance: 40, effectType: 'arrow' },
+    { emoji: '🏹', name: '弓箭', attack: 7, type: 'ranged', range: 250, attackSpeed: 700, maxCharges: 1, cooldownTime: 1000, defaultDirection: 'right', effectType: 'arrow' },
+    { emoji: '🔫', name: '枪', attack: 20, type: 'ranged', range: 300, attackSpeed: 550, maxCharges: 6, cooldownTime: 3000, defaultDirection: 'left', effectType: 'bullet' },
+    { emoji: '🏐', name: '排球', attack: 7, type: 'ranged', range: 150, attackSpeed: 600, maxCharges: 3, cooldownTime: 1500, defaultDirection: 'right', knockbackDistance: 40, effectType: 'arrow' },
     { emoji: '💣', name: '炸弹', attack: 25, type: 'aoe', range: 200, attackSpeed: 1000, maxCharges: 3, cooldownTime: 2000, defaultDirection: 'right', aoeRadius: 150, effectType: 'explosion' },
-    { emoji: '⚡', name: '闪电', attack: 30, type: 'ranged', range: 250, attackSpeed: 800, maxCharges: 2, cooldownTime: 3000, defaultDirection: 'top', ignoreDefense: true, effectType: 'lightning' },
+    { emoji: '⚡', name: '闪电', attack: 22, type: 'ranged', range: 200, attackSpeed: 800, maxCharges: 2, cooldownTime: 3000, defaultDirection: 'top', ignoreDefense: true, effectType: 'lightning' },
     { emoji: '🔥', name: '火', attack: 15, type: 'ranged', range: 180, attackSpeed: 500, maxCharges: 2, cooldownTime: 4000, defaultDirection: 'top', burnDuration: 5000, burnInterval: 500, effectType: 'fire' },
     { emoji: '🧊', name: '冰冻', attack: 7, type: 'aoe', range: 220, attackSpeed: 900, maxCharges: 1, cooldownTime: 2500, defaultDirection: 'right', aoeRadius: 120, freezeDuration: 1500, effectType: 'ice' },
-    { emoji: '🍼', name: '奶瓶', heal: 18, type: 'heal', range: 200, attackSpeed: 1200, maxCharges: 4, cooldownTime: 2000, defaultDirection: 'top', effectType: 'heal' },
-    { emoji: '💊', name: '药丸', heal: 25, type: 'heal', range: 150, attackSpeed: 1000, maxCharges: 3, cooldownTime: 3000, defaultDirection: 'top', effectType: 'heal' },
-    { emoji: '💉', name: '兴奋剂', attack: 0, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 1, cooldownTime: 3000, defaultDirection: 'top', buffDuration: 3000, buffMultiplier: 2.8, effectType: 'buff' }
+    { emoji: '🍼', name: '奶瓶', attack: 1, heal: 18, type: 'heal', range: 200, attackSpeed: 1200, maxCharges: 4, cooldownTime: 2000, defaultDirection: 'top', effectType: 'heal' },
+    { emoji: '💊', name: '药丸', attack: 1, heal: 25, type: 'heal', range: 180, attackSpeed: 1000, maxCharges: 3, cooldownTime: 3000, defaultDirection: 'top', effectType: 'heal' },
+    { emoji: '💉', name: '兴奋剂', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 1, cooldownTime: 3000, defaultDirection: 'top', buffDuration: 3000, buffMultiplier: 2.8, effectType: 'buff' }
 ];
 
 function generateRandomStats() {
@@ -302,9 +313,97 @@ function addIconToReadyZone(player, imageUrl, name = '') {
     iconItem.addEventListener('dragstart', handleIconDragStart);
     iconItem.addEventListener('dragend', handleIconDragEnd);
     
+    let clickTimeout = null;
+    let clickCount = 0;
+    
+    iconItem.addEventListener('click', (e) => {
+        clickCount++;
+        
+        if (clickCount === 1) {
+            clickTimeout = setTimeout(() => {
+                if (clickCount === 1) {
+                    const battleArea = document.getElementById('battleArea');
+                    const battleAreaRect = battleArea.getBoundingClientRect();
+                    
+                    let x, y;
+                    if (player === 1) {
+                        x = battleAreaRect.width / 8;
+                    } else {
+                        x = battleAreaRect.width * 7 / 8;
+                    }
+                    y = battleAreaRect.height / 2;
+                    
+                    const battleIcon = createBattleIcon(imageUrl, player, x, y, name);
+                    battleArea.appendChild(battleIcon);
+                    
+                    updateBattleStats();
+                    
+                    iconItem.remove();
+                }
+                clickCount = 0;
+                clickTimeout = null;
+            }, 300);
+        } else if (clickCount === 2) {
+            if (clickTimeout) {
+                clearTimeout(clickTimeout);
+                clickTimeout = null;
+            }
+            iconItem.remove();
+            clickCount = 0;
+        }
+    });
+    
+    let touchTimeout = null;
+    let touchCount = 0;
+    let lastTouchTime = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isDragging = false;
+    
     iconItem.addEventListener('touchstart', (e) => {
-        e.preventDefault();
         const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        isDragging = false;
+        
+        const currentTime = Date.now();
+        if (currentTime - lastTouchTime < 300) {
+            touchCount++;
+        } else {
+            touchCount = 1;
+        }
+        lastTouchTime = currentTime;
+        
+        if (touchTimeout) {
+            clearTimeout(touchTimeout);
+        }
+        
+        touchTimeout = setTimeout(() => {
+            if (touchCount === 1 && !isDragging) {
+                const battleArea = document.getElementById('battleArea');
+                const battleAreaRect = battleArea.getBoundingClientRect();
+                
+                let x, y;
+                if (player === 1) {
+                    x = battleAreaRect.width / 8;
+                } else {
+                    x = battleAreaRect.width * 7 / 8;
+                }
+                y = battleAreaRect.height / 2;
+                
+                const battleIcon = createBattleIcon(imageUrl, player, x, y, name);
+                battleArea.appendChild(battleIcon);
+                
+                updateBattleStats();
+                
+                iconItem.remove();
+            } else if (touchCount >= 2 && !isDragging) {
+                iconItem.remove();
+            }
+            touchCount = 0;
+            touchTimeout = null;
+        }, 300);
+        
         const rect = iconItem.getBoundingClientRect();
         
         const clone = iconItem.cloneNode(true);
@@ -323,29 +422,43 @@ function addIconToReadyZone(player, imageUrl, name = '') {
         const offsetY = touch.clientY - rect.top;
         
         function onTouchMove(e) {
-            e.preventDefault();
             const touch = e.touches[0];
+            const moveDistance = Math.sqrt(
+                Math.pow(touch.clientX - touchStartX, 2) + 
+                Math.pow(touch.clientY - touchStartY, 2)
+            );
+            
+            if (moveDistance > 10) {
+                isDragging = true;
+            }
+            
             clone.style.left = `${touch.clientX - offsetX}px`;
             clone.style.top = `${touch.clientY - offsetY}px`;
         }
         
         function onTouchEnd(e) {
-            e.preventDefault();
             const touch = e.changedTouches[0];
             const battleArea = document.getElementById('battleArea');
             const battleRect = battleArea.getBoundingClientRect();
             
-            if (touch.clientX >= battleRect.left && touch.clientX <= battleRect.right &&
-                touch.clientY >= battleRect.top && touch.clientY <= battleRect.bottom) {
-                const x = touch.clientX - battleRect.left - 40;
-                const y = touch.clientY - battleRect.top - 40;
+            if (isDragging) {
+                if (touchTimeout) {
+                    clearTimeout(touchTimeout);
+                    touchTimeout = null;
+                }
                 
-                const battleIcon = createBattleIcon(imageUrl, player, x, y, name);
-                battleArea.appendChild(battleIcon);
-                
-                updateBattleStats();
-                
-                iconItem.remove();
+                if (touch.clientX >= battleRect.left && touch.clientX <= battleRect.right &&
+                    touch.clientY >= battleRect.top && touch.clientY <= battleRect.bottom) {
+                    const x = touch.clientX - battleRect.left - 40;
+                    const y = touch.clientY - battleRect.top - 40;
+                    
+                    const battleIcon = createBattleIcon(imageUrl, player, x, y, name);
+                    battleArea.appendChild(battleIcon);
+                    
+                    updateBattleStats();
+                    
+                    iconItem.remove();
+                }
             }
             
             clone.remove();
@@ -573,6 +686,7 @@ function createBattleIcon(iconUrl, player, x, y, name = '') {
     battleIcon.className = `battle-icon player${player}`;
     battleIcon.style.left = `${x}px`;
     battleIcon.style.top = `${y}px`;
+    battleIcon.style.zIndex = Math.floor(y);
     battleIcon.dataset.player = player;
     battleIcon.dataset.iconId = iconIdCounter++;
     battleIcon.dataset.name = name;
@@ -646,7 +760,9 @@ function createBattleIcon(iconUrl, player, x, y, name = '') {
     
     const statsDisplay = document.createElement('div');
     statsDisplay.className = 'stats-display';
-    statsDisplay.innerHTML = `ATK:${stats.attack} DEF:${stats.defense}`;
+    const totalAttack = (stats.attack || 0) + (weaponData.attack || 0);
+    const totalDefense = (stats.defense || 0) + (stats.armor || 0);
+    statsDisplay.innerHTML = `ATK:${totalAttack} DEF:${totalDefense}`;
     battleIcon.appendChild(statsDisplay);
     
     const iconData = {
@@ -692,6 +808,12 @@ function createBattleIcon(iconUrl, player, x, y, name = '') {
         <span class="icon-name">${name || '未知图标'}(Lv1)${weaponData.emoji}</span>
         <span class="icon-health">${stats.health}/${stats.maxHealth}</span>
     `;
+    
+    // 添加点击事件监听器，显示详情面板
+    iconListItem.addEventListener('click', () => {
+        showIconDetailPanel(iconData, player);
+    });
+    
     iconsList.appendChild(iconListItem);
     iconData.listItem = iconListItem;
     
@@ -718,6 +840,7 @@ function createBattleIcon(iconUrl, player, x, y, name = '') {
             
             iconData.element.style.left = `${iconData.x}px`;
             iconData.element.style.top = `${iconData.y}px`;
+            iconData.element.style.zIndex = Math.floor(iconData.y);
         }
         
         function onMouseUp() {
@@ -755,6 +878,7 @@ function createBattleIcon(iconUrl, player, x, y, name = '') {
             
             iconData.element.style.left = `${iconData.x}px`;
             iconData.element.style.top = `${iconData.y}px`;
+            iconData.element.style.zIndex = Math.floor(iconData.y);
         }
         
         function onTouchEnd() {
@@ -1127,7 +1251,7 @@ function attack(attacker, defender) {
         
         if (attacker.weapon.type === 'buff') {
             if (!target || target.player !== attacker.player) {
-                const allies = battleIcons[`player${attacker.player}`].filter(ally => !ally.isDead && ally !== attacker && ally.weapon.type !== 'heal');
+                const allies = battleIcons[`player${attacker.player}`].filter(ally => !ally.isDead && ally !== attacker && (ally.weapon.type === 'melee' || ally.weapon.type === 'ranged' || ally.weapon.type === 'aoe'));
                 
                 if (allies.length > 0) {
                     allies.sort((a, b) => {
@@ -1159,37 +1283,62 @@ function attack(attacker, defender) {
             if (target.player === attacker.player) {
                 applyBuff(attacker, target);
             } else {
-                const damage = calculateDamage(attacker, target);
+                const totalAttack = attacker.stats.attack + attacker.weapon.attack;
+                const baseDamage = totalAttack;
+                const defense = target.stats.defense;
+                const armor = target.stats.armor;
+                const randomFactor = Math.random() * 0.4 + 0.8;
+                
+                const dodgeChance = target.stats.speed * 0.03;
+                const isDodged = Math.random() < dodgeChance;
+                
+                const damage = isDodged ? 0 : Math.max(1, Math.floor((baseDamage - defense / 2) * randomFactor / armor));
+                
                 addBattleInfo(attacker, target, damage);
                 
-                playSound('hit');
-                target.stats.health -= damage;
-                
-                target.element.classList.add('hit');
-                showDamageText(target, damage, 'normal');
-                
-                setTimeout(() => {
-                    target.element.classList.remove('hit');
-                }, 300);
-                
-                updateHealthBar(target);
-                
-                if (target.stats.health <= 0 && !target.hasBeenKilled) {
-                    playSound('kill');
-                    playSound('death');
-                    target.isDead = true;
-                    target.hasBeenKilled = true;
-                    target.element.classList.add('dead');
-                    target.element.classList.remove('moving');
-                    target.element.classList.remove('attacking');
+                if (damage === 0) {
+                    playSound('dodge');
+                    const dodgeText = document.createElement('div');
+                    dodgeText.className = 'dodge-text';
+                    dodgeText.textContent = '闪避!';
+                    dodgeText.style.left = '50%';
+                    dodgeText.style.top = '0';
+                    dodgeText.style.transform = 'translateX(-50%)';
+                    target.element.appendChild(dodgeText);
                     
-                    if (target.listItem) {
-                        target.listItem.classList.add('dead');
-                        target.listItem.querySelector('.icon-health').textContent = `0/${target.stats.maxHealth}`;
+                    setTimeout(() => {
+                        dodgeText.remove();
+                    }, 1000);
+                } else {
+                    playSound('hit');
+                    target.stats.health -= damage;
+                    
+                    target.element.classList.add('hit');
+                    showDamageText(target, damage, 'normal');
+                    
+                    setTimeout(() => {
+                        target.element.classList.remove('hit');
+                    }, 300);
+                    
+                    updateHealthBar(target);
+                    
+                    if (target.stats.health <= 0 && !target.hasBeenKilled) {
+                        playSound('kill');
+                        playSound('death');
+                        target.isDead = true;
+                        target.hasBeenKilled = true;
+                        target.element.classList.add('dead');
+                        target.element.classList.remove('moving');
+                        target.element.classList.remove('attacking');
+                        
+                        if (target.listItem) {
+                            target.listItem.classList.add('dead');
+                            target.listItem.querySelector('.icon-health').textContent = `0/${target.stats.maxHealth}`;
+                        }
+                        
+                        battleStats[`player${attacker.player}`].kills++;
+                        updateBattleStats();
                     }
-                    
-                    battleStats[`player${attacker.player}`].kills++;
-                    updateBattleStats();
                 }
             }
         } else if (attacker.weapon.type === 'heal') {
@@ -1214,7 +1363,8 @@ function attack(attacker, defender) {
                     addHealBattleInfo(attacker, target, actualHeal);
                 }
             } else {
-                const baseDamage = attacker.stats.attack;
+                const totalAttack = attacker.stats.attack + attacker.weapon.attack;
+                const baseDamage = totalAttack;
                 const defense = target.stats.defense;
                 const armor = target.stats.armor;
                 const randomFactor = Math.random() * 0.4 + 0.8;
@@ -1327,7 +1477,7 @@ function attack(attacker, defender) {
         
         updateBattleStats();
         
-        if (attacker.weapon.type !== 'heal' && target.stats.health <= 0 && !target.hasBeenKilled) {
+        if (target.stats.health <= 0 && !target.hasBeenKilled) {
             playSound('kill');
             playSound('death');
             target.isDead = true;
@@ -1823,6 +1973,7 @@ function applyKnockback(attacker, target, distance) {
         
         target.element.style.left = `${target.x}px`;
         target.element.style.top = `${target.y}px`;
+        target.element.style.zIndex = Math.floor(target.y);
         
         if (progress < 1) {
             requestAnimationFrame(animateKnockback);
@@ -2164,7 +2315,18 @@ function moveTowardsTarget(iconData) {
     const distance = Math.sqrt(dx * dx + dy * dy);
     
     if (distance > 5) {
-        const speed = iconData.stats.speed * gameSpeed;
+        let speed = iconData.stats.speed * gameSpeed;
+        
+        if (squadBattleMode) {
+            const members = getSquadMembers(iconData.player);
+            const minSpeed = Math.min(...members.map(m => m.stats.speed));
+            
+            if (iconData.stats.speed > minSpeed) {
+                const speedRatio = minSpeed / iconData.stats.speed;
+                speed = speed * speedRatio;
+            }
+        }
+        
         const moveX = (dx / distance) * speed;
         const moveY = (dy / distance) * speed;
         
@@ -2173,6 +2335,7 @@ function moveTowardsTarget(iconData) {
         
         iconData.element.style.left = `${iconData.x}px`;
         iconData.element.style.top = `${iconData.y}px`;
+        iconData.element.style.zIndex = Math.floor(iconData.y);
         
         iconData.element.classList.add('moving');
         
@@ -2226,6 +2389,11 @@ function updateBattleStats() {
         .reduce((sum, icon) => sum + (icon.stats.attack || 0) + (icon.weapon.attack || 0), 0);
     document.getElementById('player1Attack').textContent = player1TotalAttack;
     
+    const player1TotalDefense = battleIcons.player1
+        .filter(icon => !icon.isDead)
+        .reduce((sum, icon) => sum + (icon.stats.defense || 0) + (icon.stats.armor || 0), 0);
+    document.getElementById('player1Defense').textContent = player1TotalDefense;
+    
     document.getElementById('player2Kills').textContent = battleStats.player2.kills;
     
     const player2CurrentHealth = battleIcons.player2
@@ -2237,6 +2405,11 @@ function updateBattleStats() {
         .filter(icon => !icon.isDead)
         .reduce((sum, icon) => sum + (icon.stats.attack || 0) + (icon.weapon.attack || 0), 0);
     document.getElementById('player2Attack').textContent = player2TotalAttack;
+    
+    const player2TotalDefense = battleIcons.player2
+        .filter(icon => !icon.isDead)
+        .reduce((sum, icon) => sum + (icon.stats.defense || 0) + (icon.stats.armor || 0), 0);
+    document.getElementById('player2Defense').textContent = player2TotalDefense;
 }
 
 function initBattleInfoDrag() {
@@ -2400,6 +2573,14 @@ function gameLoop() {
         cancelAutoDeployTimer();
     }
     
+    if (squadBattleMode) {
+        updateSquadLeaders();
+    } else {
+        [1, 2].forEach(player => {
+            convertNonBattleToBattle(player);
+        });
+    }
+    
     if (isVictory) {
         const winnerIcons = battleIcons[`player${winner}`].filter(icon => !icon.isDead && icon.weapon.type !== 'heal');
         
@@ -2410,6 +2591,12 @@ function gameLoop() {
                 handleHealerBehavior(iconData);
             } else if (iconData.weapon.type === 'buff') {
                 handleBuffBehavior(iconData);
+            } else if (squadBattleMode) {
+                if (squadLeaders.player1 === iconData) {
+                    handleSquadLeaderBehavior(iconData);
+                } else {
+                    handleSquadMemberBehavior(iconData);
+                }
             } else {
                 moveTowardsTarget(iconData);
             }
@@ -2422,6 +2609,12 @@ function gameLoop() {
                 handleHealerBehavior(iconData);
             } else if (iconData.weapon.type === 'buff') {
                 handleBuffBehavior(iconData);
+            } else if (squadBattleMode) {
+                if (squadLeaders.player2 === iconData) {
+                    handleSquadLeaderBehavior(iconData);
+                } else {
+                    handleSquadMemberBehavior(iconData);
+                }
             } else {
                 moveTowardsTarget(iconData);
             }
@@ -2434,6 +2627,12 @@ function gameLoop() {
                 handleHealerBehavior(iconData);
             } else if (iconData.weapon.type === 'buff') {
                 handleBuffBehavior(iconData);
+            } else if (squadBattleMode) {
+                if (squadLeaders.player1 === iconData) {
+                    handleSquadLeaderBehavior(iconData);
+                } else {
+                    handleSquadMemberBehavior(iconData);
+                }
             } else {
                 const enemy = findNearestEnemy(iconData);
                 if (enemy) {
@@ -2459,6 +2658,12 @@ function gameLoop() {
                 handleHealerBehavior(iconData);
             } else if (iconData.weapon.type === 'buff') {
                 handleBuffBehavior(iconData);
+            } else if (squadBattleMode) {
+                if (squadLeaders.player2 === iconData) {
+                    handleSquadLeaderBehavior(iconData);
+                } else {
+                    handleSquadMemberBehavior(iconData);
+                }
             } else {
                 const enemy = findNearestEnemy(iconData);
                 if (enemy) {
@@ -2841,6 +3046,329 @@ function togglePauseGame() {
     gamePaused = document.getElementById('pauseGame').checked;
 }
 
+function toggleSquadBattleMode() {
+    squadBattleMode = document.getElementById('squadBattleMode').checked;
+    
+    if (squadBattleMode) {
+        selectSquadLeaders();
+    } else {
+        clearSquadLeaders();
+    }
+}
+
+function isBattleIcon(iconData) {
+    return iconData.weapon.type === 'melee' || iconData.weapon.type === 'ranged' || iconData.weapon.type === 'aoe';
+}
+
+function selectSquadLeaders() {
+    [1, 2].forEach(player => {
+        const battleIconsList = battleIcons[`player${player}`].filter(icon => !icon.isDead && isBattleIcon(icon));
+        
+        if (battleIconsList.length > 0) {
+            battleIconsList.sort((a, b) => {
+                const statsA = a.stats.attack + a.stats.defense + a.stats.speed;
+                const statsB = b.stats.attack + b.stats.defense + b.stats.speed;
+                if (statsA !== statsB) {
+                    return statsB - statsA;
+                }
+                return battleIconsList.indexOf(a) - battleIconsList.indexOf(b);
+            });
+            
+            const newLeader = battleIconsList[0];
+            
+            if (squadLeaders[`player${player}`] && squadLeaders[`player${player}`] !== newLeader) {
+                const oldLeader = squadLeaders[`player${player}`];
+                const armLeft = oldLeader.element.querySelector('.arm.left');
+                const armRight = oldLeader.element.querySelector('.arm.right');
+                armLeft.style.backgroundColor = '';
+                armRight.style.backgroundColor = '';
+                oldLeader.element.classList.remove('squad-leader');
+            }
+            
+            squadLeaders[`player${player}`] = newLeader;
+            
+            const armLeft = newLeader.element.querySelector('.arm.left');
+            const armRight = newLeader.element.querySelector('.arm.right');
+            armLeft.style.backgroundColor = '#ffd700';
+            armRight.style.backgroundColor = '#ffd700';
+            newLeader.element.classList.add('squad-leader');
+        }
+    });
+}
+
+function clearSquadLeaders() {
+    [1, 2].forEach(player => {
+        if (squadLeaders[`player${player}`]) {
+            const leader = squadLeaders[`player${player}`];
+            const armLeft = leader.element.querySelector('.arm.left');
+            const armRight = leader.element.querySelector('.arm.right');
+            armLeft.style.backgroundColor = '';
+            armRight.style.backgroundColor = '';
+            leader.element.classList.remove('squad-leader');
+            squadLeaders[`player${player}`] = null;
+        }
+    });
+}
+
+function updateSquadLeaders() {
+    [1, 2].forEach(player => {
+        const currentLeader = squadLeaders[`player${player}`];
+        
+        if (currentLeader && (currentLeader.isDead || !isBattleIcon(currentLeader))) {
+            const armLeft = currentLeader.element.querySelector('.arm.left');
+            const armRight = currentLeader.element.querySelector('.arm.right');
+            armLeft.style.backgroundColor = '';
+            armRight.style.backgroundColor = '';
+            currentLeader.element.classList.remove('squad-leader');
+            squadLeaders[`player${player}`] = null;
+        }
+        
+        if (!squadLeaders[`player${player}`]) {
+            selectSquadLeaders();
+        }
+        
+        convertNonBattleToBattle(player);
+        
+        if (!squadLeaders[`player${player}`]) {
+            selectSquadLeaders();
+        }
+    });
+}
+
+function convertNonBattleToBattle(player) {
+    const aliveIcons = battleIcons[`player${player}`].filter(icon => !icon.isDead);
+    const battleIconsList = aliveIcons.filter(icon => isBattleIcon(icon));
+    
+    if (battleIconsList.length === 0 && aliveIcons.length > 0) {
+        const randomIcon = aliveIcons[Math.floor(Math.random() * aliveIcons.length)];
+        const brickWeapon = weapons.find(w => w.name === '砖头');
+        
+        if (brickWeapon) {
+            const oldWeapon = randomIcon.weapon;
+            randomIcon.weapon = brickWeapon;
+            randomIcon.currentCharges = brickWeapon.maxCharges;
+            
+            const weaponInner = randomIcon.element.querySelector('.weapon-inner');
+            weaponInner.textContent = brickWeapon.emoji;
+            weaponInner.dataset.type = brickWeapon.type;
+            weaponInner.dataset.effect = brickWeapon.effectType;
+            
+            const statsDisplay = randomIcon.element.querySelector('.stats-display');
+            const totalAttack = (randomIcon.stats.attack || 0) + (brickWeapon.attack || 0);
+            const totalDefense = (randomIcon.stats.defense || 0) + (randomIcon.stats.armor || 0);
+            statsDisplay.innerHTML = `ATK:${totalAttack} DEF:${totalDefense}`;
+            
+            const battleInfo = document.getElementById('battleInfo');
+            const infoItem = document.createElement('div');
+            infoItem.className = 'battle-info-item';
+            infoItem.dataset.player = player;
+            infoItem.dataset.action = 'special';
+            const iconName = randomIcon.name || '未知图标';
+            const iconLevel = randomIcon.level || 1;
+            infoItem.innerHTML = `<span class="special-message">玩家${player}：<span class="attacker">${iconName}(Lv${iconLevel})</span>从<span class="weapon">${oldWeapon.emoji}</span>切换为<span class="weapon">${brickWeapon.emoji}</span>加入战斗！</span>`;
+            battleInfo.appendChild(infoItem);
+            battleInfo.scrollTop = battleInfo.scrollHeight;
+            
+            while (battleInfo.children.length > MAX_BATTLE_INFO_ITEMS) {
+                battleInfo.removeChild(battleInfo.firstChild);
+            }
+            
+            applyFilters();
+        }
+    }
+}
+
+function getSquadMembers(player) {
+    const leader = squadLeaders[`player${player}`];
+    if (!leader) return [];
+    
+    return battleIcons[`player${player}`].filter(icon => !icon.isDead && icon !== leader);
+}
+
+function calculateSquadFormation(leader, members) {
+    const formation = [];
+    const memberCount = members.length;
+    
+    if (memberCount === 0) return formation;
+    
+    const gridSize = Math.ceil(Math.sqrt(memberCount));
+    const spacing = 60;
+    
+    const startX = leader.x - (gridSize - 1) * spacing / 2;
+    const startY = leader.y - (gridSize - 1) * spacing / 2;
+    
+    for (let i = 0; i < memberCount; i++) {
+        const row = Math.floor(i / gridSize);
+        const col = i % gridSize;
+        formation.push({
+            x: startX + col * spacing,
+            y: startY + row * spacing
+        });
+    }
+    
+    return formation;
+}
+
+function getMonitorRange(memberCount) {
+    const baseRange = 350;
+    const additionalRange = Math.floor(memberCount / 8) * 40;
+    return baseRange + additionalRange;
+}
+
+function checkAllMembersInRange(leader, members, range) {
+    for (const member of members) {
+        const dx = member.x - leader.x;
+        const dy = member.y - leader.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > range) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function handleSquadLeaderBehavior(iconData) {
+    const members = getSquadMembers(iconData.player);
+    const monitorRange = getMonitorRange(members.length);
+    
+    const enemyPlayer = iconData.player === 1 ? 2 : 1;
+    const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+    
+    const battleArea = document.getElementById('battleArea');
+    const rect = battleArea.getBoundingClientRect();
+    
+    if (enemies.length > 0) {
+        const enemiesInRange = enemies.filter(enemy => {
+            const dx = enemy.x - iconData.x;
+            const dy = enemy.y - iconData.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < iconData.weapon.range;
+        });
+        
+        let target;
+        if (enemiesInRange.length > 0) {
+            enemiesInRange.sort((a, b) => a.stats.health - b.stats.health);
+            target = enemiesInRange[0];
+        } else {
+            enemies.sort((a, b) => {
+                const distA = Math.sqrt((a.x - iconData.x) ** 2 + (a.y - iconData.y) ** 2);
+                const distB = Math.sqrt((b.x - iconData.x) ** 2 + (b.y - iconData.y) ** 2);
+                return distA - distB;
+            });
+            target = enemies[0];
+        }
+        
+        const dx = target.x - iconData.x;
+        const dy = target.y - iconData.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < iconData.weapon.range) {
+            attack(iconData, target);
+        } else {
+            if (checkAllMembersInRange(iconData, members, monitorRange)) {
+                iconData.targetX = target.x - (iconData.weapon.type === 'melee' ? 50 : 0);
+                iconData.targetY = target.y;
+                moveTowardsTarget(iconData);
+            }
+        }
+    } else {
+        const centerX = iconData.player === 1 ? rect.width * 0.25 : rect.width * 0.75;
+        const centerY = rect.height * 0.5;
+        
+        if (checkAllMembersInRange(iconData, members, monitorRange)) {
+            iconData.targetX = centerX;
+            iconData.targetY = centerY;
+            moveTowardsTarget(iconData);
+        }
+    }
+}
+
+function handleSquadMemberBehavior(iconData) {
+    const leader = squadLeaders[`player${iconData.player}`];
+    if (!leader) {
+        const enemy = findNearestEnemy(iconData);
+        if (enemy) {
+            const dx = enemy.x - iconData.x;
+            const dy = enemy.y - iconData.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < iconData.weapon.range) {
+                attack(iconData, enemy);
+            } else {
+                iconData.targetX = enemy.x - (iconData.weapon.type === 'melee' ? 50 : 0);
+                iconData.targetY = enemy.y;
+                moveTowardsTarget(iconData);
+            }
+        }
+        return;
+    }
+    
+    const enemyPlayer = iconData.player === 1 ? 2 : 1;
+    const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+    
+    let nearestEnemyDistance = Infinity;
+    if (enemies.length > 0) {
+        enemies.forEach(enemy => {
+            const dist = Math.sqrt((enemy.x - iconData.x) ** 2 + (enemy.y - iconData.y) ** 2);
+            if (dist < nearestEnemyDistance) {
+                nearestEnemyDistance = dist;
+            }
+        });
+    }
+    
+    if (nearestEnemyDistance < 450) {
+        const enemiesInRange = enemies.filter(enemy => {
+            const dx = enemy.x - iconData.x;
+            const dy = enemy.y - iconData.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < iconData.weapon.range;
+        });
+        
+        let target;
+        if (enemiesInRange.length > 0) {
+            enemiesInRange.sort((a, b) => a.stats.health - b.stats.health);
+            target = enemiesInRange[0];
+        } else {
+            enemies.sort((a, b) => {
+                const distA = Math.sqrt((a.x - iconData.x) ** 2 + (a.y - iconData.y) ** 2);
+                const distB = Math.sqrt((b.x - iconData.x) ** 2 + (b.y - iconData.y) ** 2);
+                return distA - distB;
+            });
+            target = enemies[0];
+        }
+        
+        const dx = target.x - iconData.x;
+        const dy = target.y - iconData.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < iconData.weapon.range) {
+            attack(iconData, target);
+        } else {
+            iconData.targetX = target.x - (iconData.weapon.type === 'melee' ? 50 : 0);
+            iconData.targetY = target.y;
+            moveTowardsTarget(iconData);
+        }
+    } else {
+        const members = getSquadMembers(iconData.player);
+        const formation = calculateSquadFormation(leader, members);
+        const memberIndex = members.indexOf(iconData);
+        
+        if (memberIndex >= 0 && memberIndex < formation.length) {
+            const targetPos = formation[memberIndex];
+            const dx = targetPos.x - iconData.x;
+            const dy = targetPos.y - iconData.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > 5) {
+                iconData.targetX = targetPos.x;
+                iconData.targetY = targetPos.y;
+                moveTowardsTarget(iconData);
+            }
+        }
+    }
+}
+
 function toggleFullscreen() {
     const fullscreenCheckbox = document.getElementById('fullscreenMode');
     
@@ -3029,6 +3557,191 @@ function applyFilters() {
             item.classList.add('hidden');
         }
     });
+}
+
+// 战斗图标详情面板函数
+function showIconDetailPanel(iconData, player) {
+    // 关闭已有的详情面板
+    if (currentDetailPanel) {
+        closeIconDetailPanel();
+    }
+    
+    // 创建详情面板
+    const detailPanel = document.createElement('div');
+    detailPanel.className = `icon-detail-panel player${player}`;
+    
+    // 获取图标列表容器
+    const iconsList = document.getElementById(`player${player}IconsList`);
+    
+    // 设置面板位置
+    iconsList.appendChild(detailPanel);
+    
+    // 填充面板内容
+    detailPanel.innerHTML = `
+        <div class="icon-detail-left"></div>
+        <div class="icon-detail-right">
+            <div class="detail-item">
+                <span class="detail-label">名称:</span>
+                <span class="detail-value" id="detail-name">玩家${player}: ${iconData.name || '未知图标'}(#${iconData.element.dataset.iconId})</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">等级:</span>
+                <span class="detail-value" id="detail-level">${iconData.level}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">生命值:</span>
+                <span class="detail-value health" id="detail-health">${iconData.stats.health}/${iconData.stats.maxHealth}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">攻击力:</span>
+                <span class="detail-value attack" id="detail-attack">${iconData.stats.attack + iconData.weapon.attack}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">防御力:</span>
+                <span class="detail-value defense" id="detail-defense">${iconData.stats.defense}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">速度:</span>
+                <span class="detail-value speed" id="detail-speed">${iconData.stats.speed}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">护甲:</span>
+                <span class="detail-value armor" id="detail-armor">${iconData.stats.armor}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">武器:</span>
+                <span class="detail-value weapon" id="detail-weapon">${iconData.weapon.name}(${weaponTypeToChinese(iconData.weapon.type)})</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">总击杀数:</span>
+                <span class="detail-value kills" id="detail-kills">${iconData.killCount}</span>
+            </div>
+        </div>
+    `;
+    
+    // 添加战斗图标到面板左侧
+    const detailLeft = detailPanel.querySelector('.icon-detail-left');
+    const battleIconClone = iconData.element.cloneNode(true);
+    detailLeft.appendChild(battleIconClone);
+    
+    // 更新当前面板和图标数据
+    currentDetailPanel = detailPanel;
+    currentIconData = iconData;
+    
+    // 设置实时更新定时器
+    if (detailPanelUpdateInterval) {
+        clearInterval(detailPanelUpdateInterval);
+    }
+    detailPanelUpdateInterval = setInterval(() => {
+        updateIconDetailPanel(iconData);
+    }, 100);
+    
+    // 添加点击外部关闭面板的事件监听器
+    document.addEventListener('click', handleClickOutsideDetailPanel);
+}
+
+function updateIconDetailPanel(iconData) {
+    if (!currentDetailPanel) return;
+    
+    // 更新各项数据
+    currentDetailPanel.querySelector('#detail-name').textContent = `玩家${iconData.player}: ${iconData.name || '未知图标'}(#${iconData.element.dataset.iconId})`;
+    currentDetailPanel.querySelector('#detail-level').textContent = iconData.level;
+    currentDetailPanel.querySelector('#detail-health').textContent = `${iconData.stats.health}/${iconData.stats.maxHealth}`;
+    currentDetailPanel.querySelector('#detail-attack').textContent = iconData.stats.attack + iconData.weapon.attack;
+    currentDetailPanel.querySelector('#detail-defense').textContent = iconData.stats.defense;
+    currentDetailPanel.querySelector('#detail-speed').textContent = iconData.stats.speed;
+    currentDetailPanel.querySelector('#detail-armor').textContent = iconData.stats.armor;
+    currentDetailPanel.querySelector('#detail-weapon').textContent = `${iconData.weapon.name}(${weaponTypeToChinese(iconData.weapon.type)})`;
+    currentDetailPanel.querySelector('#detail-kills').textContent = iconData.killCount;
+    
+    // 更新左侧战斗图标状态
+    const detailLeft = currentDetailPanel.querySelector('.icon-detail-left');
+    if (detailLeft) {
+        const copyIcon = detailLeft.querySelector('.battle-icon');
+        if (copyIcon) {
+            // 更新生命值条
+            const copyHealthBar = copyIcon.querySelector('.health-bar-fill');
+            const originalHealthBar = iconData.element.querySelector('.health-bar-fill');
+            if (copyHealthBar && originalHealthBar) {
+                copyHealthBar.style.width = originalHealthBar.style.width;
+                copyHealthBar.style.backgroundColor = originalHealthBar.style.backgroundColor;
+            }
+            
+            // 更新等级徽章
+            const copyLevelBadge = copyIcon.querySelector('.level-badge');
+            const originalLevelBadge = iconData.element.querySelector('.level-badge');
+            if (copyLevelBadge && originalLevelBadge) {
+                copyLevelBadge.textContent = originalLevelBadge.textContent;
+                copyLevelBadge.className = originalLevelBadge.className;
+            }
+            
+            // 更新死亡状态
+            if (iconData.isDead && !copyIcon.classList.contains('dead')) {
+                copyIcon.classList.add('dead');
+            } else if (!iconData.isDead && copyIcon.classList.contains('dead')) {
+                copyIcon.classList.remove('dead');
+            }
+            
+            // 更新攻击状态
+            if (iconData.isAttacking && !copyIcon.classList.contains('attacking')) {
+                copyIcon.classList.add('attacking');
+            } else if (!iconData.isAttacking && copyIcon.classList.contains('attacking')) {
+                copyIcon.classList.remove('attacking');
+            }
+            
+            // 更新其他可能的状态类
+            const statusClasses = ['stunned', 'frozen', 'buffed', 'knocked-back'];
+            statusClasses.forEach(status => {
+                if (iconData[`is${status.charAt(0).toUpperCase() + status.slice(1)}`]) {
+                    copyIcon.classList.add(status);
+                } else {
+                    copyIcon.classList.remove(status);
+                }
+            });
+        }
+    }
+}
+
+function closeIconDetailPanel() {
+    if (!currentDetailPanel) return;
+    
+    // 清除更新定时器
+    if (detailPanelUpdateInterval) {
+        clearInterval(detailPanelUpdateInterval);
+        detailPanelUpdateInterval = null;
+    }
+    
+    // 移除点击外部关闭面板的事件监听器
+    document.removeEventListener('click', handleClickOutsideDetailPanel);
+    
+    // 移除面板
+    currentDetailPanel.remove();
+    
+    // 重置当前面板和图标数据
+    currentDetailPanel = null;
+    currentIconData = null;
+}
+
+function handleClickOutsideDetailPanel(event) {
+    if (currentDetailPanel && !currentDetailPanel.contains(event.target)) {
+        // 检查点击的是否是战斗图标列表项
+        const iconListItem = event.target.closest('.battle-icon-item');
+        if (!iconListItem) {
+            closeIconDetailPanel();
+        }
+    }
+}
+
+// 武器类型转换为中文
+function weaponTypeToChinese(type) {
+    const typeMap = {
+        'melee': '近战',
+        'ranged': '远程',
+        'aoe': 'AOE',
+        'heal': '治疗',
+        'buff': 'buff'
+    };
+    return typeMap[type] || type;
 }
 
 window.addEventListener('load', init);

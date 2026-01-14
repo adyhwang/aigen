@@ -33,7 +33,8 @@
                 <div class="stats-info" id="player1Stats">
                     <div class="stat-item">总击杀: <span id="player1Kills">0</span></div>
                     <div class="stat-item">总血量: <span id="player1Health">0</span></div>
-                    <div class="stat-item">总攻击力: <span id="player1Attack">0</span></div>
+                    <div class="stat-item">总攻击: <span id="player1Attack">0</span></div>
+                    <div class="stat-item">总防御: <span id="player1Defense">0</span></div>
                     <div class="battle-icons-list" id="player1IconsList"></div>
                 </div>
             </div>
@@ -42,7 +43,8 @@
                 <div class="stats-info" id="player2Stats">
                     <div class="stat-item">总击杀: <span id="player2Kills">0</span></div>
                     <div class="stat-item">总血量: <span id="player2Health">0</span></div>
-                    <div class="stat-item">总攻击力: <span id="player2Attack">0</span></div>
+                    <div class="stat-item">总攻击: <span id="player2Attack">0</span></div>
+                    <div class="stat-item">总防力: <span id="player2Defense">0</span></div>
                     <div class="battle-icons-list" id="player2IconsList"></div>
                 </div>
             </div>
@@ -77,6 +79,10 @@
                     <label class="option-item">
                         <input type="checkbox" id="fullscreenMode" onchange="toggleFullscreen()">
                         <span>全屏</span>
+                    </label>
+                    <label class="option-item">
+                        <input type="checkbox" id="squadBattleMode" onchange="toggleSquadBattleMode()">
+                        <span>小队战斗模式</span>
                     </label>
                     <label class="option-item">
                         <span id="gameSpeed" onclick="toggleGameSpeed()">1x倍速</span>

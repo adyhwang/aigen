@@ -618,6 +618,7 @@ body {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    z-index: 1;
 }
 
 .battle-icon .head {
@@ -628,7 +629,6 @@ body {
     top: -25px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 3;
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     overflow: hidden;
     background: #fff;
@@ -690,7 +690,6 @@ body {
     top: 30px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 2;
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
@@ -759,7 +758,6 @@ body {
     background: #4a4a4a;
     border-radius: 6px;
     bottom: -40px;
-    z-index: 1;
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     transform-origin: top center;
 }
@@ -1301,6 +1299,11 @@ body {
     background: linear-gradient(90deg, #44ff44 0%, #88ff88 100%);
 }
 
+.battle-icon.squad-leader .health-bar-fill {
+    background: linear-gradient(90deg, #ffd700 0%, #ffec8b 100%);
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+}
+
 .stats-display {
     position: absolute;
     bottom: -60px;
@@ -1774,6 +1777,118 @@ body {
     border-radius: 50%;
     box-shadow: 0 0 10px #FFD700, 0 0 20px #FFA500;
     animation: buffParticleFade 0.8s ease-out forwards;
+}
+
+/* 战斗图标详情面板样式 */
+.icon-detail-panel {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    padding: 10px;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    min-width: 300px;
+    min-height: 150px;
+    max-width: 400px;
+    max-height: 300px;
+    overflow: hidden;
+}
+
+.icon-detail-panel.player1 {
+    left: calc(100% + 5px);
+    top: 0;
+}
+
+.icon-detail-panel.player2 {
+    right: calc(100% + 5px);
+    top: 0;
+}
+
+.icon-detail-left {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.icon-detail-left .battle-icon {
+    transform: scale(0.6);
+    position: static;
+    box-shadow: none;
+}
+
+.icon-detail-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    overflow-y: auto;
+}
+
+.icon-detail-right::-webkit-scrollbar {
+    width: 4px;
+}
+
+.icon-detail-right::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.icon-detail-right::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: #fff;
+}
+
+.detail-label {
+    min-width: 50px;
+    color: #888;
+    margin-right: 8px;
+}
+
+.detail-value {
+    flex: 1;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.detail-value.health {
+    color: #4ade80;
+}
+
+.detail-value.attack {
+    color: #ef4444;
+}
+
+.detail-value.defense {
+    color: #3b82f6;
+}
+
+.detail-value.speed {
+    color: #f59e0b;
+}
+
+.detail-value.armor {
+    color: #6366f1;
+}
+
+.detail-value.weapon {
+    color: #ec4899;
+}
+
+.detail-value.kills {
+    color: #8b5cf6;
 }
 
 @keyframes buffParticleFade {
