@@ -36,6 +36,13 @@ let currentDetailPanel = null;
 let currentIconData = null;
 let detailPanelUpdateInterval = null;
 
+// 开发者模式相关变量
+let developerMode = false;
+let optionButtonClickCount = 0;
+let developerPanel = null;
+let developerPanelDragging = false;
+let developerPanelOffset = { x: 0, y: 0 };
+
 const MAX_BATTLE_INFO_ITEMS = 500;
 
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -224,7 +231,8 @@ const weapons = [
     { emoji: '🧊', name: '冰冻', attack: 7, type: 'aoe', range: 220, attackSpeed: 900, maxCharges: 1, cooldownTime: 2500, defaultDirection: 'right', aoeRadius: 120, freezeDuration: 1500, effectType: 'ice' },
     { emoji: '🍼', name: '奶瓶', attack: 1, heal: 18, type: 'heal', range: 200, attackSpeed: 1200, maxCharges: 4, cooldownTime: 2000, defaultDirection: 'top', effectType: 'heal' },
     { emoji: '💊', name: '药丸', attack: 1, heal: 25, type: 'heal', range: 180, attackSpeed: 1000, maxCharges: 3, cooldownTime: 3000, defaultDirection: 'top', effectType: 'heal' },
-    { emoji: '💉', name: '兴奋剂', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 1, cooldownTime: 3000, defaultDirection: 'top', buffDuration: 3000, buffMultiplier: 2.8, effectType: 'buff' }
+    { emoji: '💉', name: '兴奋剂', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 1, cooldownTime: 3000, defaultDirection: 'top', buffDuration: 3000, buffMultiplier: 2.8, effectType: 'buff' },
+    { emoji: '🚀', name: '自爆火箭', attack: 250, type: 'melee', range: 20, attackSpeed: 300, maxCharges: 1, cooldownTime: 0, defaultDirection: 'right', aoeRadius: 150, chargeSpeed: 300, effectType: 'explosion' }
 ];
 
 function generateRandomStats() {
@@ -233,7 +241,7 @@ function generateRandomStats() {
         maxHealth: 0,
         attack: Math.floor(Math.random() * 20) + 10,
         defense: Math.floor(Math.random() * 10) + 5,
-        armor: Math.floor(Math.random() * 5) + 1,
+        armor: Math.floor(Math.random() * 3) + 1,
         speed: Math.floor(Math.random() * 3) + 1
     };
 }
@@ -333,7 +341,12 @@ function addIconToReadyZone(player, imageUrl, name = '') {
                     }
                     y = battleAreaRect.height / 2;
                     
-                    const battleIcon = createBattleIcon(imageUrl, player, x, y, name);
+                    let assignedWeapon = null;
+                    if (iconItem.dataset.assignedWeaponIndex !== undefined) {
+                        assignedWeapon = weapons[parseInt(iconItem.dataset.assignedWeaponIndex)];
+                    }
+                    
+                    const battleIcon = createBattleIcon(imageUrl, player, x, y, name, assignedWeapon);
                     battleArea.appendChild(battleIcon);
                     
                     updateBattleStats();
@@ -391,7 +404,12 @@ function addIconToReadyZone(player, imageUrl, name = '') {
                 }
                 y = battleAreaRect.height / 2;
                 
-                const battleIcon = createBattleIcon(imageUrl, player, x, y, name);
+                let assignedWeapon = null;
+                if (iconItem.dataset.assignedWeaponIndex !== undefined) {
+                    assignedWeapon = weapons[parseInt(iconItem.dataset.assignedWeaponIndex)];
+                }
+                
+                const battleIcon = createBattleIcon(imageUrl, player, x, y, name, assignedWeapon);
                 battleArea.appendChild(battleIcon);
                 
                 updateBattleStats();
@@ -452,7 +470,12 @@ function addIconToReadyZone(player, imageUrl, name = '') {
                     const x = touch.clientX - battleRect.left - 40;
                     const y = touch.clientY - battleRect.top - 40;
                     
-                    const battleIcon = createBattleIcon(imageUrl, player, x, y, name);
+                    let assignedWeapon = null;
+                    if (iconItem.dataset.assignedWeaponIndex !== undefined) {
+                        assignedWeapon = weapons[parseInt(iconItem.dataset.assignedWeaponIndex)];
+                    }
+                    
+                    const battleIcon = createBattleIcon(imageUrl, player, x, y, name, assignedWeapon);
                     battleArea.appendChild(battleIcon);
                     
                     updateBattleStats();
@@ -678,7 +701,7 @@ function showBubbleTooltip(element, message) {
     }, 1500);
 }
 
-function createBattleIcon(iconUrl, player, x, y, name = '') {
+function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = null) {
     const stats = generateRandomStats();
     stats.maxHealth = stats.health;
     
@@ -741,7 +764,7 @@ function createBattleIcon(iconUrl, player, x, y, name = '') {
     const weaponInner = document.createElement('div');
     weaponInner.className = 'weapon-inner';
     
-    const weaponData = weapons[Math.floor(Math.random() * weapons.length)];
+    const weaponData = assignedWeapon || weapons[Math.floor(Math.random() * weapons.length)];
     weaponInner.textContent = weaponData.emoji;
     weaponInner.dataset.type = weaponData.type;
     weaponInner.dataset.effect = weaponData.effectType;
@@ -795,7 +818,10 @@ function createBattleIcon(iconUrl, player, x, y, name = '') {
         buffEndTime: 0,
         originalStats: null,
         level: 1,
-        killCount: 0
+        killCount: 0,
+        isCharging: false,
+        chargeTarget: null,
+        chargeStartTime: 0
     };
     
     battleIcons[`player${player}`].push(iconData);
@@ -949,11 +975,34 @@ function updateHealthBar(iconData) {
     healthBarFill.style.width = `${Math.max(0, healthPercent)}%`;
     
     const statsDisplay = iconData.element.querySelector('.stats-display');
-    statsDisplay.innerHTML = `ATK:${iconData.stats.attack} DEF:${iconData.stats.defense}`;
+    const totalDefense = (iconData.stats.defense || 0) + (iconData.stats.armor || 0);
+    statsDisplay.innerHTML = `ATK:${iconData.stats.attack} DEF:${totalDefense}`;
     
     if (iconData.listItem) {
         const healthText = iconData.listItem.querySelector('.icon-health');
         healthText.textContent = `${Math.max(0, iconData.stats.health)}/${iconData.stats.maxHealth}`;
+    }
+    
+    // 检查是否死亡（只在血量刚好变为0时触发）
+    if (iconData.stats.health <= 0 && !iconData.isDead && !iconData.hasBeenKilled) {
+        iconData.stats.health = 0;
+        iconData.isDead = true;
+        iconData.hasBeenKilled = true;
+        iconData.element.classList.add('dead');
+        iconData.element.classList.remove('moving');
+        iconData.element.classList.remove('attacking');
+        
+        if (iconData.listItem) {
+            iconData.listItem.classList.add('dead');
+            iconData.listItem.querySelector('.icon-health').textContent = `0/${iconData.stats.maxHealth}`;
+        }
+        
+        playSound('death');
+        
+        // 延迟销毁图标元素
+        setTimeout(() => {
+            removeBattleIcon(iconData);
+        }, 5000);
     }
 }
 
@@ -1129,23 +1178,36 @@ function showWeaponEffect(attacker, defender, effectType) {
     }, 500);
 }
 
-function addBattleInfo(attacker, defender, damage) {
+function addBattleInfo(attacker, defender, damage, actionType = 'attack') {
     const battleInfo = document.getElementById('battleInfo');
     const infoItem = document.createElement('div');
     infoItem.className = 'battle-info-item';
     infoItem.dataset.player = attacker.player;
-    infoItem.dataset.action = 'attack';
+    infoItem.dataset.action = actionType;
     
     const attackerName = attacker.name || '未知图标';
-    const defenderName = defender.name || '未知图标';
     const weaponName = attacker.weapon.emoji || attacker.weapon.name;
     const attackerLevel = attacker.level || 1;
-    const defenderLevel = defender.level || 1;
     
-    if (damage === 0) {
-        infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，被闪避`;
+    if (actionType === '开始冲锋') {
+        const defenderName = defender.name || '未知图标';
+        const defenderLevel = defender.level || 1;
+        infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>开始冲锋<span class="target">${defenderName}(Lv${defenderLevel})</span>`;
+    } else if (actionType === '自爆伤害') {
+        const defenderName = defender.name || '未知图标';
+        const defenderLevel = defender.level || 1;
+        infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>自爆伤害<span class="target">${defenderName}(Lv${defenderLevel})</span>，伤害值 <span class="damage">${damage}</span>`;
+    } else if (actionType === '自爆死亡') {
+        infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>自爆死亡`;
     } else {
-        infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，伤害值 <span class="damage">${damage}</span>`;
+        const defenderName = defender.name || '未知图标';
+        const defenderLevel = defender.level || 1;
+        
+        if (damage === 0) {
+            infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，被闪避`;
+        } else {
+            infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，伤害值 <span class="damage">${damage}</span>`;
+        }
     }
     
     battleInfo.appendChild(infoItem);
@@ -1255,8 +1317,8 @@ function attack(attacker, defender) {
                 
                 if (allies.length > 0) {
                     allies.sort((a, b) => {
-                        const statsA = a.stats.attack + a.stats.defense + a.stats.speed;
-                        const statsB = b.stats.attack + b.stats.defense + b.stats.speed;
+                        const statsA = a.stats.attack + (a.stats.defense || 0) + (a.stats.armor || 0) + a.stats.speed;
+                        const statsB = b.stats.attack + (b.stats.defense || 0) + (b.stats.armor || 0) + b.stats.speed;
                         return statsB - statsA;
                     });
                     target = allies[0];
@@ -2450,6 +2512,8 @@ function initBattleInfoDrag() {
 }
 
 function removeBattleIcon(iconData) {
+    if (!iconData || !iconData.element) return;
+    
     const playerIcons = battleIcons[`player${iconData.player}`];
     const index = playerIcons.indexOf(iconData);
     
@@ -2591,6 +2655,8 @@ function gameLoop() {
                 handleHealerBehavior(iconData);
             } else if (iconData.weapon.type === 'buff') {
                 handleBuffBehavior(iconData);
+            } else if (iconData.weapon.name === '自爆火箭') {
+                handleRocketCharge(iconData);
             } else if (squadBattleMode) {
                 if (squadLeaders.player1 === iconData) {
                     handleSquadLeaderBehavior(iconData);
@@ -2609,6 +2675,8 @@ function gameLoop() {
                 handleHealerBehavior(iconData);
             } else if (iconData.weapon.type === 'buff') {
                 handleBuffBehavior(iconData);
+            } else if (iconData.weapon.name === '自爆火箭') {
+                handleRocketCharge(iconData);
             } else if (squadBattleMode) {
                 if (squadLeaders.player2 === iconData) {
                     handleSquadLeaderBehavior(iconData);
@@ -2627,6 +2695,8 @@ function gameLoop() {
                 handleHealerBehavior(iconData);
             } else if (iconData.weapon.type === 'buff') {
                 handleBuffBehavior(iconData);
+            } else if (iconData.weapon.name === '自爆火箭') {
+                handleRocketCharge(iconData);
             } else if (squadBattleMode) {
                 if (squadLeaders.player1 === iconData) {
                     handleSquadLeaderBehavior(iconData);
@@ -2658,6 +2728,8 @@ function gameLoop() {
                 handleHealerBehavior(iconData);
             } else if (iconData.weapon.type === 'buff') {
                 handleBuffBehavior(iconData);
+            } else if (iconData.weapon.name === '自爆火箭') {
+                handleRocketCharge(iconData);
             } else if (squadBattleMode) {
                 if (squadLeaders.player2 === iconData) {
                     handleSquadLeaderBehavior(iconData);
@@ -2721,16 +2793,16 @@ function handleHealerBehavior(iconData) {
     }
     
     if (allies.length > 0) {
-        const nonHealerAllies = allies.filter(ally => ally.weapon.type !== 'heal');
+        const combatAllies = allies.filter(ally => ally.weapon.type !== 'heal' && ally.weapon.type !== 'buff');
         
-        if (nonHealerAllies.length > 0) {
-            nonHealerAllies.sort((a, b) => {
+        if (combatAllies.length > 0) {
+            combatAllies.sort((a, b) => {
                 const distA = Math.sqrt(Math.pow(a.x - iconData.x, 2) + Math.pow(a.y - iconData.y, 2));
                 const distB = Math.sqrt(Math.pow(b.x - iconData.x, 2) + Math.pow(b.y - iconData.y, 2));
                 return distA - distB;
             });
             
-            const target = nonHealerAllies[0];
+            const target = combatAllies[0];
             const dx = target.x - iconData.x;
             const dy = target.y - iconData.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
@@ -2809,16 +2881,16 @@ function handleBuffBehavior(iconData) {
     const battleArea = document.getElementById('battleArea');
     const rect = battleArea.getBoundingClientRect();
     
-    const nonHealerAllies = allies.filter(ally => ally.weapon.type !== 'heal');
+    const combatAllies = allies.filter(ally => ally.weapon.type !== 'heal' && ally.weapon.type !== 'buff');
     
-    if (nonHealerAllies.length > 0) {
-        nonHealerAllies.sort((a, b) => {
-            const statsA = a.stats.attack + a.stats.defense + a.stats.speed;
-            const statsB = b.stats.attack + b.stats.defense + b.stats.speed;
+    if (combatAllies.length > 0) {
+        combatAllies.sort((a, b) => {
+            const statsA = a.stats.attack + (a.stats.defense || 0) + (a.stats.armor || 0) + a.stats.speed;
+            const statsB = b.stats.attack + (b.stats.defense || 0) + (b.stats.armor || 0) + b.stats.speed;
             return statsB - statsA;
         });
         
-        const target = nonHealerAllies[0];
+        const target = combatAllies[0];
         const dx = target.x - iconData.x;
         const dy = target.y - iconData.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -2903,7 +2975,12 @@ function setupBattleZoneDrop() {
                 const y = event.clientY - rect.top - 40;
                 const name = iconItem.dataset.name || '';
                 
-                const battleIcon = createBattleIcon(iconUrl, player, x, y, name);
+                let assignedWeapon = null;
+                if (iconItem.dataset.assignedWeaponIndex !== undefined) {
+                    assignedWeapon = weapons[parseInt(iconItem.dataset.assignedWeaponIndex)];
+                }
+                
+                const battleIcon = createBattleIcon(iconUrl, player, x, y, name, assignedWeapon);
                 battleArea.appendChild(battleIcon);
                 
                 updateBattleStats();
@@ -2951,7 +3028,12 @@ function deployAllIcons(player) {
         const startY = (battleAreaRect.height - totalColumnHeight) / 2;
         const y = startY + rowIndex * rowSpacing;
         
-        const battleIcon = createBattleIcon(iconUrl, player, x, y, name);
+        let assignedWeapon = null;
+        if (iconItem.dataset.assignedWeaponIndex !== undefined) {
+            assignedWeapon = weapons[parseInt(iconItem.dataset.assignedWeaponIndex)];
+        }
+        
+        const battleIcon = createBattleIcon(iconUrl, player, x, y, name, assignedWeapon);
         battleArea.appendChild(battleIcon);
         
         updateBattleStats();
@@ -2996,6 +3078,261 @@ function init() {
 function toggleOptions() {
     const optionsDropdown = document.getElementById('optionsDropdown');
     optionsDropdown.classList.toggle('show');
+    
+    // 增加点击计数器
+    optionButtonClickCount++;
+    
+    // 检查是否达到7次点击
+    if (optionButtonClickCount >= 7 && !developerMode) {
+        developerMode = true;
+        showDeveloperModeMessage();
+        createDeveloperPanel();
+    }
+}
+
+function showDeveloperModeMessage() {
+    const battleInfo = document.getElementById('battleInfo');
+    const message = document.createElement('div');
+    message.className = 'developer-mode-message';
+    message.innerHTML = '🚀 开发者模式已激活！';
+    message.style.cssText = `
+        background: rgba(255, 215, 0, 0.9);
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 5px;
+        margin: 10px 0;
+        text-align: center;
+        font-weight: bold;
+        animation: fadeIn 0.5s ease-in;
+    `;
+    battleInfo.insertBefore(message, battleInfo.firstChild);
+    
+    // 3秒后移除消息
+    setTimeout(() => {
+        message.remove();
+    }, 3000);
+}
+
+function createDeveloperPanel() {
+    if (window.developerPanel) return;
+    
+    const developerPanel = document.createElement('div');
+    developerPanel.className = 'developer-panel';
+    developerPanel.id = 'developerPanel';
+    
+    // 设置初始位置（屏幕中心）
+    const battleArea = document.getElementById('battleArea');
+    const battleAreaRect = battleArea.getBoundingClientRect();
+    const initialLeft = (battleAreaRect.width - 400) / 2;
+    const initialTop = (battleAreaRect.height - 200) / 2;
+    
+    developerPanel.style.left = `${initialLeft}px`;
+    developerPanel.style.top = `${initialTop}px`;
+    
+    // 创建面板头部
+    const header = document.createElement('div');
+    header.className = 'developer-panel-header';
+    header.innerHTML = `
+        <span class="developer-panel-title">🛠️ 开发者面板</span>
+        <button class="developer-panel-close" onclick="closeDeveloperPanel()">×</button>
+    `;
+    developerPanel.appendChild(header);
+    
+    // 创建面板内容
+    const content = document.createElement('div');
+    content.className = 'developer-panel-content';
+    
+    // 创建武器网格
+    const weaponsGrid = document.createElement('div');
+    weaponsGrid.className = 'weapons-grid';
+    
+    // 添加所有武器emoji
+    weapons.forEach(weapon => {
+        const weaponEmoji = document.createElement('div');
+        weaponEmoji.className = 'weapon-emoji';
+        weaponEmoji.textContent = weapon.emoji;
+        weaponEmoji.title = `${weapon.name} (${weapon.type})`;
+        weaponEmoji.draggable = true;
+        weaponEmoji.dataset.weaponIndex = weapons.indexOf(weapon);
+        
+        // 添加拖拽事件
+        weaponEmoji.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', weaponEmoji.dataset.weaponIndex);
+            e.dataTransfer.setData('weapon-emoji', weapon.emoji);
+            e.dataTransfer.setData('weapon-name', weapon.name);
+            weaponEmoji.classList.add('dragging');
+        });
+        
+        weaponEmoji.addEventListener('dragend', () => {
+            weaponEmoji.classList.remove('dragging');
+        });
+        
+        weaponsGrid.appendChild(weaponEmoji);
+    });
+    
+    content.appendChild(weaponsGrid);
+    
+    // 创建调试按钮
+    const debugButtons = document.createElement('div');
+    debugButtons.className = 'debug-buttons';
+    
+    const debugButtonsData = [
+        { text: '1P血量全满', action: () => healAllPlayer(1) },
+        { text: '2P血量全满', action: () => healAllPlayer(2) }
+    ];
+    
+    debugButtonsData.forEach(btn => {
+        const button = document.createElement('button');
+        button.className = 'debug-btn';
+        button.textContent = btn.text;
+        button.onclick = btn.action;
+        debugButtons.appendChild(button);
+    });
+    
+    content.appendChild(debugButtons);
+    developerPanel.appendChild(content);
+    
+    // 添加到文档
+    document.body.appendChild(developerPanel);
+    
+    // 保存引用
+    window.developerPanel = developerPanel;
+    
+    // 添加面板拖拽功能
+    setupDeveloperPanelDrag();
+    
+    // 添加武器emoji拖拽到待命区的功能
+    setupWeaponDropToReadyZone();
+}
+
+function closeDeveloperPanel() {
+    if (developerPanel) {
+        developerPanel.remove();
+        developerPanel = null;
+    }
+}
+
+function setupDeveloperPanelDrag() {
+    const panel = document.getElementById('developerPanel');
+    if (!panel) return;
+    
+    const header = panel.querySelector('.developer-panel-header');
+    if (!header) return;
+    
+    header.addEventListener('mousedown', (e) => {
+        if (e.target.classList.contains('developer-panel-close')) return;
+        
+        developerPanelDragging = true;
+        developerPanelOffset.x = e.clientX - panel.offsetLeft;
+        developerPanelOffset.y = e.clientY - panel.offsetTop;
+        
+        header.style.cursor = 'grabbing';
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!developerPanelDragging) return;
+        
+        const newLeft = e.clientX - developerPanelOffset.x;
+        const newTop = e.clientY - developerPanelOffset.y;
+        
+        panel.style.left = `${newLeft}px`;
+        panel.style.top = `${newTop}px`;
+    });
+    
+    document.addEventListener('mouseup', () => {
+        developerPanelDragging = false;
+        if (header) {
+            header.style.cursor = 'move';
+        }
+    });
+}
+
+function setupWeaponDropToReadyZone() {
+    const readyContent1 = document.getElementById('player1ReadyContent');
+    const readyContent2 = document.getElementById('player2ReadyContent');
+    
+    [readyContent1, readyContent2].forEach((readyContent, playerIndex) => {
+        if (!readyContent) return;
+        
+        readyContent.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            readyContent.style.background = 'rgba(255, 215, 0, 0.2)';
+        });
+        
+        readyContent.addEventListener('dragleave', () => {
+            readyContent.style.background = '';
+        });
+        
+        readyContent.addEventListener('drop', (e) => {
+            e.preventDefault();
+            readyContent.style.background = '';
+            
+            const weaponIndex = e.dataTransfer.getData('text/plain');
+            const weaponEmoji = e.dataTransfer.getData('weapon-emoji');
+            const weaponName = e.dataTransfer.getData('weapon-name');
+            
+            if (weaponIndex === '' || !weapons[weaponIndex]) return;
+            
+            const weapon = weapons[weaponIndex];
+            const player = playerIndex + 1;
+            
+            // 找到被拖放到的图标
+            const targetElement = e.target;
+            const iconItem = targetElement.closest('.icon-item');
+            
+            if (!iconItem) return;
+            
+            // 移除已有的武器emoji
+            const existingWeapon = iconItem.querySelector('.assigned-weapon');
+            if (existingWeapon) {
+                existingWeapon.remove();
+            }
+            
+            // 添加武器emoji到右下角
+            const weaponBadge = document.createElement('div');
+            weaponBadge.className = 'assigned-weapon';
+            weaponBadge.textContent = weaponEmoji;
+            weaponBadge.style.cssText = `
+                position: absolute;
+                bottom: 2px;
+                right: 2px;
+                font-size: 20px;
+                background: rgba(0, 0, 0, 0.7);
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 10;
+            `;
+            
+            // 点击武器emoji移除
+            weaponBadge.addEventListener('click', (e) => {
+                e.stopPropagation();
+                weaponBadge.remove();
+                delete iconItem.dataset.assignedWeaponIndex;
+            });
+            
+            iconItem.appendChild(weaponBadge);
+            
+            // 保存武器信息到iconItem
+            iconItem.dataset.assignedWeaponIndex = weaponIndex;
+        });
+    });
+}
+
+function healAllPlayer(player) {
+    const playerIcons = battleIcons[`player${player}`];
+    playerIcons.forEach(iconData => {
+        if (iconData.isDead) return;
+        
+        iconData.stats.health = iconData.stats.maxHealth;
+        updateHealthBar(iconData);
+    });
+    
+    addBattleInfo({ player: player, name: '开发者', weapon: { emoji: '💊', name: '药丸' } }, null, 0, `${player}P血量全满`);
 }
 
 function toggleAutoAddRandom() {
@@ -3060,14 +3397,22 @@ function isBattleIcon(iconData) {
     return iconData.weapon.type === 'melee' || iconData.weapon.type === 'ranged' || iconData.weapon.type === 'aoe';
 }
 
+function isSquadMember(iconData) {
+    return iconData.weapon.type === 'melee' || iconData.weapon.type === 'ranged' || iconData.weapon.type === 'aoe';
+}
+
+function canBeSquadLeader(iconData) {
+    return (iconData.weapon.type === 'melee' || iconData.weapon.type === 'ranged' || iconData.weapon.type === 'aoe') && iconData.weapon.name !== '自爆火箭';
+}
+
 function selectSquadLeaders() {
     [1, 2].forEach(player => {
-        const battleIconsList = battleIcons[`player${player}`].filter(icon => !icon.isDead && isBattleIcon(icon));
+        const battleIconsList = battleIcons[`player${player}`].filter(icon => !icon.isDead && canBeSquadLeader(icon));
         
         if (battleIconsList.length > 0) {
             battleIconsList.sort((a, b) => {
-                const statsA = a.stats.attack + a.stats.defense + a.stats.speed;
-                const statsB = b.stats.attack + b.stats.defense + b.stats.speed;
+                const statsA = a.stats.attack + (a.stats.defense || 0) + (a.stats.armor || 0) + a.stats.speed;
+                const statsB = b.stats.attack + (b.stats.defense || 0) + (b.stats.armor || 0) + b.stats.speed;
                 if (statsA !== statsB) {
                     return statsB - statsA;
                 }
@@ -3742,6 +4087,435 @@ function weaponTypeToChinese(type) {
         'buff': 'buff'
     };
     return typeMap[type] || type;
+}
+
+// 自爆火箭目标优先级算法
+function findRocketTarget(iconData) {
+    const enemyPlayer = iconData.player === 1 ? 2 : 1;
+    const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+    
+    if (enemies.length === 0) return null;
+    
+    // 按优先级分类敌人
+    const healers = enemies.filter(e => e.weapon.type === 'heal');
+    const leaders = enemies.filter(e => squadLeaders[`player${enemyPlayer}`] === e);
+    const others = enemies.filter(e => e.weapon.type !== 'heal' && squadLeaders[`player${enemyPlayer}`] !== e);
+    
+    // 计算每个类别的最近目标
+    let target = null;
+    let minDistance = Infinity;
+    
+    // 优先级1：治疗者
+    if (healers.length > 0) {
+        healers.forEach(enemy => {
+            const distance = Math.sqrt((enemy.x - iconData.x) ** 2 + (enemy.y - iconData.y) ** 2);
+            if (distance < minDistance) {
+                minDistance = distance;
+                target = enemy;
+            }
+        });
+        return target;
+    }
+    
+    // 优先级2：队长
+    if (leaders.length > 0) {
+        leaders.forEach(enemy => {
+            const distance = Math.sqrt((enemy.x - iconData.x) ** 2 + (enemy.y - iconData.y) ** 2);
+            if (distance < minDistance) {
+                minDistance = distance;
+                target = enemy;
+            }
+        });
+        return target;
+    }
+    
+    // 优先级3：其他目标
+    others.forEach(enemy => {
+        const distance = Math.sqrt((enemy.x - iconData.x) ** 2 + (enemy.y - iconData.y) ** 2);
+        if (distance < minDistance) {
+            minDistance = distance;
+            target = enemy;
+        }
+    });
+    
+    return target;
+}
+
+// 处理自爆火箭冲锋行为
+function handleRocketCharge(iconData) {
+    if (iconData.isDead || iconData.isFrozen || iconData.isStunned) return;
+    
+    const currentTime = Date.now();
+    
+    // 如果没有在冲锋，寻找目标
+    if (!iconData.isCharging) {
+        let target;
+        
+        if (squadBattleMode) {
+            // 小队模式：检查是否是队员
+            const leader = squadLeaders[`player${iconData.player}`];
+            
+            if (leader && leader !== iconData) {
+                // 是队员，先跟随队长移动
+                const dx = leader.x - iconData.x;
+                const dy = leader.y - iconData.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // 保持与队长的距离
+                if (distance > 100) {
+                    iconData.targetX = leader.x;
+                    iconData.targetY = leader.y;
+                    moveTowardsTarget(iconData);
+                }
+                
+                // 同时监控400范围内的敌方目标
+                const enemyPlayer = iconData.player === 1 ? 2 : 1;
+                const enemiesInRange = battleIcons[`player${enemyPlayer}`].filter(e => {
+                    if (e.isDead) return false;
+                    const dist = Math.sqrt((e.x - iconData.x) ** 2 + (e.y - iconData.y) ** 2);
+                    return dist <= 400;
+                });
+                
+                if (enemiesInRange.length > 0) {
+                    target = findRocketTarget(iconData);
+                }
+            } else if (leader === iconData) {
+                // 是队长，先执行队长行为（带领小队移动）
+                const members = getSquadMembers(iconData.player);
+                const monitorRange = getMonitorRange(members.length);
+                
+                const enemyPlayer = iconData.player === 1 ? 2 : 1;
+                const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+                
+                const battleArea = document.getElementById('battleArea');
+                const rect = battleArea.getBoundingClientRect();
+                
+                if (enemies.length > 0) {
+                    const enemiesInRange = enemies.filter(enemy => {
+                        const dx = enemy.x - iconData.x;
+                        const dy = enemy.y - iconData.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        return distance < 400;
+                    });
+                    
+                    if (enemiesInRange.length > 0) {
+                        // 有敌人在400范围内，发起冲锋
+                        target = findRocketTarget(iconData);
+                    } else {
+                        // 没有敌人在范围内，带领小队向最近的敌人移动
+                        enemies.sort((a, b) => {
+                            const distA = Math.sqrt((a.x - iconData.x) ** 2 + (a.y - iconData.y) ** 2);
+                            const distB = Math.sqrt((b.x - iconData.x) ** 2 + (b.y - iconData.y) ** 2);
+                            return distA - distB;
+                        });
+                        
+                        const nearestEnemy = enemies[0];
+                        if (checkAllMembersInRange(iconData, members, monitorRange)) {
+                            iconData.targetX = nearestEnemy.x;
+                            iconData.targetY = nearestEnemy.y;
+                            moveTowardsTarget(iconData);
+                        }
+                    }
+                } else {
+                    // 没有敌人，向战场中心移动
+                    const centerX = iconData.player === 1 ? rect.width * 0.25 : rect.width * 0.75;
+                    const centerY = rect.height * 0.5;
+                    
+                    if (checkAllMembersInRange(iconData, members, monitorRange)) {
+                        iconData.targetX = centerX;
+                        iconData.targetY = centerY;
+                        moveTowardsTarget(iconData);
+                    }
+                }
+            } else {
+                // 没有队长，直接寻找目标
+                target = findRocketTarget(iconData);
+            }
+        } else {
+            // 普通模式：直接向目标发起冲锋
+            target = findRocketTarget(iconData);
+        }
+        
+        if (target) {
+            iconData.isCharging = true;
+            iconData.chargeTarget = target;
+            iconData.chargeStartTime = currentTime;
+            
+            // 记录开始冲锋的战斗信息
+            addBattleInfo(iconData, target, 0, '开始冲锋');
+        }
+    }
+    
+    // 如果正在冲锋，执行冲锋逻辑
+    if (iconData.isCharging && iconData.chargeTarget) {
+        const target = iconData.chargeTarget;
+        
+        // 检查目标是否死亡
+        if (target.isDead) {
+            // 目标死亡，重新寻找目标
+            const newTarget = findRocketTarget(iconData);
+            if (newTarget) {
+                iconData.chargeTarget = newTarget;
+            } else {
+                iconData.isCharging = false;
+                iconData.chargeTarget = null;
+            }
+            return;
+        }
+        
+        // 计算到目标的距离
+        const dx = target.x - iconData.x;
+        const dy = target.y - iconData.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // 检查是否达到自爆范围
+        if (distance <= iconData.weapon.range) {
+            // 执行自爆
+            executeRocketExplosion(iconData);
+            return;
+        }
+        
+        // 以冲锋速度向目标移动
+        const chargeSpeed = iconData.weapon.chargeSpeed || 300;
+        const moveX = (dx / distance) * chargeSpeed * (16 / 1000) * gameSpeed;
+        const moveY = (dy / distance) * chargeSpeed * (16 / 1000) * gameSpeed;
+        
+        iconData.x += moveX;
+        iconData.y += moveY;
+        
+        // 更新位置
+        iconData.element.style.left = `${iconData.x}px`;
+        iconData.element.style.top = `${iconData.y}px`;
+        iconData.element.style.zIndex = Math.floor(iconData.y);
+        
+        // 更新朝向
+        const weaponWrapper = iconData.element.querySelector('.weapon-wrapper');
+        const defaultDirection = weaponWrapper.dataset.defaultDirection;
+        
+        if (moveX > 0) {
+            iconData.element.classList.remove('facing-left');
+            iconData.element.classList.add('facing-right');
+            
+            weaponWrapper.style.right = '-30px';
+            weaponWrapper.style.left = 'auto';
+            
+            if (defaultDirection === 'top') {
+                weaponWrapper.style.transform = 'rotate(90deg)';
+            } else if (defaultDirection === 'right') {
+                weaponWrapper.style.transform = 'scaleX(1)';
+            } else if (defaultDirection === 'left') {
+                weaponWrapper.style.transform = 'scaleX(-1)';
+            }
+        } else if (moveX < 0) {
+            iconData.element.classList.remove('facing-right');
+            iconData.element.classList.add('facing-left');
+            
+            weaponWrapper.style.left = '-30px';
+            weaponWrapper.style.right = 'auto';
+            
+            if (defaultDirection === 'top') {
+                weaponWrapper.style.transform = 'rotate(-90deg)';
+            } else if (defaultDirection === 'right') {
+                weaponWrapper.style.transform = 'scaleX(-1)';
+            } else if (defaultDirection === 'left') {
+                weaponWrapper.style.transform = 'scaleX(1)';
+            }
+        }
+        
+        iconData.element.classList.add('moving');
+    }
+}
+
+// 执行自爆效果和AOE伤害
+function executeRocketExplosion(iconData) {
+    if (iconData.isDead) return;
+    
+    const enemyPlayer = iconData.player === 1 ? 2 : 1;
+    const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+    const aoeRadius = iconData.weapon.aoeRadius || 150;
+    const damage = iconData.weapon.attack || 120;
+    
+    // 对AOE范围内的所有敌人造成伤害
+    enemies.forEach(enemy => {
+        const distance = Math.sqrt((enemy.x - iconData.x) ** 2 + (enemy.y - iconData.y) ** 2);
+        if (distance <= aoeRadius) {
+            // 计算伤害（距离越近伤害越高）
+            const distanceFactor = 1 - (distance / aoeRadius) * 0.5;
+            
+            // 自爆伤害计算：
+            // 1. 基础伤害 = 攻击力 + 武器攻击力
+            // 2. 距离因子 = 1 - (距离 / 爆炸半径) * 0.5
+            //    - 中心（距离=0）：因子 = 1（100%伤害）
+            //    - 边缘（距离=150）：因子 = 0.5（50%伤害）
+            // 3. 最终伤害 = 基础伤害 * 距离因子
+            // 4. 考虑防御和护甲
+            const baseDamage = iconData.stats.attack + iconData.weapon.attack;
+            const damageBeforeDefense = Math.floor(baseDamage * distanceFactor);
+            
+            // 应用防御和护甲
+            const defense = enemy.stats.defense;
+            const armor = enemy.stats.armor;
+            const randomFactor = Math.random() * 0.4 + 0.8;
+            const actualDamage = Math.max(1, Math.floor((damageBeforeDefense - defense / 2) * randomFactor / armor));
+            
+            enemy.stats.health -= actualDamage;
+            
+            // 记录自爆造成的伤害
+            addBattleInfo(iconData, enemy, actualDamage, '自爆伤害');
+            
+            // 检查是否死亡
+            if (enemy.stats.health <= 0 && !enemy.hasBeenKilled) {
+                enemy.stats.health = 0;
+                enemy.isDead = true;
+                enemy.hasBeenKilled = true;
+                enemy.element.classList.add('dead');
+                enemy.element.classList.remove('moving');
+                enemy.element.classList.remove('attacking');
+                playSound('death');
+                
+                if (enemy.listItem) {
+                    enemy.listItem.classList.add('dead');
+                    enemy.listItem.querySelector('.icon-health').textContent = `0/${enemy.stats.maxHealth}`;
+                }
+                
+                // 更新击杀数
+                iconData.killCount++;
+                battleStats[`player${iconData.player}`].kills++;
+                updateBattleStats();
+                
+                // 记录击杀信息
+                addBattleInfo(iconData, enemy, actualDamage, '击杀');
+                
+                // 更新生命值条
+                updateHealthBar(enemy);
+                
+                // 延迟销毁图标元素
+                setTimeout(() => {
+                    removeBattleIcon(enemy);
+                }, 500);
+            } else if (!enemy.isDead) {
+                // 更新生命值条
+                updateHealthBar(enemy);
+                
+                // 播放受击音效
+                playSound('hit');
+                
+                // 显示受击效果
+                enemy.element.classList.add('hit');
+                setTimeout(() => {
+                    enemy.element.classList.remove('hit');
+                }, 200);
+            }
+        }
+    });
+    
+    // 显示自爆效果
+    showExplosionEffect(iconData.x, iconData.y, aoeRadius);
+    
+    // 自爆后死亡
+    iconData.stats.health = 0;
+    iconData.isDead = true;
+    iconData.element.classList.add('dead');
+    iconData.isCharging = false;
+    iconData.chargeTarget = null;
+    
+    // 记录自爆后死亡信息
+    addBattleInfo(iconData, null, 0, '自爆死亡');
+    
+    // 播放死亡音效
+    playSound('death');
+    
+    // 更新生命值条
+    updateHealthBar(iconData);
+    
+    // 更新战斗统计
+    updateBattleStats();
+    
+    // 延迟销毁图标元素，让玩家看到死亡效果
+    setTimeout(() => {
+        removeBattleIcon(iconData);
+    }, 500);
+}
+
+// 显示自爆爆炸效果
+function showExplosionEffect(x, y, radius) {
+    const battleArea = document.getElementById('battleArea');
+    
+    // 创建爆炸效果元素
+    const explosion = document.createElement('div');
+    explosion.className = 'explosion-effect';
+    explosion.style.position = 'absolute';
+    explosion.style.left = `${x}px`;
+    explosion.style.top = `${y}px`;
+    explosion.style.width = `${radius * 2}px`;
+    explosion.style.height = `${radius * 2}px`;
+    explosion.style.borderRadius = '50%';
+    explosion.style.background = 'radial-gradient(circle, rgba(255, 100, 0, 0.8) 0%, rgba(255, 50, 0, 0.5) 50%, transparent 100%)';
+    explosion.style.transform = 'translate(-50%, -50%)';
+    explosion.style.pointerEvents = 'none';
+    explosion.style.zIndex = '1000';
+    explosion.style.animation = 'explosion 0.5s ease-out forwards';
+    
+    battleArea.appendChild(explosion);
+    
+    // 创建爆炸环效果
+    const ring = document.createElement('div');
+    ring.className = 'explosion-ring';
+    ring.style.position = 'absolute';
+    ring.style.left = `${x}px`;
+    ring.style.top = `${y}px`;
+    ring.style.width = '20px';
+    ring.style.height = '20px';
+    ring.style.borderRadius = '50%';
+    ring.style.border = '3px solid rgba(255, 200, 0, 0.8)';
+    ring.style.transform = 'translate(-50%, -50%)';
+    ring.style.pointerEvents = 'none';
+    ring.style.zIndex = '1001';
+    ring.style.animation = 'ring-expand 0.5s ease-out forwards';
+    
+    battleArea.appendChild(ring);
+    
+    // 添加CSS动画
+    if (!document.getElementById('explosion-animations')) {
+        const style = document.createElement('style');
+        style.id = 'explosion-animations';
+        style.textContent = `
+            @keyframes explosion {
+                0% {
+                    transform: translate(-50%, -50%) scale(0);
+                    opacity: 1;
+                }
+                50% {
+                    transform: translate(-50%, -50%) scale(1.2);
+                    opacity: 0.8;
+                }
+                100% {
+                    transform: translate(-50%, -50%) scale(1);
+                    opacity: 0;
+                }
+            }
+            
+            @keyframes ring-expand {
+                0% {
+                    transform: translate(-50%, -50%) scale(1);
+                    opacity: 1;
+                    border-width: 3px;
+                }
+                100% {
+                    transform: translate(-50%, -50%) scale(${radius / 10});
+                    opacity: 0;
+                    border-width: 1px;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // 移除效果元素
+    setTimeout(() => {
+        explosion.remove();
+        ring.remove();
+    }, 500);
 }
 
 window.addEventListener('load', init);
