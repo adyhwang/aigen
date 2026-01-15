@@ -38,10 +38,15 @@ let detailPanelUpdateInterval = null;
 
 // 开发者模式相关变量
 let developerMode = false;
-let optionButtonClickCount = 0;
+let specialButtonClickCount = 0;
 let developerPanel = null;
 let developerPanelDragging = false;
 let developerPanelOffset = { x: 0, y: 0 };
+
+// 升级系统相关变量
+const killsPerLevel = 3;  // 每击杀3个敌人升一级
+const maxLevel = 6;       // 最高等级为6级
+const statIncreasePercent = 0.3;  // 每次升级属性提升30%
 
 const MAX_BATTLE_INFO_ITEMS = 500;
 
@@ -232,7 +237,7 @@ const weapons = [
     { emoji: '🍼', name: '奶瓶', attack: 1, heal: 18, type: 'heal', range: 200, attackSpeed: 1200, maxCharges: 4, cooldownTime: 2000, defaultDirection: 'top', effectType: 'heal' },
     { emoji: '💊', name: '药丸', attack: 1, heal: 25, type: 'heal', range: 180, attackSpeed: 1000, maxCharges: 3, cooldownTime: 3000, defaultDirection: 'top', effectType: 'heal' },
     { emoji: '💉', name: '兴奋剂', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 1, cooldownTime: 3000, defaultDirection: 'top', buffDuration: 3000, buffMultiplier: 2.8, effectType: 'buff' },
-    { emoji: '🚀', name: '自爆火箭', attack: 250, type: 'melee', range: 20, attackSpeed: 300, maxCharges: 1, cooldownTime: 0, defaultDirection: 'right', aoeRadius: 150, chargeSpeed: 300, effectType: 'explosion' }
+    { emoji: '🚀', name: '自爆火箭', attack: 190, type: 'melee', range: 20, attackSpeed: 300, maxCharges: 1, cooldownTime: 0, defaultDirection: 'right', aoeRadius: 150, chargeSpeed: 300, effectType: 'explosion' }
 ];
 
 function generateRandomStats() {
@@ -313,10 +318,24 @@ function addIconToReadyZone(player, imageUrl, name = '') {
     iconItem.dataset.player = player;
     iconItem.dataset.iconId = iconIdCounter++;
     iconItem.dataset.name = name;
+    iconItem.dataset.level = 1;
+    
+    const randomWeaponIndex = Math.floor(Math.random() * weapons.length);
+    iconItem.dataset.assignedWeaponIndex = randomWeaponIndex;
     
     const img = document.createElement('img');
     img.src = imageUrl;
     iconItem.appendChild(img);
+    
+    const weaponEmoji = document.createElement('div');
+    weaponEmoji.className = 'icon-weapon-emoji';
+    weaponEmoji.textContent = weapons[randomWeaponIndex].emoji;
+    iconItem.appendChild(weaponEmoji);
+    
+    const levelBadge = document.createElement('div');
+    levelBadge.className = 'icon-level-badge';
+    levelBadge.textContent = 'Lv1';
+    iconItem.appendChild(levelBadge);
     
     iconItem.addEventListener('dragstart', handleIconDragStart);
     iconItem.addEventListener('dragend', handleIconDragEnd);
@@ -346,7 +365,9 @@ function addIconToReadyZone(player, imageUrl, name = '') {
                         assignedWeapon = weapons[parseInt(iconItem.dataset.assignedWeaponIndex)];
                     }
                     
-                    const battleIcon = createBattleIcon(imageUrl, player, x, y, name, assignedWeapon);
+                    const level = parseInt(iconItem.dataset.level) || 1;
+                    
+                    const battleIcon = createBattleIcon(imageUrl, player, x, y, name, assignedWeapon, level);
                     battleArea.appendChild(battleIcon);
                     
                     updateBattleStats();
@@ -409,7 +430,9 @@ function addIconToReadyZone(player, imageUrl, name = '') {
                     assignedWeapon = weapons[parseInt(iconItem.dataset.assignedWeaponIndex)];
                 }
                 
-                const battleIcon = createBattleIcon(imageUrl, player, x, y, name, assignedWeapon);
+                const level = parseInt(iconItem.dataset.level) || 1;
+                
+                const battleIcon = createBattleIcon(imageUrl, player, x, y, name, assignedWeapon, level);
                 battleArea.appendChild(battleIcon);
                 
                 updateBattleStats();
@@ -475,7 +498,9 @@ function addIconToReadyZone(player, imageUrl, name = '') {
                         assignedWeapon = weapons[parseInt(iconItem.dataset.assignedWeaponIndex)];
                     }
                     
-                    const battleIcon = createBattleIcon(imageUrl, player, x, y, name, assignedWeapon);
+                    const level = parseInt(iconItem.dataset.level) || 1;
+                    
+                    const battleIcon = createBattleIcon(imageUrl, player, x, y, name, assignedWeapon, level);
                     battleArea.appendChild(battleIcon);
                     
                     updateBattleStats();
@@ -701,7 +726,7 @@ function showBubbleTooltip(element, message) {
     }, 1500);
 }
 
-function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = null) {
+function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = null, level = 1) {
     const stats = generateRandomStats();
     stats.maxHealth = stats.health;
     
@@ -824,6 +849,12 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
         chargeStartTime: 0
     };
     
+    if (level > 1) {
+        for (let i = 1; i < level; i++) {
+            LevelUp(iconData);
+        }
+    }
+    
     battleIcons[`player${player}`].push(iconData);
     
     const iconsList = document.getElementById(`player${player}IconsList`);
@@ -831,7 +862,7 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
     iconListItem.className = 'battle-icon-item';
     iconListItem.id = `icon-list-item-${iconIdCounter - 1}`;
     iconListItem.innerHTML = `
-        <span class="icon-name">${name || '未知图标'}(Lv1)${weaponData.emoji}</span>
+        <span class="icon-name">${name || '未知图标'}(Lv${level})${weaponData.emoji}</span>
         <span class="icon-health">${stats.health}/${stats.maxHealth}</span>
     `;
     
@@ -920,53 +951,53 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
 }
 
 function checkLevelUp(iconData) {
-    const killsPerLevel = 3;
-    const maxLevel = 6;
-    const statIncreasePercent = 0.3;
-    
     if (iconData.killCount % killsPerLevel === 0 && iconData.level < maxLevel) {
-        iconData.level++;
-        
-        const statMultiplier = 1 + statIncreasePercent;
-        
-        iconData.stats.attack = Math.round(iconData.stats.attack * statMultiplier);
-        iconData.stats.defense = Math.round(iconData.stats.defense * statMultiplier);
-        iconData.stats.speed = Math.round(iconData.stats.speed * statMultiplier);
-        iconData.stats.maxHealth = Math.round(iconData.stats.maxHealth * statMultiplier * 1.1);
-        iconData.stats.health = Math.round(iconData.stats.maxHealth * 0.3);
-        
-        const levelBadge = iconData.element.querySelector('.level-badge');
-        if (levelBadge) {
-            levelBadge.className = `level-badge level-${iconData.level}`;
-            levelBadge.textContent = iconData.level;
-        }
-        
-        if (iconData.listItem) {
-            const nameSpan = iconData.listItem.querySelector('.icon-name');
-            if (nameSpan) {
-                const currentText = nameSpan.textContent;
-                const match = currentText.match(/^(.+?)\(Lv\d+\)(.+)$/);
-                if (match) {
-                    const baseName = match[1];
-                    const weaponEmoji = match[2];
-                    nameSpan.textContent = `${baseName}(Lv${iconData.level})${weaponEmoji}`;
-                }
+        LevelUp(iconData);
+    }
+}
+
+function LevelUp(iconData) {
+    iconData.level++;
+    
+    const statMultiplier = 1 + statIncreasePercent;
+    
+    iconData.stats.attack = Math.round(iconData.stats.attack * statMultiplier);
+    iconData.stats.defense = Math.round(iconData.stats.defense * statMultiplier);
+    iconData.stats.speed = Math.round(iconData.stats.speed * statMultiplier);
+    iconData.stats.maxHealth = Math.round(iconData.stats.maxHealth * statMultiplier * 1.1);
+    iconData.stats.health = Math.min(iconData.stats.health + Math.round(iconData.stats.maxHealth * 0.3), iconData.stats.maxHealth);
+    
+    const levelBadge = iconData.element.querySelector('.level-badge');
+    if (levelBadge) {
+        levelBadge.className = `level-badge level-${iconData.level}`;
+        levelBadge.textContent = iconData.level;
+    }
+    
+    if (iconData.listItem) {
+        const nameSpan = iconData.listItem.querySelector('.icon-name');
+        if (nameSpan) {
+            const currentText = nameSpan.textContent;
+            const match = currentText.match(/^(.+?)\(Lv\d+\)(.+)$/);
+            if (match) {
+                const baseName = match[1];
+                const weaponEmoji = match[2];
+                nameSpan.textContent = `${baseName}(Lv${iconData.level})${weaponEmoji}`;
             }
         }
-        
-        updateHealthBar(iconData);
-        
-        playSound('levelup');
-        
-        const levelUpText = document.createElement('div');
-        levelUpText.className = 'levelup-text';
-        levelUpText.textContent = `Lv${iconData.level}!`;
-        iconData.element.appendChild(levelUpText);
-        
-        setTimeout(() => {
-            levelUpText.remove();
-        }, 1000);
     }
+    
+    updateHealthBar(iconData);
+    
+    playSound('levelup');
+    
+    const levelUpText = document.createElement('div');
+    levelUpText.className = 'levelup-text';
+    levelUpText.textContent = `Lv${iconData.level}!`;
+    iconData.element.appendChild(levelUpText);
+    
+    setTimeout(() => {
+        levelUpText.remove();
+    }, 1000);
 }
 
 function updateHealthBar(iconData) {
@@ -2980,7 +3011,9 @@ function setupBattleZoneDrop() {
                     assignedWeapon = weapons[parseInt(iconItem.dataset.assignedWeaponIndex)];
                 }
                 
-                const battleIcon = createBattleIcon(iconUrl, player, x, y, name, assignedWeapon);
+                const level = parseInt(iconItem.dataset.level) || 1;
+                
+                const battleIcon = createBattleIcon(iconUrl, player, x, y, name, assignedWeapon, level);
                 battleArea.appendChild(battleIcon);
                 
                 updateBattleStats();
@@ -3033,7 +3066,9 @@ function deployAllIcons(player) {
             assignedWeapon = weapons[parseInt(iconItem.dataset.assignedWeaponIndex)];
         }
         
-        const battleIcon = createBattleIcon(iconUrl, player, x, y, name, assignedWeapon);
+        const level = parseInt(iconItem.dataset.level) || 1;
+        
+        const battleIcon = createBattleIcon(iconUrl, player, x, y, name, assignedWeapon, level);
         battleArea.appendChild(battleIcon);
         
         updateBattleStats();
@@ -3078,16 +3113,6 @@ function init() {
 function toggleOptions() {
     const optionsDropdown = document.getElementById('optionsDropdown');
     optionsDropdown.classList.toggle('show');
-    
-    // 增加点击计数器
-    optionButtonClickCount++;
-    
-    // 检查是否达到7次点击
-    if (optionButtonClickCount >= 7 && !developerMode) {
-        developerMode = true;
-        showDeveloperModeMessage();
-        createDeveloperPanel();
-    }
 }
 
 function showDeveloperModeMessage() {
@@ -3170,6 +3195,26 @@ function createDeveloperPanel() {
         weaponsGrid.appendChild(weaponEmoji);
     });
     
+    // 添加升级emoji
+    const levelUpEmoji = document.createElement('div');
+    levelUpEmoji.className = 'weapon-emoji';
+    levelUpEmoji.textContent = '⏫️';
+    levelUpEmoji.title = '升级 (拖拽到待命区图标升一级)';
+    levelUpEmoji.draggable = true;
+    levelUpEmoji.dataset.isLevelUp = 'true';
+    
+    // 添加拖拽事件
+    levelUpEmoji.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('is-level-up', 'true');
+        levelUpEmoji.classList.add('dragging');
+    });
+    
+    levelUpEmoji.addEventListener('dragend', () => {
+        levelUpEmoji.classList.remove('dragging');
+    });
+    
+    weaponsGrid.appendChild(levelUpEmoji);
+    
     content.appendChild(weaponsGrid);
     
     // 创建调试按钮
@@ -3206,9 +3251,9 @@ function createDeveloperPanel() {
 }
 
 function closeDeveloperPanel() {
-    if (developerPanel) {
-        developerPanel.remove();
-        developerPanel = null;
+    if (window.developerPanel) {
+        window.developerPanel.remove();
+        window.developerPanel = null;
     }
 }
 
@@ -3270,11 +3315,7 @@ function setupWeaponDropToReadyZone() {
             const weaponIndex = e.dataTransfer.getData('text/plain');
             const weaponEmoji = e.dataTransfer.getData('weapon-emoji');
             const weaponName = e.dataTransfer.getData('weapon-name');
-            
-            if (weaponIndex === '' || !weapons[weaponIndex]) return;
-            
-            const weapon = weapons[weaponIndex];
-            const player = playerIndex + 1;
+            const isLevelUp = e.dataTransfer.getData('is-level-up');
             
             // 找到被拖放到的图标
             const targetElement = e.target;
@@ -3282,40 +3323,31 @@ function setupWeaponDropToReadyZone() {
             
             if (!iconItem) return;
             
-            // 移除已有的武器emoji
-            const existingWeapon = iconItem.querySelector('.assigned-weapon');
-            if (existingWeapon) {
-                existingWeapon.remove();
+            // 处理升级emoji
+            if (isLevelUp === 'true') {
+                let currentLevel = parseInt(iconItem.dataset.level) || 1;
+                if (currentLevel < maxLevel) {
+                    currentLevel++;
+                    iconItem.dataset.level = currentLevel;
+                    
+                    const levelBadge = iconItem.querySelector('.icon-level-badge');
+                    if (levelBadge) {
+                        levelBadge.textContent = `Lv${currentLevel}`;
+                    }
+                }
+                return;
             }
             
-            // 添加武器emoji到右下角
-            const weaponBadge = document.createElement('div');
-            weaponBadge.className = 'assigned-weapon';
-            weaponBadge.textContent = weaponEmoji;
-            weaponBadge.style.cssText = `
-                position: absolute;
-                bottom: 2px;
-                right: 2px;
-                font-size: 20px;
-                background: rgba(0, 0, 0, 0.7);
-                border-radius: 50%;
-                width: 24px;
-                height: 24px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                z-index: 10;
-            `;
+            if (weaponIndex === '' || !weapons[weaponIndex]) return;
             
-            // 点击武器emoji移除
-            weaponBadge.addEventListener('click', (e) => {
-                e.stopPropagation();
-                weaponBadge.remove();
-                delete iconItem.dataset.assignedWeaponIndex;
-            });
+            const weapon = weapons[weaponIndex];
+            const player = playerIndex + 1;
             
-            iconItem.appendChild(weaponBadge);
+            // 更新武器emoji显示
+            const existingWeapon = iconItem.querySelector('.icon-weapon-emoji');
+            if (existingWeapon) {
+                existingWeapon.textContent = weaponEmoji;
+            }
             
             // 保存武器信息到iconItem
             iconItem.dataset.assignedWeaponIndex = weaponIndex;
@@ -3752,7 +3784,11 @@ function toggleGameSpeed() {
     gameSpeed = gameSpeeds[nextIndex];
     
     const gameSpeedElement = document.getElementById('gameSpeed');
-    gameSpeedElement.textContent = `${gameSpeed}x倍速`;
+    if(gameSpeed!=1)
+        {gameSpeedElement.textContent = `⏩︎${gameSpeed}x倍速`;}
+    else{
+        gameSpeedElement.textContent = `${gameSpeed}x倍速`;
+    }
     
     if (gameSpeed === 1) {
         gameSpeedElement.classList.remove('fast');
@@ -3814,6 +3850,19 @@ function initFilterTabs() {
         tab.addEventListener('click', () => {
             const filterType = tab.dataset.filter;
             const filterValue = tab.dataset.value;
+            
+            // 检查是否点击"其他"按钮
+            if (filterType === 'action' && filterValue === 'special') {
+                specialButtonClickCount++;
+                
+                // 检查是否达到5次点击
+                if (specialButtonClickCount >= 5 && !developerMode) {
+                    developerMode = true;
+                    showDeveloperModeMessage();
+                    createDeveloperPanel();
+                    specialButtonClickCount = 0;
+                }
+            }
             
             const sameTypeTabs = document.querySelectorAll(`.filter-tab[data-filter="${filterType}"]`);
             sameTypeTabs.forEach(t => t.classList.remove('active'));

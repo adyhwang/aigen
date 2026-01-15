@@ -53,16 +53,16 @@
                 <button class="btn-options" onclick="toggleOptions()">选项</button>
                 <div class="options-dropdown" id="optionsDropdown">
                     <label class="option-item">
+                        <input type="checkbox" id="squadBattleMode" onchange="toggleSquadBattleMode()">
+                        <span>小队模式</span>
+                    </label>
+                    <label class="option-item">
                         <input type="checkbox" id="autoAddRandom" onchange="toggleAutoAddRandom()">
-                        <span>自动添加随机图标</span>
+                        <span>自动添加图标</span>
                     </label>
                     <label class="option-item">
                         <input type="checkbox" id="autoDeploy" onchange="toggleAutoDeploy()">
                         <span>自动参战</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="hideReadyArea" onchange="toggleHideReadyArea()">
-                        <span>隐藏玩家待命区</span>
                     </label>
                     <label class="option-item">
                         <input type="checkbox" id="hideBattleInfo" onchange="toggleHideBattleInfo()">
@@ -73,6 +73,10 @@
                         <span>隐藏玩家状态</span>
                     </label>
                     <label class="option-item">
+                        <input type="checkbox" id="hideReadyArea" onchange="toggleHideReadyArea()">
+                        <span>隐藏玩家待命区</span>
+                    </label>
+                    <label class="option-item">
                         <input type="checkbox" id="pauseGame" onchange="togglePauseGame()">
                         <span>暂停</span>
                     </label>
@@ -80,12 +84,8 @@
                         <input type="checkbox" id="fullscreenMode" onchange="toggleFullscreen()">
                         <span>全屏</span>
                     </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="squadBattleMode" onchange="toggleSquadBattleMode()">
-                        <span>小队战斗模式</span>
-                    </label>
-                    <label class="option-item">
-                        <span id="gameSpeed" onclick="toggleGameSpeed()">1x倍速</span>
+                    <label class="option-item" onclick="toggleGameSpeed()">
+                        <span id="gameSpeed">1x倍速</span>
                     </label>
                 </div>
             </div>

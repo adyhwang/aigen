@@ -609,6 +609,34 @@ body {
     cursor: grabbing;
 }
 
+.icon-weapon-emoji {
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    font-size: 18px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.icon-level-badge {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    font-size: 10px;
+    background: rgba(255, 215, 0, 0.9);
+    color: #000;
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-weight: bold;
+    z-index: 10;
+}
+
 .battle-icon {
     position: absolute;
     width: 80px;
