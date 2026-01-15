@@ -1428,9 +1428,6 @@ function attack(attacker, defender) {
                             target.listItem.classList.add('dead');
                             target.listItem.querySelector('.icon-health').textContent = `0/${target.stats.maxHealth}`;
                         }
-                        
-                        battleStats[`player${attacker.player}`].kills++;
-                        updateBattleStats();
                     }
                 }
             }
@@ -1583,9 +1580,6 @@ function attack(attacker, defender) {
                 target.listItem.classList.add('dead');
                 target.listItem.querySelector('.icon-health').textContent = `0/${target.stats.maxHealth}`;
             }
-            
-            battleStats[`player${attacker.player}`].kills++;
-            updateBattleStats();
             
             attacker.killCount++;
             checkLevelUp(attacker);
@@ -1740,9 +1734,6 @@ function applyAOEDamage(attacker, target) {
                     target.listItem.querySelector('.icon-health').textContent = `0/${target.stats.maxHealth}`;
                 }
                 
-                battleStats[`player${attacker.player}`].kills++;
-                updateBattleStats();
-                
                 attacker.killCount++;
                 checkLevelUp(attacker);
                 
@@ -1812,9 +1803,6 @@ function applyAOEDamage(attacker, target) {
                             enemy.listItem.classList.add('dead');
                             enemy.listItem.querySelector('.icon-health').textContent = `0/${enemy.stats.maxHealth}`;
                         }
-                        
-                        battleStats[`player${attacker.player}`].kills++;
-                        updateBattleStats();
                         
                         const attackerName = attacker.name || '未知图标';
                         const enemyName = enemy.name || '未知图标';
@@ -1980,9 +1968,6 @@ function applyBurnEffect(target, attacker, damage) {
                     target.listItem.classList.add('dead');
                     target.listItem.querySelector('.icon-health').textContent = `0/${target.stats.maxHealth}`;
                 }
-                
-                battleStats[`player${attacker.player}`].kills++;
-                updateBattleStats();
                 
                 attacker.killCount++;
                 checkLevelUp(attacker);
@@ -2556,6 +2541,10 @@ function removeBattleIcon(iconData) {
     if (iconData.listItem) {
         iconData.listItem.remove();
     }
+    
+    const enemyPlayer = iconData.player === 1 ? 2 : 1;
+    battleStats[`player${enemyPlayer}`].kills++;
+    updateBattleStats();
 }
 
 function findNearestEnemy(iconData) {
@@ -4429,8 +4418,6 @@ function executeRocketExplosion(iconData) {
                 
                 // 更新击杀数
                 iconData.killCount++;
-                battleStats[`player${iconData.player}`].kills++;
-                updateBattleStats();
                 
                 // 记录击杀信息
                 addBattleInfo(iconData, enemy, actualDamage, '击杀');
