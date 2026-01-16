@@ -52,9 +52,13 @@ let squadLeaders = {
 // 战斗图标详情面板相关变量
 let currentDetailPanel = null;  // 当前显示的详情面板元素
 let currentIconData = null;     // 当前详情面板对应的图标数据
-let detailPanelUpdateInterval = null;  // 详情面板更新计时器
+let detailPanelUpdateInterval = null;
 
-// 开发者模式相关变量
+let battleAreaElement = null;
+let battleAreaRect = null;
+let lastBattleAreaCheckTime = 0;
+const BATTLE_AREA_CHECK_INTERVAL = 1000;
+
 let developerMode = false;  // 是否启用开发者模式
 let specialButtonClickCount = 0;  // 特殊按钮点击次数，用于激活开发者模式
 let developerPanel = null;  // 开发者面板元素
@@ -883,6 +887,8 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
     
     const iconData = {
         element: battleIcon,
+        healthBarFill: healthBarFill,
+        statsDisplay: statsDisplay,
         stats: stats,
         player: player,
         x: x,
@@ -1184,6 +1190,11 @@ function handleTargetDeath(attacker, target) {
         
         // 检查升级
         checkLevelUp(attacker);
+        
+        // 延迟移除死亡的战斗图标
+        setTimeout(() => {
+            removeBattleIcon(target);
+        }, GAME_CONFIG.timing.extraLongDelay);
     }
 }
 // 更新血条
@@ -1213,26 +1224,6 @@ function updateHealthBar(iconData) {
     if (iconData.listItem) {
         const healthText = iconData.listItem.querySelector('.icon-health');
         healthText.textContent = `${Math.max(0, iconData.stats.health)}/${iconData.stats.maxHealth}`;
-    }
-    
-    if (iconData.stats.health <= 0 && !iconData.isDead && !iconData.hasBeenKilled) {
-        iconData.stats.health = 0;
-        iconData.isDead = true;
-        iconData.element.classList.add('dead');
-        iconData.element.classList.remove('moving');
-        iconData.element.classList.remove('attacking');
-        
-        if (iconData.listItem) {
-            iconData.listItem.classList.add('dead');
-            iconData.listItem.querySelector('.icon-health').textContent = `0/${iconData.stats.maxHealth}`;
-        }
-        
-        playSound('death');
-        
-        // 延迟销毁图标元素
-        setTimeout(() => {
-            removeBattleIcon(iconData);
-        }, GAME_CONFIG.timing.extraLongDelay);
     }
 }
 
@@ -2623,9 +2614,15 @@ function gameLoop() {
     
     autoAddRandomIconsIfNeeded();
     
-    const battleArea = document.getElementById('battleArea');
-    const battleAreaRect = battleArea.getBoundingClientRect();
+    if (!battleAreaElement) {
+        battleAreaElement = document.getElementById('battleArea');
+    }
+    
     const currentTime = Date.now();
+    if (currentTime - lastBattleAreaCheckTime >= BATTLE_AREA_CHECK_INTERVAL || !battleAreaRect) {
+        battleAreaRect = battleAreaElement.getBoundingClientRect();
+        lastBattleAreaCheckTime = currentTime;
+    }
     
     [...battleIcons.player1, ...battleIcons.player2].forEach(iconData => {
         if (iconData.isBuffed && currentTime >= iconData.buffEndTime) {
