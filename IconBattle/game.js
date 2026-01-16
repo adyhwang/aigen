@@ -1665,15 +1665,8 @@ function selectTarget(attacker, defender, options = {}) {
     if (options.allyTargeting && (!target || target.player !== attacker.player)) {
         const allies = battleIcons[`player${attacker.player}`].filter(ally => 
             !ally.isDead && 
-            ally !== attacker && 
-            (options.allyFilter ? options.allyFilter(ally) : true) &&
-            // 检查目标是否在攻击范围内
-            (function() {
-                const dx = ally.x - attacker.x;
-                const dy = ally.y - attacker.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                return distance < attacker.weapon.range;
-            })()
+            (attacker.weapon.type === 'heal' || ally !== attacker) &&  // 治疗武器允许治疗自己
+            (options.allyFilter ? options.allyFilter(ally) : true)
         );
         
         if (allies.length > 0) {
@@ -1730,15 +1723,6 @@ function attack(attacker, defender) {
     
     // 如果没有找到目标，结束攻击
     if (!target) {
-        attacker.isAttacking = false;
-        return;
-    }
-    
-    // 检查目标是否在攻击范围内
-    const dx = target.x - attacker.x;
-    const dy = target.y - attacker.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    if (distance >= attacker.weapon.range) {
         attacker.isAttacking = false;
         return;
     }
@@ -2837,14 +2821,14 @@ function gameLoop() {
 }
 
 function handleHealerBehavior(iconData) {
-    const allies = battleIcons[`player${iconData.player}`].filter(ally => !ally.isDead && ally !== iconData);
+    const allies = battleIcons[`player${iconData.player}`].filter(ally => !ally.isDead);
     const enemyPlayer = iconData.player === 1 ? 2 : 1;
     const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
     
     const battleArea = document.getElementById('battleArea');
     const rect = battleArea.getBoundingClientRect();
     
-    const injuredAllies = allies.filter(ally => ally.stats.health < ally.stats.maxHealth * 0.9);
+    const injuredAllies = allies.filter(ally => ally.stats.health < ally.stats.maxHealth);
     
     if (injuredAllies.length > 0) {
         injuredAllies.sort((a, b) => {
