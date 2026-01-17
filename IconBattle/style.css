@@ -112,6 +112,12 @@ body {
     color: #ff4444;
 }
 
+.option-item input[type="range"] {
+    margin-left: 10px;
+    width: 100px;
+    cursor: pointer;
+}
+
 .battle-area {
     flex: 1;
     display: flex;
@@ -957,9 +963,9 @@ body {
 }
 
 @keyframes attack {
-    0% { transform: translateX(0); }
-    50% { transform: translateX(30px); }
-    100% { transform: translateX(0); }
+    0% { transform: scale(var(--icon-size, 1)) translateX(0); }
+    50% { transform: scale(var(--icon-size, 1)) translateX(30px); }
+    100% { transform: scale(var(--icon-size, 1)) translateX(0); }
 }
 
 .battle-icon.hit {
@@ -972,9 +978,9 @@ body {
 }
 
 @keyframes weaponAttack {
-    0% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-10px) rotate(15deg); }
-    100% { transform: translateY(0) rotate(0deg); }
+    0% { transform: scale(var(--icon-size, 1)) translateY(0) rotate(0deg); }
+    50% { transform: scale(var(--icon-size, 1)) translateY(-10px) rotate(15deg); }
+    100% { transform: scale(var(--icon-size, 1)) translateY(0) rotate(0deg); }
 }
 
 .battle-icon.dead {
@@ -996,18 +1002,18 @@ body {
 }
 
 @keyframes dead {
-    0% { transform: rotate(0deg); opacity: 1; transform-origin: 50% 150%; }
-    100% { transform: rotate(90deg); opacity: 0.3; transform-origin: 50% 150%; }
+    0% { transform: scale(var(--icon-size, 1)) rotate(0deg); opacity: 1; transform-origin: 50% 150%; }
+    100% { transform: scale(var(--icon-size, 1)) rotate(90deg); opacity: 0.3; transform-origin: 50% 150%; }
 }
 
 @keyframes dead-right {
-    0% { transform: rotate(0deg); opacity: 1; transform-origin: 50% 150%; }
-    100% { transform: rotate(-90deg); opacity: 0.3; transform-origin: 50% 150%; }
+    0% { transform: scale(var(--icon-size, 1)) rotate(0deg); opacity: 1; transform-origin: 50% 150%; }
+    100% { transform: scale(var(--icon-size, 1)) rotate(90deg); opacity: 0.3; transform-origin: 50% 150%; }
 }
 
 @keyframes dead-left {
-    0% { transform: rotate(0deg); opacity: 1; transform-origin: 50% 150%; }
-    100% { transform: rotate(90deg); opacity: 0.3; transform-origin: 50% 150%; }
+    0% { transform: scale(var(--icon-size, 1)) rotate(0deg); opacity: 1; transform-origin: 50% 150%; }
+    100% { transform: scale(var(--icon-size, 1)) rotate(90deg); opacity: 0.3; transform-origin: 50% 150%; }
 }
 
 .aoe-explosion {
@@ -1944,7 +1950,7 @@ body {
 }
 
 .icon-detail-left .battle-icon {
-    transform: scale(0.6);
+    transform: scale(1);
     position: static;
     box-shadow: none;
 }
@@ -2328,7 +2334,6 @@ body {
     }
 
     .battle-icon {
-        transform: scale(0.6);
         transition: left 0.3s ease, top 0.3s ease;
     }
 
@@ -2349,30 +2354,30 @@ body {
     }
 
     @keyframes attack-portrait {
-        0% { transform: scale(0.6) translateX(0); }
-        50% { transform: scale(0.6) translateX(30px); }
-        100% { transform: scale(0.6) translateX(0); }
+        0% { transform: scale(var(--icon-size, 1)) translateX(0); }
+        50% { transform: scale(var(--icon-size, 1)) translateX(30px); }
+        100% { transform: scale(var(--icon-size, 1)) translateX(0); }
     }
 
     @keyframes dead-portrait {
-        0% { transform: scale(0.6) rotate(0deg); opacity: 1; transform-origin: 50% 150%; }
-        100% { transform: scale(0.6) rotate(90deg); opacity: 0.3; transform-origin: 50% 150%; }
+        0% { transform: scale(var(--icon-size, 1)) rotate(0deg); opacity: 1; transform-origin: 50% 150%; }
+        100% { transform: scale(var(--icon-size, 1)) rotate(90deg); opacity: 0.3; transform-origin: 50% 150%; }
     }
 
     @keyframes dead-right-portrait {
-        0% { transform: scale(0.6) rotate(0deg); opacity: 1; transform-origin: 50% 150%; }
-        100% { transform: scale(0.6) rotate(90deg); opacity: 0.3; transform-origin: 50% 150%; }
+        0% { transform: scale(var(--icon-size, 1)) rotate(0deg); opacity: 1; transform-origin: 50% 150%; }
+        100% { transform: scale(var(--icon-size, 1)) rotate(90deg); opacity: 0.3; transform-origin: 50% 150%; }
     }
 
     @keyframes dead-left-portrait {
-        0% { transform: scale(0.6) rotate(0deg); opacity: 1; transform-origin: 50% 150%; }
-        100% { transform: scale(0.6) rotate(-90deg); opacity: 0.3; transform-origin: 50% 150%; }
+        0% { transform: scale(var(--icon-size, 1)) rotate(0deg); opacity: 1; transform-origin: 50% 150%; }
+        100% { transform: scale(var(--icon-size, 1)) rotate(-90deg); opacity: 0.3; transform-origin: 50% 150%; }
     }
 
     @keyframes shake-portrait {
-        0%, 100% { transform: scale(0.6) translateX(0); }
-        25% { transform: scale(0.6) translateX(-5px); }
-        75% { transform: scale(0.6) translateX(5px); }
+        0%, 100% { transform: scale(var(--icon-size, 1)) translateX(0); }
+        25% { transform: scale(var(--icon-size, 1)) translateX(-5px); }
+        75% { transform: scale(var(--icon-size, 1)) translateX(5px); }
     }
 
     .battle-info-wrapper {

@@ -87,6 +87,10 @@
                     <label class="option-item" onclick="toggleGameSpeed()">
                         <span id="gameSpeed">1x倍速</span>
                     </label>
+                    <label class="option-item">
+                        <span>图标大小</span>
+                        <input type="range" id="iconSizeSlider" min="0.2" max="5" step="0.1" value="1" oninput="updateIconSize(this.value)">
+                    </label>
                 </div>
             </div>
         </div>

@@ -15,6 +15,11 @@ let battleStats = {
     player2: { kills: 0 }   // 玩家2的击杀数
 };
 
+// 战斗图标大小范围
+const iconSizes = [0.2, 5];
+// 战斗图标默认大小
+let iconSize = 1;
+
 // 战斗信息面板是否正在拖动
 let battleInfoDragging = false;
 // 战斗信息面板拖动时的偏移量
@@ -810,6 +815,8 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
     battleIcon.dataset.player = player;
     battleIcon.dataset.iconId = iconIdCounter++;
     battleIcon.dataset.name = name;
+    battleIcon.style.transform = `scale(${iconSize})`;
+    battleIcon.style.setProperty('--icon-size', iconSize);
     
     const healthBar = document.createElement('div');
     healthBar.className = 'health-bar';
@@ -4006,6 +4013,26 @@ function toggleGameSpeed() {
     }
 }
 
+function updateIconSize(value) {
+    iconSize = parseFloat(value);
+    
+    const allIcons = document.querySelectorAll('.battle-icon');
+    allIcons.forEach(icon => {
+        icon.style.transform = `scale(${iconSize})`;
+        icon.style.setProperty('--icon-size', iconSize);
+    });
+    
+    const mobileIconSlider = document.querySelector('.options-panel #iconSizeSlider');
+    if (mobileIconSlider) {
+        mobileIconSlider.value = value;
+    }
+    
+    const desktopIconSlider = document.getElementById('iconSizeSlider');
+    if (desktopIconSlider) {
+        desktopIconSlider.value = value;
+    }
+}
+
 function checkReadyZoneEmpty(player) {
     const readyContent = document.getElementById(`player${player}ReadyContent`);
     const iconItems = readyContent.querySelectorAll('.icon-item');
@@ -5169,6 +5196,15 @@ function showOptionsPanel() {
                 gameSpeedElement.classList.add('fast');
                 originalGameSpeedElement.classList.add('fast');
             }
+        };
+    }
+    
+    const iconSizeSlider = panel.querySelector('#iconSizeSlider');
+    if (iconSizeSlider) {
+        iconSizeSlider.value = iconSize;
+        iconSizeSlider.oninput = function() {
+            updateIconSize(this.value);
+            document.getElementById('iconSizeSlider').value = this.value;
         };
     }
 }
