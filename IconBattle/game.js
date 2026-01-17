@@ -567,8 +567,8 @@ function addIconToReadyZone(player, imageUrl, name = '') {
                 
                 if (touch.clientX >= battleRect.left && touch.clientX <= battleRect.right &&
                     touch.clientY >= battleRect.top && touch.clientY <= battleRect.bottom) {
-                    const x = touch.clientX - battleRect.left - 40;
-                    const y = touch.clientY - battleRect.top - 40;
+                    const x = touch.clientX - battleRect.left - 40 * iconSize;
+                    const y = touch.clientY - battleRect.top - 40 * iconSize;
                     
                     let assignedWeapon = null;
                     if (iconItem.dataset.assignedWeaponIndex !== undefined) {
@@ -970,8 +970,8 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
             const newX = initialX + (e.clientX - startX);
             const newY = initialY + (e.clientY - startY);
             
-            iconData.x = Math.max(50, Math.min(rect.width - 50, newX));
-            iconData.y = Math.max(50, Math.min(rect.height - 50, newY));
+            iconData.x = Math.max(50 * iconSize, Math.min(rect.width - 50 * iconSize, newX));
+            iconData.y = Math.max(50 * iconSize, Math.min(rect.height - 50 * iconSize, newY));
             iconData.targetX = iconData.x;
             iconData.targetY = iconData.y;
             
@@ -1008,8 +1008,8 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
             const newX = initialX + (touch.clientX - startX);
             const newY = initialY + (touch.clientY - startY);
             
-            iconData.x = Math.max(50, Math.min(rect.width - 50, newX));
-            iconData.y = Math.max(50, Math.min(rect.height - 50, newY));
+            iconData.x = Math.max(50 * iconSize, Math.min(rect.width - 50 * iconSize, newX));
+            iconData.y = Math.max(50 * iconSize, Math.min(rect.height - 50 * iconSize, newY));
             iconData.targetX = iconData.x;
             iconData.targetY = iconData.y;
             
@@ -1360,8 +1360,8 @@ function createBaseEffect(attacker, defender, battleArea, className, options = {
     const effect = document.createElement('div');
     effect.className = `weapon-effect ${className}`;
     
-    const effectX = defender.x + 40;
-    const effectY = defender.y + 40;
+    const effectX = defender.x + 40 * iconSize;
+    const effectY = defender.y + 40 * iconSize;
     
     effect.style.left = `${effectX}px`;
     effect.style.top = `${effectY}px`;
@@ -2229,7 +2229,7 @@ function applyBuff(attacker, target) {
     // 使用EffectText类创建兴奋文字，使用黄色
     new EffectText(target.element, '兴奋!', '#f1c40f', 'buff').show();
     
-    showBuffEffect(target.x + 40, target.y + 40, 60);
+    showBuffEffect(target.x + 40 * iconSize, target.y + 40 * iconSize, 60 * iconSize);
     
     // 使用addBattleInfo记录兴奋剂效果
     addBattleInfo(attacker, target, 0, 'buff');
@@ -3070,8 +3070,8 @@ function setupBattleZoneDrop() {
             const iconItem = document.querySelector(`.icon-item[data-icon-id="${iconId}"]`);
             if (iconItem) {
                 const rect = battleArea.getBoundingClientRect();
-                const x = event.clientX - rect.left - 40;
-                const y = event.clientY - rect.top - 40;
+                const x = event.clientX - rect.left - 40 * iconSize;
+                const y = event.clientY - rect.top - 40 * iconSize;
                 const name = iconItem.dataset.name || '';
                 
                 let assignedWeapon = null;
@@ -3099,9 +3099,9 @@ function deployAllIcons(player) {
     
     const battleZone = document.getElementById(`player${player}BattleZone`);
     
-    const columnSpacing = 80;
-    const rowSpacing = 80;
-    const padding = 40;
+    const columnSpacing = 80 * iconSize;
+    const rowSpacing = 80 * iconSize;
+    const padding = 40 * iconSize;
     
     const totalIcons = iconItems.length;
     const sideLength = Math.ceil(Math.sqrt(totalIcons));
@@ -3790,7 +3790,7 @@ function calculateSquadFormation(leader, members) {
     if (memberCount === 0) return formation;
     
     const gridSize = Math.ceil(Math.sqrt(memberCount));
-    const spacing = 60;
+    const spacing = 60 * iconSize;
     
     const startX = leader.x - (gridSize - 1) * spacing / 2;
     const startY = leader.y - (gridSize - 1) * spacing / 2;
@@ -4145,19 +4145,20 @@ function calculateFormationPositions(player) {
     if (icons.length === 0) return [];
     
     const positions = [];
-    const iconSize = 80;
-    const spacing = 10;
+    const baseIconSize = 80;
+    const iconSpacing = baseIconSize * iconSize;
+    const spacing = 10 * iconSize;
     const cols = Math.ceil(Math.sqrt(icons.length));
     const rows = Math.ceil(icons.length / cols);
     
-    const formationWidth = cols * (iconSize + spacing) - spacing;
-    const formationHeight = rows * (iconSize + spacing) - spacing;
+    const formationWidth = cols * (iconSpacing + spacing) - spacing;
+    const formationHeight = rows * (iconSpacing + spacing) - spacing;
     
     const territoryCenterX = battleZone.offsetLeft + battleZone.offsetWidth / 2;
     const territoryCenterY = battleZone.offsetTop + battleZone.offsetHeight / 2;
     
-    const startX = territoryCenterX - formationWidth / 2 + iconSize / 2;
-    const startY = territoryCenterY - formationHeight / 2 + iconSize / 2;
+    const startX = territoryCenterX - formationWidth / 2 + iconSpacing / 2;
+    const startY = territoryCenterY - formationHeight / 2 + iconSpacing / 2;
     
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
@@ -4165,8 +4166,8 @@ function calculateFormationPositions(player) {
             if (index >= icons.length) break;
             
             positions.push({
-                x: startX + col * (iconSize + spacing),
-                y: startY + row * (iconSize + spacing)
+                x: startX + col * (iconSpacing + spacing),
+                y: startY + row * (iconSpacing + spacing)
             });
         }
     }
