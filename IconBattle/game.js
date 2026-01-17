@@ -1899,7 +1899,7 @@ function attack(attacker, defender) {
 }
 
 function applyAOEDamage(attacker, target) {
-    const aoeRadius = attacker.weapon.aoeRadius || 150;
+    const aoeRadius = (attacker.weapon.aoeRadius || 150) * iconSize;
     const targetPlayer = attacker.player === 1 ? 2 : 1;
     const enemies = battleIcons[`player${targetPlayer}`];
     
@@ -2128,6 +2128,7 @@ function applyBurnEffect(target, attacker, damage) {
 function applyKnockback(attacker, target, distance) {
     if (target.isDead || target.isKnockedBack) return;
     
+    const effectiveDistance = distance * iconSize;
     const dx = target.x - attacker.x;
     const dy = target.y - attacker.y;
     const length = Math.sqrt(dx * dx + dy * dy);
@@ -2137,8 +2138,8 @@ function applyKnockback(attacker, target, distance) {
     const normalizedX = dx / length;
     const normalizedY = dy / length;
     
-    target.knockbackTargetX = target.x + normalizedX * distance;
-    target.knockbackTargetY = target.y + normalizedY * distance;
+    target.knockbackTargetX = target.x + normalizedX * effectiveDistance;
+    target.knockbackTargetY = target.y + normalizedY * effectiveDistance;
     target.isKnockedBack = true;
     
     const battleArea = document.getElementById('battleArea');
@@ -2435,7 +2436,7 @@ function moveTowardsTarget(iconData) {
     const dy = iconData.targetY - iconData.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    if (distance > GAME_CONFIG.movement.arrivalThreshold) {
+    if (distance > GAME_CONFIG.movement.arrivalThreshold * iconSize) {
         let speed = iconData.stats.speed * gameSpeed;
         
         if (squadBattleMode) {
@@ -2802,11 +2803,12 @@ function gameLoop() {
                     const dx = enemy.x - iconData.x;
                     const dy = enemy.y - iconData.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
+                    const effectiveRange = iconData.weapon.range * iconSize;
                     
-                    if (distance < iconData.weapon.range) {
+                    if (distance < effectiveRange) {
                         attack(iconData, enemy);
                     } else {
-                        iconData.targetX = enemy.x - (iconData.weapon.type === 'melee' ? 50 : 0);
+                        iconData.targetX = enemy.x - (iconData.weapon.type === 'melee' ? 50 * iconSize : 0);
                         iconData.targetY = enemy.y;
                         moveTowardsTarget(iconData);
                     }
@@ -2835,11 +2837,12 @@ function gameLoop() {
                     const dx = enemy.x - iconData.x;
                     const dy = enemy.y - iconData.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
+                    const effectiveRange = iconData.weapon.range * iconSize;
                     
-                    if (distance < iconData.weapon.range) {
+                    if (distance < effectiveRange) {
                         attack(iconData, enemy);
                     } else {
-                        iconData.targetX = enemy.x + (iconData.weapon.type === 'melee' ? 50 : 0);
+                        iconData.targetX = enemy.x + (iconData.weapon.type === 'melee' ? 50 * iconSize : 0);
                         iconData.targetY = enemy.y;
                         moveTowardsTarget(iconData);
                     }
@@ -2872,8 +2875,9 @@ function handleHealerBehavior(iconData) {
         const dx = target.x - iconData.x;
         const dy = target.y - iconData.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
+        const effectiveRange = iconData.weapon.range * iconSize;
         
-        if (distance <= iconData.weapon.range) {
+        if (distance <= effectiveRange) {
             if (!iconData.isAttacking && !iconData.isOnCooldown) {
                 attack(iconData, target);
             }
@@ -2899,7 +2903,7 @@ function handleHealerBehavior(iconData) {
             const dx = target.x - iconData.x;
             const dy = target.y - iconData.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const followDistance = 80;
+            const followDistance = 80 * iconSize;
             
             if (distance > followDistance) {
                 iconData.targetX = target.x;
@@ -2918,7 +2922,7 @@ function handleHealerBehavior(iconData) {
             const dx = target.x - iconData.x;
             const dy = target.y - iconData.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const followDistance = 80;
+            const followDistance = 80 * iconSize;
             
             if (distance > followDistance) {
                 iconData.targetX = target.x;
@@ -2947,7 +2951,7 @@ function handleHealerBehavior(iconData) {
         const dx = target.x - iconData.x;
         const dy = target.y - iconData.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const attackRange = 60;
+        const attackRange = 60 * iconSize;
         
         if (distance > attackRange) {
             iconData.targetX = target.x;
@@ -2987,15 +2991,16 @@ function handleBuffBehavior(iconData) {
         const dx = target.x - iconData.x;
         const dy = target.y - iconData.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
+        const effectiveRange = iconData.weapon.range * iconSize;
         
-        if (distance <= iconData.weapon.range) {
+        if (distance <= effectiveRange) {
             if (!iconData.isAttacking && !iconData.isOnCooldown) {
                 attack(iconData, target);
             }
         }
         
-        const safeDistance = 120;
-        const minDistance = 60;
+        const safeDistance = 120 * iconSize;
+        const minDistance = 60 * iconSize;
         
         if (distance > safeDistance) {
             iconData.targetX = target.x;
@@ -3023,8 +3028,9 @@ function handleBuffBehavior(iconData) {
         const dx = target.x - iconData.x;
         const dy = target.y - iconData.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
+        const effectiveRange = iconData.weapon.range * iconSize;
         
-        if (distance < iconData.weapon.range) {
+        if (distance < effectiveRange) {
             if (!iconData.isAttacking && !iconData.isOnCooldown) {
                 attack(iconData, target);
             }
@@ -3802,8 +3808,8 @@ function calculateSquadFormation(leader, members) {
 }
 
 function getMonitorRange(memberCount) {
-    const baseRange = 350;
-    const additionalRange = Math.floor(memberCount / 8) * 40;
+    const baseRange = 350 / iconSize;
+    const additionalRange = Math.floor(memberCount / 8) * 40 / iconSize;
     return baseRange + additionalRange;
 }
 
@@ -3832,11 +3838,12 @@ function handleSquadLeaderBehavior(iconData) {
     const rect = battleArea.getBoundingClientRect();
     
     if (enemies.length > 0) {
+        const effectiveRange = iconData.weapon.range * iconSize;
         const enemiesInRange = enemies.filter(enemy => {
             const dx = enemy.x - iconData.x;
             const dy = enemy.y - iconData.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            return distance < iconData.weapon.range;
+            return distance < effectiveRange;
         });
         
         let target;
@@ -3856,11 +3863,11 @@ function handleSquadLeaderBehavior(iconData) {
         const dy = target.y - iconData.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance < iconData.weapon.range) {
+        if (distance < effectiveRange) {
             attack(iconData, target);
         } else {
             if (checkAllMembersInRange(iconData, members, monitorRange)) {
-                iconData.targetX = target.x - (iconData.weapon.type === 'melee' ? 50 : 0);
+                iconData.targetX = target.x - (iconData.weapon.type === 'melee' ? 50 * iconSize : 0);
                 iconData.targetY = target.y;
                 moveTowardsTarget(iconData);
             }
@@ -3885,11 +3892,12 @@ function handleSquadMemberBehavior(iconData) {
             const dx = enemy.x - iconData.x;
             const dy = enemy.y - iconData.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
+            const effectiveRange = iconData.weapon.range * iconSize;
             
-            if (distance < iconData.weapon.range) {
+            if (distance < effectiveRange) {
                 attack(iconData, enemy);
             } else {
-                iconData.targetX = enemy.x - (iconData.weapon.type === 'melee' ? 50 : 0);
+                iconData.targetX = enemy.x - (iconData.weapon.type === 'melee' ? 50 * iconSize : 0);
                 iconData.targetY = enemy.y;
                 moveTowardsTarget(iconData);
             }
@@ -3910,12 +3918,13 @@ function handleSquadMemberBehavior(iconData) {
         });
     }
     
-    if (nearestEnemyDistance < 450) {
+    if (nearestEnemyDistance < 450 / iconSize) {
+        const effectiveRange = iconData.weapon.range * iconSize;
         const enemiesInRange = enemies.filter(enemy => {
             const dx = enemy.x - iconData.x;
             const dy = enemy.y - iconData.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            return distance < iconData.weapon.range;
+            return distance < effectiveRange;
         });
         
         let target;
@@ -3935,10 +3944,10 @@ function handleSquadMemberBehavior(iconData) {
         const dy = target.y - iconData.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance < iconData.weapon.range) {
+        if (distance < effectiveRange) {
             attack(iconData, target);
         } else {
-            iconData.targetX = target.x - (iconData.weapon.type === 'melee' ? 50 : 0);
+            iconData.targetX = target.x - (iconData.weapon.type === 'melee' ? 50 * iconSize : 0);
             iconData.targetY = target.y;
             moveTowardsTarget(iconData);
         }
@@ -3953,7 +3962,7 @@ function handleSquadMemberBehavior(iconData) {
             const dy = targetPos.y - iconData.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance > GAME_CONFIG.movement.arrivalThreshold) {
+            if (distance > GAME_CONFIG.movement.arrivalThreshold * iconSize) {
                 iconData.targetX = targetPos.x;
                 iconData.targetY = targetPos.y;
                 moveTowardsTarget(iconData);
@@ -4463,7 +4472,7 @@ function handleRocketCharge(iconData) {
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
                 // 保持与队长的距离
-                if (distance > GAME_CONFIG.movement.squadFollowDistance) {
+                if (distance > GAME_CONFIG.movement.squadFollowDistance / iconSize) {
                     iconData.targetX = leader.x;
                     iconData.targetY = leader.y;
                     moveTowardsTarget(iconData);
@@ -4474,7 +4483,7 @@ function handleRocketCharge(iconData) {
                 const enemiesInRange = battleIcons[`player${enemyPlayer}`].filter(e => {
                     if (e.isDead) return false;
                     const dist = Math.sqrt((e.x - iconData.x) ** 2 + (e.y - iconData.y) ** 2);
-                    return dist <= GAME_CONFIG.movement.squadMonitorRange;
+                    return dist <= GAME_CONFIG.movement.squadMonitorRange / iconSize;
                 });
                 
                 if (enemiesInRange.length > 0) {
@@ -4496,7 +4505,7 @@ function handleRocketCharge(iconData) {
                         const dx = enemy.x - iconData.x;
                         const dy = enemy.y - iconData.y;
                         const distance = Math.sqrt(dx * dx + dy * dy);
-                        return distance < GAME_CONFIG.movement.squadMonitorRange;
+                        return distance < GAME_CONFIG.movement.squadMonitorRange / iconSize;
                     });
                     
                     if (enemiesInRange.length > 0) {
@@ -4570,7 +4579,8 @@ function handleRocketCharge(iconData) {
         const distance = Math.sqrt(dx * dx + dy * dy);
         
         // 检查是否达到自爆范围
-        if (distance <= iconData.weapon.range) {
+        const effectiveRange = iconData.weapon.range * iconSize;
+        if (distance <= effectiveRange) {
             // 执行自爆
             executeRocketExplosion(iconData);
             return;
@@ -4633,7 +4643,7 @@ function executeRocketExplosion(iconData) {
     
     const enemyPlayer = iconData.player === 1 ? 2 : 1;
     const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
-    const aoeRadius = iconData.weapon.aoeRadius || 150;
+    const aoeRadius = (iconData.weapon.aoeRadius || 150) * iconSize;
     const damage = iconData.weapon.attack || 120;
     
     // 对AOE范围内的所有敌人造成伤害
