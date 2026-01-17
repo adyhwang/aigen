@@ -2329,6 +2329,7 @@ body {
 
     .battle-icon {
         transform: scale(0.6);
+        transition: left 0.3s ease, top 0.3s ease;
     }
 
     .battle-icon.attacking {

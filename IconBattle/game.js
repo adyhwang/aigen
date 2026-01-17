@@ -5127,18 +5127,28 @@ function showOptionsPanel() {
     if (gameSpeedLabel) {
         gameSpeedLabel.textContent = document.getElementById('gameSpeed').textContent;
         gameSpeedLabel.parentElement.onclick = function() {
-            if (gameSpeed === 1) {
-                gameSpeed = 2;
-                gameSpeedText = '2x倍速';
-            } else if (gameSpeed === 2) {
-                gameSpeed = 4;
-                gameSpeedText = '4x倍速';
+            const currentIndex = gameSpeeds.indexOf(gameSpeed);
+            const nextIndex = (currentIndex + 1) % gameSpeeds.length;
+            gameSpeed = gameSpeeds[nextIndex];
+            
+            const gameSpeedElement = this.querySelector('#gameSpeed');
+            const originalGameSpeedElement = document.getElementById('gameSpeed');
+            
+            if(gameSpeed != 1) {
+                gameSpeedElement.textContent = `⏩︎${gameSpeed}x倍速`;
+                originalGameSpeedElement.textContent = `⏩︎${gameSpeed}x倍速`;
             } else {
-                gameSpeed = 1;
-                gameSpeedText = '1x倍速';
+                gameSpeedElement.textContent = `${gameSpeed}x倍速`;
+                originalGameSpeedElement.textContent = `${gameSpeed}x倍速`;
             }
-            this.querySelector('#gameSpeed').textContent = gameSpeedText;
-            document.getElementById('gameSpeed').textContent = gameSpeedText;
+            
+            if (gameSpeed === 1) {
+                gameSpeedElement.classList.remove('fast');
+                originalGameSpeedElement.classList.remove('fast');
+            } else {
+                gameSpeedElement.classList.add('fast');
+                originalGameSpeedElement.classList.add('fast');
+            }
         };
     }
 }
