@@ -415,23 +415,24 @@ function addIconToReadyZone(player, imageUrl, name = '') {
     
     let clickTimeout = null;
     let clickCount = 0;
+    let isTouchAction = false;
     
     iconItem.addEventListener('click', (e) => {
+        if (isTouchAction) {
+            isTouchAction = false;
+            return;
+        }
+        
         clickCount++;
         
         if (clickCount === 1) {
             clickTimeout = setTimeout(() => {
                 if (clickCount === 1) {
                     const battleArea = document.getElementById('battleArea');
-                    const battleAreaRect = battleArea.getBoundingClientRect();
+                    const battleZone = document.getElementById(`player${player}BattleZone`);
                     
-                    let x, y;
-                    if (player === 1) {
-                        x = battleAreaRect.width / 8;
-                    } else {
-                        x = battleAreaRect.width * 7 / 8;
-                    }
-                    y = battleAreaRect.height / 2;
+                    const centerX = battleZone.offsetLeft + battleZone.offsetWidth / 2;
+                    const centerY = battleZone.offsetTop + battleZone.offsetHeight / 2;
                     
                     let assignedWeapon = null;
                     if (iconItem.dataset.assignedWeaponIndex !== undefined) {
@@ -440,7 +441,7 @@ function addIconToReadyZone(player, imageUrl, name = '') {
                     
                     const level = parseInt(iconItem.dataset.level) || 1;
                     
-                    const battleIcon = createBattleIcon(imageUrl, player, x, y, name, assignedWeapon, level);
+                    const battleIcon = createBattleIcon(imageUrl, player, centerX, centerY, name, assignedWeapon, level);
                     battleArea.appendChild(battleIcon);
                     
                     updateBattleStats();
@@ -468,6 +469,9 @@ function addIconToReadyZone(player, imageUrl, name = '') {
     let isDragging = false;
     
     iconItem.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        isTouchAction = true;
+        
         const touch = e.touches[0];
         touchStartX = touch.clientX;
         touchStartY = touch.clientY;
@@ -488,15 +492,10 @@ function addIconToReadyZone(player, imageUrl, name = '') {
         touchTimeout = setTimeout(() => {
             if (touchCount === 1 && !isDragging) {
                 const battleArea = document.getElementById('battleArea');
-                const battleAreaRect = battleArea.getBoundingClientRect();
+                const battleZone = document.getElementById(`player${player}BattleZone`);
                 
-                let x, y;
-                if (player === 1) {
-                    x = battleAreaRect.width / 8;
-                } else {
-                    x = battleAreaRect.width * 7 / 8;
-                }
-                y = battleAreaRect.height / 2;
+                const centerX = battleZone.offsetLeft + battleZone.offsetWidth / 2;
+                const centerY = battleZone.offsetTop + battleZone.offsetHeight / 2;
                 
                 let assignedWeapon = null;
                 if (iconItem.dataset.assignedWeaponIndex !== undefined) {
@@ -505,7 +504,7 @@ function addIconToReadyZone(player, imageUrl, name = '') {
                 
                 const level = parseInt(iconItem.dataset.level) || 1;
                 
-                const battleIcon = createBattleIcon(imageUrl, player, x, y, name, assignedWeapon, level);
+                const battleIcon = createBattleIcon(imageUrl, player, centerX, centerY, name, assignedWeapon, level);
                 battleArea.appendChild(battleIcon);
                 
                 updateBattleStats();
@@ -2523,10 +2522,18 @@ function updateBattleStats() {
         .filter(icon => !icon.isDead)
         .reduce((sum, icon) => sum + (icon.stats.defense || 0) + (icon.stats.armor || 0), 0);
     document.getElementById('player2Defense').textContent = player2TotalDefense;
+    
+    updateIconsStatsPanel();
 }
 
 function initBattleInfoDrag() {
     const battleInfoWrapper = document.querySelector('.battle-info-wrapper');
+    
+    // 检查是否为横屏模式，如果是则不启用拖动
+    const isLandscape = window.matchMedia('(orientation: landscape)').matches;
+    if (isLandscape) {
+        return;
+    }
     
     battleInfoWrapper.addEventListener('mousedown', (e) => {
         if (e.target.classList.contains('filter-tab')) return;
@@ -3056,37 +3063,36 @@ function deployAllIcons(player) {
     const readyContent = document.getElementById(`player${player}ReadyContent`);
     const iconItems = readyContent.querySelectorAll('.icon-item');
     const battleArea = document.getElementById('battleArea');
-    const battleAreaRect = battleArea.getBoundingClientRect();
     
-    const maxIconsPerColumn = 6;
+    const battleZone = document.getElementById(`player${player}BattleZone`);
+    
     const columnSpacing = 80;
     const rowSpacing = 80;
     const padding = 40;
     
-    const numColumns = Math.ceil(iconItems.length / maxIconsPerColumn);
+    const totalIcons = iconItems.length;
+    const sideLength = Math.ceil(Math.sqrt(totalIcons));
+    
+    const numColumns = sideLength;
+    const numRows = Math.ceil(totalIcons / numColumns);
+    
     const totalWidth = (numColumns - 1) * columnSpacing;
+    const totalHeight = (numRows - 1) * rowSpacing;
     
-    let centerX;
-    if (player === 1) {
-        centerX = battleAreaRect.width / 8;
-    } else {
-        centerX = battleAreaRect.width * 7 / 8;
-    }
+    const centerX = battleZone.offsetLeft + battleZone.offsetWidth / 2;
+    const centerY = battleZone.offsetTop + battleZone.offsetHeight / 2;
     
-    const startX = centerX - totalWidth / 2;
+    const startX = Math.max(padding, Math.min(centerX - totalWidth / 2, battleZone.offsetLeft + battleZone.offsetWidth - totalWidth - padding));
+    const startY = Math.max(padding, Math.min(centerY - totalHeight / 2, battleZone.offsetTop + battleZone.offsetHeight - totalHeight - padding));
     
     iconItems.forEach((iconItem, index) => {
         const iconUrl = iconItem.querySelector('img').src;
         const name = iconItem.dataset.name || '';
         
-        const columnIndex = Math.floor(index / maxIconsPerColumn);
-        const rowIndex = index % maxIconsPerColumn;
+        const columnIndex = index % numColumns;
+        const rowIndex = Math.floor(index / numColumns);
         
         const x = startX + columnIndex * columnSpacing;
-        
-        const iconsInColumn = Math.min(maxIconsPerColumn, iconItems.length - columnIndex * maxIconsPerColumn);
-        const totalColumnHeight = (iconsInColumn - 1) * rowSpacing;
-        const startY = (battleAreaRect.height - totalColumnHeight) / 2;
         const y = startY + rowIndex * rowSpacing;
         
         let assignedWeapon = null;
@@ -3115,6 +3121,7 @@ function init() {
     gameLoop();
     initBattleInfoDrag();
     initFilterTabs();
+    setupMobileTabs();
     
     addRandomIcons(1, 7);
     addRandomIcons(2, 7);
@@ -3123,6 +3130,12 @@ function init() {
     readyContents.forEach(content => {
         content.addEventListener('dragleave', handleDragLeave);
     });
+    
+    // 竖屏模式下初始化后直接显示待命区
+    const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+    if (isPortrait) {
+        showReadyAreaPanel();
+    }
     
     document.addEventListener('click', (event) => {
         const modal = document.getElementById('searchModal');
@@ -3220,6 +3233,72 @@ function createDeveloperPanel() {
             weaponEmoji.classList.remove('dragging');
         });
         
+        // 添加触摸拖拽事件
+        let touchDragData = null;
+        
+        weaponEmoji.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            touchDragData = {
+                element: weaponEmoji.cloneNode(true),
+                startX: touch.clientX,
+                startY: touch.clientY,
+                offsetX: touch.clientX - weaponEmoji.getBoundingClientRect().left,
+                offsetY: touch.clientY - weaponEmoji.getBoundingClientRect().top
+            };
+            
+            touchDragData.element.style.position = 'fixed';
+            touchDragData.element.style.zIndex = '9999';
+            touchDragData.element.style.pointerEvents = 'none';
+            touchDragData.element.style.opacity = '0.8';
+            touchDragData.element.classList.add('dragging');
+            
+            document.body.appendChild(touchDragData.element);
+            
+            e.preventDefault();
+        }, { passive: false });
+        
+        weaponEmoji.addEventListener('touchmove', (e) => {
+            if (!touchDragData) return;
+            
+            const touch = e.touches[0];
+            const newLeft = touch.clientX - touchDragData.offsetX;
+            const newTop = touch.clientY - touchDragData.offsetY;
+            
+            touchDragData.element.style.left = `${newLeft}px`;
+            touchDragData.element.style.top = `${newTop}px`;
+            
+            e.preventDefault();
+        }, { passive: false });
+        
+        weaponEmoji.addEventListener('touchend', (e) => {
+            if (!touchDragData) return;
+            
+            touchDragData.element.remove();
+            weaponEmoji.classList.remove('dragging');
+            
+            const touch = e.changedTouches[0];
+            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            if (dropTarget) {
+                const iconItem = dropTarget.closest('.icon-item');
+                if (iconItem) {
+                    const weaponIndex = parseInt(weaponEmoji.dataset.weaponIndex);
+                    const weapon = GAME_CONFIG.weapons[weaponIndex];
+                    
+                    if (weapon) {
+                        const existingWeapon = iconItem.querySelector('.icon-weapon-emoji');
+                        if (existingWeapon) {
+                            existingWeapon.textContent = weapon.emoji;
+                        }
+                        
+                        iconItem.dataset.assignedWeaponIndex = weaponIndex;
+                    }
+                }
+            }
+            
+            touchDragData = null;
+        });
+        
         weaponsGrid.appendChild(weaponEmoji);
     });
     
@@ -3239,6 +3318,71 @@ function createDeveloperPanel() {
     
     levelUpEmoji.addEventListener('dragend', () => {
         levelUpEmoji.classList.remove('dragging');
+    });
+    
+    // 添加触摸拖拽事件
+    let levelUpTouchDragData = null;
+    
+    levelUpEmoji.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        levelUpTouchDragData = {
+            element: levelUpEmoji.cloneNode(true),
+            startX: touch.clientX,
+            startY: touch.clientY,
+            offsetX: touch.clientX - levelUpEmoji.getBoundingClientRect().left,
+            offsetY: touch.clientY - levelUpEmoji.getBoundingClientRect().top
+        };
+        
+        levelUpTouchDragData.element.style.position = 'fixed';
+        levelUpTouchDragData.element.style.zIndex = '9999';
+        levelUpTouchDragData.element.style.pointerEvents = 'none';
+        levelUpTouchDragData.element.style.opacity = '0.8';
+        levelUpTouchDragData.element.classList.add('dragging');
+        
+        document.body.appendChild(levelUpTouchDragData.element);
+        
+        e.preventDefault();
+    }, { passive: false });
+    
+    levelUpEmoji.addEventListener('touchmove', (e) => {
+        if (!levelUpTouchDragData) return;
+        
+        const touch = e.touches[0];
+        const newLeft = touch.clientX - levelUpTouchDragData.offsetX;
+        const newTop = touch.clientY - levelUpTouchDragData.offsetY;
+        
+        levelUpTouchDragData.element.style.left = `${newLeft}px`;
+        levelUpTouchDragData.element.style.top = `${newTop}px`;
+        
+        e.preventDefault();
+    }, { passive: false });
+    
+    levelUpEmoji.addEventListener('touchend', (e) => {
+        if (!levelUpTouchDragData) return;
+        
+        levelUpTouchDragData.element.remove();
+        levelUpEmoji.classList.remove('dragging');
+        
+        const touch = e.changedTouches[0];
+        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        if (dropTarget) {
+            const iconItem = dropTarget.closest('.icon-item');
+            if (iconItem) {
+                let currentLevel = parseInt(iconItem.dataset.level) || 1;
+                if (currentLevel < GAME_CONFIG.upgrade.maxLevel) {
+                    currentLevel++;
+                    iconItem.dataset.level = currentLevel;
+                    
+                    const levelBadge = iconItem.querySelector('.icon-level-badge');
+                    if (levelBadge) {
+                        levelBadge.textContent = `Lv${currentLevel}`;
+                    }
+                }
+            }
+        }
+        
+        levelUpTouchDragData = null;
     });
     
     weaponsGrid.appendChild(levelUpEmoji);
@@ -3302,6 +3446,18 @@ function setupDeveloperPanelDrag() {
         header.style.cursor = 'grabbing';
     });
     
+    header.addEventListener('touchstart', (e) => {
+        if (e.target.classList.contains('developer-panel-close')) return;
+        
+        developerPanelDragging = true;
+        const touch = e.touches[0];
+        developerPanelOffset.x = touch.clientX - panel.offsetLeft;
+        developerPanelOffset.y = touch.clientY - panel.offsetTop;
+        
+        header.style.cursor = 'grabbing';
+        e.preventDefault();
+    }, { passive: false });
+    
     document.addEventListener('mousemove', (e) => {
         if (!developerPanelDragging) return;
         
@@ -3312,7 +3468,26 @@ function setupDeveloperPanelDrag() {
         panel.style.top = `${newTop}px`;
     });
     
+    document.addEventListener('touchmove', (e) => {
+        if (!developerPanelDragging) return;
+        
+        const touch = e.touches[0];
+        const newLeft = touch.clientX - developerPanelOffset.x;
+        const newTop = touch.clientY - developerPanelOffset.y;
+        
+        panel.style.left = `${newLeft}px`;
+        panel.style.top = `${newTop}px`;
+        e.preventDefault();
+    }, { passive: false });
+    
     document.addEventListener('mouseup', () => {
+        developerPanelDragging = false;
+        if (header) {
+            header.style.cursor = 'move';
+        }
+    });
+    
+    document.addEventListener('touchend', () => {
         developerPanelDragging = false;
         if (header) {
             header.style.cursor = 'move';
@@ -3626,6 +3801,7 @@ function handleSquadLeaderBehavior(iconData) {
     const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
     
     const battleArea = document.getElementById('battleArea');
+    const battleZone = document.getElementById(`player${iconData.player}BattleZone`);
     const rect = battleArea.getBoundingClientRect();
     
     if (enemies.length > 0) {
@@ -3663,12 +3839,12 @@ function handleSquadLeaderBehavior(iconData) {
             }
         }
     } else {
-        const centerX = iconData.player === 1 ? rect.width * 0.25 : rect.width * 0.75;
-        const centerY = rect.height * 0.5;
+        const territoryCenterX = battleZone.offsetLeft + battleZone.offsetWidth / 2;
+        const territoryCenterY = battleZone.offsetTop + battleZone.offsetHeight / 2;
         
         if (checkAllMembersInRange(iconData, members, monitorRange)) {
-            iconData.targetX = centerX;
-            iconData.targetY = centerY;
+            iconData.targetX = territoryCenterX;
+            iconData.targetY = territoryCenterY;
             moveTowardsTarget(iconData);
         }
     }
@@ -3906,6 +4082,7 @@ function initFilterTabs() {
 
 function calculateFormationPositions(player) {
     const battleArea = document.getElementById('battleArea');
+    const battleZone = document.getElementById(`player${player}BattleZone`);
     const rect = battleArea.getBoundingClientRect();
     const icons = battleIcons[`player${player}`].filter(icon => !icon.isDead && icon.weapon.type !== 'heal');
     
@@ -3920,16 +4097,11 @@ function calculateFormationPositions(player) {
     const formationWidth = cols * (iconSize + spacing) - spacing;
     const formationHeight = rows * (iconSize + spacing) - spacing;
     
-    const centerY = rect.height / 2;
+    const territoryCenterX = battleZone.offsetLeft + battleZone.offsetWidth / 2;
+    const territoryCenterY = battleZone.offsetTop + battleZone.offsetHeight / 2;
     
-    let startX;
-    if (player === 1) {
-        startX = rect.width * 0.3 - formationWidth / 2 + iconSize / 2;
-    } else {
-        startX = rect.width * 0.7 - formationWidth / 2 + iconSize / 2;
-    }
-    
-    const startY = centerY - formationHeight / 2 + iconSize / 2;
+    const startX = territoryCenterX - formationWidth / 2 + iconSize / 2;
+    const startY = territoryCenterY - formationHeight / 2 + iconSize / 2;
     
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
@@ -4598,6 +4770,384 @@ function showExplosionEffect(x, y, radius) {
         explosion.remove();
         ring.remove();
     }, 500);
+}
+
+let activeMobilePanel = null;
+
+function setupMobileTabs() {
+    const mobileTabs = document.getElementById('mobileTabs');
+    if (!mobileTabs) return;
+    
+    const tabs = mobileTabs.querySelectorAll('.mobile-tab');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            handleTabClick(tab);
+        });
+        
+        tab.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleTabClick(tab);
+        }, { passive: false });
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (activeMobilePanel && !e.target.closest('.mobile-tabs')) {
+            if (activeMobilePanel === 'readyarea') {
+                if (!e.target.closest('.ready-close-btn')) {
+                    return;
+                }
+                hideAllPanels();
+            } else {
+                if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.options-panel')) {
+                    hideAllPanels();
+                }
+            }
+        }
+    });
+    
+    document.addEventListener('touchstart', (e) => {
+        if (activeMobilePanel && !e.target.closest('.mobile-tabs')) {
+            if (activeMobilePanel === 'readyarea') {
+                if (!e.target.closest('.ready-close-btn')) {
+                    return;
+                }
+                hideAllPanels();
+            } else {
+                if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.options-panel')) {
+                    hideAllPanels();
+                }
+            }
+        }
+    }, { passive: false });
+}
+
+function handleTabClick(tab) {
+    const panelId = tab.dataset.panel;
+    
+    hideAllPanels();
+    
+    tab.classList.add('active');
+    
+    switch(panelId) {
+        case 'battleInfo':
+            showBattleInfoPanel();
+            break;
+        case 'iconsStats':
+            showIconsStatsPanel();
+            break;
+        case 'readyarea':
+            showReadyAreaPanel();
+            break;
+        case 'options':
+            showOptionsPanel();
+            break;
+    }
+}
+
+function hideAllPanels() {
+    const battleInfoWrapper = document.getElementById('battleInfoWrapper');
+    const readyArea = document.getElementById('readyarea');
+    const mobileTabs = document.getElementById('mobileTabs');
+    
+    if (battleInfoWrapper) {
+        battleInfoWrapper.classList.remove('show');
+    }
+    
+    if (readyArea) {
+        readyArea.classList.remove('show');
+        const closeBtn = readyArea.querySelector('.ready-close-btn');
+        if (closeBtn) {
+            closeBtn.remove();
+        }
+    }
+    
+    removeIconsStatsPanel();
+    removeOptionsPanel();
+    
+    if (mobileTabs) {
+        const tabs = mobileTabs.querySelectorAll('.mobile-tab');
+        tabs.forEach(tab => tab.classList.remove('active'));
+    }
+    
+    activeMobilePanel = null;
+}
+
+function showBattleInfoPanel() {
+    const battleInfoWrapper = document.getElementById('battleInfoWrapper');
+    if (battleInfoWrapper) {
+        battleInfoWrapper.classList.add('show');
+        activeMobilePanel = 'battleInfo';
+    }
+}
+
+function showIconsStatsPanel() {
+    removeIconsStatsPanel();
+    
+    const player1Stats = document.getElementById('player1Stats');
+    const player2Stats = document.getElementById('player2Stats');
+    
+    if (!player1Stats || !player2Stats) return;
+    
+    const panel = document.createElement('div');
+    panel.className = 'icons-stats-panel';
+    
+    const player1Column = document.createElement('div');
+    player1Column.className = 'icons-stats-column';
+    
+    const player1Title = document.createElement('h3');
+    player1Title.textContent = '玩家1状态';
+    player1Column.appendChild(player1Title);
+    
+    const player1Content = document.createElement('div');
+    player1Content.className = 'icons-stats-content';
+    player1Content.innerHTML = player1Stats.innerHTML;
+    player1Column.appendChild(player1Content);
+    
+    const player2Column = document.createElement('div');
+    player2Column.className = 'icons-stats-column';
+    
+    const player2Title = document.createElement('h3');
+    player2Title.textContent = '玩家2状态';
+    player2Column.appendChild(player2Title);
+    
+    const player2Content = document.createElement('div');
+    player2Content.className = 'icons-stats-content';
+    player2Content.innerHTML = player2Stats.innerHTML;
+    player2Column.appendChild(player2Content);
+    
+    panel.appendChild(player1Column);
+    panel.appendChild(player2Column);
+    
+    document.body.appendChild(panel);
+    panel.classList.add('show');
+    
+    activeMobilePanel = 'iconsStats';
+    
+    updateIconsStatsPanel();
+}
+
+function updateIconsStatsPanel() {
+    const panel = document.querySelector('.icons-stats-panel');
+    if (!panel) return;
+    
+    const player1Stats = document.getElementById('player1Stats');
+    const player2Stats = document.getElementById('player2Stats');
+    
+    if (!player1Stats || !player2Stats) return;
+    
+    const player1Column = panel.querySelector('.icons-stats-column:nth-child(1) .icons-stats-content');
+    const player2Column = panel.querySelector('.icons-stats-column:nth-child(2) .icons-stats-content');
+    
+    if (player1Column) {
+        player1Column.innerHTML = player1Stats.innerHTML;
+    }
+    
+    if (player2Column) {
+        player2Column.innerHTML = player2Stats.innerHTML;
+    }
+}
+
+function removeIconsStatsPanel() {
+    const iconsStatsPanel = document.querySelector('.icons-stats-panel');
+    if (iconsStatsPanel) {
+        iconsStatsPanel.remove();
+    }
+}
+
+function showPlayerStatsPanel(player) {
+    removePlayerStatsPanels();
+    
+    const statsInfo = document.getElementById(`player${player}Stats`);
+    if (!statsInfo) return;
+    
+    const panel = document.createElement('div');
+    panel.className = `player${player}-stats-panel`;
+    panel.innerHTML = statsInfo.innerHTML;
+    
+    document.body.appendChild(panel);
+    panel.classList.add('show');
+    
+    activeMobilePanel = `player${player}Stats`;
+}
+
+function removePlayerStatsPanels() {
+    const player1Panel = document.querySelector('.player1-stats-panel');
+    const player2Panel = document.querySelector('.player2-stats-panel');
+    
+    if (player1Panel) {
+        player1Panel.remove();
+    }
+    
+    if (player2Panel) {
+        player2Panel.remove();
+    }
+}
+
+function showReadyAreaPanel() {
+    const readyArea = document.getElementById('readyarea');
+    if (readyArea) {
+        readyArea.classList.add('show');
+        activeMobilePanel = 'readyarea';
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'ready-close-btn';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            readyArea.classList.remove('show');
+            activeMobilePanel = null;
+        };
+        
+        readyArea.appendChild(closeBtn);
+    }
+}
+
+function showOptionsPanel() {
+    removeOptionsPanel();
+    
+    const optionsDropdown = document.getElementById('optionsDropdown');
+    if (!optionsDropdown) return;
+    
+    const panel = document.createElement('div');
+    panel.className = 'options-panel';
+    panel.innerHTML = optionsDropdown.innerHTML;
+    
+    document.body.appendChild(panel);
+    panel.classList.add('show');
+    
+    activeMobilePanel = 'options';
+    
+    // 重新绑定所有选项的事件
+    const squadBattleModeCheckbox = panel.querySelector('#squadBattleMode');
+    if (squadBattleModeCheckbox) {
+        squadBattleModeCheckbox.checked = document.getElementById('squadBattleMode').checked;
+        squadBattleModeCheckbox.onchange = function() {
+            squadBattleMode = this.checked;
+            document.getElementById('squadBattleMode').checked = this.checked;
+            if (squadBattleMode) {
+                selectSquadLeaders();
+            } else {
+                clearSquadLeaders();
+            }
+        };
+    }
+    
+    const autoAddRandomCheckbox = panel.querySelector('#autoAddRandom');
+    if (autoAddRandomCheckbox) {
+        autoAddRandomCheckbox.checked = document.getElementById('autoAddRandom').checked;
+        autoAddRandomCheckbox.onchange = function() {
+            autoAddRandomEnabled = this.checked;
+            document.getElementById('autoAddRandom').checked = this.checked;
+        };
+    }
+    
+    const autoDeployCheckbox = panel.querySelector('#autoDeploy');
+    if (autoDeployCheckbox) {
+        autoDeployCheckbox.checked = document.getElementById('autoDeploy').checked;
+        autoDeployCheckbox.onchange = function() {
+            autoDeployEnabled = this.checked;
+            document.getElementById('autoDeploy').checked = this.checked;
+        };
+    }
+    
+    const hideBattleInfoCheckbox = panel.querySelector('#hideBattleInfo');
+    if (hideBattleInfoCheckbox) {
+        hideBattleInfoCheckbox.checked = document.getElementById('hideBattleInfo').checked;
+        hideBattleInfoCheckbox.onchange = function() {
+            const hideBattleInfo = this.checked;
+            const battleInfoWrapper = document.getElementById('battleInfoWrapper');
+            document.getElementById('hideBattleInfo').checked = this.checked;
+            if (hideBattleInfo) {
+                battleInfoWrapper.classList.add('hidden');
+            } else {
+                battleInfoWrapper.classList.remove('hidden');
+            }
+        };
+    }
+    
+    const hideStatsCheckbox = panel.querySelector('#hideStats');
+    if (hideStatsCheckbox) {
+        hideStatsCheckbox.checked = document.getElementById('hideStats').checked;
+        hideStatsCheckbox.onchange = function() {
+            const hideStats = this.checked;
+            const player1Stats = document.getElementById('player1Stats');
+            const player2Stats = document.getElementById('player2Stats');
+            document.getElementById('hideStats').checked = this.checked;
+            if (hideStats) {
+                player1Stats.classList.add('hidden');
+                player2Stats.classList.add('hidden');
+            } else {
+                player1Stats.classList.remove('hidden');
+                player2Stats.classList.remove('hidden');
+            }
+        };
+    }
+    
+    const hideReadyAreaCheckbox = panel.querySelector('#hideReadyArea');
+    if (hideReadyAreaCheckbox) {
+        hideReadyAreaCheckbox.checked = document.getElementById('hideReadyArea').checked;
+        hideReadyAreaCheckbox.onchange = function() {
+            const hideReadyArea = this.checked;
+            const readyArea = document.getElementById('readyarea');
+            document.getElementById('hideReadyArea').checked = this.checked;
+            if (hideReadyArea) {
+                readyArea.classList.add('hidden');
+            } else {
+                readyArea.classList.remove('hidden');
+            }
+        };
+    }
+    
+    const pauseGameCheckbox = panel.querySelector('#pauseGame');
+    if (pauseGameCheckbox) {
+        pauseGameCheckbox.checked = document.getElementById('pauseGame').checked;
+        pauseGameCheckbox.onchange = function() {
+            gamePaused = this.checked;
+            document.getElementById('pauseGame').checked = this.checked;
+        };
+    }
+    
+    const fullscreenModeCheckbox = panel.querySelector('#fullscreenMode');
+    if (fullscreenModeCheckbox) {
+        fullscreenModeCheckbox.checked = document.getElementById('fullscreenMode').checked;
+        fullscreenModeCheckbox.onchange = function() {
+            document.getElementById('fullscreenMode').checked = this.checked;
+            if (this.checked) {
+                document.documentElement.requestFullscreen().catch(err => console.log(err));
+            } else {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                }
+            }
+        };
+    }
+    
+    const gameSpeedLabel = panel.querySelector('#gameSpeed');
+    if (gameSpeedLabel) {
+        gameSpeedLabel.textContent = document.getElementById('gameSpeed').textContent;
+        gameSpeedLabel.parentElement.onclick = function() {
+            if (gameSpeed === 1) {
+                gameSpeed = 2;
+                gameSpeedText = '2x倍速';
+            } else if (gameSpeed === 2) {
+                gameSpeed = 4;
+                gameSpeedText = '4x倍速';
+            } else {
+                gameSpeed = 1;
+                gameSpeedText = '1x倍速';
+            }
+            this.querySelector('#gameSpeed').textContent = gameSpeedText;
+            document.getElementById('gameSpeed').textContent = gameSpeedText;
+        };
+    }
+}
+
+function removeOptionsPanel() {
+    const optionsPanel = document.querySelector('.options-panel');
+    if (optionsPanel) {
+        optionsPanel.remove();
+    }
 }
 
 window.addEventListener('load', init);

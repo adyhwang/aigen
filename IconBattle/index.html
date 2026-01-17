@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>图标大战</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -49,7 +49,7 @@
                 </div>
             </div>
             
-            <div class="options-container">
+            <div class="options-container" id="optionsContainer">
                 <button class="btn-options" onclick="toggleOptions()">选项</button>
                 <div class="options-dropdown" id="optionsDropdown">
                     <label class="option-item">
@@ -64,15 +64,15 @@
                         <input type="checkbox" id="autoDeploy" onchange="toggleAutoDeploy()">
                         <span>自动参战</span>
                     </label>
-                    <label class="option-item">
+                    <label class="option-item hide-option">
                         <input type="checkbox" id="hideBattleInfo" onchange="toggleHideBattleInfo()">
                         <span>隐藏战斗信息</span>
                     </label>
-                    <label class="option-item">
+                    <label class="option-item hide-option">
                         <input type="checkbox" id="hideStats" onchange="toggleHideStats()">
                         <span>隐藏玩家状态</span>
                     </label>
-                    <label class="option-item">
+                    <label class="option-item hide-option">
                         <input type="checkbox" id="hideReadyArea" onchange="toggleHideReadyArea()">
                         <span>隐藏玩家待命区</span>
                     </label>
@@ -123,6 +123,13 @@
                     <div class="drop-hint">批量拖入图标到此处</div>
                 </div>
             </div>
+        </div>
+
+        <div class="mobile-tabs" id="mobileTabs">
+            <button class="mobile-tab" data-panel="battleInfo">战斗信息</button>
+            <button class="mobile-tab" data-panel="iconsStats">图标状态</button>
+            <button class="mobile-tab" data-panel="readyarea">待命区</button>
+            <button class="mobile-tab" data-panel="options">选项</button>
         </div>
     </div>
 
