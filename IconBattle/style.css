@@ -2369,6 +2369,12 @@ body {
         100% { transform: scale(0.6) rotate(-90deg); opacity: 0.3; transform-origin: 50% 150%; }
     }
 
+    @keyframes shake-portrait {
+        0%, 100% { transform: scale(0.6) translateX(0); }
+        25% { transform: scale(0.6) translateX(-5px); }
+        75% { transform: scale(0.6) translateX(5px); }
+    }
+
     .battle-info-wrapper {
         position: fixed;
         bottom: 60px;

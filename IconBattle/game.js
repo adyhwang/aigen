@@ -1404,7 +1404,9 @@ function createSmashEffect(attacker, defender, battleArea) {
     const effect = createBaseEffect(attacker, defender, battleArea, 'smash-effect', { scale: 1.5, removeDelay: GAME_CONFIG.timing.mediumDelay });
     
     // 添加震动效果到目标
-    defender.element.style.animation = 'shake 0.5s ease-in-out';
+    const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+    const shakeAnimation = isPortrait ? 'shake-portrait' : 'shake';
+    defender.element.style.animation = `${shakeAnimation} 0.5s ease-in-out`;
     setTimeout(() => {
         defender.element.style.animation = '';
     }, 500);
