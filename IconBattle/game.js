@@ -2649,7 +2649,16 @@ function gameLoop() {
     battleIcons.player1.forEach(iconData => {
         if (iconData.isDead || iconData.stats.health >= iconData.stats.maxHealth) return;
         
-        const isInTerritory = iconData.x < battleAreaRect.width / 2;
+        const player1BattleZone = document.getElementById('player1BattleZone');
+        const zoneRect = player1BattleZone.getBoundingClientRect();
+        const battleAreaRect = battleArea.getBoundingClientRect();
+        
+        const isInTerritory = 
+            iconData.x >= zoneRect.left - battleAreaRect.left &&
+            iconData.x <= zoneRect.right - battleAreaRect.left &&
+            iconData.y >= zoneRect.top - battleAreaRect.top &&
+            iconData.y <= zoneRect.bottom - battleAreaRect.top;
+        
         if (isInTerritory && currentTime - iconData.lastHealTime >= GAME_CONFIG.timing.territoryHealIntervalPlayer1 / gameSpeed) {
             iconData.stats.health = Math.min(iconData.stats.maxHealth, iconData.stats.health + 1);
             iconData.lastHealTime = currentTime;
@@ -2660,7 +2669,16 @@ function gameLoop() {
     battleIcons.player2.forEach(iconData => {
         if (iconData.isDead || iconData.stats.health >= iconData.stats.maxHealth) return;
         
-        const isInTerritory = iconData.x >= battleAreaRect.width / 2;
+        const player2BattleZone = document.getElementById('player2BattleZone');
+        const zoneRect = player2BattleZone.getBoundingClientRect();
+        const battleAreaRect = battleArea.getBoundingClientRect();
+        
+        const isInTerritory = 
+            iconData.x >= zoneRect.left - battleAreaRect.left &&
+            iconData.x <= zoneRect.right - battleAreaRect.left &&
+            iconData.y >= zoneRect.top - battleAreaRect.top &&
+            iconData.y <= zoneRect.bottom - battleAreaRect.top;
+        
         if (isInTerritory && currentTime - iconData.lastHealTime >= GAME_CONFIG.timing.territoryHealIntervalPlayer2 / gameSpeed) {
             iconData.stats.health = Math.min(iconData.stats.maxHealth, iconData.stats.health + 1);
             iconData.lastHealTime = currentTime;
