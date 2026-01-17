@@ -875,10 +875,10 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
     weaponWrapper.dataset.defaultDirection = weaponData.defaultDirection;
     
     if (player === 1) {
-        weaponWrapper.style.right = '-30px';
+        weaponWrapper.style.right = `${-30 * iconSize}px`;
         weaponWrapper.style.left = 'auto';
     } else {
-        weaponWrapper.style.left = '-30px';
+        weaponWrapper.style.left = `${-30 * iconSize}px`;
         weaponWrapper.style.right = 'auto';
     }
     
@@ -1360,21 +1360,19 @@ function createBaseEffect(attacker, defender, battleArea, className, options = {
     const effect = document.createElement('div');
     effect.className = `weapon-effect ${className}`;
     
-    const effectX = defender.x + 40 * iconSize;
-    const effectY = defender.y + 40 * iconSize;
+    const effectX = defender.x + 40;
+    const effectY = defender.y + 40;
     
     effect.style.left = `${effectX}px`;
     effect.style.top = `${effectY}px`;
+    effect.style.setProperty('--icon-size', iconSize);
     
-    // 应用可选样式
-    if (options.scale) effect.style.transform = `scale(${options.scale})`;
     if (options.opacity) effect.style.opacity = options.opacity;
     if (options.color) effect.style.color = options.color;
     if (options.backgroundColor) effect.style.backgroundColor = options.backgroundColor;
     
     battleArea.appendChild(effect);
     
-    // 设置移除时间
     const removeDelay = options.removeDelay || GAME_CONFIG.timing.shortDelay;
     setTimeout(() => {
         effect.remove();
@@ -1408,9 +1406,10 @@ function createChopEffect(attacker, defender, battleArea) {
 }
 
 function createSmashEffect(attacker, defender, battleArea) {
-    const effect = createBaseEffect(attacker, defender, battleArea, 'smash-effect', { scale: 1.5, removeDelay: GAME_CONFIG.timing.mediumDelay });
+    const effect = createBaseEffect(attacker, defender, battleArea, 'smash-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
     
-    // 添加震动效果到目标
+    effect.style.setProperty('--icon-size', iconSize * 1.5);
+    
     const isPortrait = window.matchMedia('(orientation: portrait)').matches;
     const shakeAnimation = isPortrait ? 'shake-portrait' : 'shake';
     defender.element.style.animation = `${shakeAnimation} 0.5s ease-in-out`;
@@ -1438,7 +1437,6 @@ function createBulletEffect(attacker, defender, battleArea) {
 function createLightningSingleEffect(attacker, defender, battleArea) {
     const effect = createBaseEffect(attacker, defender, battleArea, 'lightning-single-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
     
-    // 添加多个闪电分支
     for (let i = 0; i < 3; i++) {
         setTimeout(() => {
             const branch = document.createElement('div');
@@ -1454,7 +1452,6 @@ function createLightningSingleEffect(attacker, defender, battleArea) {
 function createFireSingleEffect(attacker, defender, battleArea) {
     const effect = createBaseEffect(attacker, defender, battleArea, 'fire-single-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
     
-    // 添加火焰粒子效果
     for (let i = 0; i < 5; i++) {
         setTimeout(() => {
             const particle = document.createElement('div');
@@ -1471,7 +1468,6 @@ function createFireSingleEffect(attacker, defender, battleArea) {
 function createHealEffect(attacker, defender, battleArea) {
     const effect = createBaseEffect(attacker, defender, battleArea, 'heal-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
     
-    // 添加治疗粒子效果
     for (let i = 0; i < 6; i++) {
         setTimeout(() => {
             const particle = document.createElement('div');
@@ -1983,10 +1979,11 @@ function showAOEExplosion(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     const explosion = document.createElement('div');
     explosion.className = 'aoe-explosion';
-    explosion.style.left = `${x - radius}px`;
-    explosion.style.top = `${y - radius}px`;
+    explosion.style.left = `${x + 40 - radius}px`;
+    explosion.style.top = `${y + 40 - radius}px`;
     explosion.style.width = `${radius * 2}px`;
     explosion.style.height = `${radius * 2}px`;
+    explosion.style.setProperty('--icon-size', iconSize);
     battleArea.appendChild(explosion);
     
     setTimeout(() => {
@@ -1998,10 +1995,11 @@ function showLightningEffect(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     const lightning = document.createElement('div');
     lightning.className = 'lightning-effect';
-    lightning.style.left = `${x - radius}px`;
-    lightning.style.top = `${y - radius}px`;
+    lightning.style.left = `${x + 40 - radius}px`;
+    lightning.style.top = `${y + 40 - radius}px`;
     lightning.style.width = `${radius * 2}px`;
     lightning.style.height = `${radius * 2}px`;
+    lightning.style.setProperty('--icon-size', iconSize);
     battleArea.appendChild(lightning);
     
     const numBolts = 5;
@@ -2030,10 +2028,11 @@ function showFireEffect(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     const fire = document.createElement('div');
     fire.className = 'fire-effect';
-    fire.style.left = `${x - radius}px`;
-    fire.style.top = `${y - radius}px`;
+    fire.style.left = `${x + 40 - radius}px`;
+    fire.style.top = `${y + 40 - radius}px`;
     fire.style.width = `${radius * 2}px`;
     fire.style.height = `${radius * 2}px`;
+    fire.style.setProperty('--icon-size', iconSize);
     battleArea.appendChild(fire);
     
     const numFlames = 8;
@@ -2268,6 +2267,7 @@ function showSoundWaveEffect(x, y, radius) {
                 ring.style.width = `${currentRadius * 2}px`;
                 ring.style.height = `${currentRadius * 2}px`;
                 ring.style.opacity = 1 - progress;
+                ring.style.transform = `translate(-50%, -50%) scale(${iconSize})`;
                 
                 if (progress < 1) {
                     requestAnimationFrame(animateRing);
@@ -2289,10 +2289,12 @@ function showIceEffect(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     const iceEffect = document.createElement('div');
     iceEffect.className = 'ice-effect';
-    iceEffect.style.left = `${x - radius}px`;
-    iceEffect.style.top = `${y - radius}px`;
+    iceEffect.style.left = `${x + 40 - radius}px`;
+    iceEffect.style.top = `${y + 40 - radius}px`;
     iceEffect.style.width = `${radius * 2}px`;
     iceEffect.style.height = `${radius * 2}px`;
+    iceEffect.style.setProperty('--icon-size', iconSize);
+    iceEffect.style.setProperty('--ice-radius', radius);
     battleArea.appendChild(iceEffect);
     
     const numRings = 4;
@@ -2318,6 +2320,7 @@ function showIceEffect(x, y, radius) {
                 ring.style.width = `${currentRadius * 2}px`;
                 ring.style.height = `${currentRadius * 2}px`;
                 ring.style.opacity = 1 - progress;
+                ring.style.transform = `translate(-50%, -50%) scale(${iconSize})`;
                 
                 if (progress < 1) {
                     requestAnimationFrame(animateRing);
@@ -2347,7 +2350,7 @@ function showIceEffect(x, y, radius) {
         
         particle.style.left = `${50 + startX}%`;
         particle.style.top = `${50 + startY}%`;
-        particle.style.transform = 'translate(-50%, -50%)';
+        particle.style.transform = `translate(-50%, -50%) scale(${iconSize})`;
         iceParticles.appendChild(particle);
     }
     
@@ -2360,10 +2363,12 @@ function showBuffEffect(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     const buffEffect = document.createElement('div');
     buffEffect.className = 'buff-effect';
-    buffEffect.style.left = `${x - radius}px`;
-    buffEffect.style.top = `${y - radius}px`;
+    buffEffect.style.left = `${x + 40 - radius}px`;
+    buffEffect.style.top = `${y + 40 - radius}px`;
     buffEffect.style.width = `${radius * 2}px`;
     buffEffect.style.height = `${radius * 2}px`;
+    buffEffect.style.setProperty('--icon-size', iconSize);
+    buffEffect.style.setProperty('--buff-radius', radius);
     battleArea.appendChild(buffEffect);
     
     const numRings = 4;
@@ -2418,7 +2423,7 @@ function showBuffEffect(x, y, radius) {
         
         particle.style.left = `${50 + startX}%`;
         particle.style.top = `${50 + startY}%`;
-        particle.style.transform = 'translate(-50%, -50%)';
+        particle.style.transform = `translate(-50%, -50%) scale(${iconSize})`;
         buffParticles.appendChild(particle);
     }
     
@@ -3808,8 +3813,8 @@ function calculateSquadFormation(leader, members) {
 }
 
 function getMonitorRange(memberCount) {
-    const baseRange = 350 / iconSize;
-    const additionalRange = Math.floor(memberCount / 8) * 40 / iconSize;
+    const baseRange = 350 ;
+    const additionalRange = Math.floor(memberCount / 8) * 40 ;
     return baseRange + additionalRange;
 }
 
@@ -3918,7 +3923,7 @@ function handleSquadMemberBehavior(iconData) {
         });
     }
     
-    if (nearestEnemyDistance < 450 / iconSize) {
+    if (nearestEnemyDistance < 450) {
         const effectiveRange = iconData.weapon.range * iconSize;
         const enemiesInRange = enemies.filter(enemy => {
             const dx = enemy.x - iconData.x;
@@ -4753,12 +4758,14 @@ function executeRocketExplosion(iconData) {
 function showExplosionEffect(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     
-    // 创建爆炸效果元素
+    const centerX = x + 40;
+    const centerY = y + 40;
+    
     const explosion = document.createElement('div');
     explosion.className = 'explosion-effect';
     explosion.style.position = 'absolute';
-    explosion.style.left = `${x}px`;
-    explosion.style.top = `${y}px`;
+    explosion.style.left = `${centerX}px`;
+    explosion.style.top = `${centerY}px`;
     explosion.style.width = `${radius * 2}px`;
     explosion.style.height = `${radius * 2}px`;
     explosion.style.borderRadius = '50%';
@@ -4770,12 +4777,11 @@ function showExplosionEffect(x, y, radius) {
     
     battleArea.appendChild(explosion);
     
-    // 创建爆炸环效果
     const ring = document.createElement('div');
     ring.className = 'explosion-ring';
     ring.style.position = 'absolute';
-    ring.style.left = `${x}px`;
-    ring.style.top = `${y}px`;
+    ring.style.left = `${centerX}px`;
+    ring.style.top = `${centerY}px`;
     ring.style.width = '20px';
     ring.style.height = '20px';
     ring.style.borderRadius = '50%';
@@ -4783,6 +4789,8 @@ function showExplosionEffect(x, y, radius) {
     ring.style.transform = 'translate(-50%, -50%)';
     ring.style.pointerEvents = 'none';
     ring.style.zIndex = GAME_CONFIG.ui.explosionZIndex + 1;
+    ring.style.setProperty('--icon-size', iconSize);
+    ring.style.setProperty('--ring-radius', radius / 10);
     ring.style.animation = 'ring-expand 0.5s ease-out forwards';
     
     battleArea.appendChild(ring);
@@ -4794,27 +4802,27 @@ function showExplosionEffect(x, y, radius) {
         style.textContent = `
             @keyframes explosion {
                 0% {
-                    transform: translate(-50%, -50%) scale(0);
+                    transform: translate(-50%, -50%) scale(calc(0 * var(--icon-size, 1)));
                     opacity: 1;
                 }
                 50% {
-                    transform: translate(-50%, -50%) scale(1.2);
+                    transform: translate(-50%, -50%) scale(calc(1.2 * var(--icon-size, 1)));
                     opacity: 0.8;
                 }
                 100% {
-                    transform: translate(-50%, -50%) scale(1);
+                    transform: translate(-50%, -50%) scale(calc(1 * var(--icon-size, 1)));
                     opacity: 0;
                 }
             }
             
             @keyframes ring-expand {
                 0% {
-                    transform: translate(-50%, -50%) scale(1);
+                    transform: translate(-50%, -50%) scale(calc(1 * var(--icon-size, 1)));
                     opacity: 1;
                     border-width: 3px;
                 }
                 100% {
-                    transform: translate(-50%, -50%) scale(${radius / 10});
+                    transform: translate(-50%, -50%) scale(calc(var(--ring-radius, 1) * var(--icon-size, 1)));
                     opacity: 0;
                     border-width: 1px;
                 }
