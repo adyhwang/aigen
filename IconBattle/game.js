@@ -820,10 +820,10 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
     
     // 计算脚的精确位置，用于死亡动画的旋转支点
     // 主图标高度80px，腿底部在主图标底部下方40px
-    // 所以脚的位置在主图标顶部下方120px处
-    // 注意：transform-origin是相对于元素本身的位置，不随缩放变化
-    const footPositionFromTop = 80 + 40; // 120px
-    battleIcon.style.setProperty('--foot-position', footPositionFromTop);
+    // 实际观察调整：增加10px偏移让旋转支点更靠近地面
+    const footPositionFromTop = 80 + 40 + 10; // 130px
+    const scaledFootPosition = footPositionFromTop * iconSize;
+    battleIcon.style.setProperty('--foot-position', scaledFootPosition);
     
     const healthBar = document.createElement('div');
     healthBar.className = 'health-bar';
