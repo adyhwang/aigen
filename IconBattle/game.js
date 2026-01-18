@@ -2665,8 +2665,25 @@ function findNearestEnemy(iconData) {
 
 // 游戏主循环函数，负责驱动游戏的所有更新逻辑
 // 使用requestAnimationFrame实现平滑的游戏更新
-function gameLoop() {
+const TARGET_FPS = 60;
+const FRAME_INTERVAL = 1000 / TARGET_FPS;
+let lastFrameTime = 0;
+
+function gameLoop(timestamp) {
+    // 计算自上次更新以来的时间
+    const elapsed = timestamp - lastFrameTime;
+    
     if (gamePaused) {
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+    
+    // 确保帧率不超过60fps
+    if (elapsed >= FRAME_INTERVAL) {
+        // 更新上次更新时间
+        lastFrameTime = timestamp - (elapsed % FRAME_INTERVAL);
+    } else {
+        // 如果时间间隔不够，继续等待
         requestAnimationFrame(gameLoop);
         return;
     }
@@ -3196,7 +3213,7 @@ function deployAllIcons(player) {
 
 function init() {
     setupBattleZoneDrop();
-    gameLoop();
+    requestAnimationFrame(gameLoop);
     initBattleInfoDrag();
     initFilterTabs();
     setupMobileTabs();
