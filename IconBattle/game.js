@@ -818,6 +818,13 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
     battleIcon.style.transform = `scale(${iconSize})`;
     battleIcon.style.setProperty('--icon-size', iconSize);
     
+    // 计算脚的精确位置，用于死亡动画的旋转支点
+    // 主图标高度80px，腿底部在主图标底部下方40px
+    // 所以脚的位置在主图标顶部下方120px处
+    // 注意：transform-origin是相对于元素本身的位置，不随缩放变化
+    const footPositionFromTop = 80 + 40; // 120px
+    battleIcon.style.setProperty('--foot-position', footPositionFromTop);
+    
     const healthBar = document.createElement('div');
     healthBar.className = 'health-bar';
     const healthBarFill = document.createElement('div');
@@ -1179,9 +1186,20 @@ function handleTargetDeath(attacker, target) {
         playSound('death');
         target.isDead = true;
         target.hasBeenKilled = true;
+        
+        // 确定倒地方向：根据攻击者位置
         target.element.classList.add('dead');
+        if (attacker.x < target.x) {
+            // 攻击者在左侧，目标向右倒
+            target.element.classList.add('fall-right');
+        } else {
+            // 攻击者在右侧，目标向左倒
+            target.element.classList.add('fall-left');
+        }
         target.element.classList.remove('moving');
         target.element.classList.remove('attacking');
+        target.element.classList.remove('facing-right');
+        target.element.classList.remove('facing-left');
         
         if (target.listItem) {
             target.listItem.classList.add('dead');
@@ -1863,9 +1881,20 @@ function attack(attacker, defender) {
             playSound('death');  // 播放死亡音效
             target.isDead = true;  // 设置目标为死亡状态
             target.hasBeenKilled = true;  // 标记目标已被击杀
-            target.element.classList.add('dead');  // 添加死亡动画类
+            
+            // 确定倒地方向：根据攻击者位置
+            target.element.classList.add('dead');
+            if (attacker.x < target.x) {
+                // 攻击者在左侧，目标向右倒
+                target.element.classList.add('fall-right');
+            } else {
+                // 攻击者在右侧，目标向左倒
+                target.element.classList.add('fall-left');
+            }
             target.element.classList.remove('moving');  // 移除移动类
             target.element.classList.remove('attacking');  // 移除攻击类
+            target.element.classList.remove('facing-right');
+            target.element.classList.remove('facing-left');
             
             // 更新列表项状态
             if (target.listItem) {
@@ -2088,9 +2117,20 @@ function applyBurnEffect(target, attacker, damage) {
                 playSound('death');
                 target.isDead = true;
                 target.hasBeenKilled = true;
+                
+                // 确定倒地方向：根据攻击者位置
                 target.element.classList.add('dead');
+                if (attacker.x < target.x) {
+                    // 攻击者在左侧，目标向右倒
+                    target.element.classList.add('fall-right');
+                } else {
+                    // 攻击者在右侧，目标向左倒
+                    target.element.classList.add('fall-left');
+                }
                 target.element.classList.remove('moving');
                 target.element.classList.remove('attacking');
+                target.element.classList.remove('facing-right');
+                target.element.classList.remove('facing-left');
                 
                 if (target.listItem) {
                     target.listItem.classList.add('dead');
@@ -4685,9 +4725,20 @@ function executeRocketExplosion(iconData) {
                 enemy.stats.health = 0;
                 enemy.isDead = true;
                 enemy.hasBeenKilled = true;
+                
+                // 确定倒地方向：根据攻击者（自爆者）位置
                 enemy.element.classList.add('dead');
+                if (iconData.x < enemy.x) {
+                    // 攻击者在左侧，目标向右倒
+                    enemy.element.classList.add('fall-right');
+                } else {
+                    // 攻击者在右侧，目标向左倒
+                    enemy.element.classList.add('fall-left');
+                }
                 enemy.element.classList.remove('moving');
                 enemy.element.classList.remove('attacking');
+                enemy.element.classList.remove('facing-right');
+                enemy.element.classList.remove('facing-left');
                 playSound('death');
                 
                 if (enemy.listItem) {
@@ -4732,7 +4783,15 @@ function executeRocketExplosion(iconData) {
     // 自爆后死亡
     iconData.stats.health = 0;
     iconData.isDead = true;
+    
+    // 自爆者默认向右倒
     iconData.element.classList.add('dead');
+    iconData.element.classList.add('fall-right');
+    iconData.element.classList.remove('moving');
+    iconData.element.classList.remove('attacking');
+    iconData.element.classList.remove('facing-right');
+    iconData.element.classList.remove('facing-left');
+    
     iconData.isCharging = false;
     iconData.chargeTarget = null;
     
