@@ -16,7 +16,7 @@ let battleStats = {
 };
 
 // 战斗图标大小范围
-const iconSizes = [0.2, 5];
+const iconSizes = [0.2, 1.4];
 // 战斗图标默认大小
 let iconSize = 1;
 
@@ -3215,6 +3215,23 @@ function init() {
     setupBattleZoneDrop();
     requestAnimationFrame(gameLoop);
     initBattleInfoDrag();
+    
+    // 初始化滑块控件的最小值和最大值
+    const [minSize, maxSize] = iconSizes;
+    
+    // 更新桌面端滑块控件
+    const desktopSlider = document.getElementById('iconSizeSlider');
+    if (desktopSlider) {
+        desktopSlider.min = minSize;
+        desktopSlider.max = maxSize;
+    }
+    
+    // 更新移动端滑块控件
+    const mobileSlider = document.querySelector('.options-panel #iconSizeSlider');
+    if (mobileSlider) {
+        mobileSlider.min = minSize;
+        mobileSlider.max = maxSize;
+    }
     initFilterTabs();
     setupMobileTabs();
     
@@ -4085,7 +4102,8 @@ function toggleGameSpeed() {
 }
 
 function updateIconSize(value) {
-    iconSize = parseFloat(value);
+    const [minSize, maxSize] = iconSizes;
+    iconSize = Math.min(maxSize, Math.max(minSize, parseFloat(value)));
     
     const allIcons = document.querySelectorAll('.battle-icon');
     allIcons.forEach(icon => {
