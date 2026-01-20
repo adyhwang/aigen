@@ -137,8 +137,8 @@ const GAME_CONFIG = {
         { emoji: '🏹', name: '弓箭', attack: 7, type: 'ranged', range: 250, attackSpeed: 700, maxCharges: 1, cooldownTime: 1000, defaultDirection: 'right', effectType: 'arrow' },
         { emoji: '🔫', name: '枪', attack: 20, type: 'ranged', range: 300, attackSpeed: 550, maxCharges: 6, cooldownTime: 3000, defaultDirection: 'left', effectType: 'bullet' },
         { emoji: '🏐', name: '排球', attack: 7, type: 'ranged', range: 150, attackSpeed: 600, maxCharges: 3, cooldownTime: 1500, defaultDirection: 'right', knockbackDistance: 40, effectType: 'arrow' },
-        { emoji: '💣', name: '炸弹', attack: 25, type: 'aoe', range: 200, attackSpeed: 1000, maxCharges: 3, cooldownTime: 2000, defaultDirection: 'right', aoeRadius: 150, effectType: 'explosion' },
-        { emoji: '⚡', name: '闪电', attack: 16, type: 'ranged', range: 200, attackSpeed: 800, maxCharges: 2, cooldownTime: 3000, defaultDirection: 'top', ignoreDefense: true, effectType: 'lightning' },
+        { emoji: '💣', name: '炸弹', attack: 25, type: 'aoe', range: 180, attackSpeed: 1000, maxCharges: 2, cooldownTime: 2500, defaultDirection: 'right', aoeRadius: 120, effectType: 'explosion' },
+        { emoji: '⚡', name: '闪电', attack: 16, type: 'ranged', range: 170, attackSpeed: 800, maxCharges: 2, cooldownTime: 3000, defaultDirection: 'top', ignoreDefense: true, effectType: 'lightning' },
         { emoji: '🔥', name: '火', attack: 15, type: 'ranged', range: 180, attackSpeed: 500, maxCharges: 2, cooldownTime: 4000, defaultDirection: 'top', burnDuration: 5000, burnInterval: 500, effectType: 'fire' },
         { emoji: '🧊', name: '冰冻', attack: 7, type: 'aoe', range: 220, attackSpeed: 900, maxCharges: 1, cooldownTime: 2500, defaultDirection: 'right', aoeRadius: 120, freezeDuration: 1500, effectType: 'ice' },
         { emoji: '🍼', name: '奶瓶', attack: 1, heal: 18, type: 'heal', range: 200, attackSpeed: 1200, maxCharges: 4, cooldownTime: 2000, defaultDirection: 'top', effectType: 'heal' },
@@ -1933,27 +1933,19 @@ function applyAOEDamage(attacker, target) {
     
     if (attacker.weapon.emoji && attacker.weapon.emoji === '⚡') {
         playSound('lightning');
-        showLightningEffect(explosionX, explosionY, aoeRadius);
-        
-        // 使用addBattleInfo记录闪电攻击
+        showLightningEffect(explosionX, explosionY, aoeRadius);        
         addBattleInfo(attacker, target, 0, 'lightning');
     } else if (attacker.weapon.emoji && attacker.weapon.emoji === '🔥') {
         playSound('fire');
         showFireEffect(explosionX, explosionY, aoeRadius);
-        
-        // 使用addBattleInfo记录火焰攻击
         addBattleInfo(attacker, target, 0, 'fire');
     } else if (attacker.weapon.emoji && attacker.weapon.emoji === '🧊') {
         playSound('ice');
         showIceEffect(explosionX, explosionY, aoeRadius);
-        
-        // 使用addBattleInfo记录冰冻攻击
         addBattleInfo(attacker, target, 0, 'ice');
     } else {
         playSound('explosion');
         showAOEExplosion(explosionX, explosionY, aoeRadius);
-        
-        // 使用addBattleInfo记录爆炸攻击
         addBattleInfo(attacker, target, 0, 'explosion');
     }
     
@@ -1963,8 +1955,6 @@ function applyAOEDamage(attacker, target) {
             calculateDamage(attacker, target);
         
         addBattleInfo(attacker, target, damage);
-        
-        // 使用applyDamageEffects处理伤害效果
         applyDamageEffects(attacker, target, damage, attacker.weapon.effectType);
         
         // 处理火焰效果
@@ -1983,8 +1973,7 @@ function applyAOEDamage(attacker, target) {
             const distance = Math.sqrt(dx * dx + dy * dy);
             
             if (distance <= aoeRadius) {
-                const damage = calculateDamage(attacker, enemy);
-                
+                const damage = calculateDamage(attacker, enemy);                
                 addBattleInfo(attacker, enemy, damage);
                 
                 if (damage > 0) {
