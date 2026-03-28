@@ -272,6 +272,93 @@
                 border-radius: 2px;
                 transition: width 0.3s ease;
             }
+            /* 难度按钮 */
+            .difficulty-btn {
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                border: 2px solid transparent;
+                background: #f3f4f6;
+                color: #6b7280;
+            }
+            .difficulty-btn:hover {
+                background: #e5e7eb;
+            }
+            .difficulty-btn.active[data-difficulty="easy"] {
+                background: #D1FAE5;
+                border-color: #10B981;
+                color: #059669;
+            }
+            .difficulty-btn.active[data-difficulty="medium"] {
+                background: #FEF3C7;
+                border-color: #F59E0B;
+                color: #D97706;
+            }
+            .difficulty-btn.active[data-difficulty="hard"] {
+                background: #FEE2E2;
+                border-color: #EF4444;
+                color: #DC2626;
+            }
+            /* 主题按钮 */
+            .theme-btn {
+                background: transparent;
+            }
+            .theme-btn.active {
+                background: white;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            /* 深色模式 */
+            body.dark-mode {
+                background: #1a1a2e;
+                color: #e0e0e0;
+            }
+            body.dark-mode .bg-white,
+            body.dark-mode .setting-card {
+                background: #16213e;
+                color: #e0e0e0;
+            }
+            body.dark-mode .text-gray-800 {
+                color: #e0e0e0;
+            }
+            body.dark-mode .text-gray-700,
+            body.dark-mode .text-gray-600 {
+                color: #b0b0b0;
+            }
+            body.dark-mode .equation-container {
+                background: linear-gradient(135deg, #1e2a4a 0%, #16213e 100%);
+                border-color: #2a3f5f;
+            }
+            body.dark-mode .equation-input {
+                background: #0f172a;
+                border-color: #2a3f5f;
+                color: #e0e0e0;
+            }
+            body.dark-mode .modern-checkbox {
+                background: #1e2a4a;
+            }
+            body.dark-mode .modern-checkbox:has(input:checked) {
+                background: #312e81;
+            }
+            /* 护眼模式 */
+            body.eye-mode {
+                background: #f5f0e1;
+            }
+            body.eye-mode .bg-white,
+            body.eye-mode .setting-card {
+                background: #faf6e9;
+            }
+            body.eye-mode .equation-container {
+                background: linear-gradient(135deg, #f9f6e8 0%, #f0ebd8 100%);
+            }
+            body.eye-mode .equation-input {
+                background: #fffcf5;
+            }
+            @keyframes slideDown {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
         }
     </style>
 </head>
@@ -280,6 +367,18 @@
     <header class="bg-white shadow-sm py-3 px-4 md:px-6 flex justify-between items-center">
         <h1 class="text-2xl font-bold text-gray-800" id="header-title">四则运算练习</h1>
         <div class="flex items-center gap-3">
+            <!-- 主题切换 -->
+            <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                <button id="theme-light" class="theme-btn active p-2 rounded-md transition-all" title="浅色模式">
+                    <i class="fa fa-sun-o text-amber-500"></i>
+                </button>
+                <button id="theme-dark" class="theme-btn p-2 rounded-md transition-all" title="深色模式">
+                    <i class="fa fa-moon-o text-indigo-500"></i>
+                </button>
+                <button id="theme-eye" class="theme-btn p-2 rounded-md transition-all" title="护眼模式">
+                    <i class="fa fa-eye text-green-600"></i>
+                </button>
+            </div>
             <button id="fullscreen-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors" title="全屏">
                 <i class="fa fa-expand text-gray-600"></i>
             </button>
@@ -306,7 +405,23 @@
                     <div class="flex items-center gap-3">
                         <input type="number" id="num-questions" min="1" max="50" value="5" 
                             class="modern-number-input">
-                        <span class="text-sm text-gray-500">道</span>
+                        <span class="text-sm text-gray-500" id="unit-questions">道</span>
+                    </div>
+                </div>
+                
+                <!-- 难度选择 -->
+                <div class="setting-item">
+                    <label class="setting-label" id="label-difficulty">难度级别</label>
+                    <div class="flex gap-2">
+                        <button type="button" class="difficulty-btn active" data-difficulty="easy" id="btn-easy">
+                            🌱 简单
+                        </button>
+                        <button type="button" class="difficulty-btn" data-difficulty="medium" id="btn-medium">
+                            🌿 中等
+                        </button>
+                        <button type="button" class="difficulty-btn" data-difficulty="hard" id="btn-hard">
+                            🌳 困难
+                        </button>
                     </div>
                 </div>
                 
@@ -316,19 +431,19 @@
                     <div class="flex flex-wrap gap-2">
                         <label class="modern-checkbox">
                             <input type="checkbox" name="operators" value="+" checked>
-                            <span>+ 加法</span>
+                            <span id="op-add">+ 加法</span>
                         </label>
                         <label class="modern-checkbox">
                             <input type="checkbox" name="operators" value="-">
-                            <span>- 减法</span>
+                            <span id="op-subtract">- 减法</span>
                         </label>
                         <label class="modern-checkbox">
                             <input type="checkbox" name="operators" value="×">
-                            <span>× 乘法</span>
+                            <span id="op-multiply">× 乘法</span>
                         </label>
                         <label class="modern-checkbox">
                             <input type="checkbox" name="operators" value="÷">
-                            <span>÷ 除法</span>
+                            <span id="op-divide">÷ 除法</span>
                         </label>
                         <label class="modern-checkbox">
                             <input type="checkbox" name="operators" value="()">
@@ -343,7 +458,7 @@
                     <div class="flex items-center gap-3">
                         <input type="number" id="num-numbers" min="2" max="5" value="2" 
                             class="modern-number-input">
-                        <span class="text-sm text-gray-500">个</span>
+                        <span class="text-sm text-gray-500" id="unit-numbers">个</span>
                     </div>
                 </div>
                 
@@ -353,7 +468,7 @@
                     <div class="flex items-center gap-3">
                         <input type="number" id="max-digit-length" min="1" max="3" value="2" 
                             class="modern-number-input">
-                        <span class="text-sm text-gray-500">位</span>
+                        <span class="text-sm text-gray-500" id="unit-digits">位</span>
                     </div>
                 </div>
                 
@@ -417,6 +532,10 @@
                         <i class="fa fa-check-circle"></i>
                         <span id="btn-check-all">检查全部</span>
                     </button>
+                    <button id="show-answers-btn" class="toolbar-btn text-amber-600 border-amber-200 hover:border-amber-500">
+                        <i class="fa fa-eye"></i>
+                        <span id="btn-show-answers">显示答案</span>
+                    </button>
                     <button id="clear-answers-btn" class="toolbar-btn text-gray-600">
                         <i class="fa fa-eraser"></i>
                         <span id="btn-clear-answers">清空答案</span>
@@ -459,9 +578,6 @@
     
     <!-- 悬浮按钮 -->
     <div class="fixed right-4 bottom-4 flex flex-col gap-3 z-40">
-        <button id="show-answers-btn" class="fab bg-gradient-to-br from-amber-500 to-orange-500 text-white" title="显示答案">
-            <i class="fa fa-check-circle text-xl"></i>
-        </button>
         <button id="notepad-btn" class="fab bg-gradient-to-br from-primary to-purple-600 text-white" title="草稿纸">
             <i class="fa fa-pencil text-xl"></i>
         </button>
@@ -541,6 +657,34 @@
             MAX_DIGIT_LENGTH: 3
         };
 
+        // 难度配置
+        const DIFFICULTY_CONFIG = {
+            easy: {
+                numNumbers: 2,
+                maxDigitLength: 1,
+                operators: ['+', '-'],
+                useBrackets: false,
+                numberTypes: ['integer'],
+                label: { zh: '简单', en: 'Easy' }
+            },
+            medium: {
+                numNumbers: 3,
+                maxDigitLength: 2,
+                operators: ['+', '-', '×'],
+                useBrackets: true,
+                numberTypes: ['integer'],
+                label: { zh: '中等', en: 'Medium' }
+            },
+            hard: {
+                numNumbers: 4,
+                maxDigitLength: 3,
+                operators: ['+', '-', '×', '÷'],
+                useBrackets: true,
+                numberTypes: ['integer', 'decimal'],
+                label: { zh: '困难', en: 'Hard' }
+            }
+        };
+
         // 全局状态变量
         const state = {
             language: 'zh', // 默认中文
@@ -563,7 +707,11 @@
             ruleInterval: null,
             rulesVisible: true, // 规则是否可见
             // 缓存题目输入框
-            cachedInputs: null
+            cachedInputs: null,
+            // 当前难度
+            currentDifficulty: 'easy',
+            // 当前主题
+            currentTheme: 'light'
         };
 
         // 多语言四则运算规则
@@ -598,6 +746,14 @@
             answerPositions: document.querySelectorAll('input[name="answer-position"]'),
             numberTypes: document.querySelectorAll('input[name="number-type"]'),
             generateBtn: document.getElementById('generate-btn'),
+            
+            // 难度按钮
+            difficultyBtns: document.querySelectorAll('.difficulty-btn'),
+            
+            // 主题按钮
+            themeLight: document.getElementById('theme-light'),
+            themeDark: document.getElementById('theme-dark'),
+            themeEye: document.getElementById('theme-eye'),
             
             // 练习题区域元素
             exercisesTitle: document.getElementById('exercises-title'),
@@ -651,6 +807,17 @@
             labelNumberType: document.getElementById('label-number-type'),
             labelInteger: document.getElementById('label-integer'),
             labelDecimal: document.getElementById('label-decimal'),
+            
+            // 单位文本
+            unitQuestions: document.getElementById('unit-questions'),
+            unitNumbers: document.getElementById('unit-numbers'),
+            unitDigits: document.getElementById('unit-digits'),
+            
+            // 运算符文本
+            opAdd: document.getElementById('op-add'),
+            opSubtract: document.getElementById('op-subtract'),
+            opMultiply: document.getElementById('op-multiply'),
+            opDivide: document.getElementById('op-divide'),
             btnGenerate: document.getElementById('btn-generate'),
         };
 
@@ -670,14 +837,31 @@
                 labelNumberType: '数字类型',
                 labelInteger: '🔢 整数',
                 labelDecimal: '🔹 小数',
+                labelDifficulty: '难度级别',
                 btnGenerate: '生成题目',
                 exercisesTitle: '练习题',
                 exercisesSubtitle: '完成所有题目后点击检查答案',
                 noQuestionsMessage: '准备好开始练习了吗？',
                 notepadTitle: '草稿纸',
+                unitQuestions: '道',
+                unitNumbers: '个',
+                unitDigits: '位',
+                opAdd: '+ 加法',
+                opSubtract: '- 减法',
+                opMultiply: '× 乘法',
+                opDivide: '÷ 除法',
                 showRulesText: '显示运算规则',
                 btnCheckAll: '检查全部',
-                btnClearAnswers: '清空答案'
+                btnClearAnswers: '清空答案',
+                btnShowAnswers: '显示答案',
+                difficultyEasy: '🌱 简单',
+                difficultyMedium: '🌿 中等',
+                difficultyHard: '🌳 困难',
+                notepadUndo: '撤销',
+                notepadRedo: '重做',
+                notepadClear: '清空',
+                notepadClose: '关闭',
+                notepadEraser: '橡皮擦'
             },
             en: {
                 headerTitle: 'Arithmetic Practice',
@@ -693,14 +877,31 @@
                 labelNumberType: 'Number Type',
                 labelInteger: '🔢 Integer',
                 labelDecimal: '🔹 Decimal',
+                labelDifficulty: 'Difficulty',
                 btnGenerate: 'Generate',
                 exercisesTitle: 'Practice',
                 exercisesSubtitle: 'Check answers after completing all questions',
                 noQuestionsMessage: 'Ready to practice?',
                 notepadTitle: 'Notepad',
+                unitQuestions: 'questions',
+                unitNumbers: 'numbers',
+                unitDigits: 'digits',
+                opAdd: '+ Add',
+                opSubtract: '- Subtract',
+                opMultiply: '× Multiply',
+                opDivide: '÷ Divide',
                 showRulesText: 'Show Rules',
                 btnCheckAll: 'Check All',
-                btnClearAnswers: 'Clear'
+                btnClearAnswers: 'Clear',
+                btnShowAnswers: 'Show Answers',
+                difficultyEasy: '🌱 Easy',
+                difficultyMedium: '🌿 Medium',
+                difficultyHard: '🌳 Hard',
+                notepadUndo: 'Undo',
+                notepadRedo: 'Redo',
+                notepadClear: 'Clear',
+                notepadClose: 'Close',
+                notepadEraser: 'Eraser'
             }
         };
 
@@ -720,6 +921,12 @@
             
             // 设置输入验证
             setupInputValidation();
+            
+            // 加载保存的主题
+            loadSavedTheme();
+            
+            // 初始化难度设置
+            setDifficulty('easy');
         }
 
         // 初始化历史记录
@@ -927,6 +1134,18 @@
                 clearAllAnswers();
             });
             
+            // 难度按钮
+            elements.difficultyBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setDifficulty(btn.dataset.difficulty);
+                });
+            });
+            
+            // 主题切换按钮
+            elements.themeLight.addEventListener('click', () => setTheme('light'));
+            elements.themeDark.addEventListener('click', () => setTheme('dark'));
+            elements.themeEye.addEventListener('click', () => setTheme('eye'));
+            
             // 为草稿纸背景添加点击事件，点击时移除焦点
             elements.notepad.addEventListener('click', (e) => {
                 // 如果点击的是背景遮罩，移除所有焦点
@@ -1068,11 +1287,24 @@
             elements.notepadTitle.textContent = translations[lang].notepadTitle;
             elements.showRulesText.textContent = translations[lang].showRulesText;
             
+            // 更新单位文本
+            if (elements.unitQuestions) elements.unitQuestions.textContent = translations[lang].unitQuestions;
+            if (elements.unitNumbers) elements.unitNumbers.textContent = translations[lang].unitNumbers;
+            if (elements.unitDigits) elements.unitDigits.textContent = translations[lang].unitDigits;
+            
+            // 更新运算符文本
+            if (elements.opAdd) elements.opAdd.textContent = translations[lang].opAdd;
+            if (elements.opSubtract) elements.opSubtract.textContent = translations[lang].opSubtract;
+            if (elements.opMultiply) elements.opMultiply.textContent = translations[lang].opMultiply;
+            if (elements.opDivide) elements.opDivide.textContent = translations[lang].opDivide;
+            
             // 更新工具栏按钮文本
             const checkAllSpan = elements.checkAllBtn.querySelector('span');
             const clearAnswersSpan = elements.clearAnswersBtn.querySelector('span');
+            const showAnswersSpan = elements.showAnswersBtn.querySelector('span');
             if (checkAllSpan) checkAllSpan.textContent = translations[lang].btnCheckAll;
             if (clearAnswersSpan) clearAnswersSpan.textContent = translations[lang].btnClearAnswers;
+            if (showAnswersSpan) showAnswersSpan.textContent = translations[lang].btnShowAnswers;
             
             // 更新空状态消息
             const noQuestionsP = elements.noQuestionsMessage.querySelectorAll('p');
@@ -1081,6 +1313,83 @@
                 noQuestionsP[1].textContent = lang === 'zh' 
                     ? '点击上方"生成题目"按钮生成练习题' 
                     : 'Click "Generate" button above to start';
+            }
+            
+            // 更新难度按钮文本
+            document.getElementById('btn-easy').textContent = translations[lang].difficultyEasy;
+            document.getElementById('btn-medium').textContent = translations[lang].difficultyMedium;
+            document.getElementById('btn-hard').textContent = translations[lang].difficultyHard;
+            
+            // 更新难度标签
+            const difficultyLabel = document.getElementById('label-difficulty');
+            if (difficultyLabel) difficultyLabel.textContent = translations[lang].labelDifficulty;
+            
+            // 更新草稿纸按钮title
+            if (elements.undoBtn) elements.undoBtn.title = translations[lang].notepadUndo;
+            if (elements.redoBtn) elements.redoBtn.title = translations[lang].notepadRedo;
+            if (elements.clearNotepadBtn) elements.clearNotepadBtn.title = translations[lang].notepadClear;
+            if (elements.closeNotepadBtn) elements.closeNotepadBtn.title = translations[lang].notepadClose;
+            if (elements.eraserBtn) elements.eraserBtn.title = translations[lang].notepadEraser;
+        }
+        
+        // 设置难度
+        function setDifficulty(difficulty) {
+            state.currentDifficulty = difficulty;
+            const config = DIFFICULTY_CONFIG[difficulty];
+            
+            // 更新按钮状态
+            elements.difficultyBtns.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.difficulty === difficulty) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // 应用难度设置
+            elements.numNumbers.value = config.numNumbers;
+            elements.maxDigitLength.value = config.maxDigitLength;
+            
+            // 设置运算符
+            elements.operators.forEach(op => {
+                op.checked = config.operators.includes(op.value) || 
+                            (config.useBrackets && op.value === '()');
+            });
+            
+            // 设置数字类型
+            elements.numberTypes.forEach(type => {
+                type.checked = config.numberTypes.includes(type.value);
+            });
+        }
+        
+        // 设置主题
+        function setTheme(theme) {
+            state.currentTheme = theme;
+            document.body.classList.remove('dark-mode', 'eye-mode');
+            
+            // 更新按钮状态
+            [elements.themeLight, elements.themeDark, elements.themeEye].forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+                elements.themeDark.classList.add('active');
+            } else if (theme === 'eye') {
+                document.body.classList.add('eye-mode');
+                elements.themeEye.classList.add('active');
+            } else {
+                elements.themeLight.classList.add('active');
+            }
+            
+            // 保存主题设置到本地存储
+            localStorage.setItem('math-practice-theme', theme);
+        }
+        
+        // 加载保存的主题
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('math-practice-theme');
+            if (savedTheme) {
+                setTheme(savedTheme);
             }
         }
 
@@ -1375,7 +1684,6 @@
                 } else {
                     // 如果是运算符，弹出两个数字进行计算
                     if (stack.length < 2) {
-                        console.error('无效的表达式');
                         return null;
                     }
                     
@@ -1395,7 +1703,6 @@
                             break;
                         case '÷':
                             if (b === 0) {
-                                console.error('除数不能为零');
                                 return null;
                             }
                             // 检查除法是否会产生有限小数
@@ -1413,15 +1720,12 @@
                             while (temp % 5 === 0) temp /= 5;
                             
                             if (temp !== 1) {
-                                // 会产生无限循环小数，返回null
-                                console.log('除法会产生无限小数，拒绝计算');
                                 return null;
                             }
                             
                             result = a / b;
                             break;
                         default:
-                            console.error('未知运算符:', token);
                             return null;
                     }
                     
@@ -1431,7 +1735,6 @@
             
             // 栈中应该只剩下一个结果
             if (stack.length !== 1) {
-                console.error('表达式计算错误');
                 return null;
             }
             
@@ -1444,20 +1747,17 @@
                 // 转换为后缀表达式
                 const postfix = infixToPostfix(expression);
                 if (!postfix || postfix.length === 0) {
-                    console.error('无法解析表达式:', expression);
                     return null;
                 }
                 
                 // 计算后缀表达式
                 let result = calculatePostfix(postfix);
                 if (result === null) {
-                    console.error('表达式计算失败:', expression);
                     return null;
                 }
                 
                 // 检查结果是否为有限小数
                 if (!isFiniteDecimal(result)) {
-                    console.log('结果是无限小数，拒绝使用:', result);
                     return null;
                 }
                 
@@ -1471,7 +1771,6 @@
                 
                 return result;
             } catch (e) {
-                console.error('计算表达式错误:', e, '表达式:', expression);
                 return null;
             }
         }
@@ -1907,7 +2206,6 @@
                 
                 // 如果无法生成当前题目，跳过继续生成下一题
                 if (!exprData) {
-                    console.warn(`跳过第 ${generatedCount + 1} 题，无法生成有效表达式`);
                     continue;
                 }
                 
@@ -1984,6 +2282,7 @@
                 }
                 
                 equationElement.appendChild(resultIcon);
+                
                 elements.questionsContainer.appendChild(equationElement);
                 
                 // 存储题目和答案
@@ -2164,6 +2463,8 @@
             // 移除末尾的0和可能的小数点
             return fixed.replace(/\.?0+$/, '');
         }
+
+
 
         // 切换草稿纸显示/隐藏
         function toggleNotepad() {
@@ -2383,7 +2684,6 @@
                         updateHistoryButtons();
                     }
                 } catch (error) {
-                    console.error("保存历史记录失败:", error);
                 } finally {
                     state.isSavingState = false;
                 }
@@ -2428,7 +2728,6 @@
                         updateHistoryButtons();
                     };
                     img.onerror = function() {
-                        console.error("恢复历史记录失败，图片加载错误");
                         updateHistoryButtons();
                     };
                     img.src = data;
