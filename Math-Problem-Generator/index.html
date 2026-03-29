@@ -355,6 +355,32 @@
             body.eye-mode .equation-input {
                 background: #fffcf5;
             }
+            /* 提示按钮 */
+            .hint-btn {
+                padding: 6px 12px;
+                background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+                color: white;
+                border-radius: 6px;
+                font-size: 0.85rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                border: none;
+                margin-left: 8px;
+                position: relative;
+                z-index: 10;
+                pointer-events: auto;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+            }
+            .hint-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+            }
+            .hint-btn:active {
+                transform: translateY(0);
+            }
             @keyframes slideDown {
                 from { opacity: 0; transform: translateY(-10px); }
                 to { opacity: 1; transform: translateY(0); }
@@ -861,7 +887,8 @@
                 notepadRedo: '重做',
                 notepadClear: '清空',
                 notepadClose: '关闭',
-                notepadEraser: '橡皮擦'
+                notepadEraser: '橡皮擦',
+                hintBtn: '💡 提示'
             },
             en: {
                 headerTitle: 'Arithmetic Practice',
@@ -901,7 +928,8 @@
                 notepadRedo: 'Redo',
                 notepadClear: 'Clear',
                 notepadClose: 'Close',
-                notepadEraser: 'Eraser'
+                notepadEraser: 'Eraser',
+                hintBtn: '💡 Hint'
             }
         };
 
@@ -2282,6 +2310,30 @@
                 }
                 
                 equationElement.appendChild(resultIcon);
+                
+                // 创建提示按钮
+                const hintBtn = document.createElement('a');
+                hintBtn.className = 'hint-btn';
+                hintBtn.innerHTML = translations[state.language].hintBtn;
+                hintBtn.target = '_blank';
+                
+                // 构建mathsteps.html的URL参数
+                const currentMode = state.currentTheme === 'dark' ? 'dark-mode' : (state.currentTheme === 'eye' ? 'eye-mode' : '');
+                let mathParam = '';
+                
+                if (answerPosition === 'right') {
+                    // 右侧答案：直接使用原始表达式，去除空格
+                    mathParam = exprData.originalExpression.replace(/\s+/g, '');
+                } else {
+                    // 左侧答案：用X代表答案位置，用equals代表等于号
+                    // displayExpression格式如 "3+?×2" 或 "?+5-2"，等号右边是fullResult
+                    let leftExpr = exprData.displayExpression.replace(/\?/g, 'X').replace(/\s+/g, '');
+                    // 使用fullResult作为等号右边的值
+                    mathParam = leftExpr + 'equals' + formatNumber(exprData.fullResult);
+                }
+                
+                hintBtn.href = `mathsteps.html?lang=${state.language}&mode=${currentMode}&math=${encodeURIComponent(mathParam)}`;
+                equationElement.appendChild(hintBtn);
                 
                 elements.questionsContainer.appendChild(equationElement);
                 
