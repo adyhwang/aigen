@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>四则运算练习</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="libs/tailwind.min.js"></script>
+
     
     <!-- 配置Tailwind自定义颜色和字体 -->
     <script>
@@ -396,17 +396,17 @@
             <!-- 主题切换 -->
             <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                 <button id="theme-light" class="theme-btn active p-2 rounded-md transition-all" title="浅色模式">
-                    <i class="fa fa-sun-o text-amber-500"></i>
+                    ☀️
                 </button>
                 <button id="theme-dark" class="theme-btn p-2 rounded-md transition-all" title="深色模式">
-                    <i class="fa fa-moon-o text-indigo-500"></i>
+                    🌙
                 </button>
                 <button id="theme-eye" class="theme-btn p-2 rounded-md transition-all" title="护眼模式">
-                    <i class="fa fa-eye text-green-600"></i>
+                    👁️
                 </button>
             </div>
-            <button id="fullscreen-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors" title="全屏">
-                <i class="fa fa-expand text-gray-600"></i>
+            <button id="fullscreen-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors text-lg" title="全屏">
+                ⛶
             </button>
             <button id="lang-toggle" class="px-3 py-1 rounded bg-primary text-white hover:bg-primary/90 transition-colors">
                 EN
@@ -419,7 +419,7 @@
         <section class="setting-card mb-6">
             <div class="flex items-center gap-3 mb-6">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-                    <i class="fa fa-cog text-white"></i>
+                    ⚙️
                 </div>
                 <h2 class="text-xl font-bold text-gray-800" id="settings-title">题目生成设置</h2>
             </div>
@@ -531,7 +531,7 @@
                 <!-- 生成题目按钮 -->
                 <div class="pt-4 flex gap-3">
                     <button id="generate-btn" class="btn-primary flex items-center gap-2">
-                        <i class="fa fa-magic"></i>
+                        ✨
                         <span id="btn-generate">生成题目</span>
                     </button>
                 </div>
@@ -544,7 +544,7 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                        <i class="fa fa-pencil-square-o text-white"></i>
+                        📝
                     </div>
                     <div>
                         <h2 class="text-xl font-bold text-gray-800" id="exercises-title">练习题</h2>
@@ -555,15 +555,15 @@
                 <!-- 工具栏 -->
                 <div class="flex gap-2 flex-wrap">
                     <button id="check-all-btn" class="toolbar-btn text-green-600 border-green-200 hover:border-green-500">
-                        <i class="fa fa-check-circle"></i>
+                        ✅
                         <span id="btn-check-all">检查全部</span>
                     </button>
                     <button id="show-answers-btn" class="toolbar-btn text-amber-600 border-amber-200 hover:border-amber-500">
-                        <i class="fa fa-eye"></i>
+                        👁️
                         <span id="btn-show-answers">显示答案</span>
                     </button>
                     <button id="clear-answers-btn" class="toolbar-btn text-gray-600">
-                        <i class="fa fa-eraser"></i>
+                        🧹
                         <span id="btn-clear-answers">清空答案</span>
                     </button>
                 </div>
@@ -585,17 +585,17 @@
             
             <!-- 显示规则按钮 -->
             <button id="show-rules-btn" class="text-primary text-sm mb-2 hidden hover:underline">
-                <i class="fa fa-info-circle mr-1"></i>
+                ℹ️
                 <span id="show-rules-text">显示运算规则</span>
             </button>
             
             <!-- 运算规则提示区 -->
             <div class="rules-container text-sm md:text-base text-gray-600 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl relative border border-blue-100" id="rules-container">
                 <button id="close-rules-btn" class="close-rule-btn">
-                    <i class="fa fa-times"></i>
+                    ✖️
                 </button>
                 <div class="flex items-start gap-3">
-                    <i class="fa fa-lightbulb-o text-yellow-500 mt-1"></i>
+                    💡
                     <p id="current-rule" class="rule-highlight"></p>
                 </div>
             </div>
@@ -604,8 +604,8 @@
     
     <!-- 悬浮按钮 -->
     <div class="fixed right-4 bottom-4 flex flex-col gap-3 z-40">
-        <button id="notepad-btn" class="fab bg-gradient-to-br from-primary to-purple-600 text-white" title="草稿纸">
-            <i class="fa fa-pencil text-xl"></i>
+        <button id="notepad-btn" class="fab bg-gradient-to-br from-primary to-purple-600 text-white text-xl" title="草稿纸">
+            ✏️
         </button>
     </div>
     
@@ -621,16 +621,16 @@
                 <div class="flex gap-1">
                     <!-- 撤销和重做按钮 - 增大移动端点击区域 -->
                     <button id="undo-btn" class="notepad-btn notepad-btn-mobile" title="撤销">
-                        <i class="fa fa-undo"></i>
+                        ↩️
                     </button>
                     <button id="redo-btn" class="notepad-btn notepad-btn-mobile" title="重做">
-                        <i class="fa fa-repeat"></i>
+                        ↪️
                     </button>
                     <button id="clear-notepad-btn" class="notepad-btn notepad-btn-mobile" title="清空">
-                        <i class="fa fa-trash"></i>
+                        🗑️
                     </button>
                     <button id="close-notepad-btn" class="notepad-btn notepad-btn-mobile" title="关闭">
-                        <i class="fa fa-times"></i>
+                        ✖️
                     </button>
                 </div>
             </div>
@@ -657,7 +657,7 @@
                 
                 <!-- 橡皮擦按钮 -->
                 <button id="eraser-btn" class="notepad-btn text-sm px-2" title="橡皮擦">
-                    <i class="fa fa-eraser"></i>
+                    🧽
                 </button>
             </div>
             
@@ -1270,11 +1270,11 @@
                 document.documentElement.requestFullscreen().catch(err => {
                     console.error(`无法进入全屏模式: ${err.message}`);
                 });
-                elements.fullscreenBtn.innerHTML = '<i class="fa fa-compress text-gray-600"></i>';
+                elements.fullscreenBtn.innerHTML = '⛶';
             } else {
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
-                    elements.fullscreenBtn.innerHTML = '<i class="fa fa-expand text-gray-600"></i>';
+                    elements.fullscreenBtn.innerHTML = '⛶';
                 }
             }
         }
