@@ -116,12 +116,6 @@
             .notepad-btn-mobile {
                 @apply md:p-2 p-3; /* 移动端增大按钮尺寸 */
             }
-            .rule-highlight {
-                animation: fadeIn 0.5s ease-in-out;
-            }
-            .close-rule-btn {
-                @apply absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full hover:bg-blue-100 text-gray-600 hover:text-gray-800 transition-colors;
-            }
             @keyframes fadeIn {
                 from { opacity: 0; transform: translateY(10px); }
                 to { opacity: 1; transform: translateY(0); }
@@ -311,49 +305,204 @@
             }
             /* 深色模式 */
             body.dark-mode {
-                background: #1a1a2e;
-                color: #e0e0e0;
+                background: #0f172a;
+                color: #e2e8f0;
             }
             body.dark-mode .bg-white,
             body.dark-mode .setting-card {
-                background: #16213e;
-                color: #e0e0e0;
+                background: #1e293b;
+                color: #e2e8f0;
+            }
+            body.dark-mode header.bg-white {
+                background: #1e293b;
+                border-bottom-color: #334155;
             }
             body.dark-mode .text-gray-800 {
-                color: #e0e0e0;
+                color: #e2e8f0;
             }
             body.dark-mode .text-gray-700,
             body.dark-mode .text-gray-600 {
-                color: #b0b0b0;
+                color: #94a3b8;
+            }
+            body.dark-mode .text-gray-500 {
+                color: #64748b;
             }
             body.dark-mode .equation-container {
-                background: linear-gradient(135deg, #1e2a4a 0%, #16213e 100%);
-                border-color: #2a3f5f;
+                background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+                border-color: #475569;
             }
             body.dark-mode .equation-input {
                 background: #0f172a;
-                border-color: #2a3f5f;
-                color: #e0e0e0;
+                border-color: #475569;
+                color: #e2e8f0;
+            }
+            body.dark-mode .equation-input:focus {
+                border-color: #6366f1;
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
             }
             body.dark-mode .modern-checkbox {
-                background: #1e2a4a;
+                background: #334155;
+            }
+            body.dark-mode .modern-checkbox span {
+                color: #e2e8f0;
             }
             body.dark-mode .modern-checkbox:has(input:checked) {
-                background: #312e81;
+                background: #4f46e5;
+            }
+            body.dark-mode .modern-checkbox:has(input:checked) span {
+                color: white;
+            }
+            body.dark-mode .btn-primary {
+                background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            }
+            body.dark-mode .btn-primary:hover {
+                background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+            }
+            body.dark-mode .difficulty-btn {
+                background: #334155;
+                border-color: #475569;
+                color: #cbd5e1;
+            }
+            body.dark-mode .difficulty-btn:hover {
+                background: #475569;
+            }
+            body.dark-mode .difficulty-btn.active[data-difficulty="easy"] {
+                background: #064e3b;
+                border-color: #10b981;
+                color: #34d399;
+            }
+            body.dark-mode .difficulty-btn.active[data-difficulty="medium"] {
+                background: #78350f;
+                border-color: #f59e0b;
+                color: #fbbf24;
+            }
+            body.dark-mode .difficulty-btn.active[data-difficulty="hard"] {
+                background: #7f1d1d;
+                border-color: #ef4444;
+                color: #f87171;
+            }
+            body.dark-mode .hint-btn {
+                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            }
+            body.dark-mode .hint-btn:hover {
+                background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            }
+            body.dark-mode .input-group input[type="number"] {
+                background: #0f172a;
+                border-color: #475569;
+                color: #e2e8f0;
+            }
+            body.dark-mode .input-group input[type="number"]:focus {
+                border-color: #6366f1;
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            }
+            body.dark-mode .toolbar-btn {
+                background: #334155;
+                border-color: #475569;
+                color: #94a3b8;
+            }
+            body.dark-mode .toolbar-btn:hover {
+                background: #475569;
+                border-color: #64748b;
+            }
+            body.dark-mode .empty-state {
+                background: #334155;
+            }
+            body.dark-mode .empty-state-icon {
+                background: #475569;
+            }
+            body.dark-mode #notepad-container {
+                background: #1e293b;
+            }
+            body.dark-mode #notepad-header {
+                background: #334155;
+                border-bottom-color: #475569;
+            }
+            body.dark-mode #notepad-content {
+                background: #1e293b;
+            }
+            body.dark-mode .bg-gray-50 {
+                background: #334155;
+            }
+            body.dark-mode .bg-gray-100 {
+                background: #475569;
+            }
+            body.dark-mode .modern-number-input {
+                background: #0f172a;
+                border-color: #475569;
+                color: #e2e8f0;
+            }
+            body.dark-mode .modern-number-input:focus {
+                border-color: #6366f1;
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
             }
             /* 护眼模式 */
             body.eye-mode {
-                background: #f5f0e1;
+                background: #f0ead2;
             }
             body.eye-mode .bg-white,
             body.eye-mode .setting-card {
-                background: #faf6e9;
+                background: #f8f6e8;
             }
             body.eye-mode .equation-container {
-                background: linear-gradient(135deg, #f9f6e8 0%, #f0ebd8 100%);
+                background: linear-gradient(135deg, #fcf9e8 0%, #f5f1d8 100%);
+                border-color: #e8e0b8;
             }
             body.eye-mode .equation-input {
-                background: #fffcf5;
+                background: #fffef5;
+                border-color: #e8e0b8;
+            }
+            body.eye-mode .equation-input:focus {
+                border-color: #8b9a6d;
+                box-shadow: 0 0 0 3px rgba(139, 154, 109, 0.15);
+            }
+            body.eye-mode .modern-checkbox {
+                background: #f0ead2;
+            }
+            body.eye-mode .modern-checkbox:has(input:checked) {
+                background: #8b9a6d;
+            }
+            body.eye-mode .btn-primary {
+                background: linear-gradient(135deg, #8b9a6d 0%, #6b7a4d 100%);
+            }
+            body.eye-mode .btn-primary:hover {
+                background: linear-gradient(135deg, #9baa7d 0%, #7b8a5d 100%);
+            }
+            body.eye-mode .difficulty-btn {
+                background: #f0ead2;
+                border-color: #d8d0a8;
+            }
+            body.eye-mode .difficulty-btn:hover {
+                background: #e8e0b8;
+            }
+            body.eye-mode .difficulty-btn.active[data-difficulty="easy"] {
+                background: #c8e6c9;
+                border-color: #4caf50;
+                color: #2e7d32;
+            }
+            body.eye-mode .difficulty-btn.active[data-difficulty="medium"] {
+                background: #fff3e0;
+                border-color: #ff9800;
+                color: #e65100;
+            }
+            body.eye-mode .difficulty-btn.active[data-difficulty="hard"] {
+                background: #ffcdd2;
+                border-color: #f44336;
+                color: #c62828;
+            }
+            body.eye-mode .hint-btn {
+                background: linear-gradient(135deg, #8b9a6d 0%, #6b7a4d 100%);
+            }
+            body.eye-mode .hint-btn:hover {
+                background: linear-gradient(135deg, #9baa7d 0%, #7b8a5d 100%);
+            }
+            body.eye-mode .input-group input[type="number"] {
+                background: #fffef5;
+                border-color: #e8e0b8;
+            }
+            body.eye-mode .input-group input[type="number"]:focus {
+                border-color: #8b9a6d;
+                box-shadow: 0 0 0 3px rgba(139, 154, 109, 0.15);
             }
             /* 提示按钮 */
             .hint-btn {
@@ -440,13 +589,13 @@
                     <label class="setting-label" id="label-difficulty">难度级别</label>
                     <div class="flex gap-2">
                         <button type="button" class="difficulty-btn active" data-difficulty="easy" id="btn-easy">
-                            🌱 简单
+                            简单
                         </button>
                         <button type="button" class="difficulty-btn" data-difficulty="medium" id="btn-medium">
-                            🌿 中等
+                            中等
                         </button>
                         <button type="button" class="difficulty-btn" data-difficulty="hard" id="btn-hard">
-                            🌳 困难
+                            困难
                         </button>
                     </div>
                 </div>
@@ -551,22 +700,6 @@
                         <p class="text-sm text-gray-500" id="exercises-subtitle">完成所有题目后点击检查答案</p>
                     </div>
                 </div>
-                
-                <!-- 工具栏 -->
-                <div class="flex gap-2 flex-wrap">
-                    <button id="check-all-btn" class="toolbar-btn text-green-600 border-green-200 hover:border-green-500">
-                        ✅
-                        <span id="btn-check-all">检查全部</span>
-                    </button>
-                    <button id="show-answers-btn" class="toolbar-btn text-amber-600 border-amber-200 hover:border-amber-500">
-                        👁️
-                        <span id="btn-show-answers">显示答案</span>
-                    </button>
-                    <button id="clear-answers-btn" class="toolbar-btn text-gray-600">
-                        🧹
-                        <span id="btn-clear-answers">清空答案</span>
-                    </button>
-                </div>
             </div>
             
             <!-- 进度条 -->
@@ -583,21 +716,20 @@
                 </div>
             </div>
             
-            <!-- 显示规则按钮 -->
-            <button id="show-rules-btn" class="text-primary text-sm mb-2 hidden hover:underline">
-                ℹ️
-                <span id="show-rules-text">显示运算规则</span>
-            </button>
-            
-            <!-- 运算规则提示区 -->
-            <div class="rules-container text-sm md:text-base text-gray-600 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl relative border border-blue-100" id="rules-container">
-                <button id="close-rules-btn" class="close-rule-btn">
-                    ✖️
+            <!-- 工具栏 -->
+            <div class="flex gap-2 flex-wrap" id="toolbar-container">
+                <button id="check-all-btn" class="toolbar-btn text-green-600 border-green-200 hover:border-green-500">
+                    ✅
+                    <span id="btn-check-all">检查全部</span>
                 </button>
-                <div class="flex items-start gap-3">
-                    💡
-                    <p id="current-rule" class="rule-highlight"></p>
-                </div>
+                <button id="show-answers-btn" class="toolbar-btn text-amber-600 border-amber-200 hover:border-amber-500">
+                    👁️
+                    <span id="btn-show-answers">显示答案</span>
+                </button>
+                <button id="clear-answers-btn" class="toolbar-btn text-gray-600">
+                    🧹
+                    <span id="btn-clear-answers">清空答案</span>
+                </button>
             </div>
         </section>
     </main>
@@ -639,18 +771,18 @@
             <div class="bg-gray-50 p-2 border-b flex items-center gap-3 flex-wrap">
                 <!-- 画笔颜色选择 -->
                 <div class="flex items-center gap-1">
-                    <span class="text-xs text-gray-600">颜色:</span>
+                    <span class="text-xs text-gray-600" id="label-pen-color">颜色:</span>
                     <div class="flex gap-1">
-                        <button class="pen-color-btn w-6 h-6 rounded-full border-2 border-gray-300 bg-black" data-color="#000000" title="黑色"></button>
-                        <button class="pen-color-btn w-6 h-6 rounded-full border-2 border-gray-300 bg-red-500" data-color="#EF4444" title="红色"></button>
-                        <button class="pen-color-btn w-6 h-6 rounded-full border-2 border-gray-300 bg-blue-500" data-color="#3B82F6" title="蓝色"></button>
-                        <button class="pen-color-btn w-6 h-6 rounded-full border-2 border-gray-300 bg-green-500" data-color="#10B981" title="绿色"></button>
+                        <button class="pen-color-btn w-6 h-6 rounded-full border-2 border-gray-300 bg-black" data-color="#000000" id="pen-color-black" title="黑色"></button>
+                        <button class="pen-color-btn w-6 h-6 rounded-full border-2 border-gray-300 bg-red-500" data-color="#EF4444" id="pen-color-red" title="红色"></button>
+                        <button class="pen-color-btn w-6 h-6 rounded-full border-2 border-gray-300 bg-blue-500" data-color="#3B82F6" id="pen-color-blue" title="蓝色"></button>
+                        <button class="pen-color-btn w-6 h-6 rounded-full border-2 border-gray-300 bg-green-500" data-color="#10B981" id="pen-color-green" title="绿色"></button>
                     </div>
                 </div>
                 
                 <!-- 画笔粗细选择 -->
                 <div class="flex items-center gap-1">
-                    <span class="text-xs text-gray-600">粗细:</span>
+                    <span class="text-xs text-gray-600" id="label-pen-size">粗细:</span>
                     <input type="range" id="pen-size-slider" min="1" max="10" value="3" class="w-20">
                     <span id="pen-size-display" class="text-xs text-gray-600 w-4">3</span>
                 </div>
@@ -676,7 +808,6 @@
             MAX_HISTORY: 50,
             FLOAT_PRECISION: 0.001,
             MAX_DECIMAL_PLACES: 4,
-            RULE_SWITCH_INTERVAL: 10000, // 10秒
             MIN_NUMBER: 1,
             MAX_QUESTIONS: 50,
             MAX_NUMBERS: 5,
@@ -728,32 +859,12 @@
             currentPath: [],
             // 防止重复保存的标志
             isSavingState: false,
-            // 运算规则相关
-            currentRuleIndex: 0,
-            ruleInterval: null,
-            rulesVisible: true, // 规则是否可见
             // 缓存题目输入框
             cachedInputs: null,
             // 当前难度
             currentDifficulty: 'easy',
             // 当前主题
             currentTheme: 'light'
-        };
-
-        // 多语言四则运算规则
-        const arithmeticRules = {
-            zh: [
-                "1、加法、减法、乘法和除法统称四则运算。",
-                "2、在没有括号的算式里，如果只有加、减法或者只有乘、除法，都要从左往右按顺序计算。",
-                "3、在没有括号的算式里，既有乘、除法又有加、减法的，要先算乘除法，再算加减法。",
-                "4、算式有括号，要先算括号里面的，再算括号外面的；大、中、小括号的计算顺序为小→中→大。括号里面的计算顺序遵循以上1、2、3条的计算顺序。"
-            ],
-            en: [
-                "1. Addition, subtraction, multiplication, and division are collectively called the four arithmetic operations.",
-                "2. In an expression without parentheses, if there are only addition and subtraction, or only multiplication and division, calculate from left to right in order.",
-                "3. In an expression without parentheses, if there are both multiplication/division and addition/subtraction, calculate multiplication and division first, then addition and subtraction.",
-                "4. If an expression has parentheses, calculate the inside of the parentheses first, then the outside; the order of calculation for large, medium, and small parentheses is small → medium → large. The calculation order inside the parentheses follows rules 1, 2, and 3 above."
-            ]
         };
 
         // DOM元素引用
@@ -786,11 +897,6 @@
             exercisesSubtitle: document.getElementById('exercises-subtitle'),
             questionsContainer: document.getElementById('questions-container'),
             noQuestionsMessage: document.getElementById('no-questions-message'),
-            currentRule: document.getElementById('current-rule'),
-            rulesContainer: document.getElementById('rules-container'),
-            closeRulesBtn: document.getElementById('close-rules-btn'),
-            showRulesBtn: document.getElementById('show-rules-btn'),
-            showRulesText: document.getElementById('show-rules-text'),
             progressBar: document.getElementById('progress-bar'),
             progressFill: document.getElementById('progress-fill'),
             
@@ -845,6 +951,13 @@
             opMultiply: document.getElementById('op-multiply'),
             opDivide: document.getElementById('op-divide'),
             btnGenerate: document.getElementById('btn-generate'),
+            // 草稿纸工具栏标签
+            labelPenColor: document.getElementById('label-pen-color'),
+            labelPenSize: document.getElementById('label-pen-size'),
+            penColorBlack: document.getElementById('pen-color-black'),
+            penColorRed: document.getElementById('pen-color-red'),
+            penColorBlue: document.getElementById('pen-color-blue'),
+            penColorGreen: document.getElementById('pen-color-green'),
         };
 
         // 翻译文本映射
@@ -876,19 +989,27 @@
                 opSubtract: '- 减法',
                 opMultiply: '× 乘法',
                 opDivide: '÷ 除法',
-                showRulesText: '显示运算规则',
                 btnCheckAll: '检查全部',
                 btnClearAnswers: '清空答案',
                 btnShowAnswers: '显示答案',
-                difficultyEasy: '🌱 简单',
-                difficultyMedium: '🌿 中等',
-                difficultyHard: '🌳 困难',
+                difficultyEasy: '简单',
+                difficultyMedium: '中等',
+                difficultyHard: '困难',
                 notepadUndo: '撤销',
                 notepadRedo: '重做',
                 notepadClear: '清空',
                 notepadClose: '关闭',
                 notepadEraser: '橡皮擦',
-                hintBtn: '💡 提示'
+                hintBtn: '💡 提示',
+                penColor: '颜色',
+                penSize: '粗细',
+                colorBlack: '黑色',
+                colorRed: '红色',
+                colorBlue: '蓝色',
+                colorGreen: '绿色',
+                notepad: '草稿纸',
+                fullscreen: '全屏',
+                close: '关闭'
             },
             en: {
                 headerTitle: 'Arithmetic Practice',
@@ -917,19 +1038,27 @@
                 opSubtract: '- Subtract',
                 opMultiply: '× Multiply',
                 opDivide: '÷ Divide',
-                showRulesText: 'Show Rules',
                 btnCheckAll: 'Check All',
                 btnClearAnswers: 'Clear',
                 btnShowAnswers: 'Show Answers',
-                difficultyEasy: '🌱 Easy',
-                difficultyMedium: '🌿 Medium',
-                difficultyHard: '🌳 Hard',
+                difficultyEasy: 'Easy',
+                difficultyMedium: 'Medium',
+                difficultyHard: 'Hard',
                 notepadUndo: 'Undo',
                 notepadRedo: 'Redo',
                 notepadClear: 'Clear',
                 notepadClose: 'Close',
                 notepadEraser: 'Eraser',
-                hintBtn: '💡 Hint'
+                hintBtn: '💡 Hint',
+                penColor: 'Color',
+                penSize: 'Size',
+                colorBlack: 'Black',
+                colorRed: 'Red',
+                colorBlue: 'Blue',
+                colorGreen: 'Green',
+                notepad: 'Notepad',
+                fullscreen: 'Fullscreen',
+                close: 'Close'
             }
         };
 
@@ -944,11 +1073,11 @@
             // 初始化历史记录（保存空白画布状态）
             initHistory();
             
-            // 初始化运算规则显示和切换
-            initRulesDisplay();
-            
             // 设置输入验证
             setupInputValidation();
+            
+            // 加载保存的语言
+            loadSavedLang();
             
             // 加载保存的主题
             loadSavedTheme();
@@ -992,50 +1121,6 @@
                 if (value > CONFIG.MAX_DIGIT_LENGTH) value = CONFIG.MAX_DIGIT_LENGTH;
                 e.target.value = value;
             });
-        }
-
-        // 初始化运算规则显示和切换
-        function initRulesDisplay() {
-            // 显示第一条规则
-            showCurrentRule();
-            
-            // 设置定时器，每10秒切换一条规则
-            state.ruleInterval = setInterval(() => {
-                if (state.rulesVisible) { // 只有当规则可见时才切换
-                    state.currentRuleIndex = (state.currentRuleIndex + 1) % arithmeticRules[state.language].length;
-                    showCurrentRule();
-                }
-            }, CONFIG.RULE_SWITCH_INTERVAL);
-        }
-
-        // 显示当前规则
-        function showCurrentRule() {
-            // 移除高亮类以重置动画
-            elements.currentRule.classList.remove('rule-highlight');
-            
-            // 强制重排
-            void elements.currentRule.offsetWidth;
-            
-            // 更新规则文本并添加高亮动画
-            elements.currentRule.textContent = arithmeticRules[state.language][state.currentRuleIndex];
-            elements.currentRule.classList.add('rule-highlight');
-        }
-
-        // 切换规则显示状态
-        function toggleRules() {
-            state.rulesVisible = !state.rulesVisible;
-            
-            if (state.rulesVisible) {
-                // 显示规则
-                elements.rulesContainer.classList.remove('hidden');
-                elements.showRulesBtn.classList.add('hidden');
-                // 显示当前规则
-                showCurrentRule();
-            } else {
-                // 隐藏规则
-                elements.rulesContainer.classList.add('hidden');
-                elements.showRulesBtn.classList.remove('hidden');
-            }
         }
 
         // 移除所有输入元素的焦点
@@ -1131,21 +1216,6 @@
                 e.stopPropagation();
                 e.preventDefault();
                 redo();
-            });
-            
-            // 规则提示关闭按钮
-            elements.closeRulesBtn.addEventListener('click', toggleRules);
-            elements.closeRulesBtn.addEventListener('touchstart', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                toggleRules();
-            });
-            
-            // 显示规则按钮
-            elements.showRulesBtn.addEventListener('click', toggleRules);
-            elements.showRulesBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                toggleRules();
             });
             
             // 检查全部按钮
@@ -1285,12 +1355,8 @@
             
             state.language = state.language === 'zh' ? 'en' : 'zh';
             elements.langToggle.textContent = state.language === 'zh' ? 'EN' : '中';
+            localStorage.setItem('math-practice-lang', state.language);
             updateTranslations();
-            
-            // 语言切换时更新当前显示的规则
-            if (state.rulesVisible) {
-                showCurrentRule();
-            }
         }
 
         // 更新翻译
@@ -1313,7 +1379,6 @@
             elements.exercisesTitle.textContent = translations[lang].exercisesTitle;
             elements.exercisesSubtitle.textContent = translations[lang].exercisesSubtitle;
             elements.notepadTitle.textContent = translations[lang].notepadTitle;
-            elements.showRulesText.textContent = translations[lang].showRulesText;
             
             // 更新单位文本
             if (elements.unitQuestions) elements.unitQuestions.textContent = translations[lang].unitQuestions;
@@ -1358,6 +1423,20 @@
             if (elements.clearNotepadBtn) elements.clearNotepadBtn.title = translations[lang].notepadClear;
             if (elements.closeNotepadBtn) elements.closeNotepadBtn.title = translations[lang].notepadClose;
             if (elements.eraserBtn) elements.eraserBtn.title = translations[lang].notepadEraser;
+            
+            // 更新草稿纸工具栏标签
+            if (elements.labelPenColor) elements.labelPenColor.textContent = translations[lang].penColor + ':';
+            if (elements.labelPenSize) elements.labelPenSize.textContent = translations[lang].penSize + ':';
+            if (elements.penColorBlack) elements.penColorBlack.title = translations[lang].colorBlack;
+            if (elements.penColorRed) elements.penColorRed.title = translations[lang].colorRed;
+            if (elements.penColorBlue) elements.penColorBlue.title = translations[lang].colorBlue;
+            if (elements.penColorGreen) elements.penColorGreen.title = translations[lang].colorGreen;
+            
+            // 更新已生成的hint按钮文本
+            const hintBtns = document.querySelectorAll('.hint-btn');
+            hintBtns.forEach(btn => {
+                btn.innerHTML = translations[lang].hintBtn;
+            });
         }
         
         // 设置难度
@@ -1411,6 +1490,24 @@
             
             // 保存主题设置到本地存储
             localStorage.setItem('math-practice-theme', theme);
+        }
+        
+        // 加载保存的语言
+        function loadSavedLang() {
+            const savedLang = localStorage.getItem('math-practice-lang');
+            if (savedLang) {
+                state.language = savedLang;
+            } else {
+                // 根据系统语言设置默认语言
+                const systemLang = navigator.language || navigator.userLanguage;
+                if (systemLang.startsWith('zh')) {
+                    state.language = 'zh';
+                } else {
+                    state.language = 'en';
+                }
+            }
+            elements.langToggle.textContent = state.language === 'zh' ? 'EN' : '中';
+            updateTranslations();
         }
         
         // 加载保存的主题
@@ -2314,8 +2411,9 @@
                 // 创建提示按钮
                 const hintBtn = document.createElement('a');
                 hintBtn.className = 'hint-btn';
-                hintBtn.innerHTML = translations[state.language].hintBtn;
+                hintBtn.innerHTML = '💡';
                 hintBtn.target = '_blank';
+                hintBtn.title = translations[state.language].hintBtn;
                 
                 // 构建mathsteps.html的URL参数
                 const currentMode = state.currentTheme === 'dark' ? 'dark-mode' : (state.currentTheme === 'eye' ? 'eye-mode' : '');
@@ -2332,7 +2430,7 @@
                     mathParam = leftExpr + 'equals' + formatNumber(exprData.fullResult);
                 }
                 
-                hintBtn.href = `mathsteps.html?lang=${state.language}&mode=${currentMode}&math=${encodeURIComponent(mathParam)}`;
+                hintBtn.href = `mathsteps.html?math=${encodeURIComponent(mathParam)}`;
                 equationElement.appendChild(hintBtn);
                 
                 elements.questionsContainer.appendChild(equationElement);

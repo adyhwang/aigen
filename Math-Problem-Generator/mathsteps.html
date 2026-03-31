@@ -131,6 +131,26 @@
             background: linear-gradient(135deg, #8b9a6d 0%, #6b7a4d 100%);
             box-shadow: 0 4px 15px rgba(107, 122, 77, 0.3);
         }
+        body.dark-mode .bg-blue-50 {
+            background: rgba(124, 58, 237, 0.2) !important;
+            border-color: rgba(124, 58, 237, 0.4) !important;
+        }
+        body.dark-mode .text-blue-800 {
+            color: #a78bfa !important;
+        }
+        body.dark-mode .text-blue-700 {
+            color: #c4b5fd !important;
+        }
+        body.eye-mode .bg-blue-50 {
+            background: rgba(139, 154, 109, 0.15) !important;
+            border-color: rgba(139, 154, 109, 0.3) !important;
+        }
+        body.eye-mode .text-blue-800 {
+            color: #6b7a4d !important;
+        }
+        body.eye-mode .text-blue-700 {
+            color: #8b9a6d !important;
+        }
         .step-card {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             border-radius: 14px;
@@ -153,6 +173,11 @@
             transform: translateX(4px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
         .step-number {
             display: inline-flex;
             align-items: center;
@@ -165,6 +190,7 @@
             font-size: 0.95rem;
             font-weight: 700;
             margin-right: 16px;
+            flex-shrink: 0;
             box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
         }
         body.dark-mode .step-number {
@@ -178,8 +204,21 @@
         .step-title {
             font-weight: 700;
             color: #667eea;
-            margin-bottom: 10px;
             font-size: 1.05rem;
+            display: inline-flex;
+            align-items: center;
+        }
+        .step-hint {
+            font-weight: 400;
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-left: 8px;
+        }
+        body.dark-mode .step-hint {
+            color: #94a3b8;
+        }
+        body.eye-mode .step-hint {
+            color: #8b9a6d;
         }
         body.dark-mode .step-title {
             color: #a78bfa;
@@ -212,6 +251,77 @@
             color: #667eea;
             font-weight: bold;
             font-size: 1.2rem;
+        }
+        .highlight-calc {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 2px solid #f59e0b;
+            font-weight: 700;
+            color: #92400e;
+        }
+        .highlight-result {
+            background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 2px solid #10b981;
+            font-weight: 700;
+            color: #065f46;
+        }
+        body.dark-mode .highlight-calc {
+            background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+            border-color: #f59e0b;
+            color: #fef3c7;
+        }
+        body.dark-mode .highlight-result {
+            background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+            border-color: #10b981;
+            color: #a7f3d0;
+        }
+        body.eye-mode .highlight-calc {
+            background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%);
+            border-color: #ca8a04;
+            color: #713f12;
+        }
+        body.eye-mode .highlight-result {
+            background: linear-gradient(135deg, #bbf7d0 0%, #86efac 100%);
+            border-color: #15803d;
+            color: #14532d;
+        }
+        .highlight-underline {
+            text-decoration: underline;
+            text-decoration-color: #eab308;
+            text-decoration-thickness: 3px;
+            text-underline-offset: 4px;
+        }
+        body.dark-mode .highlight-underline {
+            text-decoration-color: #fde047;
+        }
+        body.eye-mode .highlight-underline {
+            text-decoration-color: #ca8a04;
+        }
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 4px;
+        }
+        .fraction .numerator {
+            padding: 0 4px;
+            font-size: 0.9em;
+        }
+        .fraction .fraction-line {
+            width: 100%;
+            height: 2px;
+            background: currentColor;
+        }
+        .fraction .denominator {
+            padding: 0 4px;
+            font-size: 0.9em;
+        }
+        .equation-step-pair {
+            margin-top: 8px;
         }
         body.dark-mode .step-arrow {
             color: #a78bfa;
@@ -323,11 +433,68 @@
         body.eye-mode .steps-count {
             background: linear-gradient(135deg, #8b9a6d 0%, #6b7a4d 100%);
         }
+        .header-controls {
+            position: absolute;
+            top: 20px;
+            right: 28px;
+            z-index: 20;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .theme-btn-group {
+            display: flex;
+            gap: 4px;
+            background: rgba(255,255,255,0.2);
+            padding: 4px;
+            border-radius: 10px;
+        }
+        .theme-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .theme-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        .theme-btn.active {
+            background: rgba(255,255,255,0.35);
+        }
+        .lang-toggle-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.25);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .lang-toggle-btn:hover {
+            background: rgba(255,255,255,0.35);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="section-card title-section">
+        <div class="section-card title-section" style="position: relative;">
+            <div class="header-controls">
+                <div class="theme-btn-group">
+                    <button id="theme-light" class="theme-btn active" title="浅色模式">☀️</button>
+                    <button id="theme-dark" class="theme-btn" title="深色模式">🌙</button>
+                    <button id="theme-eye" class="theme-btn" title="护眼模式">👁️</button>
+                </div>
+                <button id="lang-toggle" class="lang-toggle-btn">EN</button>
+            </div>
             <h1 class="text-3xl font-bold relative z-10" id="page-title">数学问题解析</h1>
             <p class="text-sm opacity-90 mt-3 relative z-10" id="page-subtitle">输入数学问题，获取详细解题步骤</p>
         </div>
@@ -340,12 +507,26 @@
                     <span id="solve-text">解析</span>
                 </button>
             </div>
+
+            <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                <div class="text-sm text-blue-800 font-semibold mb-2" id="supported-ops-title">支持的运算符号：</div>
+                <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-blue-700">
+                    <span><strong>+</strong> <span id="op-add">加法</span></span>
+                    <span><strong>-</strong> <span id="op-subtract">减法</span></span>
+                    <span><strong>×, *</strong> <span id="op-multiply">乘法</span></span>
+                    <span><strong>÷, /</strong> <span id="op-divide">除法</span></span>
+                    <span><strong>( )</strong> <span id="op-parentheses">括号</span></span>
+                    <span><strong>x, X</strong> <span id="op-variable">未知数</span></span>
+                    <span><strong>=</strong> <span id="op-equals">等号</span></span>
+                </div>
+            </div>
+            
             <div class="mt-5" id="examples-section">
                 <span class="text-sm text-gray-500" id="examples-label">示例：</span>
                 <button class="example-btn" data-math="8+12-(12-8)">8+12-(12-8)</button>
                 <button class="example-btn" data-math="2×(3+4)-5">2×(3+4)-5</button>
                 <button class="example-btn" data-math="2x+3=7">2x+3=7</button>
-                <button class="example-btn" data-math="3(x-2)=15">3(x-2)=15</button>
+                <button class="example-btn" data-math="3×8×1÷4+x=6">3×8×1÷4+x=6</button>
             </div>
         </div>
         
@@ -380,10 +561,24 @@
                 stepParentheses: '计算括号内',
                 stepMultiplyDivide: '计算乘除',
                 stepAddSubtract: '计算加减',
+                hintDenominator: '方程两边同乘各分母的最小公倍数，去掉分母。',
+                hintExpand: '按照去括号法则，先去小括号，再去中括号，最后去大括号。',
+                hintMove: '把含有未知数的项移到方程一边，其他项移到另一边，移项要变号。',
+                hintMerge: '将方程化为 ax=b（a≠0）的形式。',
+                hintCoeff: '方程两边同时除以未知数的系数 a，得到方程的解 x=b/a。',
                 errorInvalid: '无法解析该数学问题，请检查格式',
                 equation: '原方程',
                 subStepMultiplyDivide: '先算乘除：',
-                subStepAddSubtract: '再算加减：'
+                subStepAddSubtract: '再算加减：',
+                supportedOpsTitle: '支持的运算符号：',
+                opAdd: '加法',
+                opSubtract: '减法',
+                opMultiply: '乘法',
+                opDivide: '除法',
+                opParentheses: '括号',
+                opVariable: '未知数',
+                opEquals: '等号',
+                placeholder: '输入数学问题，如：2×(3+4)-5 或 2x+3=7'
             },
             en: {
                 title: 'Math Problem Solver',
@@ -403,14 +598,31 @@
                 stepParentheses: 'Calculate inside parentheses',
                 stepMultiplyDivide: 'Multiply and divide',
                 stepAddSubtract: 'Add and subtract',
+                hintDenominator: 'Multiply both sides by the least common multiple of denominators to remove denominators.',
+                hintExpand: 'Follow the rules to remove parentheses, starting with the innermost.',
+                hintMove: 'Move terms with variables to one side and constants to the other, changing signs when moving.',
+                hintMerge: 'Combine the equation into the form ax=b (a≠0).',
+                hintCoeff: 'Divide both sides by the coefficient a to get the solution x=b/a.',
                 errorInvalid: 'Cannot parse this math problem, please check the format',
                 equation: 'Original equation',
                 subStepMultiplyDivide: 'Multiply/divide first:',
-                subStepAddSubtract: 'Then add/subtract:'
+                subStepAddSubtract: 'Then add/subtract:',
+                supportedOpsTitle: 'Supported operators:',
+                opAdd: 'Addition',
+                opSubtract: 'Subtraction',
+                opMultiply: 'Multiplication',
+                opDivide: 'Division',
+                opParentheses: 'Parentheses',
+                opVariable: 'Variable',
+                opEquals: 'Equals',
+                placeholder: 'Enter a math problem, e.g.: 2×(3+4)-5 or 2x+3=7'
             }
         };
 
         let currentLang = 'zh';
+        let currentTheme = 'light';
+        let currentInput = '';
+        const elements = {};
 
         function getUrlParams() {
             const params = new URLSearchParams(window.location.search);
@@ -425,20 +637,88 @@
             document.body.classList.remove('dark-mode', 'eye-mode');
             if (mode === 'dark-mode') {
                 document.body.classList.add('dark-mode');
+                currentTheme = 'dark';
             } else if (mode === 'eye-mode') {
                 document.body.classList.add('eye-mode');
+                currentTheme = 'eye';
+            } else {
+                currentTheme = 'light';
             }
+            updateThemeButtons();
+        }
+
+        function updateThemeButtons() {
+            [elements.themeLight, elements.themeDark, elements.themeEye].forEach(btn => {
+                btn.classList.remove('active');
+            });
+            if (currentTheme === 'dark') {
+                elements.themeDark.classList.add('active');
+            } else if (currentTheme === 'eye') {
+                elements.themeEye.classList.add('active');
+            } else {
+                elements.themeLight.classList.add('active');
+            }
+        }
+
+        function setTheme(theme) {
+            currentTheme = theme;
+            document.body.classList.remove('dark-mode', 'eye-mode');
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else if (theme === 'eye') {
+                document.body.classList.add('eye-mode');
+            }
+            updateThemeButtons();
+            localStorage.setItem('math-practice-theme', theme);
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            elements.langToggle.textContent = currentLang === 'zh' ? 'EN' : '中';
+            applyTranslations(currentLang);
+            localStorage.setItem('math-practice-lang', currentLang);
         }
 
         function applyTranslations(lang) {
             currentLang = lang;
             const t = translations[lang];
-            document.getElementById('page-title').textContent = t.title;
-            document.getElementById('page-subtitle').textContent = t.subtitle;
-            document.getElementById('solve-text').textContent = t.solve;
-            document.getElementById('steps-title').textContent = t.stepsTitle;
-            document.getElementById('no-steps-msg').textContent = t.noSteps;
-            document.getElementById('examples-label').textContent = t.examples;
+            
+            const pageTitle = document.getElementById('page-title');
+            const pageSubtitle = document.getElementById('page-subtitle');
+            const solveText = document.getElementById('solve-text');
+            const stepsTitle = document.getElementById('steps-title');
+            const noStepsMsg = document.getElementById('no-steps-msg');
+            const examplesLabel = document.getElementById('examples-label');
+            const supportedOpsTitle = document.getElementById('supported-ops-title');
+            const opAdd = document.getElementById('op-add');
+            const opSubtract = document.getElementById('op-subtract');
+            const opMultiply = document.getElementById('op-multiply');
+            const opDivide = document.getElementById('op-divide');
+            const opParentheses = document.getElementById('op-parentheses');
+            const opVariable = document.getElementById('op-variable');
+            const opEquals = document.getElementById('op-equals');
+            const mathInput = document.getElementById('math-input');
+            
+            if (pageTitle) pageTitle.textContent = t.title;
+            if (pageSubtitle) pageSubtitle.textContent = t.subtitle;
+            if (solveText) solveText.textContent = t.solve;
+            if (stepsTitle) stepsTitle.textContent = t.stepsTitle;
+            if (noStepsMsg) noStepsMsg.textContent = t.noSteps;
+            if (examplesLabel) examplesLabel.textContent = t.examples;
+            if (supportedOpsTitle) supportedOpsTitle.textContent = t.supportedOpsTitle;
+            if (opAdd) opAdd.textContent = t.opAdd;
+            if (opSubtract) opSubtract.textContent = t.opSubtract;
+            if (opMultiply) opMultiply.textContent = t.opMultiply;
+            if (opDivide) opDivide.textContent = t.opDivide;
+            if (opParentheses) opParentheses.textContent = t.opParentheses;
+            if (opVariable) opVariable.textContent = t.opVariable;
+            if (opEquals) opEquals.textContent = t.opEquals;
+            if (mathInput) mathInput.placeholder = t.placeholder;
+            
+            if (currentInput) {
+                const result = solve(currentInput);
+                displaySteps(result);
+            }
         }
 
         function parseInput(input) {
@@ -495,6 +775,38 @@
         function formatExpression(tokens) {
             return tokens.map(t => t.value).join('');
         }
+        
+        function formatExpressionWithFractions(tokens) {
+            let result = '';
+            let i = 0;
+            
+            while (i < tokens.length) {
+                if (i + 2 < tokens.length && 
+                    tokens[i + 1].value === '÷' && 
+                    tokens[i].type !== 'operator' && 
+                    tokens[i + 2].type !== 'operator') {
+                    const numerator = tokens[i].value;
+                    const denominator = tokens[i + 2].value;
+                    result += `<span class="fraction"><span class="numerator">${numerator}</span><span class="fraction-line"></span><span class="denominator">${denominator}</span></span>`;
+                    i += 3;
+                } else {
+                    result += tokens[i].value;
+                    i++;
+                }
+            }
+            
+            return result;
+        }
+        
+        function convertToFractionString(expr) {
+            if (!expr) return expr;
+            let result = expr;
+            const regex = /([0-9]+|x|X)÷([0-9]+)/g;
+            result = result.replace(regex, (match, numerator, denominator) => {
+                return `<span class="fraction"><span class="numerator">${numerator}</span><span class="fraction-line"></span><span class="denominator">${denominator}</span></span>`;
+            });
+            return result;
+        }
 
         function countNumbersInTokens(tokens) {
             return tokens.filter(t => t.type === 'number').length;
@@ -537,30 +849,59 @@
                 
                 if (innerNumCount >= 3) {
                     let tempTokens = [...innerTokens];
+                    let maxIterations = 100;
                     
-                    let hasMultiplyDivide = tempTokens.some(tok => tok.value === '×' || tok.value === '÷');
-                    if (hasMultiplyDivide) {
-                        const mdResult = processMultiplyDivideInTokens(tempTokens);
-                        if (mdResult.changed) {
-                            subSteps.push({
-                                title: t.subStepMultiplyDivide,
-                                before: formatExpression(tempTokens),
-                                after: formatExpression(mdResult.tokens)
-                            });
-                            tempTokens = mdResult.tokens;
+                    while (maxIterations-- > 0 && tempTokens.length > 1) {
+                        let hasChanged = false;
+                        
+                        let hasMultiplyDivide = tempTokens.some(tok => tok.value === '×' || tok.value === '÷');
+                        if (hasMultiplyDivide) {
+                            const mdResult = processMultiplyDivideInTokens(tempTokens);
+                            if (mdResult.changed && mdResult.stepInfo) {
+                                const info = mdResult.stepInfo;
+                                const calcStart = info.beforeExpr.length;
+                                const calcEnd = calcStart + info.calcStr.length;
+                                const resultStart = info.beforeExpr.length;
+                                const resultEnd = resultStart + info.resultStr.length;
+                                
+                                subSteps.push({
+                                    title: t.subStepMultiplyDivide,
+                                    before: info.before,
+                                    after: formatExpression(mdResult.tokens),
+                                    calcStart: calcStart,
+                                    calcEnd: calcEnd,
+                                    resultStart: resultStart,
+                                    resultEnd: resultEnd
+                                });
+                                tempTokens = mdResult.tokens;
+                                hasChanged = true;
+                            }
                         }
-                    }
-                    
-                    if (tempTokens.length > 1) {
-                        const asResult = processAddSubtractInTokens(tempTokens);
-                        if (asResult.changed) {
-                            subSteps.push({
-                                title: t.subStepAddSubtract,
-                                before: formatExpression(tempTokens),
-                                after: formatExpression(asResult.tokens)
-                            });
-                            tempTokens = asResult.tokens;
+                        
+                        if (!hasChanged && tempTokens.length > 1) {
+                            const asResult = processAddSubtractInTokens(tempTokens);
+                            if (asResult.changed && asResult.stepInfo) {
+                                const info = asResult.stepInfo;
+                                const calcStart = info.beforeExpr.length;
+                                const calcEnd = calcStart + info.calcStr.length;
+                                const resultStart = info.beforeExpr.length;
+                                const resultEnd = resultStart + info.resultStr.length;
+                                
+                                subSteps.push({
+                                    title: t.subStepAddSubtract,
+                                    before: info.before,
+                                    after: formatExpression(asResult.tokens),
+                                    calcStart: calcStart,
+                                    calcEnd: calcEnd,
+                                    resultStart: resultStart,
+                                    resultEnd: resultEnd
+                                });
+                                tempTokens = asResult.tokens;
+                                hasChanged = true;
+                            }
                         }
+                        
+                        if (!hasChanged) break;
                     }
                     
                     innerResult = tempTokens.length === 1 ? tempTokens[0].value : evaluateSimpleExpression(innerTokens);
@@ -569,10 +910,21 @@
                 }
                 
                 if (innerResult !== null) {
+                    const calcStr = '(' + innerExpr + ')';
+                    const resultStr = String(innerResult);
+                    const calcStart = beforeExpr.length;
+                    const calcEnd = calcStart + calcStr.length;
+                    const resultStart = beforeExpr.length;
+                    const resultEnd = resultStart + resultStr.length;
+                    
                     steps.push({
                         title: t.stepParentheses,
-                        before: beforeExpr + '(' + innerExpr + ')' + afterExpr,
-                        after: beforeExpr + innerResult + afterExpr,
+                        before: beforeExpr + calcStr + afterExpr,
+                        after: beforeExpr + resultStr + afterExpr,
+                        calcStart: calcStart,
+                        calcEnd: calcEnd,
+                        resultStart: resultStart,
+                        resultEnd: resultEnd,
                         subSteps: subSteps
                     });
                     
@@ -591,6 +943,7 @@
             function processMultiplyDivideInTokens(tokens) {
                 let result = [...tokens];
                 let changed = false;
+                let stepInfo = null;
                 
                 for (let i = 0; i < result.length; i++) {
                     if ((result[i].value === '×' || result[i].value === '÷') &&
@@ -604,22 +957,34 @@
                             calcResult = result[i - 1].value / result[i + 1].value;
                         }
                         
+                        const beforeExpr = formatExpression(result.slice(0, i - 1));
+                        const calcStr = result[i - 1].value + result[i].value + result[i + 1].value;
+                        const resultStr = String(calcResult);
+                        
+                        stepInfo = {
+                            before: formatExpression(result),
+                            beforeExpr: beforeExpr,
+                            calcStr: calcStr,
+                            resultStr: resultStr
+                        };
+                        
                         result = [
                             ...result.slice(0, i - 1),
                             { type: 'number', value: calcResult },
                             ...result.slice(i + 2)
                         ];
                         changed = true;
-                        i--;
+                        break;
                     }
                 }
                 
-                return { tokens: result, changed };
+                return { tokens: result, changed, stepInfo };
             }
 
             function processAddSubtractInTokens(tokens) {
                 let result = [...tokens];
                 let changed = false;
+                let stepInfo = null;
                 
                 for (let i = 0; i < result.length; i++) {
                     if ((result[i].value === '+' || result[i].value === '-') &&
@@ -633,17 +998,28 @@
                             calcResult = result[i - 1].value - result[i + 1].value;
                         }
                         
+                        const beforeExpr = formatExpression(result.slice(0, i - 1));
+                        const calcStr = result[i - 1].value + result[i].value + result[i + 1].value;
+                        const resultStr = String(calcResult);
+                        
+                        stepInfo = {
+                            before: formatExpression(result),
+                            beforeExpr: beforeExpr,
+                            calcStr: calcStr,
+                            resultStr: resultStr
+                        };
+                        
                         result = [
                             ...result.slice(0, i - 1),
                             { type: 'number', value: calcResult },
                             ...result.slice(i + 2)
                         ];
                         changed = true;
-                        i--;
+                        break;
                     }
                 }
                 
-                return { tokens: result, changed };
+                return { tokens: result, changed, stepInfo };
             }
 
             function evaluateSimpleExpression(tokens) {
@@ -708,13 +1084,25 @@
                                 result = left.value / right.value;
                             }
                             
-                            const beforeExpr = formatExpression(currentTokens.slice(0, i - 1));
+                            const beforeTokens = currentTokens.slice(0, i - 1);
+                            const beforeExpr = formatExpression(beforeTokens);
+                            const calcStr = left.value + currentTokens[i].value + right.value;
+                            const resultStr = String(result);
                             const afterExpr = formatExpression(currentTokens.slice(i + 2));
+                            
+                            const calcStart = beforeExpr.length;
+                            const calcEnd = calcStart + calcStr.length;
+                            const resultStart = beforeExpr.length;
+                            const resultEnd = resultStart + resultStr.length;
                             
                             steps.push({
                                 title: t.stepMultiplyDivide,
-                                before: beforeExpr + left.value + currentTokens[i].value + right.value + afterExpr,
-                                after: beforeExpr + result + afterExpr
+                                before: beforeExpr + calcStr + afterExpr,
+                                after: beforeExpr + resultStr + afterExpr,
+                                calcStart: calcStart,
+                                calcEnd: calcEnd,
+                                resultStart: resultStart,
+                                resultEnd: resultEnd
                             });
                             
                             currentTokens = [
@@ -744,13 +1132,25 @@
                                 result = left.value - right.value;
                             }
                             
-                            const beforeExpr = formatExpression(currentTokens.slice(0, i - 1));
+                            const beforeTokens = currentTokens.slice(0, i - 1);
+                            const beforeExpr = formatExpression(beforeTokens);
+                            const calcStr = left.value + currentTokens[i].value + right.value;
+                            const resultStr = String(result);
                             const afterExpr = formatExpression(currentTokens.slice(i + 2));
+                            
+                            const calcStart = beforeExpr.length;
+                            const calcEnd = calcStart + calcStr.length;
+                            const resultStart = beforeExpr.length;
+                            const resultEnd = resultStart + resultStr.length;
                             
                             steps.push({
                                 title: t.stepAddSubtract,
-                                before: beforeExpr + left.value + currentTokens[i].value + right.value + afterExpr,
-                                after: beforeExpr + result + afterExpr
+                                before: beforeExpr + calcStr + afterExpr,
+                                after: beforeExpr + resultStr + afterExpr,
+                                calcStart: calcStart,
+                                calcEnd: calcEnd,
+                                resultStart: resultStart,
+                                resultEnd: resultEnd
                             });
                             
                             currentTokens = [
@@ -775,7 +1175,7 @@
             }
 
             return {
-                steps,
+                steps: steps.map(s => ({ ...s, isEquation: false })),
                 result: currentTokens.length === 1 && currentTokens[0].type === 'number' 
                     ? currentTokens[0].value 
                     : null
@@ -796,9 +1196,13 @@
             if (!variableToken) return null;
             const varName = variableToken.value;
             
+            const originalLeftStr = formatExpression(leftTokens);
+            const originalRightStr = formatExpression(rightTokens);
+            const originalEquation = originalLeftStr + ' = ' + originalRightStr;
+            
             steps.push({
                 title: t.equation,
-                before: formatExpression(leftTokens) + ' = ' + formatExpression(rightTokens),
+                before: originalEquation,
                 after: ''
             });
 
@@ -847,56 +1251,225 @@
                 const lcmVal = lcmMultiple(allDenominators);
                 
                 if (lcmVal > 1) {
+                    const beforeLeftStr = formatExpression(leftTokens);
+                    const beforeRightStr = formatExpression(rightTokens);
+                    const beforeStr = beforeLeftStr + ' = ' + beforeRightStr;
+                    
                     function multiplyByLCM(tokens, lcmVal) {
-                        const newTokens = [];
+                        const result = [];
                         let i = 0;
                         
                         while (i < tokens.length) {
-                            if (tokens[i].value === '÷' && tokens[i + 1] && tokens[i + 1].type === 'number') {
-                                const denominator = tokens[i + 1].value;
-                                const multiplier = lcmVal / denominator;
-                                
-                                if (newTokens.length > 0) {
-                                    const lastToken = newTokens[newTokens.length - 1];
-                                    if (lastToken.type === 'number') {
-                                        lastToken.value *= multiplier;
-                                    } else if (lastToken.type === 'variable') {
-                                        newTokens.push({ type: 'operator', value: '×' });
-                                        newTokens.push({ type: 'number', value: multiplier });
-                                    }
+                            let termStart = i;
+                            
+                            while (i < tokens.length && tokens[i].value !== '+' && tokens[i].value !== '-') {
+                                i++;
+                            }
+                            
+                            const term = tokens.slice(termStart, i);
+                            let processedTerm = [];
+                            
+                            let termDenominator = 1;
+                            for (let j = 0; j < term.length; j++) {
+                                if (term[j].value === '÷' && term[j+1] && term[j+1].type === 'number') {
+                                    termDenominator = term[j+1].value;
+                                    break;
                                 }
-                                i += 2;
-                            } else {
-                                if (tokens[i].type === 'number' && 
-                                    (i === 0 || tokens[i-1].type === 'operator' || tokens[i-1].type === 'equals') &&
-                                    (i + 1 >= tokens.length || tokens[i + 1].type === 'operator' || tokens[i + 1].type === 'equals' || tokens[i + 1].type === 'parenthesis')) {
-                                    if (i + 1 < tokens.length && tokens[i + 1].value === '÷') {
-                                        newTokens.push(tokens[i]);
-                                    } else {
-                                        newTokens.push({ type: 'number', value: tokens[i].value * lcmVal });
-                                    }
-                                } else if (tokens[i].type === 'variable') {
-                                    if (i === 0 || tokens[i-1].type === 'operator') {
-                                        newTokens.push({ type: 'number', value: lcmVal });
-                                        newTokens.push({ type: 'operator', value: '×' });
-                                    }
-                                    newTokens.push(tokens[i]);
+                            }
+                            
+                            const multiplier = lcmVal / termDenominator;
+                            let applied = false;
+                            
+                            for (let j = 0; j < term.length; j++) {
+                                if (term[j].value === '÷' && term[j+1] && term[j+1].type === 'number') {
+                                    j += 1;
+                                } else if (!applied && term[j].type === 'number') {
+                                    processedTerm.push({ type: 'number', value: term[j].value * multiplier });
+                                    applied = true;
+                                } else if (!applied && term[j].type === 'variable') {
+                                    processedTerm.push({ type: 'number', value: multiplier });
+                                    processedTerm.push({ type: 'operator', value: '×' });
+                                    processedTerm.push(term[j]);
+                                    applied = true;
                                 } else {
-                                    newTokens.push(tokens[i]);
+                                    processedTerm.push(term[j]);
                                 }
+                            }
+                            
+                            for (let j = 0; j < processedTerm.length; j++) {
+                                result.push(processedTerm[j]);
+                            }
+                            
+                            if (i < tokens.length) {
+                                result.push(tokens[i]);
                                 i++;
                             }
                         }
-                        return newTokens;
+                        
+                        return result;
                     }
                     
-                    leftTokens = multiplyByLCM(cloneTokens(leftTokens), lcmVal);
-                    rightTokens = multiplyByLCM(cloneTokens(rightTokens), lcmVal);
+                    function buildMultiplyStep(tokens, lcmVal) {
+                        let result = '';
+                        let i = 0;
+                        let first = true;
+                        
+                        while (i < tokens.length) {
+                            let termStart = i;
+                            
+                            while (i < tokens.length && tokens[i].value !== '+' && tokens[i].value !== '-') {
+                                i++;
+                            }
+                            
+                            const term = tokens.slice(termStart, i);
+                            let termStr = formatExpression(term);
+                            
+                            if (!first) {
+                                if (tokens[termStart - 1] && tokens[termStart - 1].value === '+') {
+                                    result += '+';
+                                } else if (tokens[termStart - 1] && tokens[termStart - 1].value === '-') {
+                                    result += '-';
+                                }
+                            }
+                            
+                            result += termStr + '×' + lcmVal;
+                            first = false;
+                            
+                            if (i < tokens.length) {
+                                i++;
+                            }
+                        }
+                        
+                        return result || '0';
+                    }
+                    
+                    function buildSimplifiedStep(tokens, lcmVal) {
+                        let result = '';
+                        let i = 0;
+                        let first = true;
+                        
+                        while (i < tokens.length) {
+                            let termStart = i;
+                            
+                            while (i < tokens.length && tokens[i].value !== '+' && tokens[i].value !== '-') {
+                                i++;
+                            }
+                            
+                            const term = tokens.slice(termStart, i);
+                            
+                            let termDenominator = 1;
+                            let hasDivision = false;
+                            let newTerm = [];
+                            let j = 0;
+                            
+                            while (j < term.length) {
+                                if (term[j].value === '÷' && term[j+1] && term[j+1].type === 'number') {
+                                    termDenominator = term[j+1].value;
+                                    hasDivision = true;
+                                    j += 2;
+                                } else {
+                                    newTerm.push(term[j]);
+                                    j++;
+                                }
+                            }
+                            
+                            const multiplier = lcmVal / termDenominator;
+                            let termStr = formatExpression(newTerm);
+                            
+                            if (!first) {
+                                if (tokens[termStart - 1] && tokens[termStart - 1].value === '+') {
+                                    result += '+';
+                                } else if (tokens[termStart - 1] && tokens[termStart - 1].value === '-') {
+                                    result += '-';
+                                }
+                            }
+                            
+                            if (multiplier > 1) {
+                                if (newTerm.length > 0) {
+                                    result += termStr + '×' + multiplier;
+                                } else {
+                                    result += multiplier;
+                                }
+                            } else {
+                                result += termStr;
+                            }
+                            first = false;
+                            
+                            if (i < tokens.length) {
+                                i++;
+                            }
+                        }
+                        
+                        return result || '0';
+                    }
+                    
+                    function buildSimplifiedTokens(tokens, lcmVal) {
+                        let result = [];
+                        let i = 0;
+                        
+                        while (i < tokens.length) {
+                            let termStart = i;
+                            
+                            while (i < tokens.length && tokens[i].value !== '+' && tokens[i].value !== '-') {
+                                i++;
+                            }
+                            
+                            const term = tokens.slice(termStart, i);
+                            
+                            let termDenominator = 1;
+                            let newTerm = [];
+                            let j = 0;
+                            
+                            while (j < term.length) {
+                                if (term[j].value === '÷' && term[j+1] && term[j+1].type === 'number') {
+                                    termDenominator = term[j+1].value;
+                                    j += 2;
+                                } else {
+                                    newTerm.push(term[j]);
+                                    j++;
+                                }
+                            }
+                            
+                            const multiplier = lcmVal / termDenominator;
+                            
+                            if (multiplier > 1) {
+                                if (newTerm.length > 0) {
+                                    newTerm.forEach(t => result.push({...t}));
+                                    result.push({ type: 'operator', value: '×' });
+                                    result.push({ type: 'number', value: multiplier });
+                                } else {
+                                    result.push({ type: 'number', value: multiplier });
+                                }
+                            } else {
+                                newTerm.forEach(t => result.push({...t}));
+                            }
+                            
+                            if (i < tokens.length) {
+                                result.push(tokens[i]);
+                                i++;
+                            }
+                        }
+                        
+                        return result;
+                    }
+                    
+                    const midLeftStr = buildMultiplyStep(leftTokens, lcmVal);
+                    const midRightStr = buildMultiplyStep(rightTokens, lcmVal);
+                    const midStr = midLeftStr + ' = ' + midRightStr;
+                    
+                    const simplifiedLeftStr = buildSimplifiedStep(leftTokens, lcmVal);
+                    const simplifiedRightStr = buildSimplifiedStep(rightTokens, lcmVal);
+                    const simplifiedStr = simplifiedLeftStr + ' = ' + simplifiedRightStr;
+                    
+                    leftTokens = buildSimplifiedTokens(cloneTokens(leftTokens), lcmVal);
+                    rightTokens = buildSimplifiedTokens(cloneTokens(rightTokens), lcmVal);
                     
                     steps.push({
                         title: t.stepDenominator,
-                        before: '',
-                        after: formatExpression(leftTokens) + ' = ' + formatExpression(rightTokens)
+                        pairs: [
+                            { before: beforeStr, after: midStr },
+                            { before: midStr, after: simplifiedStr }
+                        ]
                     });
                 }
             }
@@ -1019,6 +1592,10 @@
 
             let maxExpandIterations = 5;
             while (maxExpandIterations-- > 0) {
+                const beforeExpandLeft = formatExpression(leftTokens);
+                const beforeExpandRight = formatExpression(rightTokens);
+                const beforeExpandStr = beforeExpandLeft + ' = ' + beforeExpandRight;
+                
                 const leftExpand = expandParentheses(leftTokens);
                 const rightExpand = expandParentheses(rightTokens);
                 
@@ -1028,7 +1605,7 @@
                     
                     steps.push({
                         title: t.stepExpand,
-                        before: '',
+                        before: beforeExpandStr,
                         after: formatExpression(leftTokens) + ' = ' + formatExpression(rightTokens)
                     });
                 } else {
@@ -1067,6 +1644,10 @@
 
             let maxCalcIterations = 10;
             while (maxCalcIterations-- > 0) {
+                const beforeCalcLeft = formatExpression(leftTokens);
+                const beforeCalcRight = formatExpression(rightTokens);
+                const beforeCalcStr = beforeCalcLeft + ' = ' + beforeCalcRight;
+                
                 const leftSimplify = simplifyNumericOperations(leftTokens);
                 const rightSimplify = simplifyNumericOperations(rightTokens);
                 
@@ -1076,7 +1657,7 @@
                     
                     steps.push({
                         title: t.stepMultiplyDivide,
-                        before: '',
+                        before: beforeCalcStr,
                         after: formatExpression(leftTokens) + ' = ' + formatExpression(rightTokens)
                     });
                 } else {
@@ -1120,12 +1701,20 @@
                             i++;
                         }
                     } else if (token.type === 'variable') {
-                        currentTerm.coeff = currentTerm.sign;
                         currentTerm.hasVar = true;
                         currentTerm.varName = token.value;
-                        terms.push({ ...currentTerm });
-                        currentTerm = { coeff: 0, hasVar: false, varName: '', sign: 1 };
-                        i++;
+                        
+                        if (i + 2 < tokens.length && tokens[i + 1].value === '×' && tokens[i + 2].type === 'number') {
+                            currentTerm.coeff = tokens[i + 2].value * currentTerm.sign;
+                            terms.push({ ...currentTerm });
+                            currentTerm = { coeff: 0, hasVar: false, varName: '', sign: 1 };
+                            i += 3;
+                        } else {
+                            currentTerm.coeff = currentTerm.sign;
+                            terms.push({ ...currentTerm });
+                            currentTerm = { coeff: 0, hasVar: false, varName: '', sign: 1 };
+                            i++;
+                        }
                     } else if (token.type === 'operator') {
                         if (token.value === '+') {
                             currentTerm.sign = 1;
@@ -1150,6 +1739,39 @@
             let rightConstTerms = rightTerms.filter(t => !t.hasVar);
 
             const needMove = rightVarTerms.length > 0 || leftConstTerms.length > 0;
+            
+            function buildExpression(varTerms, constTerms, varName) {
+                let expr = '';
+                let first = true;
+                
+                varTerms.forEach(term => {
+                    if (term.coeff !== 0) {
+                        if (!first && term.coeff > 0) {
+                            expr += '+';
+                        }
+                        if (term.coeff === 1) {
+                            expr += varName;
+                        } else if (term.coeff === -1) {
+                            expr += '-' + varName;
+                        } else {
+                            expr += term.coeff + '×' + varName;
+                        }
+                        first = false;
+                    }
+                });
+                
+                constTerms.forEach(term => {
+                    if (term.coeff !== 0) {
+                        if (!first && term.coeff > 0) {
+                            expr += '+';
+                        }
+                        expr += term.coeff;
+                        first = false;
+                    }
+                });
+                
+                return expr || '0';
+            }
 
             if (needMove) {
                 const newLeftVarTerms = [...leftVarTerms];
@@ -1170,45 +1792,14 @@
                     });
                 });
 
-                function buildExpression(varTerms, constTerms, varName) {
-                    let expr = '';
-                    let first = true;
-                    
-                    varTerms.forEach(term => {
-                        if (term.coeff !== 0) {
-                            if (!first && term.coeff > 0) {
-                                expr += '+';
-                            }
-                            if (term.coeff === 1) {
-                                expr += varName;
-                            } else if (term.coeff === -1) {
-                                expr += '-' + varName;
-                            } else {
-                                expr += term.coeff + varName;
-                            }
-                            first = false;
-                        }
-                    });
-                    
-                    constTerms.forEach(term => {
-                        if (term.coeff !== 0) {
-                            if (!first && term.coeff > 0) {
-                                expr += '+';
-                            }
-                            expr += term.coeff;
-                            first = false;
-                        }
-                    });
-                    
-                    return expr || '0';
-                }
-
+                const beforeMoveStr = formatExpression(leftTokens) + ' = ' + formatExpression(rightTokens);
+                
                 const movedLeftExpr = buildExpression(newLeftVarTerms, [], varName);
                 const movedRightExpr = buildExpression([], newRightConstTerms, varName);
 
                 steps.push({
                     title: t.stepMove,
-                    before: '',
+                    before: beforeMoveStr,
                     after: movedLeftExpr + ' = ' + movedRightExpr
                 });
 
@@ -1216,6 +1807,10 @@
                 rightConstTerms = newRightConstTerms;
             }
 
+            const beforeMergeLeft = buildExpression(leftVarTerms, [], varName);
+            const beforeMergeRight = buildExpression([], rightConstTerms, varName);
+            const beforeMergeStr = beforeMergeLeft + ' = ' + beforeMergeRight;
+            
             let varCoeff = 0;
             let constTerm = 0;
 
@@ -1235,14 +1830,14 @@
             } else if (varCoeff === -1) {
                 mergedLeft = '-' + varName;
             } else {
-                mergedLeft = varCoeff + varName;
+                mergedLeft = varCoeff + '×' + varName;
             }
 
             mergedRight = constTerm.toString();
 
             steps.push({
                 title: t.stepMerge,
-                before: '',
+                before: beforeMergeStr,
                 after: mergedLeft + ' = ' + mergedRight
             });
 
@@ -1254,17 +1849,18 @@
                 };
             }
 
+            const beforeCoeffStr = mergedLeft + ' = ' + mergedRight;
             const solution = constTerm / varCoeff;
             const roundedSolution = Math.round(solution * 10000) / 10000;
 
             steps.push({
                 title: t.stepCoeff,
-                before: '',
+                before: beforeCoeffStr,
                 after: varName + ' = ' + roundedSolution
             });
 
             return {
-                steps,
+                steps: steps.map(s => ({ ...s, isEquation: true })),
                 result: roundedSolution
             };
         }
@@ -1285,6 +1881,133 @@
             }
         }
 
+        function highlightByPosition(expr, start, end, highlightClass) {
+            if (start === undefined || end === undefined || start < 0 || end > expr.length) {
+                return expr;
+            }
+            return expr.substring(0, start) + 
+                   `<span class="${highlightClass}">` + 
+                   expr.substring(start, end) + 
+                   `</span>` + 
+                   expr.substring(end);
+        }
+        
+        function renderStep(step, index, isSubStep = false) {
+            let content = '';
+            const useFraction = step.isEquation;
+            const t = translations[currentLang];
+            
+            if (isSubStep) {
+                content += `<div class="sub-step">`;
+                content += `<div class="sub-step-title">${step.title}</div>`;
+            } else {
+                content += `<div class="step-card" style="animation-delay: ${index * 0.1}s;">`;
+                content += `<div class="step-header">`;
+                content += `<span class="step-number">${index + 1}</span>`;
+                content += `<div class="step-title">${step.title}</div>`;
+                
+                let hint = '';
+                if (step.title === t.stepDenominator) {
+                    hint = t.hintDenominator;
+                } else if (step.title === t.stepExpand) {
+                    hint = t.hintExpand;
+                } else if (step.title === t.stepMove) {
+                    hint = t.hintMove;
+                } else if (step.title === t.stepMerge) {
+                    hint = t.hintMerge;
+                } else if (step.title === t.stepCoeff) {
+                    hint = t.hintCoeff;
+                }
+                
+                if (hint) {
+                    content += `<span class="step-hint">(${hint})</span>`;
+                }
+                
+                content += `</div>`;
+            }
+            
+            if (step.pairs && step.pairs.length > 0) {
+                step.pairs.forEach((pair, pairIndex) => {
+                    if (pair.before) {
+                        let beforeHtml = pair.before;
+                        if (pair.calcStart !== undefined && pair.calcEnd !== undefined) {
+                            beforeHtml = highlightByPosition(beforeHtml, pair.calcStart, pair.calcEnd, 'highlight-calc');
+                        }
+                        if (useFraction) {
+                            beforeHtml = convertToFractionString(beforeHtml);
+                        }
+                        if (isSubStep) {
+                            content += `<span class="step-expression" style="font-size: 1.1rem; padding: 8px 12px;">${beforeHtml}</span>`;
+                        } else {
+                            content += `<div class="step-expression">${beforeHtml}</div>`;
+                        }
+                    }
+                    if (pair.after) {
+                        content += `<span class="step-arrow">→</span>`;
+                        let afterHtml = pair.after;
+                        if (pair.resultStart !== undefined && pair.resultEnd !== undefined) {
+                            afterHtml = highlightByPosition(afterHtml, pair.resultStart, pair.resultEnd, 'highlight-result');
+                        }
+                        if (useFraction) {
+                            afterHtml = convertToFractionString(afterHtml);
+                        }
+                        if (isSubStep) {
+                            content += `<span class="step-expression" style="font-size: 1.1rem; padding: 8px 12px;">${afterHtml}</span>`;
+                        } else {
+                            content += `<span class="step-expression">${afterHtml}</span>`;
+                        }
+                    }
+                    if (pairIndex < step.pairs.length - 1) {
+                        content += `<div style="height: 8px;"></div>`;
+                    }
+                });
+            } else {
+                if (step.before) {
+                    let beforeHtml = step.before;
+                    if (step.calcStart !== undefined && step.calcEnd !== undefined) {
+                        beforeHtml = highlightByPosition(beforeHtml, step.calcStart, step.calcEnd, 'highlight-calc');
+                    }
+                    if (useFraction) {
+                        beforeHtml = convertToFractionString(beforeHtml);
+                    }
+                    if (isSubStep) {
+                        content += `<span class="step-expression" style="font-size: 1.1rem; padding: 8px 12px;">${beforeHtml}</span>`;
+                    } else {
+                        content += `<div class="step-expression">${beforeHtml}</div>`;
+                    }
+                }
+                if (step.after) {
+                    content += `<span class="step-arrow">→</span>`;
+                    let afterHtml = step.after;
+                    if (step.resultStart !== undefined && step.resultEnd !== undefined) {
+                        afterHtml = highlightByPosition(afterHtml, step.resultStart, step.resultEnd, 'highlight-result');
+                    }
+                    if (useFraction) {
+                        afterHtml = convertToFractionString(afterHtml);
+                    }
+                    if (isSubStep) {
+                        content += `<span class="step-expression" style="font-size: 1.1rem; padding: 8px 12px;">${afterHtml}</span>`;
+                    } else {
+                        content += `<span class="step-expression">${afterHtml}</span>`;
+                    }
+                }
+            }
+            
+            if (step.subSteps && step.subSteps.length > 0) {
+                step.subSteps.forEach(subStep => {
+                    content += renderStep({...subStep, isEquation: useFraction}, 0, true);
+                });
+            }
+            
+            if (isSubStep) {
+                content += `</div>`;
+            } else {
+                content += `</div>`;
+            }
+            
+            return content;
+        }
+        
         function displaySteps(result) {
             const container = document.getElementById('steps-container');
             const stepsCount = document.getElementById('steps-count');
@@ -1307,36 +2030,11 @@
             stepsCount.style.display = 'inline-block';
             stepsCount.textContent = `${result.steps.length} ${t.stepsCount}`;
             
+            let htmlContent = '';
             result.steps.forEach((step, index) => {
-                const stepDiv = document.createElement('div');
-                stepDiv.className = 'step-card';
-                stepDiv.style.animationDelay = `${index * 0.1}s`;
-                
-                let content = `<span class="step-number">${index + 1}</span>`;
-                content += `<div class="step-title">${step.title}</div>`;
-                
-                if (step.before) {
-                    content += `<div class="step-expression">${step.before}</div>`;
-                }
-                if (step.after) {
-                    content += `<span class="step-arrow">→</span>`;
-                    content += `<span class="step-expression">${step.after}</span>`;
-                }
-                
-                if (step.subSteps && step.subSteps.length > 0) {
-                    step.subSteps.forEach(subStep => {
-                        content += `<div class="sub-step">`;
-                        content += `<div class="sub-step-title">${subStep.title}</div>`;
-                        content += `<span class="step-expression" style="font-size: 1.1rem; padding: 8px 12px;">${subStep.before}</span>`;
-                        content += `<span class="step-arrow">→</span>`;
-                        content += `<span class="step-expression" style="font-size: 1.1rem; padding: 8px 12px;">${subStep.after}</span>`;
-                        content += `</div>`;
-                    });
-                }
-                
-                stepDiv.innerHTML = content;
-                container.appendChild(stepDiv);
+                htmlContent += renderStep(step, index, false);
             });
+            container.innerHTML = htmlContent;
             
             if (result.result !== null && result.result !== undefined) {
                 const answerDiv = document.createElement('div');
@@ -1349,13 +2047,38 @@
         function init() {
             const params = getUrlParams();
             
-            applyTheme(params.mode);
-            applyTranslations(params.lang);
+            elements.themeLight = document.getElementById('theme-light');
+            elements.themeDark = document.getElementById('theme-dark');
+            elements.themeEye = document.getElementById('theme-eye');
+            elements.langToggle = document.getElementById('lang-toggle');
+            
+            const savedTheme = localStorage.getItem('math-practice-theme') || 'light';
+            let savedLang = localStorage.getItem('math-practice-lang');
+            
+            if (!savedLang) {
+                // 根据系统语言设置默认语言
+                const systemLang = navigator.language || navigator.userLanguage;
+                if (systemLang.startsWith('zh')) {
+                    savedLang = 'zh';
+                } else {
+                    savedLang = 'en';
+                }
+            }
+            
+            setTheme(savedTheme);
+            currentLang = savedLang;
+            elements.langToggle.textContent = currentLang === 'zh' ? 'EN' : '中';
+            applyTranslations(savedLang);
+            
+            elements.themeLight.addEventListener('click', () => setTheme('light'));
+            elements.themeDark.addEventListener('click', () => setTheme('dark'));
+            elements.themeEye.addEventListener('click', () => setTheme('eye'));
+            elements.langToggle.addEventListener('click', toggleLanguage);
             
             if (params.math) {
                 const parsedMath = parseInput(params.math);
                 document.getElementById('math-input').value = parsedMath;
-                
+                currentInput = params.math;
                 const result = solve(params.math);
                 displaySteps(result);
             }
@@ -1363,6 +2086,7 @@
             document.getElementById('solve-btn').addEventListener('click', () => {
                 const input = document.getElementById('math-input').value;
                 if (input.trim()) {
+                    currentInput = input;
                     const result = solve(input);
                     displaySteps(result);
                 }
@@ -1372,6 +2096,7 @@
                 if (e.key === 'Enter') {
                     const input = document.getElementById('math-input').value;
                     if (input.trim()) {
+                        currentInput = input;
                         const result = solve(input);
                         displaySteps(result);
                     }
@@ -1382,6 +2107,7 @@
                 btn.addEventListener('click', () => {
                     const math = btn.dataset.math;
                     document.getElementById('math-input').value = math;
+                    currentInput = math;
                     const result = solve(math);
                     displaySteps(result);
                 });
