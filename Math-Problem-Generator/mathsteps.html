@@ -801,7 +801,7 @@
         function convertToFractionString(expr) {
             if (!expr) return expr;
             let result = expr;
-            const regex = /([0-9]+|x|X)÷([0-9]+)/g;
+            const regex = /([0-9]+|x|X)÷([0-9]+|x|X)/g;
             result = result.replace(regex, (match, numerator, denominator) => {
                 return `<span class="fraction"><span class="numerator">${numerator}</span><span class="fraction-line"></span><span class="denominator">${denominator}</span></span>`;
             });
@@ -1216,12 +1216,15 @@
 
             function collectDenominators(tokens) {
                 const denominators = [];
+                const hasXDenominator = tokens.some((t, i) => 
+                    t.value === '÷' && tokens[i + 1] && tokens[i + 1].type === 'variable'
+                );
                 for (let i = 0; i < tokens.length; i++) {
                     if (tokens[i].value === '÷' && tokens[i + 1] && tokens[i + 1].type === 'number') {
                         denominators.push(tokens[i + 1].value);
                     }
                 }
-                return denominators;
+                return { numbers: denominators, hasXDenominator };
             }
 
             function lcm(a, b) {
@@ -1246,70 +1249,38 @@
                 return result;
             }
 
-            if (hasDivision(leftTokens) || hasDivision(rightTokens)) {
-                const allDenominators = [...collectDenominators(leftTokens), ...collectDenominators(rightTokens)];
-                const lcmVal = lcmMultiple(allDenominators);
+            const leftDenomInfo = collectDenominators(leftTokens);
+            const rightDenomInfo = collectDenominators(rightTokens);
+            const hasAnyDivision = hasDivision(leftTokens) || hasDivision(rightTokens);
+            const hasXDenominator = leftDenomInfo.hasXDenominator || rightDenomInfo.hasXDenominator;
+            const allNumberDenominators = [...leftDenomInfo.numbers, ...rightDenomInfo.numbers];
+            const numberLcm = lcmMultiple(allNumberDenominators);
+            
+            if (hasAnyDivision) {
+                let needDenominatorStep = false;
+                let multiplyValue = 1;
+                let multiplyIsX = false;
+                let hasNumberFactor = numberLcm > 1;
                 
-                if (lcmVal > 1) {
+                if (hasXDenominator && hasNumberFactor) {
+                    multiplyValue = `${numberLcm}×x`;
+                    multiplyIsX = true;
+                    needDenominatorStep = true;
+                } else if (hasXDenominator) {
+                    multiplyValue = 'x';
+                    multiplyIsX = true;
+                    needDenominatorStep = true;
+                } else if (numberLcm > 1) {
+                    multiplyValue = numberLcm;
+                    needDenominatorStep = true;
+                }
+                
+                if (needDenominatorStep) {
                     const beforeLeftStr = formatExpression(leftTokens);
                     const beforeRightStr = formatExpression(rightTokens);
                     const beforeStr = beforeLeftStr + ' = ' + beforeRightStr;
                     
-                    function multiplyByLCM(tokens, lcmVal) {
-                        const result = [];
-                        let i = 0;
-                        
-                        while (i < tokens.length) {
-                            let termStart = i;
-                            
-                            while (i < tokens.length && tokens[i].value !== '+' && tokens[i].value !== '-') {
-                                i++;
-                            }
-                            
-                            const term = tokens.slice(termStart, i);
-                            let processedTerm = [];
-                            
-                            let termDenominator = 1;
-                            for (let j = 0; j < term.length; j++) {
-                                if (term[j].value === '÷' && term[j+1] && term[j+1].type === 'number') {
-                                    termDenominator = term[j+1].value;
-                                    break;
-                                }
-                            }
-                            
-                            const multiplier = lcmVal / termDenominator;
-                            let applied = false;
-                            
-                            for (let j = 0; j < term.length; j++) {
-                                if (term[j].value === '÷' && term[j+1] && term[j+1].type === 'number') {
-                                    j += 1;
-                                } else if (!applied && term[j].type === 'number') {
-                                    processedTerm.push({ type: 'number', value: term[j].value * multiplier });
-                                    applied = true;
-                                } else if (!applied && term[j].type === 'variable') {
-                                    processedTerm.push({ type: 'number', value: multiplier });
-                                    processedTerm.push({ type: 'operator', value: '×' });
-                                    processedTerm.push(term[j]);
-                                    applied = true;
-                                } else {
-                                    processedTerm.push(term[j]);
-                                }
-                            }
-                            
-                            for (let j = 0; j < processedTerm.length; j++) {
-                                result.push(processedTerm[j]);
-                            }
-                            
-                            if (i < tokens.length) {
-                                result.push(tokens[i]);
-                                i++;
-                            }
-                        }
-                        
-                        return result;
-                    }
-                    
-                    function buildMultiplyStep(tokens, lcmVal) {
+                    function buildMultiplyStep(tokens, value) {
                         let result = '';
                         let i = 0;
                         let first = true;
@@ -1332,7 +1303,7 @@
                                 }
                             }
                             
-                            result += termStr + '×' + lcmVal;
+                            result += termStr + '×' + value;
                             first = false;
                             
                             if (i < tokens.length) {
@@ -1343,7 +1314,7 @@
                         return result || '0';
                     }
                     
-                    function buildSimplifiedStep(tokens, lcmVal) {
+                    function buildSimplifiedStep(tokens, value, isX, hasNumber) {
                         let result = '';
                         let i = 0;
                         let first = true;
@@ -1357,23 +1328,32 @@
                             
                             const term = tokens.slice(termStart, i);
                             
+                            let hasDenominatorX = false;
                             let termDenominator = 1;
-                            let hasDivision = false;
                             let newTerm = [];
                             let j = 0;
                             
                             while (j < term.length) {
-                                if (term[j].value === '÷' && term[j+1] && term[j+1].type === 'number') {
-                                    termDenominator = term[j+1].value;
-                                    hasDivision = true;
-                                    j += 2;
+                                if (term[j].value === '÷' && term[j+1]) {
+                                    if (term[j+1].type === 'variable') {
+                                        hasDenominatorX = true;
+                                        j += 2;
+                                    } else if (term[j+1].type === 'number') {
+                                        termDenominator = term[j+1].value;
+                                        j += 2;
+                                    } else {
+                                        newTerm.push(term[j]);
+                                        j++;
+                                    }
                                 } else {
                                     newTerm.push(term[j]);
                                     j++;
                                 }
                             }
                             
-                            const multiplier = lcmVal / termDenominator;
+                            let numberMultiplier = hasNumber ? (numberLcm / termDenominator) : 1;
+                            let xMultiplier = isX && !hasDenominatorX ? 'x' : null;
+                            
                             let termStr = formatExpression(newTerm);
                             
                             if (!first) {
@@ -1384,11 +1364,22 @@
                                 }
                             }
                             
-                            if (multiplier > 1) {
+                            let needMultiply = false;
+                            let multiplyParts = [];
+                            if (numberMultiplier > 1) {
+                                multiplyParts.push(numberMultiplier);
+                                needMultiply = true;
+                            }
+                            if (xMultiplier !== null) {
+                                multiplyParts.push(xMultiplier);
+                                needMultiply = true;
+                            }
+                            
+                            if (needMultiply) {
                                 if (newTerm.length > 0) {
-                                    result += termStr + '×' + multiplier;
+                                    result += termStr + '×' + multiplyParts.join('×');
                                 } else {
-                                    result += multiplier;
+                                    result += multiplyParts.join('×');
                                 }
                             } else {
                                 result += termStr;
@@ -1403,7 +1394,7 @@
                         return result || '0';
                     }
                     
-                    function buildSimplifiedTokens(tokens, lcmVal) {
+                    function buildSimplifiedTokens(tokens, value, isX, hasNumber) {
                         let result = [];
                         let i = 0;
                         
@@ -1416,32 +1407,55 @@
                             
                             const term = tokens.slice(termStart, i);
                             
+                            let hasDenominatorX = false;
                             let termDenominator = 1;
                             let newTerm = [];
                             let j = 0;
                             
                             while (j < term.length) {
-                                if (term[j].value === '÷' && term[j+1] && term[j+1].type === 'number') {
-                                    termDenominator = term[j+1].value;
-                                    j += 2;
+                                if (term[j].value === '÷' && term[j+1]) {
+                                    if (term[j+1].type === 'variable') {
+                                        hasDenominatorX = true;
+                                        j += 2;
+                                    } else if (term[j+1].type === 'number') {
+                                        termDenominator = term[j+1].value;
+                                        j += 2;
+                                    } else {
+                                        newTerm.push(term[j]);
+                                        j++;
+                                    }
                                 } else {
                                     newTerm.push(term[j]);
                                     j++;
                                 }
                             }
                             
-                            const multiplier = lcmVal / termDenominator;
+                            let numberMultiplier = hasNumber ? (numberLcm / termDenominator) : 1;
+                            let xMultiplier = isX && !hasDenominatorX ? 'x' : null;
                             
-                            if (multiplier > 1) {
-                                if (newTerm.length > 0) {
-                                    newTerm.forEach(t => result.push({...t}));
+                            let needNumberMultiply = numberMultiplier > 1;
+                            let needXMultiply = xMultiplier !== null;
+                            
+                            if (newTerm.length > 0) {
+                                newTerm.forEach(t => result.push({...t}));
+                                if (needNumberMultiply) {
                                     result.push({ type: 'operator', value: '×' });
-                                    result.push({ type: 'number', value: multiplier });
-                                } else {
-                                    result.push({ type: 'number', value: multiplier });
+                                    result.push({ type: 'number', value: numberMultiplier });
+                                }
+                                if (needXMultiply) {
+                                    result.push({ type: 'operator', value: '×' });
+                                    result.push({ type: 'variable', value: xMultiplier });
                                 }
                             } else {
-                                newTerm.forEach(t => result.push({...t}));
+                                if (needNumberMultiply && needXMultiply) {
+                                    result.push({ type: 'number', value: numberMultiplier });
+                                    result.push({ type: 'operator', value: '×' });
+                                    result.push({ type: 'variable', value: xMultiplier });
+                                } else if (needNumberMultiply) {
+                                    result.push({ type: 'number', value: numberMultiplier });
+                                } else if (needXMultiply) {
+                                    result.push({ type: 'variable', value: xMultiplier });
+                                }
                             }
                             
                             if (i < tokens.length) {
@@ -1453,16 +1467,16 @@
                         return result;
                     }
                     
-                    const midLeftStr = buildMultiplyStep(leftTokens, lcmVal);
-                    const midRightStr = buildMultiplyStep(rightTokens, lcmVal);
+                    const midLeftStr = buildMultiplyStep(leftTokens, multiplyValue);
+                    const midRightStr = buildMultiplyStep(rightTokens, multiplyValue);
                     const midStr = midLeftStr + ' = ' + midRightStr;
                     
-                    const simplifiedLeftStr = buildSimplifiedStep(leftTokens, lcmVal);
-                    const simplifiedRightStr = buildSimplifiedStep(rightTokens, lcmVal);
+                    const simplifiedLeftStr = buildSimplifiedStep(leftTokens, multiplyValue, multiplyIsX, hasNumberFactor);
+                    const simplifiedRightStr = buildSimplifiedStep(rightTokens, multiplyValue, multiplyIsX, hasNumberFactor);
                     const simplifiedStr = simplifiedLeftStr + ' = ' + simplifiedRightStr;
                     
-                    leftTokens = buildSimplifiedTokens(cloneTokens(leftTokens), lcmVal);
-                    rightTokens = buildSimplifiedTokens(cloneTokens(rightTokens), lcmVal);
+                    leftTokens = buildSimplifiedTokens(cloneTokens(leftTokens), multiplyValue, multiplyIsX, hasNumberFactor);
+                    rightTokens = buildSimplifiedTokens(cloneTokens(rightTokens), multiplyValue, multiplyIsX, hasNumberFactor);
                     
                     steps.push({
                         title: t.stepDenominator,
