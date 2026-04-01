@@ -524,9 +524,9 @@
             <div class="mt-5" id="examples-section">
                 <span class="text-sm text-gray-500" id="examples-label">示例：</span>
                 <button class="example-btn" data-math="8+12-(12-8)">8+12-(12-8)</button>
-                <button class="example-btn" data-math="2×(3+4)-5">2×(3+4)-5</button>
                 <button class="example-btn" data-math="2x+3=7">2x+3=7</button>
                 <button class="example-btn" data-math="3×8×1÷4+x=6">3×8×1÷4+x=6</button>
+                <button class="example-btn" data-math="6+1/x-7/3=7">6+1/x-7/3=7</button>
             </div>
         </div>
         
@@ -1215,16 +1215,18 @@
             }
 
             function collectDenominators(tokens) {
-                const denominators = [];
-                const hasXDenominator = tokens.some((t, i) => 
-                    t.value === '÷' && tokens[i + 1] && tokens[i + 1].type === 'variable'
-                );
+                const numbers = [];
+                let hasX = false;
                 for (let i = 0; i < tokens.length; i++) {
-                    if (tokens[i].value === '÷' && tokens[i + 1] && tokens[i + 1].type === 'number') {
-                        denominators.push(tokens[i + 1].value);
+                    if (tokens[i].value === '÷' && tokens[i + 1]) {
+                        if (tokens[i + 1].type === 'number') {
+                            numbers.push(tokens[i + 1].value);
+                        } else if (tokens[i + 1].type === 'variable') {
+                            hasX = true;
+                        }
                     }
                 }
-                return { numbers: denominators, hasXDenominator };
+                return { numbers, hasX };
             }
 
             function lcm(a, b) {
@@ -1252,240 +1254,363 @@
             const leftDenomInfo = collectDenominators(leftTokens);
             const rightDenomInfo = collectDenominators(rightTokens);
             const hasAnyDivision = hasDivision(leftTokens) || hasDivision(rightTokens);
-            const hasXDenominator = leftDenomInfo.hasXDenominator || rightDenomInfo.hasXDenominator;
+            const hasXDenominator = leftDenomInfo.hasX || rightDenomInfo.hasX;
             const allNumberDenominators = [...leftDenomInfo.numbers, ...rightDenomInfo.numbers];
             const numberLcm = lcmMultiple(allNumberDenominators);
             
             if (hasAnyDivision) {
-                let needDenominatorStep = false;
-                let multiplyValue = 1;
-                let multiplyIsX = false;
-                let hasNumberFactor = numberLcm > 1;
+                const beforeLeftStr = formatExpression(leftTokens);
+                const beforeRightStr = formatExpression(rightTokens);
+                const beforeStr = beforeLeftStr + ' = ' + beforeRightStr;
                 
-                if (hasXDenominator && hasNumberFactor) {
-                    multiplyValue = `${numberLcm}×x`;
-                    multiplyIsX = true;
-                    needDenominatorStep = true;
-                } else if (hasXDenominator) {
-                    multiplyValue = 'x';
-                    multiplyIsX = true;
-                    needDenominatorStep = true;
-                } else if (numberLcm > 1) {
-                    multiplyValue = numberLcm;
-                    needDenominatorStep = true;
+                const lcmValue = hasXDenominator ? (numberLcm > 1 ? numberLcm + '×x' : 'x') : String(numberLcm);
+                
+                function parseLcm(lcmStr) {
+                    if (lcmStr.includes('×')) {
+                        const parts = lcmStr.split('×');
+                        return { number: parseInt(parts[0]), hasX: true };
+                    } else if (lcmStr === 'x') {
+                        return { number: 1, hasX: true };
+                    } else {
+                        return { number: parseInt(lcmStr), hasX: false };
+                    }
                 }
                 
-                if (needDenominatorStep) {
-                    const beforeLeftStr = formatExpression(leftTokens);
-                    const beforeRightStr = formatExpression(rightTokens);
-                    const beforeStr = beforeLeftStr + ' = ' + beforeRightStr;
+                const lcmInfo = parseLcm(lcmValue);
+                
+                function multiplyByLCM(tokens, lcmInfo) {
+                    const result = [];
+                    let i = 0;
                     
-                    function buildMultiplyStep(tokens, value) {
-                        let result = '';
-                        let i = 0;
-                        let first = true;
+                    while (i < tokens.length) {
+                        let termStart = i;
                         
-                        while (i < tokens.length) {
-                            let termStart = i;
-                            
-                            while (i < tokens.length && tokens[i].value !== '+' && tokens[i].value !== '-') {
-                                i++;
-                            }
-                            
-                            const term = tokens.slice(termStart, i);
-                            let termStr = formatExpression(term);
-                            
-                            if (!first) {
-                                if (tokens[termStart - 1] && tokens[termStart - 1].value === '+') {
-                                    result += '+';
-                                } else if (tokens[termStart - 1] && tokens[termStart - 1].value === '-') {
-                                    result += '-';
+                        while (i < tokens.length && tokens[i].value !== '+' && tokens[i].value !== '-') {
+                            i++;
+                        }
+                        
+                        const term = tokens.slice(termStart, i);
+                        let processedTerm = [];
+                        
+                        let termDenominator = 1;
+                        let hasDenominatorX = false;
+                        for (let j = 0; j < term.length; j++) {
+                            if (term[j].value === '÷' && term[j+1]) {
+                                if (term[j+1].type === 'number') {
+                                    termDenominator = term[j+1].value;
+                                } else if (term[j+1].type === 'variable') {
+                                    hasDenominatorX = true;
                                 }
-                            }
-                            
-                            result += termStr + '×' + value;
-                            first = false;
-                            
-                            if (i < tokens.length) {
-                                i++;
                             }
                         }
                         
-                        return result || '0';
+                        let multiplier = lcmInfo.number;
+                        if (lcmInfo.hasX && !hasDenominatorX) {
+                            multiplier = multiplier + '×x';
+                        } else if (lcmInfo.hasX && hasDenominatorX) {
+                            multiplier = String(multiplier);
+                        } else {
+                            multiplier = multiplier / termDenominator;
+                            multiplier = String(multiplier);
+                        }
+                        
+                        let applied = false;
+                        let j = 0;
+                        
+                        while (j < term.length) {
+                            if (term[j].value === '÷' && term[j+1]) {
+                                if (term[j+1].type === 'number' && !lcmInfo.hasX) {
+                                    j += 2;
+                                } else if (term[j+1].type === 'variable' && lcmInfo.hasX) {
+                                    j += 2;
+                                } else {
+                                    processedTerm.push(term[j]);
+                                    j++;
+                                }
+                            } else if (!applied && multiplier !== '1') {
+                                if (term[j].type === 'number') {
+                                    if (multiplier.includes('×')) {
+                                        const numPart = parseInt(multiplier.split('×')[0]);
+                                        processedTerm.push({ type: 'number', value: term[j].value * numPart });
+                                        processedTerm.push({ type: 'operator', value: '×' });
+                                        processedTerm.push({ type: 'variable', value: 'x' });
+                                    } else {
+                                        processedTerm.push({ type: 'number', value: term[j].value * parseInt(multiplier) });
+                                    }
+                                    applied = true;
+                                } else if (term[j].type === 'variable') {
+                                    if (multiplier.includes('×')) {
+                                        const numPart = parseInt(multiplier.split('×')[0]);
+                                        processedTerm.push({ type: 'number', value: numPart });
+                                        processedTerm.push({ type: 'operator', value: '×' });
+                                        processedTerm.push({ type: 'variable', value: 'x' });
+                                        processedTerm.push({ type: 'operator', value: '×' });
+                                        processedTerm.push(term[j]);
+                                    } else {
+                                        processedTerm.push({ type: 'number', value: parseInt(multiplier) });
+                                        processedTerm.push({ type: 'operator', value: '×' });
+                                        processedTerm.push(term[j]);
+                                    }
+                                    applied = true;
+                                } else {
+                                    processedTerm.push(term[j]);
+                                }
+                                j++;
+                            } else {
+                                processedTerm.push(term[j]);
+                                j++;
+                            }
+                        }
+                        
+                        for (let k = 0; k < processedTerm.length; k++) {
+                            result.push(processedTerm[k]);
+                        }
+                        
+                        if (i < tokens.length) {
+                            result.push(tokens[i]);
+                            i++;
+                        }
                     }
                     
-                    function buildSimplifiedStep(tokens, value, isX, hasNumber) {
-                        let result = '';
-                        let i = 0;
-                        let first = true;
+                    return result;
+                }
+                
+                function buildMultiplyStep(tokens, lcmStr) {
+                    let result = '';
+                    let i = 0;
+                    let first = true;
+                    const highlightedLcm = '<span class="highlight-underline">×' + lcmStr + '</span>';
+                    
+                    while (i < tokens.length) {
+                        let termStart = i;
                         
-                        while (i < tokens.length) {
-                            let termStart = i;
-                            
-                            while (i < tokens.length && tokens[i].value !== '+' && tokens[i].value !== '-') {
-                                i++;
+                        while (i < tokens.length && tokens[i].value !== '+' && tokens[i].value !== '-') {
+                            i++;
+                        }
+                        
+                        const term = tokens.slice(termStart, i);
+                        let termStr = formatExpression(term);
+                        
+                        if (!first) {
+                            if (tokens[termStart - 1] && tokens[termStart - 1].value === '+') {
+                                result += '+';
+                            } else if (tokens[termStart - 1] && tokens[termStart - 1].value === '-') {
+                                result += '-';
                             }
-                            
-                            const term = tokens.slice(termStart, i);
-                            
-                            let hasDenominatorX = false;
-                            let termDenominator = 1;
-                            let newTerm = [];
-                            let j = 0;
-                            
-                            while (j < term.length) {
-                                if (term[j].value === '÷' && term[j+1]) {
-                                    if (term[j+1].type === 'variable') {
-                                        hasDenominatorX = true;
-                                        j += 2;
-                                    } else if (term[j+1].type === 'number') {
-                                        termDenominator = term[j+1].value;
-                                        j += 2;
-                                    } else {
-                                        newTerm.push(term[j]);
-                                        j++;
-                                    }
+                        }
+                        
+                        result += termStr + highlightedLcm;
+                        first = false;
+                        
+                        if (i < tokens.length) {
+                            i++;
+                        }
+                    }
+                    
+                    return result || '0';
+                }
+                
+                function buildSimplifiedStep(tokens, lcmInfo) {
+                    let result = '';
+                    let i = 0;
+                    let first = true;
+                    
+                    while (i < tokens.length) {
+                        let termStart = i;
+                        
+                        while (i < tokens.length && tokens[i].value !== '+' && tokens[i].value !== '-') {
+                            i++;
+                        }
+                        
+                        const term = tokens.slice(termStart, i);
+                        
+                        let termDenominator = 1;
+                        let hasDenominatorX = false;
+                        let newTerm = [];
+                        let j = 0;
+                        
+                        while (j < term.length) {
+                            if (term[j].value === '÷' && term[j+1]) {
+                                if (term[j+1].type === 'number') {
+                                    termDenominator = term[j+1].value;
+                                    j += 2;
+                                } else if (term[j+1].type === 'variable') {
+                                    hasDenominatorX = true;
+                                    j += 2;
                                 } else {
                                     newTerm.push(term[j]);
                                     j++;
-                                }
-                            }
-                            
-                            let numberMultiplier = hasNumber ? (numberLcm / termDenominator) : 1;
-                            let xMultiplier = isX && !hasDenominatorX ? 'x' : null;
-                            
-                            let termStr = formatExpression(newTerm);
-                            
-                            if (!first) {
-                                if (tokens[termStart - 1] && tokens[termStart - 1].value === '+') {
-                                    result += '+';
-                                } else if (tokens[termStart - 1] && tokens[termStart - 1].value === '-') {
-                                    result += '-';
-                                }
-                            }
-                            
-                            let needMultiply = false;
-                            let multiplyParts = [];
-                            if (numberMultiplier > 1) {
-                                multiplyParts.push(numberMultiplier);
-                                needMultiply = true;
-                            }
-                            if (xMultiplier !== null) {
-                                multiplyParts.push(xMultiplier);
-                                needMultiply = true;
-                            }
-                            
-                            if (needMultiply) {
-                                if (newTerm.length > 0) {
-                                    result += termStr + '×' + multiplyParts.join('×');
-                                } else {
-                                    result += multiplyParts.join('×');
                                 }
                             } else {
-                                result += termStr;
-                            }
-                            first = false;
-                            
-                            if (i < tokens.length) {
-                                i++;
+                                newTerm.push(term[j]);
+                                j++;
                             }
                         }
                         
-                        return result || '0';
+                        let multiplier;
+                        if (lcmInfo.hasX) {
+                            if (hasDenominatorX) {
+                                multiplier = lcmInfo.number;
+                            } else {
+                                const remainingNum = lcmInfo.number / termDenominator;
+                                if (remainingNum > 1) {
+                                    multiplier = remainingNum + '×x';
+                                } else if (remainingNum === 1) {
+                                    multiplier = 'x';
+                                } else {
+                                    multiplier = '1';
+                                }
+                            }
+                        } else {
+                            multiplier = lcmInfo.number / termDenominator;
+                        }
+                        
+                        let termStr = formatExpression(newTerm);
+                        
+                        if (!first) {
+                            if (tokens[termStart - 1] && tokens[termStart - 1].value === '+') {
+                                result += '+';
+                            } else if (tokens[termStart - 1] && tokens[termStart - 1].value === '-') {
+                                result += '-';
+                            }
+                        }
+                        
+                        if (multiplier !== 1 && multiplier !== '1') {
+                            if (newTerm.length > 0) {
+                                result += termStr + '×' + multiplier;
+                            } else {
+                                result += multiplier;
+                            }
+                        } else {
+                            result += termStr;
+                        }
+                        first = false;
+                        
+                        if (i < tokens.length) {
+                            i++;
+                        }
                     }
                     
-                    function buildSimplifiedTokens(tokens, value, isX, hasNumber) {
-                        let result = [];
-                        let i = 0;
+                    return result || '0';
+                }
+                
+                function buildSimplifiedTokens(tokens, lcmInfo) {
+                    let result = [];
+                    let i = 0;
+                    
+                    while (i < tokens.length) {
+                        let termStart = i;
                         
-                        while (i < tokens.length) {
-                            let termStart = i;
-                            
-                            while (i < tokens.length && tokens[i].value !== '+' && tokens[i].value !== '-') {
-                                i++;
-                            }
-                            
-                            const term = tokens.slice(termStart, i);
-                            
-                            let hasDenominatorX = false;
-                            let termDenominator = 1;
-                            let newTerm = [];
-                            let j = 0;
-                            
-                            while (j < term.length) {
-                                if (term[j].value === '÷' && term[j+1]) {
-                                    if (term[j+1].type === 'variable') {
-                                        hasDenominatorX = true;
-                                        j += 2;
-                                    } else if (term[j+1].type === 'number') {
-                                        termDenominator = term[j+1].value;
-                                        j += 2;
-                                    } else {
-                                        newTerm.push(term[j]);
-                                        j++;
-                                    }
+                        while (i < tokens.length && tokens[i].value !== '+' && tokens[i].value !== '-') {
+                            i++;
+                        }
+                        
+                        const term = tokens.slice(termStart, i);
+                        
+                        let termDenominator = 1;
+                        let hasDenominatorX = false;
+                        let newTerm = [];
+                        let j = 0;
+                        
+                        while (j < term.length) {
+                            if (term[j].value === '÷' && term[j+1]) {
+                                if (term[j+1].type === 'number') {
+                                    termDenominator = term[j+1].value;
+                                    j += 2;
+                                } else if (term[j+1].type === 'variable') {
+                                    hasDenominatorX = true;
+                                    j += 2;
                                 } else {
                                     newTerm.push(term[j]);
                                     j++;
                                 }
+                            } else {
+                                newTerm.push(term[j]);
+                                j++;
                             }
-                            
-                            let numberMultiplier = hasNumber ? (numberLcm / termDenominator) : 1;
-                            let xMultiplier = isX && !hasDenominatorX ? 'x' : null;
-                            
-                            let needNumberMultiply = numberMultiplier > 1;
-                            let needXMultiply = xMultiplier !== null;
-                            
+                        }
+                        
+                        let multiplier;
+                        let applyMultiplier = true;
+                        if (lcmInfo.hasX) {
+                            if (hasDenominatorX) {
+                                multiplier = lcmInfo.number;
+                                applyMultiplier = multiplier > 1;
+                            } else {
+                                const remainingNum = lcmInfo.number / termDenominator;
+                                if (remainingNum > 1) {
+                                    multiplier = remainingNum + '×x';
+                                    applyMultiplier = true;
+                                } else if (remainingNum === 1) {
+                                    multiplier = 'x';
+                                    applyMultiplier = true;
+                                } else {
+                                    multiplier = '1';
+                                    applyMultiplier = false;
+                                }
+                            }
+                        } else {
+                            multiplier = lcmInfo.number / termDenominator;
+                            applyMultiplier = multiplier > 1;
+                        }
+                        
+                        if (applyMultiplier) {
                             if (newTerm.length > 0) {
                                 newTerm.forEach(t => result.push({...t}));
-                                if (needNumberMultiply) {
+                                result.push({ type: 'operator', value: '×' });
+                                if (multiplier.includes && multiplier.includes('×')) {
+                                    const numPart = parseInt(multiplier.split('×')[0]);
+                                    result.push({ type: 'number', value: numPart });
                                     result.push({ type: 'operator', value: '×' });
-                                    result.push({ type: 'number', value: numberMultiplier });
-                                }
-                                if (needXMultiply) {
-                                    result.push({ type: 'operator', value: '×' });
-                                    result.push({ type: 'variable', value: xMultiplier });
+                                    result.push({ type: 'variable', value: 'x' });
+                                } else if (multiplier === 'x') {
+                                    result.push({ type: 'variable', value: 'x' });
+                                } else {
+                                    result.push({ type: 'number', value: multiplier });
                                 }
                             } else {
-                                if (needNumberMultiply && needXMultiply) {
-                                    result.push({ type: 'number', value: numberMultiplier });
+                                if (multiplier.includes && multiplier.includes('×')) {
+                                    const numPart = parseInt(multiplier.split('×')[0]);
+                                    result.push({ type: 'number', value: numPart });
                                     result.push({ type: 'operator', value: '×' });
-                                    result.push({ type: 'variable', value: xMultiplier });
-                                } else if (needNumberMultiply) {
-                                    result.push({ type: 'number', value: numberMultiplier });
-                                } else if (needXMultiply) {
-                                    result.push({ type: 'variable', value: xMultiplier });
+                                    result.push({ type: 'variable', value: 'x' });
+                                } else if (multiplier === 'x') {
+                                    result.push({ type: 'variable', value: 'x' });
+                                } else {
+                                    result.push({ type: 'number', value: multiplier });
                                 }
                             }
-                            
-                            if (i < tokens.length) {
-                                result.push(tokens[i]);
-                                i++;
-                            }
+                        } else {
+                            newTerm.forEach(t => result.push({...t}));
                         }
                         
-                        return result;
+                        if (i < tokens.length) {
+                            result.push(tokens[i]);
+                            i++;
+                        }
                     }
                     
-                    const midLeftStr = buildMultiplyStep(leftTokens, multiplyValue);
-                    const midRightStr = buildMultiplyStep(rightTokens, multiplyValue);
-                    const midStr = midLeftStr + ' = ' + midRightStr;
-                    
-                    const simplifiedLeftStr = buildSimplifiedStep(leftTokens, multiplyValue, multiplyIsX, hasNumberFactor);
-                    const simplifiedRightStr = buildSimplifiedStep(rightTokens, multiplyValue, multiplyIsX, hasNumberFactor);
-                    const simplifiedStr = simplifiedLeftStr + ' = ' + simplifiedRightStr;
-                    
-                    leftTokens = buildSimplifiedTokens(cloneTokens(leftTokens), multiplyValue, multiplyIsX, hasNumberFactor);
-                    rightTokens = buildSimplifiedTokens(cloneTokens(rightTokens), multiplyValue, multiplyIsX, hasNumberFactor);
-                    
-                    steps.push({
-                        title: t.stepDenominator,
-                        pairs: [
-                            { before: beforeStr, after: midStr },
-                            { before: midStr, after: simplifiedStr }
-                        ]
-                    });
+                    return result;
                 }
+                
+                const midLeftStr = buildMultiplyStep(leftTokens, lcmValue);
+                const midRightStr = buildMultiplyStep(rightTokens, lcmValue);
+                const midStr = midLeftStr + ' = ' + midRightStr;
+                
+                const simplifiedLeftStr = buildSimplifiedStep(leftTokens, lcmInfo);
+                const simplifiedRightStr = buildSimplifiedStep(rightTokens, lcmInfo);
+                const simplifiedStr = simplifiedLeftStr + ' = ' + simplifiedRightStr;
+                
+                leftTokens = buildSimplifiedTokens(cloneTokens(leftTokens), lcmInfo);
+                rightTokens = buildSimplifiedTokens(cloneTokens(rightTokens), lcmInfo);
+                
+                steps.push({
+                    title: t.stepDenominator,
+                    pairs: [
+                        { before: beforeStr, after: midStr },
+                        { before: midStr, after: simplifiedStr }
+                    ]
+                });
             }
 
             function expandParentheses(sideTokens) {
