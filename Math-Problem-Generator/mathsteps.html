@@ -507,8 +507,12 @@
                     <span id="solve-text">解析</span>
                 </button>
             </div>
+            
+            <div class="mt-2">
+                <button id="toggle-examples" class="text-sm text-blue-600 hover:underline">操作提示</button>
+            </div>
 
-            <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+            <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100 mt-5" id="examples-section" style="display: none;">
                 <div class="text-sm text-blue-800 font-semibold mb-2" id="supported-ops-title">支持的运算符号：</div>
                 <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-blue-700">
                     <span><strong>+</strong> <span id="op-add">加法</span></span>
@@ -519,14 +523,14 @@
                     <span><strong>x, X</strong> <span id="op-variable">未知数</span></span>
                     <span><strong>=</strong> <span id="op-equals">等号</span></span>
                 </div>
-            </div>
-            
-            <div class="mt-5" id="examples-section">
-                <span class="text-sm text-gray-500" id="examples-label">示例：</span>
-                <button class="example-btn" data-math="8+12-(12-8)">8+12-(12-8)</button>
-                <button class="example-btn" data-math="2x+3=7">2x+3=7</button>
-                <button class="example-btn" data-math="3×8×1÷4+x=6">3×8×1÷4+x=6</button>
-                <button class="example-btn" data-math="6+1/x-7/3=7">6+1/x-7/3=7</button>
+                
+                <div class="mt-4">
+                    <span class="text-sm text-gray-500" id="examples-label">示例：</span>
+                    <button class="example-btn" data-math="8+12-(12-8)">8+12-(12-8)</button>
+                    <button class="example-btn" data-math="2x+3=7">2x+3=7</button>
+                    <button class="example-btn" data-math="3×8×1÷4+x=6">3×8×1÷4+x=6</button>
+                    <button class="example-btn" data-math="6+1/x-7/3=7">6+1/x-7/3=7</button>
+                </div>
             </div>
         </div>
         
@@ -579,7 +583,14 @@
                 opParentheses: '括号',
                 opVariable: '未知数',
                 opEquals: '等号',
-                placeholder: '输入数学问题，如：2×(3+4)-5 或 2x+3=7'
+                placeholder: '输入数学问题，如：2×(3+4)-5 或 2x+3=7',
+                validateOneEqual: '本程序只能计算一元一次方程，请确保方程中只有一个等号',
+                validateHasVariable: '本程序只能计算一元一次方程，方程中必须包含未知数（如x）',
+                validateOneVariable: '本程序只能计算一元一次方程，方程中只能包含一个未知数（如x），不能同时包含多个不同变量',
+                validateNoProduct: '本程序只能计算一元一次方程，方程中不能出现未知数的乘积（如x×x）',
+                validateNoDenominatorX: '本程序只能计算一元一次方程，方程中未知数不能出现在分母中（如1/x），否则会变为分式方程',
+                validateNoComplexDenominator: '本程序只能计算一元一次方程，方程中未知数不能出现在括号内的分母中（如1/(x+1)）',
+                validateSuccess: '方程验证通过'
             },
             en: {
                 title: 'Math Problem Solver',
@@ -617,7 +628,14 @@
                 opParentheses: 'Parentheses',
                 opVariable: 'Variable',
                 opEquals: 'Equals',
-                placeholder: 'Enter a math problem, e.g.: 2×(3+4)-5 or 2x+3=7'
+                placeholder: 'Enter a math problem, e.g.: 2×(3+4)-5 or 2x+3=7',
+                validateOneEqual: 'This program can only solve linear equations with one variable, please ensure there is only one equals sign in the equation',
+                validateHasVariable: 'This program can only solve linear equations with one variable, the equation must contain an unknown (like x)',
+                validateOneVariable: 'This program can only solve linear equations with one variable, the equation can only contain one unknown (like x), not multiple different variables',
+                validateNoProduct: 'This program can only solve linear equations with one variable, the equation cannot contain products of unknowns (like x×x)',
+                validateNoDenominatorX: 'This program can only solve linear equations with one variable, the unknown cannot appear in the denominator (like 1/x), as this would create a rational equation',
+                validateNoComplexDenominator: 'This program can only solve linear equations with one variable, the unknown cannot appear in parentheses in the denominator (like 1/(x+1))',
+                validateSuccess: 'Equation validation passed'
             }
         };
 
@@ -741,6 +759,10 @@
                         num += expr[i];
                         i++;
                     }
+                    // 检查多个小数点
+                    if ((num.match(/\./g) || []).length > 1) {
+                        return { error: '数字格式错误：多个小数点' };
+                    }
                     tokens.push({ type: 'number', value: parseFloat(num) });
                 } else if (i < expr.length && /[a-zA-Z]/.test(expr[i])) {
                     tokens.push({ type: 'number', value: -1 });
@@ -759,11 +781,41 @@
                         num += expr[i];
                         i++;
                     }
+                    // 检查多个小数点
+                    if ((num.match(/\./g) || []).length > 1) {
+                        return { error: '数字格式错误：多个小数点' };
+                    }
                     tokens.push({ type: 'number', value: parseFloat(num) });
                 } else if (/[a-zA-Z]/.test(char)) {
                     tokens.push({ type: 'variable', value: char.toLowerCase() });
                     i++;
                 } else if (['+', '-', '×', '*', '÷', '/', '(', ')', '[', ']', '{', '}', '='].includes(char)) {
+                    // 处理连续运算符
+                    if (i > 0 && tokens.length > 0) {
+                        const prevToken = tokens[tokens.length - 1];
+                        if ((prevToken.type === 'operator' || prevToken.type === 'equals') && 
+                            char !== '(' && char !== '[' && char !== '{' && char !== '-') {
+                            return { error: '表达式格式错误：连续运算符' };
+                        }
+                    }
+                    
+                    // 处理空括号
+                    if (char === '(' || char === '[' || char === '{') {
+                        const closingBracket = char === '(' ? ')' : char === '[' ? ']' : '}';
+                        let j = i + 1;
+                        let foundClosing = false;
+                        while (j < expr.length) {
+                            if (expr[j] === closingBracket) {
+                                foundClosing = true;
+                                break;
+                            }
+                            j++;
+                        }
+                        if (foundClosing && j === i + 1) {
+                            return { error: '表达式格式错误：空括号' };
+                        }
+                    }
+                    
                     // 处理负数作为除数的情况：6÷-3 应该被解析为 [6, ÷, -3]
                     if (char === '-' && i > 0 && ['÷', '/', '×', '*', '+', '-', '(', '[', '{', '='].includes(expr[i-1])) {
                         // 这是一个负数，而不是减号
@@ -773,6 +825,10 @@
                             while (i < expr.length && /[0-9.]/.test(expr[i])) {
                                 num += expr[i];
                                 i++;
+                            }
+                            // 检查多个小数点
+                            if ((num.match(/\./g) || []).length > 1) {
+                                return { error: '数字格式错误：多个小数点' };
                             }
                             tokens.push({ type: 'number', value: parseFloat(num) });
                         } else if (i < expr.length && /[a-zA-Z]/.test(expr[i])) {
@@ -798,7 +854,16 @@
                         i++;
                     }
                 } else {
+                    // 忽略未知字符
                     i++;
+                }
+            }
+            
+            // 检查以运算符结尾
+            if (tokens.length > 0) {
+                const lastToken = tokens[tokens.length - 1];
+                if (lastToken.type === 'operator' || lastToken.type === 'equals') {
+                    return { error: '表达式格式错误：以运算符结尾' };
                 }
             }
             
@@ -955,6 +1020,10 @@
                         let hasMultiplyDivide = tempTokens.some(tok => tok.value === '×' || tok.value === '÷');
                         if (hasMultiplyDivide) {
                             const mdResult = processMultiplyDivideInTokens(tempTokens);
+                            // 检查是否有错误
+                            if (mdResult.error) {
+                                return null;
+                            }
                             if (mdResult.changed && mdResult.stepInfo) {
                                 const info = mdResult.stepInfo;
                                 const calcStart = info.beforeExpr.length;
@@ -1052,6 +1121,10 @@
                         if (result[i].value === '×') {
                             calcResult = result[i - 1].value * result[i + 1].value;
                         } else {
+                            // 除零保护
+                            if (result[i + 1].value === 0) {
+                                return { tokens: result, changed: false, error: '除零错误' };
+                            }
                             calcResult = result[i - 1].value / result[i + 1].value;
                         }
                         
@@ -1150,8 +1223,10 @@
                             
                             if (op === '×') {
                                 currentNum *= nextNum;
-                            } else {
+                            } else if (nextNum !== 0) {
                                 currentNum /= nextNum;
+                            } else {
+                                return null;  // 除零保护
                             }
                             i += 2;
                         }
@@ -1287,20 +1362,25 @@
         }
 
         function validateLinearEquation(tokens) {
+            // 检查tokens是否为空
+            if (!tokens || tokens.length === 0) {
+                return { valid: false, message: '方程不能为空' };
+            }
+            
             const equalCount = tokens.filter(tok => tok.type === 'equals').length;
             if (equalCount !== 1) {
-                return { valid: false, message: '本程序只能计算一元一次方程，请确保方程中只有一个等号' };
+                return { valid: false, message: translations[currentLang].validateOneEqual };
             }
             
             const variableTokens = tokens.filter(tok => tok.type === 'variable');
             if (variableTokens.length === 0) {
-                return { valid: false, message: '本程序只能计算一元一次方程，方程中必须包含未知数（如x）' };
+                return { valid: false, message: translations[currentLang].validateHasVariable };
             }
             
             // 检查是否只有一个变量名（如只有x，不能同时有x和y）
             const uniqueVars = [...new Set(variableTokens.map(tok => tok.value))];
             if (uniqueVars.length > 1) {
-                return { valid: false, message: '本程序只能计算一元一次方程，方程中只能包含一个未知数（如x），不能同时包含多个不同变量' };
+                return { valid: false, message: translations[currentLang].validateOneVariable };
             }
             
             // 检查变量是否在分母中出现多次（可能导致二次方程）
@@ -1326,7 +1406,7 @@
             }
             
             if (hasVariableProduct(leftTokens) || hasVariableProduct(rightTokens)) {
-                return { valid: false, message: '本程序只能计算一元一次方程，方程中不能出现未知数的乘积（如x×x）' };
+                return { valid: false, message: translations[currentLang].validateNoProduct };
             }
             
             // 检查变量是否在分母中多次出现（如1/x+1/x=1，去分母后可能产生x²）
@@ -1343,7 +1423,7 @@
             const xInDenomLeft = countXInDenominator(leftTokens);
             const xInDenomRight = countXInDenominator(rightTokens);
             if (xInDenomLeft + xInDenomRight > 1) {
-                return { valid: false, message: '本程序只能计算一元一次方程，方程中未知数在分母中出现多次会导致高次方程' };
+                return { valid: false, message: translations[currentLang].validateNoDenominatorX };
             }
             
             // 检查是否有括号作为分母，以及括号内是否包含变量
@@ -1366,7 +1446,7 @@
             }
             
             if (hasParenthesesAsDenominator(leftTokens) || hasParenthesesAsDenominator(rightTokens)) {
-                return { valid: false, message: '本程序只能计算一元一次方程，括号作为分母且括号内包含未知数会导致高次方程' };
+                return { valid: false, message: translations[currentLang].validateNoComplexDenominator };
             }
             
             return { valid: true, message: '' };
@@ -1420,9 +1500,9 @@
                     if (tokens[i].value === '÷' && tokens[i + 1]) {
                         // 处理负数作为分母的情况
                         if (tokens[i + 1].value === '-' && tokens[i + 2] && tokens[i + 2].type === 'number') {
-                            numbers.push(-tokens[i + 2].value);
+                            numbers.push(Math.abs(-tokens[i + 2].value));  // LCM使用绝对值
                         } else if (tokens[i + 1].type === 'number') {
-                            numbers.push(tokens[i + 1].value);
+                            numbers.push(Math.abs(tokens[i + 1].value));  // LCM使用绝对值
                         } else if (tokens[i + 1].type === 'variable') {
                             hasX = true;
                         } else if (tokens[i + 1].value === '(' || tokens[i + 1].value === '[' || tokens[i + 1].value === '{') {
@@ -1431,11 +1511,11 @@
                                 const innerTokens = tokens.slice(i + 2, match);
                                 const hasVarInParentheses = innerTokens.some(t => t.type === 'variable');
                                 if (!hasVarInParentheses) {
-                                    const innerResult = solveArithmetic(innerTokens, 'zh');
-                                    if (innerResult && innerResult.result !== null) {
-                                        numbers.push(parseFloat(innerResult.result));
+                                        const innerResult = solveArithmetic(innerTokens, 'zh');
+                                        if (innerResult && innerResult.result !== null) {
+                                            numbers.push(Math.abs(parseFloat(innerResult.result)));  // LCM使用绝对值
+                                        }
                                     }
-                                }
                             }
                         }
                     }
@@ -2355,6 +2435,11 @@
             const tokens = tokenize(parsedInput);
             const t = translations[currentLang];
             
+            // 检查tokenize是否返回错误
+            if (tokens.error) {
+                return { steps: [], result: null, error: tokens.error };
+            }
+            
             if (tokens.length === 0) {
                 return { steps: [], result: null, error: t.errorInvalid };
             }
@@ -2564,6 +2649,22 @@
             elements.themeDark.addEventListener('click', () => setTheme('dark'));
             elements.themeEye.addEventListener('click', () => setTheme('eye'));
             elements.langToggle.addEventListener('click', toggleLanguage);
+            
+            // 添加操作提示切换功能
+            const toggleExamples = document.getElementById('toggle-examples');
+            const examplesSection = document.getElementById('examples-section');
+            
+            if (toggleExamples && examplesSection) {
+                toggleExamples.addEventListener('click', () => {
+                    if (examplesSection.style.display === 'none') {
+                        examplesSection.style.display = 'block';
+                        toggleExamples.textContent = '隐藏操作提示';
+                    } else {
+                        examplesSection.style.display = 'none';
+                        toggleExamples.textContent = '操作提示';
+                    }
+                });
+            }
             
             if (params.math) {
                 const parsedMath = parseInput(params.math);
