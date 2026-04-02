@@ -6,6 +6,27 @@
     <title>数学问题解析</title>
     <script src="libs/tailwind.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/all.min.js"></script>
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#F59E0B',
+                        paper: '#FFFDD0',
+                        success: '#10B981',
+                        error: '#EF4444',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
     <style>
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -13,11 +34,11 @@
             min-height: 100vh;
         }
         body.dark-mode {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #e0e0e0;
+            background: #0f172a;
+            color: #e2e8f0;
         }
         body.eye-mode {
-            background: linear-gradient(135deg, #f5f0e1 0%, #e8e0d0 100%);
+            background: #f0ead2;
         }
         .container {
             max-width: 900px;
@@ -41,33 +62,23 @@
             background: #faf6e9;
             border-color: rgba(139,154,109,0.2);
         }
-        .title-section {
-            text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 36px;
-            position: relative;
-            overflow: hidden;
+        /* 统一头部区域样式 - 与index.html一致 */
+        header {
+            border-bottom: 1px solid #e5e7eb;
         }
-        .title-section::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
-            animation: shimmer 3s infinite;
+        body.dark-mode header {
+            background: #1e293b !important;
+            border-bottom-color: #334155;
         }
-        @keyframes shimmer {
-            0%, 100% { transform: translate(-30%, -30%); }
-            50% { transform: translate(30%, 30%); }
+        body.dark-mode header h1 {
+            color: #e2e8f0;
         }
-        body.dark-mode .title-section {
-            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        body.eye-mode header {
+            background: #f8f6e8 !important;
+            border-bottom-color: #e8e0b8;
         }
-        body.eye-mode .title-section {
-            background: linear-gradient(135deg, #8b9a6d 0%, #6b7a4d 100%);
+        body.eye-mode header h1 {
+            color: #4a4a3a;
         }
         .input-section {
             display: flex;
@@ -75,62 +86,78 @@
             align-items: center;
             flex-wrap: wrap;
         }
+        /* 统一输入框样式 - 与index.html一致 */
         #math-input {
             flex: 1;
             min-width: 220px;
             padding: 16px 20px;
             font-size: 1.25rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
             outline: none;
             transition: all 0.3s ease;
             font-family: 'Times New Roman', serif;
             letter-spacing: 1px;
-            background: #fafbfc;
+            background: white;
         }
         #math-input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
             background: white;
         }
         body.dark-mode #math-input {
-            background: #3d3d5c;
-            border-color: #4a5568;
-            color: #e0e0e0;
+            background: #0f172a;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+        body.dark-mode #math-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
         }
         body.eye-mode #math-input {
-            background: #fffcf5;
-            border-color: #c9b896;
+            background: #fffef5;
+            border-color: #e8e0b8;
         }
+        body.eye-mode #math-input:focus {
+            border-color: #8b9a6d;
+            box-shadow: 0 0 0 3px rgba(139, 154, 109, 0.15);
+        }
+        /* 统一按钮样式 - 与index.html一致 */
         .solve-btn {
-            padding: 16px 32px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
             color: white;
             border: none;
-            border-radius: 14px;
-            font-size: 1.15rem;
+            border-radius: 12px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
         }
         .solve-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
         }
         .solve-btn:active {
-            transform: translateY(-1px);
+            transform: translateY(0);
         }
         body.dark-mode .solve-btn {
-            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
-            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+        }
+        body.dark-mode .solve-btn:hover {
+            background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
         }
         body.eye-mode .solve-btn {
             background: linear-gradient(135deg, #8b9a6d 0%, #6b7a4d 100%);
-            box-shadow: 0 4px 15px rgba(107, 122, 77, 0.3);
+            box-shadow: 0 4px 14px rgba(107, 122, 77, 0.3);
+        }
+        body.eye-mode .solve-btn:hover {
+            background: linear-gradient(135deg, #9baa7d 0%, #7b8a5d 100%);
         }
         body.dark-mode .bg-blue-50 {
             background: rgba(124, 58, 237, 0.2) !important;
@@ -411,6 +438,221 @@
             background: linear-gradient(135deg, #f0ebd8 0%, #e8e3d0 100%);
             border-color: #c9b896;
         }
+        /* 运算符按钮样式 */
+        .op-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #4F46E5;
+            border-radius: 10px;
+            background: white;
+            color: #4F46E5;
+            font-size: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Times New Roman', serif;
+        }
+        .op-btn:hover {
+            background: #4F46E5;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        .op-btn:active {
+            transform: translateY(0);
+        }
+        body.dark-mode .op-btn {
+            border-color: #6366f1;
+            background: #1e293b;
+            color: #818cf8;
+        }
+        body.dark-mode .op-btn:hover {
+            background: #6366f1;
+            color: white;
+        }
+        body.eye-mode .op-btn {
+            border-color: #8b9a6d;
+            background: #faf6e9;
+            color: #6b7a4d;
+        }
+        body.eye-mode .op-btn:hover {
+            background: #8b9a6d;
+            color: white;
+        }
+        /* 数字键盘样式 */
+        .calc-keyboard {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+        .keyboard-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        .calc-btn {
+            width: 60px;
+            height: 50px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            background: white;
+            color: #374151;
+            font-size: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Times New Roman', serif;
+        }
+        .calc-btn:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .calc-btn:active {
+            transform: translateY(0);
+        }
+        /* AC按钮 - 红色 */
+        .calc-btn-ac {
+            background: #fee2e2;
+            border-color: #ef4444;
+            color: #dc2626;
+            font-size: 1rem;
+        }
+        .calc-btn-ac:hover {
+            background: #ef4444;
+            color: white;
+        }
+        /* 等号按钮 - 紫色 */
+        .calc-btn-eq {
+            background: #eef2ff;
+            border-color: #4f46e5;
+            color: #4f46e5;
+        }
+        .calc-btn-eq:hover {
+            background: #4f46e5;
+            color: white;
+        }
+        /* 运算符按钮 - 蓝色 */
+        .calc-btn-op {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #2563eb;
+        }
+        .calc-btn-op:hover {
+            background: #3b82f6;
+            color: white;
+        }
+        /* 退格按钮 - 橙色 */
+        .calc-btn-del {
+            background: #fff7ed;
+            border-color: #f97316;
+            color: #ea580c;
+        }
+        .calc-btn-del:hover {
+            background: #f97316;
+            color: white;
+        }
+        /* 深色模式 */
+        body.dark-mode .calc-btn {
+            background: #1e293b;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+        body.dark-mode .calc-btn:hover {
+            background: #334155;
+            border-color: #64748b;
+        }
+        body.dark-mode .calc-btn-ac {
+            background: #7f1d1d;
+            border-color: #ef4444;
+            color: #fca5a5;
+        }
+        body.dark-mode .calc-btn-ac:hover {
+            background: #ef4444;
+            color: white;
+        }
+        body.dark-mode .calc-btn-eq {
+            background: #312e81;
+            border-color: #6366f1;
+            color: #a5b4fc;
+        }
+        body.dark-mode .calc-btn-eq:hover {
+            background: #6366f1;
+            color: white;
+        }
+        body.dark-mode .calc-btn-op {
+            background: #1e3a8a;
+            border-color: #3b82f6;
+            color: #93c5fd;
+        }
+        body.dark-mode .calc-btn-op:hover {
+            background: #3b82f6;
+            color: white;
+        }
+        body.dark-mode .calc-btn-del {
+            background: #7c2d12;
+            border-color: #f97316;
+            color: #fdba74;
+        }
+        body.dark-mode .calc-btn-del:hover {
+            background: #f97316;
+            color: white;
+        }
+        /* 护眼模式 */
+        body.eye-mode .calc-btn {
+            background: #faf6e9;
+            border-color: #d8d0a8;
+            color: #4a4a3a;
+        }
+        body.eye-mode .calc-btn:hover {
+            background: #f0ead2;
+            border-color: #c9b896;
+        }
+        body.eye-mode .calc-btn-ac {
+            background: #ffcdd2;
+            border-color: #f44336;
+            color: #c62828;
+        }
+        body.eye-mode .calc-btn-ac:hover {
+            background: #f44336;
+            color: white;
+        }
+        body.eye-mode .calc-btn-eq {
+            background: #c8e6c9;
+            border-color: #6b7a4d;
+            color: #4a5a2d;
+        }
+        body.eye-mode .calc-btn-eq:hover {
+            background: #6b7a4d;
+            color: white;
+        }
+        body.eye-mode .calc-btn-op {
+            background: #e8f5e9;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+        body.eye-mode .calc-btn-op:hover {
+            background: #4caf50;
+            color: white;
+        }
+        body.eye-mode .calc-btn-del {
+            background: #ffe0b2;
+            border-color: #ff9800;
+            color: #e65100;
+        }
+        body.eye-mode .calc-btn-del:hover {
+            background: #ff9800;
+            color: white;
+        }
         .steps-header {
             display: flex;
             align-items: center;
@@ -434,71 +676,67 @@
         body.eye-mode .steps-count {
             background: linear-gradient(135deg, #8b9a6d 0%, #6b7a4d 100%);
         }
-        .header-controls {
-            position: absolute;
-            top: 20px;
-            right: 28px;
-            z-index: 20;
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        .theme-btn-group {
-            display: flex;
-            gap: 4px;
-            background: rgba(255,255,255,0.2);
-            padding: 4px;
-            border-radius: 10px;
-        }
+        /* 主题按钮样式 - 与index.html一致 */
         .theme-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            border: none;
             background: transparent;
-            color: white;
+            border: none;
             cursor: pointer;
             font-size: 1.2rem;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .theme-btn:hover {
-            background: rgba(255,255,255,0.25);
         }
         .theme-btn.active {
-            background: rgba(255,255,255,0.35);
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .lang-toggle-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.25);
+        body.dark-mode .theme-btn-group {
+            background: #334155 !important;
+        }
+        body.dark-mode .theme-btn.active {
+            background: #4f46e5;
             color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
         }
-        .lang-toggle-btn:hover {
-            background: rgba(255,255,255,0.35);
+        body.eye-mode .theme-btn-group {
+            background: #f0ead2 !important;
+        }
+        body.eye-mode .theme-btn.active {
+            background: #8b9a6d;
+            color: white;
+        }
+        /* 深色/护眼模式下的全屏按钮 */
+        body.dark-mode #fullscreen-btn:hover {
+            background: #475569;
+        }
+        body.eye-mode #fullscreen-btn:hover {
+            background: #e8e0b8;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="section-card title-section" style="position: relative;">
-            <div class="header-controls">
-                <div class="theme-btn-group">
-                    <button id="theme-light" class="theme-btn active" title="浅色模式">☀️</button>
-                    <button id="theme-dark" class="theme-btn" title="深色模式">🌙</button>
-                    <button id="theme-eye" class="theme-btn" title="护眼模式">👁️</button>
-                </div>
-                <button id="lang-toggle" class="lang-toggle-btn">EN</button>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 头部区域 -->
+    <header class="bg-white shadow-sm py-3 px-4 md:px-6 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800" id="page-title">数学问题解析</h1>
+        <div class="flex items-center gap-3">
+            <!-- 主题切换 -->
+            <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                <button id="theme-light" class="theme-btn active p-2 rounded-md transition-all" title="浅色模式">
+                    ☀️
+                </button>
+                <button id="theme-dark" class="theme-btn p-2 rounded-md transition-all" title="深色模式">
+                    🌙
+                </button>
+                <button id="theme-eye" class="theme-btn p-2 rounded-md transition-all" title="护眼模式">
+                    👁️
+                </button>
             </div>
-            <h1 class="text-3xl font-bold relative z-10" id="page-title">数学问题解析</h1>
-            <p class="text-sm opacity-90 mt-3 relative z-10" id="page-subtitle">输入数学问题，获取详细解题步骤</p>
+            <button id="fullscreen-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors text-lg" title="全屏">
+                ⛶
+            </button>
+            <button id="lang-toggle" class="px-3 py-1 rounded bg-primary text-white hover:bg-primary/90 transition-colors">
+                EN
+            </button>
         </div>
+    </header>
+
+    <div class="container">
         
         <div class="section-card">
             <div class="input-section">
@@ -514,18 +752,48 @@
             </div>
 
             <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100 mt-5" id="examples-section" style="display: none;">
-                <div class="text-sm text-blue-800 font-semibold mb-2" id="supported-ops-title">支持的运算符号：</div>
-                <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-blue-700">
-                    <span><strong>+</strong> <span id="op-add">加法</span></span>
-                    <span><strong>-</strong> <span id="op-subtract">减法</span></span>
-                    <span><strong>×, *</strong> <span id="op-multiply">乘法</span></span>
-                    <span><strong>÷, /</strong> <span id="op-divide">除法</span></span>
-                    <span><strong>( )</strong> <span id="op-parentheses">括号</span></span>
-                    <span><strong>x, X</strong> <span id="op-variable">未知数</span></span>
-                    <span><strong>=</strong> <span id="op-equals">等号</span></span>
+                <div class="text-sm text-blue-800 font-semibold mb-2" id="supported-ops-title">点击按钮输入：</div>
+                
+                <!-- 数字键盘 -->
+                <div class="calc-keyboard">
+                    <!-- 第一行: AC ( ) = -->
+                    <div class="keyboard-row">
+                        <button type="button" class="calc-btn calc-btn-ac" data-action="clear">AC</button>
+                        <button type="button" class="calc-btn" data-op="(">(</button>
+                        <button type="button" class="calc-btn" data-op=")">)</button>
+                        <button type="button" class="calc-btn calc-btn-eq" data-op="=">=</button>
+                    </div>
+                    <!-- 第二行: 1 2 3 + -->
+                    <div class="keyboard-row">
+                        <button type="button" class="calc-btn" data-op="1">1</button>
+                        <button type="button" class="calc-btn" data-op="2">2</button>
+                        <button type="button" class="calc-btn" data-op="3">3</button>
+                        <button type="button" class="calc-btn calc-btn-op" data-op="+">+</button>
+                    </div>
+                    <!-- 第三行: 4 5 6 - -->
+                    <div class="keyboard-row">
+                        <button type="button" class="calc-btn" data-op="4">4</button>
+                        <button type="button" class="calc-btn" data-op="5">5</button>
+                        <button type="button" class="calc-btn" data-op="6">6</button>
+                        <button type="button" class="calc-btn calc-btn-op" data-op="-">-</button>
+                    </div>
+                    <!-- 第四行: 7 8 9 × -->
+                    <div class="keyboard-row">
+                        <button type="button" class="calc-btn" data-op="7">7</button>
+                        <button type="button" class="calc-btn" data-op="8">8</button>
+                        <button type="button" class="calc-btn" data-op="9">9</button>
+                        <button type="button" class="calc-btn calc-btn-op" data-op="×">×</button>
+                    </div>
+                    <!-- 第五行: 0 . ← ÷ -->
+                    <div class="keyboard-row">
+                        <button type="button" class="calc-btn" data-op="0">0</button>
+                        <button type="button" class="calc-btn" data-op=".">.</button>
+                        <button type="button" class="calc-btn calc-btn-del" data-action="backspace">←</button>
+                        <button type="button" class="calc-btn calc-btn-op" data-op="÷">÷</button>
+                    </div>
                 </div>
                 
-                <div class="mt-4">
+                <div class="mt-4 pt-4 border-t border-blue-200">
                     <span class="text-sm text-gray-500" id="examples-label">示例：</span>
                     <button class="example-btn" data-math="8+12-(12-8)">8+12-(12-8)</button>
                     <button class="example-btn" data-math="2x+3=7">2x+3=7</button>
@@ -715,12 +983,24 @@
             localStorage.setItem('math-practice-lang', currentLang);
         }
 
+        // 全屏切换功能
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`无法进入全屏模式: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
         function applyTranslations(lang) {
             currentLang = lang;
             const t = translations[lang];
             
             const pageTitle = document.getElementById('page-title');
-            const pageSubtitle = document.getElementById('page-subtitle');
             const solveText = document.getElementById('solve-text');
             const stepsTitle = document.getElementById('steps-title');
             const noStepsMsg = document.getElementById('no-steps-msg');
@@ -736,7 +1016,6 @@
             const mathInput = document.getElementById('math-input');
             
             if (pageTitle) pageTitle.textContent = t.title;
-            if (pageSubtitle) pageSubtitle.textContent = t.subtitle;
             if (solveText) solveText.textContent = t.solve;
             if (stepsTitle) stepsTitle.textContent = t.stepsTitle;
             if (noStepsMsg) noStepsMsg.textContent = t.noSteps;
@@ -2841,6 +3120,7 @@
             elements.themeDark = document.getElementById('theme-dark');
             elements.themeEye = document.getElementById('theme-eye');
             elements.langToggle = document.getElementById('lang-toggle');
+            elements.fullscreenBtn = document.getElementById('fullscreen-btn');
             
             const savedTheme = localStorage.getItem('math-practice-theme') || 'light';
             let savedLang = localStorage.getItem('math-practice-lang');
@@ -2864,6 +3144,11 @@
             elements.themeDark.addEventListener('click', () => setTheme('dark'));
             elements.themeEye.addEventListener('click', () => setTheme('eye'));
             elements.langToggle.addEventListener('click', toggleLanguage);
+            
+            // 全屏按钮事件
+            if (elements.fullscreenBtn) {
+                elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
+            }
             
             // 添加操作提示切换功能
             const toggleExamples = document.getElementById('toggle-examples');
@@ -2914,6 +3199,37 @@
                     currentInput = math;
                     const result = solve(math);
                     displaySteps(result);
+                });
+            });
+            
+            // 运算符按钮点击插入功能
+            document.querySelectorAll('.op-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const op = btn.dataset.op;
+                    const input = document.getElementById('math-input');
+                    input.value += op;
+                    input.focus();
+                });
+            });
+            
+            // 数字键盘按钮点击功能
+            document.querySelectorAll('.calc-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const input = document.getElementById('math-input');
+                    const action = btn.dataset.action;
+                    const op = btn.dataset.op;
+                    
+                    if (action === 'clear') {
+                        // AC - 清空
+                        input.value = '';
+                    } else if (action === 'backspace') {
+                        // 退格 - 删除最后一个字符
+                        input.value = input.value.slice(0, -1);
+                    } else if (op) {
+                        // 插入运算符或数字
+                        input.value += op;
+                    }
+                    input.focus();
                 });
             });
         }
