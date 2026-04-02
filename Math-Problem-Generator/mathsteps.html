@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数学问题解析</title>
     <script src="libs/tailwind.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/all.min.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -509,7 +510,7 @@
             </div>
             
             <div class="mt-2">
-                <button id="toggle-examples" class="text-sm text-blue-600 hover:underline">操作提示</button>
+                <button id="toggle-examples" class="text-sm text-blue-600 hover:underline">💡</button>
             </div>
 
             <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100 mt-5" id="examples-section" style="display: none;">
@@ -528,20 +529,29 @@
                     <span class="text-sm text-gray-500" id="examples-label">示例：</span>
                     <button class="example-btn" data-math="8+12-(12-8)">8+12-(12-8)</button>
                     <button class="example-btn" data-math="2x+3=7">2x+3=7</button>
-                    <button class="example-btn" data-math="3×8×1÷4+x=6">3×8×1÷4+x=6</button>
+                    <button class="example-btn" data-math="6×x+3÷5÷2=3">6×x+3÷5÷2=3</button>
                     <button class="example-btn" data-math="6+1/x-7/3=7">6+1/x-7/3=7</button>
                 </div>
             </div>
         </div>
         
         <div class="section-card">
-            <div class="steps-header">
-                <h2 class="text-xl font-semibold" id="steps-title">解答步骤</h2>
-                <span class="steps-count" id="steps-count" style="display: none;">0 步</span>
+            
+            <div id="tab-content-nerdamer" class="tab-content">
+                <div id="nerdamer-steps-container" style="font-size: 1.5rem; text-align: center; padding: 20px;" data-translation-key="nerdamerAnswer">
+                    答案：
+                </div>
             </div>
-            <div id="steps-container">
-                <div class="no-steps" id="no-steps-msg">请输入数学问题并点击"解析"按钮</div>
-            </div>
+
+            <div id="tab-content-normal" class="tab-content pt-8">
+                <div class="steps-header">
+                    <h2 class="text-xl font-semibold" id="steps-title">解答步骤</h2>(beta)
+                    <span class="steps-count" id="steps-count" >0 步</span>
+                </div>
+                <div id="steps-container">
+                    <div class="no-steps" id="no-steps-msg">请输入数学问题并点击"解析"按钮</div>
+                </div>
+            </div>            
         </div>
     </div>
 
@@ -590,7 +600,10 @@
                 validateNoProduct: '本程序只能计算一元一次方程，方程中不能出现未知数的乘积（如x×x）',
                 validateNoDenominatorX: '本程序只能计算一元一次方程，方程中未知数不能出现在分母中（如1/x），否则会变为分式方程',
                 validateNoComplexDenominator: '本程序只能计算一元一次方程，方程中未知数不能出现在括号内的分母中（如1/(x+1)）',
-                validateSuccess: '方程验证通过'
+                validateSuccess: '方程验证通过',
+                nerdamerAnswer: '答案：',
+                nerdamerError: '答案：计算错误',
+                nerdamerNoResult: '答案：无法计算'
             },
             en: {
                 title: 'Math Problem Solver',
@@ -635,7 +648,10 @@
                 validateNoProduct: 'This program can only solve linear equations with one variable, the equation cannot contain products of unknowns (like x×x)',
                 validateNoDenominatorX: 'This program can only solve linear equations with one variable, the unknown cannot appear in the denominator (like 1/x), as this would create a rational equation',
                 validateNoComplexDenominator: 'This program can only solve linear equations with one variable, the unknown cannot appear in parentheses in the denominator (like 1/(x+1))',
-                validateSuccess: 'Equation validation passed'
+                validateSuccess: 'Equation validation passed',
+                nerdamerAnswer: 'Answer: ',
+                nerdamerError: 'Answer: Calculation error',
+                nerdamerNoResult: 'Answer: Unable to calculate'
             }
         };
 
@@ -734,6 +750,12 @@
             if (opVariable) opVariable.textContent = t.opVariable;
             if (opEquals) opEquals.textContent = t.opEquals;
             if (mathInput) mathInput.placeholder = t.placeholder;
+            
+            // 更新Nerdamer容器的默认文本
+            const nerdamerContainer = document.getElementById('nerdamer-steps-container');
+            if (nerdamerContainer && !currentInput) {
+                nerdamerContainer.innerHTML = t.nerdamerAnswer;
+            }
             
             if (currentInput) {
                 const result = solve(currentInput);
@@ -1501,10 +1523,13 @@
                         // 处理负数作为分母的情况
                         if (tokens[i + 1].value === '-' && tokens[i + 2] && tokens[i + 2].type === 'number') {
                             numbers.push(Math.abs(-tokens[i + 2].value));  // LCM使用绝对值
+                            i += 2; // 跳过已处理的分母
                         } else if (tokens[i + 1].type === 'number') {
                             numbers.push(Math.abs(tokens[i + 1].value));  // LCM使用绝对值
+                            i += 1; // 跳过已处理的分母
                         } else if (tokens[i + 1].type === 'variable') {
                             hasX = true;
+                            i += 1; // 跳过已处理的分母
                         } else if (tokens[i + 1].value === '(' || tokens[i + 1].value === '[' || tokens[i + 1].value === '{') {
                             const match = findMatchingParenthesis(tokens, i + 1);
                             if (match !== -1) {
@@ -1516,6 +1541,7 @@
                                             numbers.push(Math.abs(parseFloat(innerResult.result)));  // LCM使用绝对值
                                         }
                                     }
+                                i = match; // 跳过已处理的括号内容
                             }
                         }
                     }
@@ -1644,9 +1670,9 @@
                             if (term[j].value === '÷' && term[j+1]) {
                                 // 处理负数作为分母的情况
                                 if (term[j+1].value === '-' && term[j+2] && term[j+2].type === 'number') {
-                                    termDenominator = -term[j+2].value;
+                                    termDenominator *= -term[j+2].value;
                                 } else if (term[j+1].type === 'number') {
-                                    termDenominator = term[j+1].value;
+                                    termDenominator *= term[j+1].value;
                                 } else if (term[j+1].type === 'variable') {
                                     hasDenominatorX = true;
                                 } else if (term[j+1].value === '(' || term[j+1].value === '[' || term[j+1].value === '{') {
@@ -1657,7 +1683,7 @@
                                         if (!hasVarInParentheses) {
                                             const innerResult = solveArithmetic(innerTokens, 'zh');
                                             if (innerResult && innerResult.result !== null) {
-                                                termDenominator = parseFloat(innerResult.result);
+                                                termDenominator *= parseFloat(innerResult.result);
                                                 denominatorParentheses = { start: j, end: match };
                                             }
                                         }
@@ -1798,10 +1824,10 @@
                             if (term[j].value === '÷' && term[j+1]) {
                                 // 处理负数作为分母的情况
                                 if (term[j+1].value === '-' && term[j+2] && term[j+2].type === 'number') {
-                                    termDenominator = -term[j+2].value;
+                                    termDenominator *= -term[j+2].value;
                                     j += 3;
                                 } else if (term[j+1].type === 'number') {
-                                    termDenominator = term[j+1].value;
+                                    termDenominator *= term[j+1].value;
                                     j += 2;
                                 } else if (term[j+1].type === 'variable') {
                                     hasDenominatorX = true;
@@ -1814,7 +1840,7 @@
                                         if (!hasVarInParentheses) {
                                             const innerResult = solveArithmetic(innerTokens, 'zh');
                                             if (innerResult && innerResult.result !== null) {
-                                                termDenominator = parseFloat(innerResult.result);
+                                                termDenominator *= parseFloat(innerResult.result);
                                                 denominatorParentheses = { start: j, end: match };
                                                 j = match + 1;
                                                 continue;
@@ -1903,10 +1929,10 @@
                             if (term[j].value === '÷' && term[j+1]) {
                                 // 处理负数作为分母的情况
                                 if (term[j+1].value === '-' && term[j+2] && term[j+2].type === 'number') {
-                                    termDenominator = -term[j+2].value;
+                                    termDenominator *= -term[j+2].value;
                                     j += 3;
                                 } else if (term[j+1].type === 'number') {
-                                    termDenominator = term[j+1].value;
+                                    termDenominator *= term[j+1].value;
                                     j += 2;
                                 } else if (term[j+1].type === 'variable') {
                                     hasDenominatorX = true;
@@ -1919,7 +1945,7 @@
                                         if (!hasVarInParentheses) {
                                             const innerResult = solveArithmetic(innerTokens, 'zh');
                                             if (innerResult && innerResult.result !== null) {
-                                                termDenominator = parseFloat(innerResult.result);
+                                                termDenominator *= parseFloat(innerResult.result);
                                                 denominatorParentheses = { start: j, end: match };
                                                 j = match + 1;
                                                 continue;
@@ -2182,6 +2208,7 @@
                 let result = [...tokens];
                 let changed = false;
                 
+                // 第一遍：处理数字×数字或数字÷数字
                 for (let i = 0; i < result.length; i++) {
                     if ((result[i].value === '×' || result[i].value === '÷') &&
                         result[i - 1] && result[i - 1].type === 'number' &&
@@ -2201,6 +2228,44 @@
                         ];
                         changed = true;
                         i--;
+                    }
+                }
+                
+                // 第二遍：处理数字×变量×数字（如 6×x×10 变为 60×x）
+                for (let i = 0; i < result.length - 2; i++) {
+                    // 模式：数字 × 变量 × 数字
+                    if (result[i].type === 'number' &&
+                        result[i + 1] && result[i + 1].value === '×' &&
+                        result[i + 2] && result[i + 2].type === 'variable' &&
+                        result[i + 3] && result[i + 3].value === '×' &&
+                        result[i + 4] && result[i + 4].type === 'number') {
+                        
+                        const newCoeff = result[i].value * result[i + 4].value;
+                        result = [
+                            ...result.slice(0, i),
+                            { type: 'number', value: newCoeff },
+                            { type: 'operator', value: '×' },
+                            result[i + 2], // 变量
+                            ...result.slice(i + 5)
+                        ];
+                        changed = true;
+                    }
+                    // 模式：数字 × 数字 × 变量
+                    else if (result[i].type === 'number' &&
+                        result[i + 1] && result[i + 1].value === '×' &&
+                        result[i + 2] && result[i + 2].type === 'number' &&
+                        result[i + 3] && result[i + 3].value === '×' &&
+                        result[i + 4] && result[i + 4].type === 'variable') {
+                        
+                        const newCoeff = result[i].value * result[i + 2].value;
+                        result = [
+                            ...result.slice(0, i),
+                            { type: 'number', value: newCoeff },
+                            { type: 'operator', value: '×' },
+                            result[i + 4], // 变量
+                            ...result.slice(i + 5)
+                        ];
+                        changed = true;
                     }
                 }
                 
@@ -2434,7 +2499,6 @@
             const parsedInput = parseInput(input);
             const tokens = tokenize(parsedInput);
             const t = translations[currentLang];
-            
             // 检查tokenize是否返回错误
             if (tokens.error) {
                 return { steps: [], result: null, error: tokens.error };
@@ -2443,17 +2507,168 @@
             if (tokens.length === 0) {
                 return { steps: [], result: null, error: t.errorInvalid };
             }
-            
+
+            // 同时调用Nerdamer求解
+            const nerdamerResult = solveWithNerdamer(parsedInput);
+            displayNerdamerSteps(nerdamerResult);
             if (isEquation(tokens) && hasVariable(tokens)) {
                 const result = solveLinearEquation(tokens, currentLang);
                 // 检查是否返回错误
                 if (result && result.error) {
                     return { steps: [], result: null, error: result.message };
                 }
+
                 return result;
             } else {
-                return solveArithmetic(tokens, currentLang);
+                const result = solveArithmetic(tokens, currentLang);
+
+                return result;
             }
+
+        }
+        
+        // Nerdamer求解函数
+        function solveWithNerdamer(input) {
+            try {
+                // 转换输入格式（将×替换为*，÷替换为/）
+                let nerdamerInput = input.replace(/×/g, '*').replace(/÷/g, '/');
+                
+                // 检查是否为方程
+                const isEquation = nerdamerInput.includes('=');
+                
+                let steps = [];
+                let result = null;
+                
+                if (isEquation) {
+                    // 解析方程
+                    const parts = nerdamerInput.split('=');
+                    if (parts.length === 2) {
+                        const leftSide = parts[0].trim();
+                        const rightSide = parts[1].trim();
+                        
+                        // 原方程
+                        steps.push({
+                            title: '原方程',
+                            before: '',
+                            after: nerdamerInput
+                        });
+                        
+                        try {
+                            // 使用Nerdamer求解
+                            const solution = nerdamer.solve(nerdamerInput, 'x');
+                            
+                            if (solution && solution.toString) {
+                                const solutionStr = solution.toString();
+                                result = solutionStr;
+                                
+                                // 简化步骤
+                                try {
+                                    const expr = nerdamer(nerdamerInput);
+                                    const simplified = expr.simplify();
+                                    
+                                    if (simplified && simplified.toString !== nerdamerInput) {
+                                        steps.push({
+                                            title: '简化表达式',
+                                            before: nerdamerInput,
+                                            after: simplified.toString()
+                                        });
+                                    }
+                                } catch (e) {
+                                    // 简化失败，继续
+                                }
+                                
+                                // 求解步骤
+                                steps.push({
+                                    title: '求解',
+                                    before: nerdamerInput,
+                                    after: 'x = ' + solutionStr
+                                });
+                            }
+                        } catch (solveError) {
+                            // 求解失败，尝试其他方法
+                            steps.push({
+                                title: '求解',
+                                before: nerdamerInput,
+                                after: '无法求解: ' + solveError.message
+                            });
+                        }
+                    }
+                } else {
+                    // 算术表达式
+                    steps.push({
+                        title: '原表达式',
+                        before: '',
+                        after: nerdamerInput
+                    });
+                    
+                    try {
+                        const expr = nerdamer(nerdamerInput);
+                        const evaluated = expr.evaluate();
+                        
+                        if (evaluated && evaluated.toString) {
+                            result = evaluated.toString();
+                            
+                            // 简化步骤
+                            try {
+                                const simplified = expr.simplify();
+                                if (simplified && simplified.toString !== nerdamerInput) {
+                                    steps.push({
+                                        title: '简化',
+                                        before: nerdamerInput,
+                                        after: simplified.toString()
+                                    });
+                                }
+                            } catch (e) {
+                                // 简化失败
+                            }
+                            
+                            // 计算结果
+                            steps.push({
+                                title: '计算结果',
+                                before: nerdamerInput,
+                                after: result
+                            });
+                        }
+                    } catch (evalError) {
+                        steps.push({
+                            title: '计算',
+                            before: nerdamerInput,
+                            after: '计算错误: ' + evalError.message
+                        });
+                    }
+                }
+                
+                return {
+                    steps: steps,
+                    result: result,
+                    error: null
+                };
+            } catch (error) {
+                return {
+                    steps: [],
+                    result: null,
+                    error: error.message
+                };
+            }
+        }
+        
+        // 显示Nerdamer结果（直接显示答案）
+        function displayNerdamerSteps(result) {
+            const container = document.getElementById('nerdamer-steps-container');
+            const t = translations[currentLang];
+            
+            if (result.error) {
+                container.innerHTML = `${t.nerdamerError}`;
+                return;
+            }
+            
+            if (result.result === null || result.result === undefined) {
+                container.innerHTML = `${t.nerdamerNoResult}`;
+                return;
+            }
+            
+            // 直接显示 <答案：XXXX> 格式
+            container.innerHTML = `${t.nerdamerAnswer}${result.result}`;
         }
 
         function highlightByPosition(expr, start, end, highlightClass) {
@@ -2658,10 +2873,8 @@
                 toggleExamples.addEventListener('click', () => {
                     if (examplesSection.style.display === 'none') {
                         examplesSection.style.display = 'block';
-                        toggleExamples.textContent = '隐藏操作提示';
                     } else {
                         examplesSection.style.display = 'none';
-                        toggleExamples.textContent = '操作提示';
                     }
                 });
             }
