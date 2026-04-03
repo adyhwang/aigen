@@ -928,6 +928,11 @@
         let currentInput = '';
         const elements = {};
 
+        function fixFloatPrecision(num, precision = 10) {
+            if (typeof num !== 'number') return num;
+            return parseFloat(num.toFixed(precision));
+        }
+
         function getUrlParams() {
             const params = new URLSearchParams(window.location.search);
             return {
@@ -1372,9 +1377,9 @@
                         if (!hasChanged) break;
                     }
                     
-                    innerResult = tempTokens.length === 1 ? tempTokens[0].value : evaluateSimpleExpression(innerTokens);
+                    innerResult = fixFloatPrecision(tempTokens.length === 1 ? tempTokens[0].value : evaluateSimpleExpression(innerTokens));
                 } else {
-                    innerResult = evaluateSimpleExpression(innerTokens);
+                    innerResult = fixFloatPrecision(evaluateSimpleExpression(innerTokens));
                 }
                 
                 if (innerResult !== null) {
@@ -1420,13 +1425,13 @@
                         
                         let calcResult;
                         if (result[i].value === '×') {
-                            calcResult = result[i - 1].value * result[i + 1].value;
+                            calcResult = fixFloatPrecision(result[i - 1].value * result[i + 1].value);
                         } else {
                             // 除零保护
                             if (result[i + 1].value === 0) {
                                 return { tokens: result, changed: false, error: '除零错误' };
                             }
-                            calcResult = result[i - 1].value / result[i + 1].value;
+                            calcResult = fixFloatPrecision(result[i - 1].value / result[i + 1].value);
                         }
                         
                         const beforeExpr = formatExpression(result.slice(0, i - 1));
@@ -1465,9 +1470,9 @@
                         
                         let calcResult;
                         if (result[i].value === '+') {
-                            calcResult = result[i - 1].value + result[i + 1].value;
+                            calcResult = fixFloatPrecision(result[i - 1].value + result[i + 1].value);
                         } else {
-                            calcResult = result[i - 1].value - result[i + 1].value;
+                            calcResult = fixFloatPrecision(result[i - 1].value - result[i + 1].value);
                         }
                         
                         const beforeExpr = formatExpression(result.slice(0, i - 1));
@@ -1523,9 +1528,9 @@
                             const nextNum = tokens[i + 2].value;
                             
                             if (op === '×') {
-                                currentNum *= nextNum;
+                                currentNum = fixFloatPrecision(currentNum * nextNum);
                             } else if (nextNum !== 0) {
-                                currentNum /= nextNum;
+                                currentNum = fixFloatPrecision(currentNum / nextNum);
                             } else {
                                 return null;  // 除零保护
                             }
@@ -1541,13 +1546,13 @@
                 let result = nums[0] || 0;
                 for (let i = 0; i < ops.length; i++) {
                     if (ops[i] === '+') {
-                        result += nums[i + 1];
+                        result = fixFloatPrecision(result + nums[i + 1]);
                     } else {
-                        result -= nums[i + 1];
+                        result = fixFloatPrecision(result - nums[i + 1]);
                     }
                 }
                 
-                return result;
+                return fixFloatPrecision(result);
             }
 
             function processMultiplyDivide() {
@@ -1559,9 +1564,9 @@
                         if (left && right && left.type === 'number' && right.type === 'number') {
                             let result;
                             if (currentTokens[i].value === '×') {
-                                result = left.value * right.value;
+                                result = fixFloatPrecision(left.value * right.value);
                             } else {
-                                result = left.value / right.value;
+                                result = fixFloatPrecision(left.value / right.value);
                             }
                             
                             const beforeTokens = currentTokens.slice(0, i - 1);
@@ -1607,9 +1612,9 @@
                         if (left && right && left.type === 'number' && right.type === 'number') {
                             let result;
                             if (currentTokens[i].value === '+') {
-                                result = left.value + right.value;
+                                result = fixFloatPrecision(left.value + right.value);
                             } else {
-                                result = left.value - right.value;
+                                result = fixFloatPrecision(left.value - right.value);
                             }
                             
                             const beforeTokens = currentTokens.slice(0, i - 1);
@@ -1657,7 +1662,7 @@
             return {
                 steps: steps.map(s => ({ ...s, isEquation: false })),
                 result: currentTokens.length === 1 && currentTokens[0].type === 'number' 
-                    ? currentTokens[0].value 
+                    ? fixFloatPrecision(currentTokens[0].value) 
                     : null
             };
         }
@@ -2495,9 +2500,9 @@
                         
                         let calcResult;
                         if (result[i].value === '×') {
-                            calcResult = result[i - 1].value * result[i + 1].value;
+                            calcResult = fixFloatPrecision(result[i - 1].value * result[i + 1].value);
                         } else {
-                            calcResult = result[i - 1].value / result[i + 1].value;
+                            calcResult = fixFloatPrecision(result[i - 1].value / result[i + 1].value);
                         }
                         
                         result = [
@@ -2519,7 +2524,7 @@
                         result[i + 3] && result[i + 3].value === '×' &&
                         result[i + 4] && result[i + 4].type === 'number') {
                         
-                        const newCoeff = result[i].value * result[i + 4].value;
+                        const newCoeff = fixFloatPrecision(result[i].value * result[i + 4].value);
                         result = [
                             ...result.slice(0, i),
                             { type: 'number', value: newCoeff },
@@ -2536,7 +2541,7 @@
                         result[i + 3] && result[i + 3].value === '×' &&
                         result[i + 4] && result[i + 4].type === 'variable') {
                         
-                        const newCoeff = result[i].value * result[i + 2].value;
+                        const newCoeff = fixFloatPrecision(result[i].value * result[i + 2].value);
                         result = [
                             ...result.slice(0, i),
                             { type: 'number', value: newCoeff },
@@ -2724,11 +2729,11 @@
             let constTerm = 0;
 
             leftVarTerms.forEach(term => {
-                varCoeff += term.coeff;
+                varCoeff = fixFloatPrecision(varCoeff + term.coeff);
             });
 
             rightConstTerms.forEach(term => {
-                constTerm += term.coeff;
+                constTerm = fixFloatPrecision(constTerm + term.coeff);
             });
 
             let mergedLeft = '';
@@ -2759,8 +2764,8 @@
             }
 
             const beforeCoeffStr = mergedLeft + ' = ' + mergedRight;
-            const solution = constTerm / varCoeff;
-            const roundedSolution = Math.round(solution * 10000) / 10000;
+            const solution = fixFloatPrecision(constTerm / varCoeff);
+            const roundedSolution = solution;
 
             steps.push({
                 title: t.stepCoeff,
@@ -2778,6 +2783,11 @@
             const parsedInput = parseInput(input);
             const tokens = tokenize(parsedInput);
             const t = translations[currentLang];
+            
+            // 先清空两个容器
+            document.getElementById('steps-container').innerHTML = '';
+            document.getElementById('nerdamer-steps-container').innerHTML = '';
+            
             // 检查tokenize是否返回错误
             if (tokens.error) {
                 return { steps: [], result: null, error: tokens.error };
@@ -2837,7 +2847,9 @@
                             const solution = nerdamer.solve(nerdamerInput, 'x');
                             
                             if (solution && solution.toString) {
-                                const solutionStr = solution.toString();
+                                let solutionStr = solution.toString();
+                                // 去掉可能包裹的方括号（如 [1/2] → 1/2）
+                                solutionStr = solutionStr.replace(/^\[(.*)\]$/, '$1');
                                 result = solutionStr;
                                 
                                 // 简化步骤
@@ -2946,8 +2958,24 @@
                 return;
             }
             
-            // 直接显示 <答案：XXXX> 格式
-            container.innerHTML = `${t.nerdamerAnswer}${result.result}`;
+            let resultValue = result.result;
+            // 去掉可能包裹的方括号（如 [1/2] → 1/2）
+            resultValue = String(resultValue).replace(/^\[(.*)\]$/, '$1');
+            let displayText = `${t.nerdamerAnswer}${resultValue}`;
+            
+            // 检查是否是分数形式（包含 /）
+            const resultStr = resultValue;
+            const fractionMatch = resultStr.match(/^(-?\d+)\/(\d+)$/);
+            if (fractionMatch) {
+                const numerator = parseFloat(fractionMatch[1]);
+                const denominator = parseFloat(fractionMatch[2]);
+                if (denominator !== 0) {
+                    const decimalValue = fixFloatPrecision(numerator / denominator);
+                    displayText = `${t.nerdamerAnswer}${resultValue} → ${decimalValue}`;
+                }
+            }
+            
+            container.innerHTML = displayText;
         }
 
         function highlightByPosition(expr, start, end, highlightClass) {
