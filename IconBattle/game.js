@@ -751,8 +751,8 @@ function addIconToReadyZone(player, imageUrl, name = '') {
                 
                 if (touch.clientX >= battleRect.left && touch.clientX <= battleRect.right &&
                     touch.clientY >= battleRect.top && touch.clientY <= battleRect.bottom) {
-                    const x = touch.clientX - battleRect.left - 40 * iconSize;
-                    const y = touch.clientY - battleRect.top - 40 * iconSize;
+                    const x = touch.clientX - battleRect.left - 40;
+                    const y = touch.clientY - battleRect.top - 40;
                     
                     let assignedWeapon = null;
                     if (iconItem.dataset.assignedWeaponIndex !== undefined) {
@@ -1641,8 +1641,8 @@ function createBaseEffect(attacker, defender, battleArea, className, options = {
     const effect = document.createElement('div');
     effect.className = `weapon-effect ${className}`;
     
-    const effectX = defender.x + 40 * iconSize;
-    const effectY = defender.y + 45 * iconSize;
+    const effectX = defender.x + 40;
+    const effectY = defender.y + 40;
     
     effect.style.left = `${effectX}px`;
     effect.style.top = `${effectY}px`;
@@ -2272,8 +2272,8 @@ function showAOEExplosion(x, y, radius) {
     const explosion = document.createElement('div');
     explosion.className = 'aoe-explosion';
     const effectRadius = radius * 0.7;
-    explosion.style.left = `${x + 40 * iconSize - effectRadius}px`;
-    explosion.style.top = `${y + 45 * iconSize - effectRadius}px`;
+    explosion.style.left = `${x + 40 - effectRadius}px`;
+    explosion.style.top = `${y + 40 - effectRadius}px`;
     explosion.style.width = `${effectRadius * 2}px`;
     explosion.style.height = `${effectRadius * 2}px`;
     explosion.style.setProperty('--icon-size', iconSize);
@@ -2289,8 +2289,8 @@ function showLightningEffect(x, y, radius) {
     const lightning = document.createElement('div');
     lightning.className = 'lightning-effect';
     const effectRadius = radius * 0.7;
-    lightning.style.left = `${x + 40 * iconSize - effectRadius}px`;
-    lightning.style.top = `${y + 45 * iconSize - effectRadius}px`;
+    lightning.style.left = `${x + 40 - effectRadius}px`;
+    lightning.style.top = `${y + 40 - effectRadius}px`;
     lightning.style.width = `${effectRadius * 2}px`;
     lightning.style.height = `${effectRadius * 2}px`;
     lightning.style.setProperty('--icon-size', iconSize);
@@ -2323,8 +2323,8 @@ function showFireEffect(x, y, radius) {
     const fire = document.createElement('div');
     fire.className = 'fire-effect';
     const effectRadius = radius * 0.7;
-    fire.style.left = `${x + 40 * iconSize - effectRadius}px`;
-    fire.style.top = `${y + 45 * iconSize - effectRadius}px`;
+    fire.style.left = `${x + 40 - effectRadius}px`;
+    fire.style.top = `${y + 40 - effectRadius}px`;
     fire.style.width = `${effectRadius * 2}px`;
     fire.style.height = `${effectRadius * 2}px`;
     fire.style.setProperty('--icon-size', iconSize);
@@ -2539,7 +2539,7 @@ function applyBuff(attacker, target) {
     // 使用EffectText类创建兴奋文字，使用黄色
     createEffectText(target.element, '兴奋!', '#f1c40f', 'buff').show();
     
-    showBuffEffect(target.x + GAME_CONFIG.movement.effectOffset * iconSize, target.y + GAME_CONFIG.movement.effectOffset * iconSize, 60 * iconSize);
+    showBuffEffect(target.x + 40, target.y + 40, 60 * iconSize);
     
     // 使用addBattleInfo记录兴奋剂效果
     addBattleInfo(attacker, target, 0, 'buff');
@@ -2601,8 +2601,8 @@ function showIceEffect(x, y, radius) {
     const iceEffect = document.createElement('div');
     iceEffect.className = 'ice-effect';
     const effectRadius = radius * 0.7;
-    iceEffect.style.left = `${x + 40 * iconSize - effectRadius}px`;
-    iceEffect.style.top = `${y + 45 * iconSize - effectRadius}px`;
+    iceEffect.style.left = `${x + 40 - effectRadius}px`;
+    iceEffect.style.top = `${y + 40 - effectRadius}px`;
     iceEffect.style.width = `${effectRadius * 2}px`;
     iceEffect.style.height = `${effectRadius * 2}px`;
     iceEffect.style.setProperty('--icon-size', iconSize);
@@ -2675,8 +2675,8 @@ function showBuffEffect(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     const buffEffect = document.createElement('div');
     buffEffect.className = 'buff-effect';
-    buffEffect.style.left = `${x + 40 * iconSize - radius}px`;
-    buffEffect.style.top = `${y + 45 * iconSize - radius}px`;
+    buffEffect.style.left = `${x - radius}px`;
+    buffEffect.style.top = `${y - radius}px`;
     buffEffect.style.width = `${radius * 2}px`;
     buffEffect.style.height = `${radius * 2}px`;
     buffEffect.style.setProperty('--icon-size', iconSize);
@@ -3427,8 +3427,8 @@ function setupBattleZoneDrop() {
             const iconItem = document.querySelector(`.icon-item[data-icon-id="${iconId}"]`);
             if (iconItem) {
                 const rect = battleArea.getBoundingClientRect();
-                const x = event.clientX - rect.left - 40 * iconSize;
-                const y = event.clientY - rect.top - 40 * iconSize;
+                const x = event.clientX - rect.left - 40;
+                const y = event.clientY - rect.top - 40;
                 const name = iconItem.dataset.name || '';
                 
                 let assignedWeapon = null;
@@ -5616,8 +5616,8 @@ function executeRocketExplosion(iconData) {
 function showExplosionEffect(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     
-    const centerX = x + 40 * iconSize;
-    const centerY = y + 45 * iconSize;
+    const centerX = x + 40;
+    const centerY = y + 40;
     const effectRadius = radius * 0.7;
     
     const explosion = document.createElement('div');
