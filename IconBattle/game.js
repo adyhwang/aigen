@@ -3595,22 +3595,14 @@ function init() {
     // 初始化滑块控件的最小值和最大值
     const [minSize, maxSize] = iconSizes;
     
-    // 更新桌面端滑块控件
-    const desktopSlider = document.getElementById('iconSizeSlider');
-    if (desktopSlider) {
-        desktopSlider.min = minSize;
-        desktopSlider.max = maxSize;
-    }
-    
-    // 更新移动端滑块控件
-    const mobileSlider = document.querySelector('.options-panel #iconSizeSlider');
-    if (mobileSlider) {
-        mobileSlider.min = minSize;
-        mobileSlider.max = maxSize;
+    const iconSizeSlider = document.getElementById('iconSizeSlider');
+    if (iconSizeSlider) {
+        iconSizeSlider.min = minSize;
+        iconSizeSlider.max = maxSize;
     }
     initFilterTabs();
-    setupMobileOptimizations();
-    setupMobileTabs();
+    setupTouchOptimizations();
+    setupPortraitTabs();
     
     addRandomIcons(1, 7);
     addRandomIcons(2, 7);
@@ -3704,15 +3696,14 @@ function updateOptionsDropdownHeight() {
     const buttonRect = btnOptions.getBoundingClientRect();
     
     const isPortrait = window.matchMedia('(orientation: portrait)').matches;
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
     
     const headerHeight = 60;
-    const mobileTabsHeight = 60;
+    const portraitTabsHeight = 60;
     
     let availableHeight;
     
-    if (isMobile && isPortrait) {
-        const distanceToBottom = window.innerHeight - containerRect.bottom - mobileTabsHeight;
+    if (isPortrait) {
+        const distanceToBottom = window.innerHeight - containerRect.bottom - portraitTabsHeight;
         availableHeight = Math.max(200, Math.min(distanceToBottom - 20, window.innerHeight - 150));
         optionsDropdown.style.bottom = 'auto';
         optionsDropdown.style.top = `${buttonRect.height + 10}px`;
@@ -4955,14 +4946,9 @@ function updateIconSize(value) {
         content.style.height = `${rowHeight}px`;
     });
     
-    const mobileIconSlider = document.querySelector('.options-panel #iconSizeSlider');
-    if (mobileIconSlider) {
-        mobileIconSlider.value = value;
-    }
-    
-    const desktopIconSlider = document.getElementById('iconSizeSlider');
-    if (desktopIconSlider) {
-        desktopIconSlider.value = value;
+    const iconSizeSlider = document.getElementById('iconSizeSlider');
+    if (iconSizeSlider) {
+        iconSizeSlider.value = value;
     }
     
     saveOptionsConfig();
@@ -5860,22 +5846,7 @@ function showExplosionEffect(x, y, radius) {
     }, 500);
 }
 
-let activeMobilePanel = null;
-let isMobileDevice = false;
-
-function detectMobileDevice() {
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    const mobileKeywords = ['android', 'webos', 'iphone', 'ipad', 'ipod', 'blackberry', 'windows phone', 'mobile'];
-    isMobileDevice = mobileKeywords.some(keyword => 
-        userAgent.toLowerCase().includes(keyword)
-    ) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-    
-    if (isMobileDevice) {
-        document.body.classList.add('mobile-device');
-    }
-    
-    return isMobileDevice;
-}
+let activePortraitPanel = null;
 
 function preventZoomOnDoubleTap() {
     let lastTouchEnd = 0;
@@ -5888,9 +5859,7 @@ function preventZoomOnDoubleTap() {
     }, { passive: false });
 }
 
-function setupMobileOptimizations() {
-    if (!detectMobileDevice()) return;
-    
+function setupTouchOptimizations() {
     preventZoomOnDoubleTap();
     
     let resizeTimeout;
@@ -5914,11 +5883,11 @@ function setupMobileOptimizations() {
     }, { passive: false });
 }
 
-function setupMobileTabs() {
-    const mobileTabs = document.getElementById('mobileTabs');
-    if (!mobileTabs) return;
+function setupPortraitTabs() {
+    const portraitTabs = document.getElementById('portraitTabs');
+    if (!portraitTabs) return;
     
-    const tabs = mobileTabs.querySelectorAll('.mobile-tab');
+    const tabs = portraitTabs.querySelectorAll('.portrait-tab');
     
     tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
@@ -5932,8 +5901,8 @@ function setupMobileTabs() {
     });
     
     document.addEventListener('click', (e) => {
-        if (activeMobilePanel && !e.target.closest('.mobile-tabs')) {
-            if (activeMobilePanel === 'readyarea') {
+        if (activePortraitPanel && !e.target.closest('.portrait-tabs')) {
+            if (activePortraitPanel === 'readyarea') {
                 if (!e.target.closest('.ready-close-btn')) {
                     return;
                 }
@@ -5947,8 +5916,8 @@ function setupMobileTabs() {
     });
     
     document.addEventListener('touchstart', (e) => {
-        if (activeMobilePanel && !e.target.closest('.mobile-tabs')) {
-            if (activeMobilePanel === 'readyarea') {
+        if (activePortraitPanel && !e.target.closest('.portrait-tabs')) {
+            if (activePortraitPanel === 'readyarea') {
                 if (!e.target.closest('.ready-close-btn')) {
                     return;
                 }
@@ -5988,7 +5957,7 @@ function handleTabClick(tab) {
 function hideAllPanels() {
     const battleInfoWrapper = document.getElementById('battleInfoWrapper');
     const readyArea = document.getElementById('readyarea');
-    const mobileTabs = document.getElementById('mobileTabs');
+    const portraitTabs = document.getElementById('portraitTabs');
     
     if (battleInfoWrapper) {
         battleInfoWrapper.classList.remove('show');
@@ -6005,19 +5974,19 @@ function hideAllPanels() {
     removeIconsStatsPanel();
     removeOptionsPanel();
     
-    if (mobileTabs) {
-        const tabs = mobileTabs.querySelectorAll('.mobile-tab');
+    if (portraitTabs) {
+        const tabs = portraitTabs.querySelectorAll('.portrait-tab');
         tabs.forEach(tab => tab.classList.remove('active'));
     }
     
-    activeMobilePanel = null;
+    activePortraitPanel = null;
 }
 
 function showBattleInfoPanel() {
     const battleInfoWrapper = document.getElementById('battleInfoWrapper');
     if (battleInfoWrapper) {
         battleInfoWrapper.classList.add('show');
-        activeMobilePanel = 'battleInfo';
+        activePortraitPanel = 'battleInfo';
     }
 }
 
@@ -6062,7 +6031,7 @@ function showIconsStatsPanel() {
     document.body.appendChild(panel);
     panel.classList.add('show');
     
-    activeMobilePanel = 'iconsStats';
+    activePortraitPanel = 'iconsStats';
     
     updateIconsStatsPanel();
 }
@@ -6108,7 +6077,7 @@ function showPlayerStatsPanel(player) {
     document.body.appendChild(panel);
     panel.classList.add('show');
     
-    activeMobilePanel = `player${player}Stats`;
+    activePortraitPanel = `player${player}Stats`;
 }
 
 function removePlayerStatsPanels() {
@@ -6128,7 +6097,7 @@ function showReadyAreaPanel() {
     const readyArea = document.getElementById('readyarea');
     if (readyArea) {
         readyArea.classList.add('show');
-        activeMobilePanel = 'readyarea';
+        activePortraitPanel = 'readyarea';
         
         const closeBtn = document.createElement('button');
         closeBtn.className = 'ready-close-btn';
@@ -6136,7 +6105,7 @@ function showReadyAreaPanel() {
         closeBtn.onclick = (e) => {
             e.stopPropagation();
             readyArea.classList.remove('show');
-            activeMobilePanel = null;
+            activePortraitPanel = null;
         };
         
         readyArea.appendChild(closeBtn);
@@ -6156,7 +6125,7 @@ function showOptionsPanel() {
     document.body.appendChild(panel);
     panel.classList.add('show');
     
-    activeMobilePanel = 'options';
+    activePortraitPanel = 'options';
     
     // 重新绑定所有选项的事件
     const squadBattleModeCheckbox = panel.querySelector('#squadBattleMode');
