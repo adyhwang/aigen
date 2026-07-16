@@ -3590,6 +3590,7 @@ function init() {
         resizeTimeout = setTimeout(() => {
             battleAreaRect = null;
             clampAllIconsToBounds();
+            updateOptionsDropdownHeight();
         }, 100);
     });
 }
@@ -3602,9 +3603,58 @@ function initEventSubscriptions() {
     });
 }
 
+function updateOptionsDropdownHeight() {
+    const optionsDropdown = document.getElementById('optionsDropdown');
+    const optionsContainer = document.querySelector('.options-container');
+    const btnOptions = document.querySelector('.btn-options');
+    
+    if (!optionsDropdown || !optionsDropdown.classList.contains('show') || !optionsContainer || !btnOptions) {
+        return;
+    }
+    
+    const containerRect = optionsContainer.getBoundingClientRect();
+    const buttonRect = btnOptions.getBoundingClientRect();
+    
+    const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    
+    const headerHeight = 60;
+    const mobileTabsHeight = 60;
+    
+    let availableHeight;
+    
+    if (isMobile && isPortrait) {
+        const distanceToBottom = window.innerHeight - containerRect.bottom - mobileTabsHeight;
+        availableHeight = Math.max(200, Math.min(distanceToBottom - 20, window.innerHeight - 150));
+        optionsDropdown.style.bottom = 'auto';
+        optionsDropdown.style.top = `${buttonRect.height + 10}px`;
+    } else {
+        const distanceToTop = containerRect.top - headerHeight;
+        availableHeight = Math.max(200, Math.min(distanceToTop - 20, window.innerHeight - 120));
+        optionsDropdown.style.bottom = `${buttonRect.height + 10}px`;
+        optionsDropdown.style.top = 'auto';
+    }
+    
+    optionsDropdown.style.maxHeight = `${availableHeight}px`;
+}
+
 function toggleOptions() {
     const optionsDropdown = document.getElementById('optionsDropdown');
-    optionsDropdown.classList.toggle('show');
+    
+    if (optionsDropdown.classList.contains('show')) {
+        optionsDropdown.classList.remove('show');
+        optionsDropdown.style.maxHeight = '';
+        optionsDropdown.style.bottom = '';
+        optionsDropdown.style.top = '';
+        return;
+    }
+    
+    optionsDropdown.classList.add('show');
+    updateOptionsDropdownHeight();
+    
+    setTimeout(() => {
+        optionsDropdown.scrollTop = 0;
+    }, 0);
 }
 
 function showDeveloperModeMessage() {

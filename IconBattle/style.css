@@ -62,7 +62,6 @@ body {
     position: absolute;
     bottom: 100%;
     right: 0;
-    margin-top: 10px;
     background: rgba(0, 0, 0, 0.8);
     border-radius: 8px;
     padding: 10px;
@@ -71,6 +70,13 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.2);
     display: none;
     z-index: 2500;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.options-dropdown::-webkit-scrollbar {
+    display: none;
 }
 
 .options-dropdown.show {
@@ -2282,10 +2288,14 @@ body {
         bottom: auto;
         top: 100%;
         right: 0;
-        margin-top: 10px;
         width: 200px;
-        max-height: 70vh;
+        max-height: calc(100vh - 150px);
         overflow-y: auto;
+        scrollbar-width: none;
+    }
+
+    .options-dropdown::-webkit-scrollbar {
+        display: none;
     }
 
     .hide-option {
