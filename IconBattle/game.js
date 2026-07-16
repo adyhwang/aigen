@@ -3647,23 +3647,27 @@ function init() {
         }
     });
 
-    // 初始化后自动勾选三个选项
-    const squadCheckbox = document.getElementById('squadBattleMode');
-    if (squadCheckbox) {
-        squadCheckbox.checked = true;
-        toggleSquadBattleMode();
-    }
+    loadOptionsConfig();
+    
+    const savedOptions = localStorage.getItem('iconBattle_options');
+    if (!savedOptions) {
+        const squadCheckbox = document.getElementById('squadBattleMode');
+        if (squadCheckbox) {
+            squadCheckbox.checked = true;
+            toggleSquadBattleMode();
+        }
 
-    const autoAddCheckbox = document.getElementById('autoAddRandom');
-    if (autoAddCheckbox) {
-        autoAddCheckbox.checked = true;
-        toggleAutoAddRandom();
-    }
+        const autoAddCheckbox = document.getElementById('autoAddRandom');
+        if (autoAddCheckbox) {
+            autoAddCheckbox.checked = true;
+            toggleAutoAddRandom();
+        }
 
-    const autoDeployCheckbox = document.getElementById('autoDeploy');
-    if (autoDeployCheckbox) {
-        autoDeployCheckbox.checked = true;
-        toggleAutoDeploy();
+        const autoDeployCheckbox = document.getElementById('autoDeploy');
+        if (autoDeployCheckbox) {
+            autoDeployCheckbox.checked = true;
+            toggleAutoDeploy();
+        }
     }
     
     initEventSubscriptions();
@@ -4157,10 +4161,12 @@ function healAllPlayer(player) {
 
 function toggleAutoAddRandom() {
     autoAddRandomEnabled = document.getElementById('autoAddRandom').checked;
+    saveOptionsConfig();
 }
 
 function toggleAutoDeploy() {
     autoDeployEnabled = document.getElementById('autoDeploy').checked;
+    saveOptionsConfig();
 }
 
 function toggleHideReadyArea() {
@@ -4211,6 +4217,8 @@ function toggleSquadBattleMode() {
     } else {
         clearSquadLeaders();
     }
+    
+    saveOptionsConfig();
 }
 
 function isBattleIcon(iconData) {
@@ -4916,6 +4924,8 @@ function toggleGameSpeed() {
     } else {
         gameSpeedElement.classList.add('fast');
     }
+    
+    saveOptionsConfig();
 }
 
 function updateIconSize(value) {
@@ -4954,6 +4964,8 @@ function updateIconSize(value) {
     if (desktopIconSlider) {
         desktopIconSlider.value = value;
     }
+    
+    saveOptionsConfig();
 }
 
 function checkReadyZoneEmpty(player) {
@@ -6158,6 +6170,7 @@ function showOptionsPanel() {
             } else {
                 clearSquadLeaders();
             }
+            saveOptionsConfig();
         };
     }
     
@@ -6167,6 +6180,7 @@ function showOptionsPanel() {
         autoAddRandomCheckbox.onchange = function() {
             autoAddRandomEnabled = this.checked;
             document.getElementById('autoAddRandom').checked = this.checked;
+            saveOptionsConfig();
         };
     }
     
@@ -6176,6 +6190,7 @@ function showOptionsPanel() {
         autoDeployCheckbox.onchange = function() {
             autoDeployEnabled = this.checked;
             document.getElementById('autoDeploy').checked = this.checked;
+            saveOptionsConfig();
         };
     }
     
@@ -6277,6 +6292,8 @@ function showOptionsPanel() {
                 gameSpeedElement.classList.add('fast');
                 originalGameSpeedElement.classList.add('fast');
             }
+            
+            saveOptionsConfig();
         };
     }
     
@@ -6397,6 +6414,11 @@ function initWeaponSelect() {
 }
 
 function selectWeaponConfig(index) {
+    const select = document.getElementById('weaponSelect');
+    if (select) {
+        select.value = index;
+    }
+    
     const weapon = GAME_CONFIG.weapons[index];
     const form = document.getElementById('weaponConfigForm');
     form.innerHTML = '';
@@ -6736,6 +6758,68 @@ function loadSavedConfig() {
         }
     } catch (e) {
         console.warn('加载保存的配置失败:', e);
+    }
+}
+
+function saveOptionsConfig() {
+    try {
+        const options = {
+            squadBattleMode: squadBattleMode,
+            autoAddRandomEnabled: autoAddRandomEnabled,
+            autoDeployEnabled: autoDeployEnabled,
+            gameSpeed: gameSpeed,
+            iconSize: iconSize
+        };
+        localStorage.setItem('iconBattle_options', JSON.stringify(options));
+    } catch (e) {
+        console.warn('保存选项配置失败:', e);
+    }
+}
+
+function loadOptionsConfig() {
+    try {
+        const savedOptions = localStorage.getItem('iconBattle_options');
+        if (savedOptions) {
+            const options = JSON.parse(savedOptions);
+            
+            if (options.squadBattleMode !== undefined) {
+                squadBattleMode = options.squadBattleMode;
+                const squadCheckbox = document.getElementById('squadBattleMode');
+                if (squadCheckbox) squadCheckbox.checked = options.squadBattleMode;
+            }
+            
+            if (options.autoAddRandomEnabled !== undefined) {
+                autoAddRandomEnabled = options.autoAddRandomEnabled;
+                const autoAddCheckbox = document.getElementById('autoAddRandom');
+                if (autoAddCheckbox) autoAddCheckbox.checked = options.autoAddRandomEnabled;
+            }
+            
+            if (options.autoDeployEnabled !== undefined) {
+                autoDeployEnabled = options.autoDeployEnabled;
+                const autoDeployCheckbox = document.getElementById('autoDeploy');
+                if (autoDeployCheckbox) autoDeployCheckbox.checked = options.autoDeployEnabled;
+            }
+            
+            if (options.gameSpeed !== undefined) {
+                gameSpeed = options.gameSpeed;
+                const gameSpeedElement = document.getElementById('gameSpeed');
+                if (gameSpeedElement) {
+                    gameSpeedElement.textContent = gameSpeed !== 1 ? `⏩︎${gameSpeed}x倍速` : `${gameSpeed}x倍速`;
+                    if (gameSpeed === 1) {
+                        gameSpeedElement.classList.remove('fast');
+                    } else {
+                        gameSpeedElement.classList.add('fast');
+                    }
+                }
+            }
+            
+            if (options.iconSize !== undefined) {
+                iconSize = options.iconSize;
+                updateIconSize(iconSize);
+            }
+        }
+    } catch (e) {
+        console.warn('加载选项配置失败:', e);
     }
 }
 
