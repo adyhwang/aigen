@@ -582,6 +582,12 @@ function addIconToReadyZone(player, imageUrl, name = '') {
     iconItem.dataset.name = name;
     iconItem.dataset.level = 1;
     
+    const defaultIconSize = 0.8;
+    const readyBaseSize = 70;
+    const readyIconSize = readyBaseSize * (iconSize / defaultIconSize);
+    iconItem.style.width = `${readyIconSize}px`;
+    iconItem.style.height = `${readyIconSize}px`;
+    
     const randomWeaponIndex = Math.floor(Math.random() * GAME_CONFIG.weapons.length);
     iconItem.dataset.assignedWeaponIndex = randomWeaponIndex;
     
@@ -4844,6 +4850,16 @@ function updateIconSize(value) {
         icon.style.setProperty('--icon-size', iconSize);
     });
     
+    const defaultIconSize = 0.8;
+    const readyBaseSize = 70;
+    const readyIconSize = readyBaseSize * (iconSize / defaultIconSize);
+    
+    const allReadyIcons = document.querySelectorAll('.icon-item');
+    allReadyIcons.forEach(icon => {
+        icon.style.width = `${readyIconSize}px`;
+        icon.style.height = `${readyIconSize}px`;
+    });
+    
     const mobileIconSlider = document.querySelector('.options-panel #iconSizeSlider');
     if (mobileIconSlider) {
         mobileIconSlider.value = value;
@@ -6219,6 +6235,7 @@ const WEAPON_FIELD_META = {
     buffMultiplier: { label: '增益倍率', type: 'number', desc: '属性倍率', min: 0, step: 0.1 },
     chargeSpeed: { label: '冲锋速度', type: 'number', desc: '自爆武器专用', min: 0 },
     deathExplosionMultiplier: { label: '死亡自爆倍率', type: 'number', desc: '死亡时爆炸伤害比例', min: 0, step: 0.05 },
+    isSelfDestruct: { label: '是否自爆', type: 'checkbox', desc: '武器是否为自爆类型' },
     defaultDirection: { label: '默认朝向', type: 'select', desc: '', options: ['top', 'bottom', 'left', 'right'] },
     effectType: { label: '特效类型', type: 'select', desc: '', options: ['slash', 'stab', 'chop', 'smash', 'pierce', 'dig', 'arrow', 'bullet', 'explosion', 'lightning', 'fire', 'ice', 'heal', 'buff'] }
 };
@@ -6304,7 +6321,7 @@ function selectWeaponConfig(index) {
         if (!(field in weapon) && field !== 'heal' && field !== 'aoeRadius' && field !== 'knockbackDistance' 
             && field !== 'ignoreDefense' && field !== 'burnDuration' && field !== 'burnInterval'
             && field !== 'freezeDuration' && field !== 'buffDuration' && field !== 'buffMultiplier'
-            && field !== 'chargeSpeed' && field !== 'deathExplosionMultiplier') {
+            && field !== 'chargeSpeed' && field !== 'deathExplosionMultiplier' && field !== 'isSelfDestruct') {
             return;
         }
         
