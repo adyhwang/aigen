@@ -1016,31 +1016,33 @@ body {
 .aoe-explosion {
     position: absolute;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 100, 0, 0.8) 0%, rgba(255, 50, 0, 0.6) 30%, rgba(255, 0, 0, 0.3) 60%, transparent 100%);
+    background: radial-gradient(circle, rgba(255, 140, 0, 0.85) 0%, rgba(255, 80, 0, 0.6) 35%, rgba(255, 30, 0, 0.3) 65%, transparent 100%);
     pointer-events: none;
     z-index: 2500;
     animation: explosion 0.5s ease-out forwards;
+    box-shadow: 0 0 40px rgba(255, 100, 0, 0.6), inset 0 0 30px rgba(255, 200, 0, 0.4);
 }
 
 @keyframes explosion {
-    0% { transform: scale(calc(0 * var(--icon-size, 1))); opacity: 1; }
-    50% { transform: scale(calc(1.2 * var(--icon-size, 1))); opacity: 0.8; }
-    100% { transform: scale(calc(1 * var(--icon-size, 1))); opacity: 0; }
+    0% { transform: scale(0); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 0; }
 }
 
 .lightning-effect {
     position: absolute;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(100, 200, 255, 0.6) 0%, rgba(50, 150, 255, 0.3) 50%, transparent 100%);
+    background: radial-gradient(circle, rgba(150, 220, 255, 0.7) 0%, rgba(80, 180, 255, 0.4) 50%, transparent 100%);
     pointer-events: none;
     z-index: 2500;
     animation: lightning 0.5s ease-out forwards;
+    box-shadow: 0 0 50px rgba(100, 200, 255, 0.6), inset 0 0 30px rgba(200, 240, 255, 0.4);
 }
 
 @keyframes lightning {
-    0% { transform: scale(calc(0 * var(--icon-size, 1))); opacity: 1; }
-    50% { transform: scale(calc(1.1 * var(--icon-size, 1))); opacity: 0.9; }
-    100% { transform: scale(calc(1 * var(--icon-size, 1))); opacity: 0; }
+    0% { transform: scale(0); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 0; }
 }
 
 .lightning-bolt {
@@ -1060,16 +1062,17 @@ body {
 .fire-effect {
     position: absolute;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 100, 0, 0.6) 0%, rgba(255, 50, 0, 0.3) 50%, transparent 100%);
+    background: radial-gradient(circle, rgba(255, 150, 0, 0.7) 0%, rgba(255, 80, 0, 0.45) 50%, transparent 100%);
     pointer-events: none;
     z-index: 2500;
     animation: fire 0.5s ease-out forwards;
+    box-shadow: 0 0 50px rgba(255, 100, 0, 0.6), inset 0 0 30px rgba(255, 200, 50, 0.4);
 }
 
 @keyframes fire {
-    0% { transform: scale(calc(0 * var(--icon-size, 1))); opacity: 1; }
-    50% { transform: scale(calc(1.1 * var(--icon-size, 1))); opacity: 0.9; }
-    100% { transform: scale(calc(1 * var(--icon-size, 1))); opacity: 0; }
+    0% { transform: scale(0); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 0; }
 }
 
 .flame {
@@ -1163,85 +1166,85 @@ body {
 }
 
 .slash-effect {
-    width: 60px;
-    height: 60px;
-    border: 4px solid rgba(255, 255, 255, 0.9);
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.9);
     border-radius: 50%;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.5), inset 0 0 8px rgba(255, 255, 255, 0.3);
     animation: slash 0.4s ease-out forwards;
 }
 
 @keyframes slash {
-    0% { transform: translate(-50%, -50%) rotate(0deg) scale(calc(0.3 * var(--icon-size, 1))); opacity: 1; border-width: 6px; }
-    30% { transform: translate(-50%, -50%) rotate(30deg) scale(calc(1.4 * var(--icon-size, 1))); opacity: 0.9; border-width: 4px; }
-    60% { transform: translate(-50%, -50%) rotate(60deg) scale(calc(1.1 * var(--icon-size, 1))); opacity: 0.7; border-width: 3px; }
-    100% { transform: translate(-50%, -50%) rotate(90deg) scale(calc(0.6 * var(--icon-size, 1))); opacity: 0; border-width: 2px; }
+    0% { transform: translate(-50%, -50%) rotate(0deg) scale(calc(0.2 * var(--icon-size, 1))); opacity: 1; border-width: 4px; }
+    30% { transform: translate(-50%, -50%) rotate(30deg) scale(calc(1.1 * var(--icon-size, 1))); opacity: 0.9; border-width: 3px; }
+    60% { transform: translate(-50%, -50%) rotate(60deg) scale(calc(0.9 * var(--icon-size, 1))); opacity: 0.7; border-width: 2px; }
+    100% { transform: translate(-50%, -50%) rotate(90deg) scale(calc(0.5 * var(--icon-size, 1))); opacity: 0; border-width: 1px; }
 }
 
 .stab-effect {
-    width: 45px;
-    height: 45px;
+    width: 35px;
+    height: 35px;
     background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(200, 200, 200, 0.7) 40%, transparent 100%);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 25px rgba(255, 255, 255, 0.4);
     animation: stab 0.3s ease-out forwards;
 }
 
 @keyframes stab {
     0% { transform: translate(-50%, -50%) scale(calc(0 * var(--icon-size, 1))); opacity: 1; }
-    40% { transform: translate(-50%, -50%) scale(calc(1.8 * var(--icon-size, 1))); opacity: 0.9; }
-    100% { transform: translate(-50%, -50%) scale(calc(0.4 * var(--icon-size, 1))); opacity: 0; }
+    40% { transform: translate(-50%, -50%) scale(calc(1.4 * var(--icon-size, 1))); opacity: 0.9; }
+    100% { transform: translate(-50%, -50%) scale(calc(0.3 * var(--icon-size, 1))); opacity: 0; }
 }
 
 .chop-effect {
-    width: 75px;
-    height: 75px;
-    border: 5px solid rgba(255, 200, 100, 1);
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 200, 100, 1);
     border-radius: 15%;
-    box-shadow: 0 0 20px rgba(255, 200, 100, 0.6), inset 0 0 15px rgba(255, 200, 100, 0.3);
+    box-shadow: 0 0 15px rgba(255, 200, 100, 0.6), inset 0 0 12px rgba(255, 200, 100, 0.3);
     animation: chop 0.35s ease-out forwards;
 }
 
 @keyframes chop {
-    0% { transform: translate(-50%, -50%) rotate(-45deg) scale(calc(0.2 * var(--icon-size, 1))); opacity: 1; border-width: 7px; }
-    35% { transform: translate(-50%, -50%) rotate(-15deg) scale(calc(1.5 * var(--icon-size, 1))); opacity: 0.95; border-width: 5px; }
-    70% { transform: translate(-50%, -50%) rotate(15deg) scale(calc(1.2 * var(--icon-size, 1))); opacity: 0.8; border-width: 4px; }
-    100% { transform: translate(-50%, -50%) rotate(45deg) scale(calc(0.5 * var(--icon-size, 1))); opacity: 0; border-width: 2px; }
+    0% { transform: translate(-50%, -50%) rotate(-45deg) scale(calc(0.2 * var(--icon-size, 1))); opacity: 1; border-width: 5px; }
+    35% { transform: translate(-50%, -50%) rotate(-15deg) scale(calc(1.2 * var(--icon-size, 1))); opacity: 0.95; border-width: 4px; }
+    70% { transform: translate(-50%, -50%) rotate(15deg) scale(calc(1.0 * var(--icon-size, 1))); opacity: 0.8; border-width: 3px; }
+    100% { transform: translate(-50%, -50%) rotate(45deg) scale(calc(0.4 * var(--icon-size, 1))); opacity: 0; border-width: 2px; }
 }
 
 .smash-effect {
-    width: 90px;
-    height: 90px;
+    width: 70px;
+    height: 70px;
     background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(200, 200, 200, 0.6) 40%, transparent 100%);
     border-radius: 25%;
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 50px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 35px rgba(255, 255, 255, 0.4);
     animation: smash 0.4s ease-out forwards;
 }
 
 @keyframes smash {
     0% { transform: translate(-50%, -50%) scale(calc(0 * var(--icon-size, 1))); opacity: 1; }
-    25% { transform: translate(-50%, -50%) scale(calc(1.8 * var(--icon-size, 1))); opacity: 0.95; }
-    50% { transform: translate(-50%, -50%) scale(calc(1.3 * var(--icon-size, 1))); opacity: 0.8; }
-    100% { transform: translate(-50%, -50%) scale(calc(0.7 * var(--icon-size, 1))); opacity: 0; }
+    25% { transform: translate(-50%, -50%) scale(calc(1.4 * var(--icon-size, 1))); opacity: 0.95; }
+    50% { transform: translate(-50%, -50%) scale(calc(1.1 * var(--icon-size, 1))); opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(calc(0.6 * var(--icon-size, 1))); opacity: 0; }
 }
 
 .pierce-effect {
-    width: 55px;
-    height: 55px;
-    border: 4px solid rgba(100, 200, 255, 1);
+    width: 45px;
+    height: 45px;
+    border: 3px solid rgba(100, 200, 255, 1);
     border-radius: 50%;
-    box-shadow: 0 0 20px rgba(100, 200, 255, 0.7), inset 0 0 15px rgba(100, 200, 255, 0.3);
+    box-shadow: 0 0 15px rgba(100, 200, 255, 0.7), inset 0 0 12px rgba(100, 200, 255, 0.3);
     animation: pierce 0.3s ease-out forwards;
 }
 
 @keyframes pierce {
-    0% { transform: translate(-50%, -50%) scale(calc(0 * var(--icon-size, 1))); opacity: 1; border-width: 6px; }
-    40% { transform: translate(-50%, -50%) scale(calc(1.6 * var(--icon-size, 1))); opacity: 0.9; border-width: 4px; }
-    100% { transform: translate(-50%, -50%) scale(calc(0.4 * var(--icon-size, 1))); opacity: 0; border-width: 2px; }
+    0% { transform: translate(-50%, -50%) scale(calc(0 * var(--icon-size, 1))); opacity: 1; border-width: 4px; }
+    40% { transform: translate(-50%, -50%) scale(calc(1.3 * var(--icon-size, 1))); opacity: 0.9; border-width: 3px; }
+    100% { transform: translate(-50%, -50%) scale(calc(0.3 * var(--icon-size, 1))); opacity: 0; border-width: 2px; }
 }
 
 .dig-effect {
-    width: 45px;
-    height: 45px;
+    width: 35px;
+    height: 35px;
     background: radial-gradient(circle, rgba(200, 150, 100, 0.8) 0%, rgba(150, 100, 50, 0.4) 50%, transparent 100%);
     border-radius: 30%;
     animation: dig 0.2s ease-out forwards;
@@ -1249,68 +1252,68 @@ body {
 
 @keyframes dig {
     0% { transform: translate(-50%, -50%) scale(calc(0 * var(--icon-size, 1))); opacity: 1; }
-    50% { transform: translate(-50%, -50%) scale(calc(1.3 * var(--icon-size, 1))); opacity: 0.8; }
-    100% { transform: translate(-50%, -50%) scale(calc(0.4 * var(--icon-size, 1))); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(calc(1.1 * var(--icon-size, 1))); opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(calc(0.3 * var(--icon-size, 1))); opacity: 0; }
 }
 
 .arrow-effect {
-    width: 35px;
-    height: 35px;
+    width: 30px;
+    height: 30px;
     background: radial-gradient(circle, rgba(150, 255, 150, 1) 0%, rgba(100, 200, 100, 0.7) 40%, transparent 100%);
     border-radius: 50%;
-    box-shadow: 0 0 15px rgba(150, 255, 150, 0.8), 0 0 25px rgba(150, 255, 150, 0.4);
+    box-shadow: 0 0 12px rgba(150, 255, 150, 0.8), 0 0 20px rgba(150, 255, 150, 0.4);
     animation: arrow 0.25s ease-out forwards;
 }
 
 @keyframes arrow {
     0% { transform: translate(-50%, -50%) scale(calc(0 * var(--icon-size, 1))); opacity: 1; }
-    40% { transform: translate(-50%, -50%) scale(calc(1.7 * var(--icon-size, 1))); opacity: 0.9; }
-    100% { transform: translate(-50%, -50%) scale(calc(0.3 * var(--icon-size, 1))); opacity: 0; }
+    40% { transform: translate(-50%, -50%) scale(calc(1.4 * var(--icon-size, 1))); opacity: 0.9; }
+    100% { transform: translate(-50%, -50%) scale(calc(0.2 * var(--icon-size, 1))); opacity: 0; }
 }
 
 .bullet-effect {
-    width: 30px;
-    height: 30px;
+    width: 25px;
+    height: 25px;
     background: radial-gradient(circle, rgba(255, 255, 100, 1) 0%, rgba(255, 200, 50, 0.7) 40%, transparent 100%);
     border-radius: 50%;
-    box-shadow: 0 0 20px rgba(255, 255, 100, 0.9), 0 0 35px rgba(255, 200, 50, 0.5);
+    box-shadow: 0 0 15px rgba(255, 255, 100, 0.9), 0 0 25px rgba(255, 200, 50, 0.5);
     animation: bullet 0.2s ease-out forwards;
 }
 
 @keyframes bullet {
     0% { transform: translate(-50%, -50%) scale(calc(0 * var(--icon-size, 1))); opacity: 1; }
-    35% { transform: translate(-50%, -50%) scale(calc(1.8 * var(--icon-size, 1))); opacity: 0.95; }
+    35% { transform: translate(-50%, -50%) scale(calc(1.5 * var(--icon-size, 1))); opacity: 0.95; }
     100% { transform: translate(-50%, -50%) scale(calc(0.2 * var(--icon-size, 1))); opacity: 0; }
 }
 
 .lightning-single-effect {
-    width: 70px;
-    height: 70px;
+    width: 55px;
+    height: 55px;
     border-radius: 50%;
     background: radial-gradient(circle, rgba(100, 200, 255, 1) 0%, rgba(50, 150, 255, 0.7) 40%, transparent 100%);
-    box-shadow: 0 0 25px rgba(100, 200, 255, 0.9), 0 0 50px rgba(50, 150, 255, 0.5);
+    box-shadow: 0 0 20px rgba(100, 200, 255, 0.9), 0 0 40px rgba(50, 150, 255, 0.5);
     animation: lightning-single 0.35s ease-out forwards;
 }
 
 @keyframes lightning-single {
     0% { transform: translate(-50%, -50%) scale(calc(0 * var(--icon-size, 1))); opacity: 1; }
-    30% { transform: translate(-50%, -50%) scale(calc(1.5 * var(--icon-size, 1))); opacity: 0.95; }
-    100% { transform: translate(-50%, -50%) scale(calc(0.8 * var(--icon-size, 1))); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(calc(1.2 * var(--icon-size, 1))); opacity: 0.95; }
+    100% { transform: translate(-50%, -50%) scale(calc(0.6 * var(--icon-size, 1))); opacity: 0; }
 }
 
 .fire-single-effect {
-    width: 65px;
-    height: 65px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 100, 0, 1) 0%, rgba(255, 50, 0, 0.7) 40%, transparent 100%);
-    box-shadow: 0 0 25px rgba(255, 100, 0, 0.9), 0 0 50px rgba(255, 50, 0, 0.5);
+    background: radial-gradient(circle, rgba(255, 120, 0, 1) 0%, rgba(255, 60, 0, 0.7) 40%, transparent 100%);
+    box-shadow: 0 0 20px rgba(255, 120, 0, 0.9), 0 0 40px rgba(255, 60, 0, 0.5);
     animation: fire-single 0.35s ease-out forwards;
 }
 
 @keyframes fire-single {
     0% { transform: translate(-50%, -50%) scale(calc(0 * var(--icon-size, 1))); opacity: 1; }
-    30% { transform: translate(-50%, -50%) scale(calc(1.5 * var(--icon-size, 1))); opacity: 0.95; }
-    100% { transform: translate(-50%, -50%) scale(calc(0.8 * var(--icon-size, 1))); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(calc(1.2 * var(--icon-size, 1))); opacity: 0.95; }
+    100% { transform: translate(-50%, -50%) scale(calc(0.6 * var(--icon-size, 1))); opacity: 0; }
 }
 
 /* 增强的武器特效样式 */
@@ -1361,25 +1364,40 @@ body {
     100% { opacity: 0; transform: translate(-50%, -120px) scale(0.3); }
 }
 
+.heal-effect {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(100, 255, 150, 0.5) 0%, rgba(50, 200, 100, 0.3) 50%, transparent 100%);
+    box-shadow: 0 0 25px rgba(100, 255, 150, 0.6), inset 0 0 20px rgba(150, 255, 200, 0.4);
+    animation: heal-pulse 0.6s ease-out forwards;
+}
+
+@keyframes heal-pulse {
+    0% { transform: translate(-50%, -50%) scale(calc(0.2 * var(--icon-size, 1))); opacity: 0.8; }
+    50% { transform: translate(-50%, -50%) scale(calc(1.1 * var(--icon-size, 1))); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(calc(0.8 * var(--icon-size, 1))); opacity: 0; }
+}
+
 .heal-particle {
     position: absolute;
-    width: 20px;
-    height: 20px;
-    color: rgba(100, 255, 100, 1);
-    font-size: 18px;
+    width: 16px;
+    height: 16px;
+    color: rgba(100, 255, 150, 1);
+    font-size: 14px;
     text-align: center;
-    line-height: 20px;
+    line-height: 16px;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    text-shadow: 0 0 10px rgba(100, 255, 100, 0.8);
-    animation: heal-particle-float 1s ease-out forwards;
+    text-shadow: 0 0 8px rgba(100, 255, 150, 0.9), 0 0 15px rgba(50, 200, 100, 0.6);
+    animation: heal-particle-float 0.9s ease-out forwards;
 }
 
 @keyframes heal-particle-float {
     0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
-    70% { opacity: 1; transform: translate(-50%, calc(-50% - 40px)) scale(1.2); }
-    100% { opacity: 0; transform: translate(-50%, calc(-50% - 60px)) scale(0.3); }
+    60% { opacity: 1; transform: translate(-50%, calc(-50% - 35px)) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, calc(-50% - 50px)) scale(0.3); }
 }
 
 .buff-glow {
@@ -1394,6 +1412,35 @@ body {
     0% { opacity: 0; transform: scale(0.5); }
     50% { opacity: 1; transform: scale(1.2); }
     100% { opacity: 0; transform: scale(1.5); }
+}
+
+.buff-single-effect {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.5) 0%, rgba(255, 165, 0, 0.3) 50%, transparent 100%);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.6), inset 0 0 20px rgba(255, 255, 150, 0.4);
+    animation: buff-single-pulse 0.6s ease-out forwards;
+}
+
+@keyframes buff-single-pulse {
+    0% { transform: translate(-50%, -50%) scale(calc(0.2 * var(--icon-size, 1))); opacity: 0.8; }
+    50% { transform: translate(-50%, -50%) scale(calc(1.1 * var(--icon-size, 1))); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(calc(0.8 * var(--icon-size, 1))); opacity: 0; }
+}
+
+.buff-single-glow {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 215, 0, 0.9);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.7), inset 0 0 8px rgba(255, 255, 150, 0.4);
+    animation: buff-single-glow-pulse 0.7s ease-out forwards;
+}
+
+@keyframes buff-single-glow-pulse {
+    0% { opacity: 0; transform: scale(0.4); }
+    50% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0; transform: scale(1.4); }
 }
 
 @keyframes shake {
@@ -1812,16 +1859,17 @@ body {
 .ice-effect {
     position: absolute;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(135, 206, 235, 0.3) 0%, rgba(65, 105, 225, 0.1) 50%, transparent 100%);
+    background: radial-gradient(circle, rgba(135, 206, 235, 0.35) 0%, rgba(65, 105, 225, 0.15) 50%, transparent 100%);
     pointer-events: none;
     z-index: 2500;
+    box-shadow: 0 0 40px rgba(135, 206, 235, 0.4), inset 0 0 25px rgba(200, 240, 255, 0.3);
 }
 
 .ice-ring {
     position: absolute;
     border-radius: 50%;
-    border: 3px solid rgba(135, 206, 235, 0.8);
-    box-shadow: 0 0 15px rgba(135, 206, 235, 0.6), inset 0 0 10px rgba(135, 206, 235, 0.3);
+    border: 3px solid rgba(150, 220, 255, 0.9);
+    box-shadow: 0 0 20px rgba(135, 206, 235, 0.8), inset 0 0 15px rgba(200, 240, 255, 0.5);
     pointer-events: none;
 }
 
@@ -1838,7 +1886,7 @@ body {
     height: 8px;
     background: radial-gradient(circle, #ffffff 0%, #87CEEB 50%, transparent 100%);
     border-radius: 50%;
-    box-shadow: 0 0 10px #87CEEB, 0 0 20px #4169E1;
+    box-shadow: 0 0 12px #87CEEB, 0 0 25px #4169E1;
     animation: iceParticleFade 0.8s ease-out forwards;
 }
 
@@ -1879,16 +1927,17 @@ body {
 .buff-effect {
     position: absolute;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, rgba(255, 165, 0, 0.2) 50%, transparent 100%);
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.45) 0%, rgba(255, 165, 0, 0.25) 50%, transparent 100%);
     pointer-events: none;
     z-index: 2500;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.5), inset 0 0 25px rgba(255, 255, 150, 0.4);
 }
 
 .buff-ring {
     position: absolute;
     border-radius: 50%;
-    border: 3px solid rgba(255, 215, 0, 0.8);
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6), inset 0 0 10px rgba(255, 165, 0, 0.3);
+    border: 3px solid rgba(255, 215, 0, 0.9);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.7), inset 0 0 15px rgba(255, 255, 150, 0.4);
     pointer-events: none;
 }
 
@@ -1905,7 +1954,7 @@ body {
     height: 8px;
     background: radial-gradient(circle, #ffffff 0%, #FFD700 50%, transparent 100%);
     border-radius: 50%;
-    box-shadow: 0 0 10px #FFD700, 0 0 20px #FFA500;
+    box-shadow: 0 0 12px #FFD700, 0 0 25px #FFA500;
     animation: buffParticleFade 0.8s ease-out forwards;
 }
 
@@ -2558,5 +2607,396 @@ body {
         font-size: 24px;
         width: 50px;
         height: 50px;
+    }
+}
+
+.config-modal .modal-content {
+    max-width: 900px;
+}
+
+.config-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+}
+
+.config-tab {
+    padding: 10px 20px;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: #ccc;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.config-tab:hover {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+}
+
+.config-tab.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+}
+
+.config-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.weapon-selector {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.weapon-selector label {
+    color: #fff;
+    font-size: 14px;
+    min-width: 80px;
+}
+
+.weapon-selector select {
+    flex: 1;
+    padding: 10px 15px;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.weapon-selector select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.weapon-config-form,
+.combat-config-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    max-height: 50vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.config-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.config-field label {
+    color: #ccc;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.config-field label .field-desc {
+    color: #888;
+    font-size: 11px;
+    font-weight: normal;
+}
+
+.config-field input[type="number"],
+.config-field input[type="text"] {
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid #555;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.config-field input[type="number"]:focus,
+.config-field input[type="text"]:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.config-field input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.config-section-title {
+    grid-column: 1 / -1;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    margin-top: 10px;
+}
+
+.config-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid rgba(255,255,255,0.1);
+}
+
+.btn-config-save,
+.btn-config-reset {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-config-save {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-config-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-config-reset {
+    background: rgba(255,255,255,0.1);
+    color: #ccc;
+    border: 1px solid #555;
+}
+
+.btn-config-reset:hover {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .weapon-config-form,
+    .combat-config-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .config-modal .modal-content {
+        max-width: 95%;
+        padding: 15px;
+    }
+}
+
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .game-header {
+        padding: 5px 15px;
+    }
+
+    .game-header h1 {
+        font-size: 16px;
+    }
+
+    .btn-options {
+        padding: 4px 10px;
+        font-size: 11px;
+    }
+
+    .battle-area {
+        margin-top: 40px;
+        height: calc(100vh - 40px - 180px);
+    }
+
+    .ready-area {
+        height: 180px;
+    }
+
+    .ready-header h2 {
+        font-size: 14px;
+    }
+
+    .add-buttons button {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+
+    .icon-item {
+        width: 50px;
+        height: 50px;
+        font-size: 10px;
+    }
+
+    .mobile-tabs {
+        display: none;
+    }
+
+    .battle-info-wrapper {
+        position: fixed;
+        top: 50px;
+        right: 10px;
+        width: 280px;
+        max-height: calc(100vh - 200px);
+    }
+
+    .battle-info {
+        min-width: 100%;
+        max-width: 100%;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .btn-options,
+    .filter-tab,
+    .config-tab,
+    .weapon-emoji,
+    .btn-upload,
+    .btn-search,
+    .btn-battle,
+    .btn-search-action,
+    .btn-config-reset,
+    .btn-config-save,
+    .mobile-tab {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .options-dropdown {
+        min-width: 200px;
+    }
+
+    .option-item {
+        padding: 10px 12px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    .option-item input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+    }
+
+    .option-item input[type="range"] {
+        height: 44px;
+    }
+
+    .icon-item {
+        min-width: 60px;
+        min-height: 60px;
+    }
+
+    .search-modal .modal-content,
+    .config-modal .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .weapon-emoji {
+        min-width: 50px;
+        min-height: 50px;
+    }
+}
+
+@media (max-width: 480px) {
+    .game-header {
+        padding: 8px 12px;
+    }
+
+    .game-header h1 {
+        font-size: 16px;
+    }
+
+    .btn-options {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .battle-area {
+        height: 45vh;
+        margin-top: 45px;
+    }
+
+    .zone-label {
+        font-size: 10px;
+        padding: 2px 4px;
+    }
+
+    .mobile-tabs {
+        padding: 4px;
+        gap: 4px;
+    }
+
+    .mobile-tab {
+        font-size: 11px;
+        padding: 8px 4px;
+        min-height: 40px;
+    }
+
+    .ready-header {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .ready-header h2 {
+        font-size: 14px;
+    }
+
+    .add-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .add-buttons button {
+        flex: 1;
+        font-size: 11px;
+        padding: 6px 4px;
+    }
+
+    .battle-info-wrapper {
+        width: 95%;
+        height: 50vh;
+        bottom: 55px;
+    }
+
+    .battle-info {
+        font-size: 10px;
+    }
+
+    .filter-tab {
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+
+    .search-modal .modal-content,
+    .config-modal .modal-content {
+        width: 98%;
+        max-width: 98%;
+        padding: 10px;
+    }
+
+    .config-tabs {
+        gap: 5px;
+    }
+
+    .config-tab {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .weapons-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+
+    .weapon-emoji {
+        width: 45px;
+        height: 45px;
+        font-size: 22px;
     }
 }

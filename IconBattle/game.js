@@ -18,7 +18,7 @@ let battleStats = {
 // 战斗图标大小范围
 const iconSizes = [0.2, 1.4];
 // 战斗图标默认大小
-let iconSize = 1;
+let iconSize = 0.8;
 
 // 战斗信息面板是否正在拖动
 let battleInfoDragging = false;
@@ -64,6 +64,10 @@ let battleAreaRect = null;
 let lastBattleAreaCheckTime = 0;
 const BATTLE_AREA_CHECK_INTERVAL = 1000;
 
+let player1BattleZoneElement = null;
+let player2BattleZoneElement = null;
+let battleInfoElement = null;
+
 let developerMode = false;  // 是否启用开发者模式
 let specialButtonClickCount = 0;  // 特殊按钮点击次数，用于激活开发者模式
 let developerPanel = null;  // 开发者面板元素
@@ -102,7 +106,14 @@ const GAME_CONFIG = {
     movement: {
         arrivalThreshold: 5,            // 到达目标的阈值（像素）
         squadFollowDistance: 200,       // 小队跟随距离（像素）
-        squadMonitorRange: 800          // 小队监控范围（像素）
+        squadMonitorRange: 800,         // 小队监控范围（像素）
+        boundaryMargin: 50,             // 边界边距（像素，乘以iconSize）
+        meleeApproachOffset: 50,        // 近战接近目标的偏移距离（像素，乘以iconSize）
+        healerSafeDistance: 120,        // 治疗者安全距离（像素，乘以iconSize）
+        healerMinDistance: 60,          // 治疗者最小距离（像素，乘以iconSize）
+        buffAttackRange: 60,            // 增益武器攻击距离（像素，乘以iconSize）
+        retreatDistance: 150,           // 撤退距离（像素，乘以iconSize）
+        effectOffset: 40                // 特效位置偏移（像素，乘以iconSize）
     },
     // 时间相关配置
     timing: {
@@ -121,6 +132,80 @@ const GAME_CONFIG = {
     ui: {
         explosionZIndex: 1000,          // 爆炸效果的z-index层级
         developerPanelWidth: 400        // 开发者面板宽度（像素）
+    },
+    // 战斗数值配置
+    combat: {
+        damage: {
+            randomMin: 0.8,              // 伤害随机浮动最小值
+            randomMax: 1.2,              // 伤害随机浮动最大值
+            defenseFactor: 0.5,          // 防御减免系数（防御值×该系数从伤害中扣除）
+            aoeEdgeDamageFactor: 0.5,    // AOE边缘伤害比例（中心100%，边缘该比例）
+            levelUpHealPercent: 0.3,     // 升级回血百分比
+            levelUpMaxHealthBonus: 1.1,  // 升级最大生命值额外加成倍数
+            minDamage: 1,                // 最小伤害值
+            baseCritRate: 0.05,          // 基础暴击率
+            baseCritDamage: 1.5,         // 基础暴击伤害倍率
+            baseLifeSteal: 0             // 基础吸血比例
+        },
+        dodge: {
+            speedFactor: 0.03            // 闪避概率系数（速度值×该系数=闪避率）
+        },
+        burn: {
+            damageFactor: 0.5,           // 燃烧每次跳伤害占初始伤害的比例
+            defaultDuration: 2000,       // 默认燃烧持续时间（毫秒）
+            defaultInterval: 500         // 默认燃烧跳伤害间隔（毫秒）
+        },
+        weaponDefaults: {
+            aoeRadius: 150,              // 默认AOE半径
+            healAmount: 18,              // 默认治疗量
+            attack: 120,                 // 默认攻击力
+            chargeSpeed: 300,            // 默认冲锋速度
+            deathExplosionMultiplier: 0.85 // 默认死亡自爆伤害倍率
+        },
+        buff: {
+            defaultDuration: 3000,       // 默认buff持续时间（毫秒）
+            defaultMultiplier: 1.8       // 默认buff属性倍率
+        },
+        squad: {
+            meleeIdealRangeVsMelee: 0.7,  // 近战对近战的理想射程比例
+            meleeIdealRangeVsRanged: 0.7, // 近战对远程的理想射程比例
+            rangedIdealRangeVsMelee: 0.85,// 远程对近战的理想射程比例
+            rangedIdealRangeVsRanged: 0.7,// 远程对远程的理想射程比例
+            aoeIdealRangeVsMelee: 0.8,    // AOE对近战的理想射程比例
+            aoeIdealRangeVsRanged: 0.65,  // AOE对远程的理想射程比例
+            retreatHealthThreshold: 0.6,  // 后撤触发血量阈值
+            retreatCloseRangeFactor: 0.4, // 后撤贴脸距离比例
+            retreatDistance: 150,         // 后撤距离（像素）
+            supportPriorityHealPercent: 0.75 // 辅助治疗触发血量阈值
+        },
+        ai: {
+            types: ['aggressive', 'balanced', 'defensive'],
+            aggressive: {
+                targetPriority: 'lowestHealth',  // 目标优先级：最低血量
+                approachBias: 1.2,               // 接近倾向系数（越大越主动接近）
+                retreatThreshold: 0.2,           // 后撤血量阈值
+                attackAggression: 1.1            // 攻击激进程度
+            },
+            balanced: {
+                targetPriority: 'nearest',       // 目标优先级：最近
+                approachBias: 1.0,               // 接近倾向系数
+                retreatThreshold: 0.4,           // 后撤血量阈值
+                attackAggression: 1.0            // 攻击激进程度
+            },
+            defensive: {
+                targetPriority: 'nearest',       // 目标优先级：最近
+                approachBias: 0.8,               // 接近倾向系数
+                retreatThreshold: 0.6,           // 后撤血量阈值
+                attackAggression: 0.9            // 攻击激进程度
+            },
+            weaponTypeBias: {
+                melee: { aggressive: 0.5, balanced: 0.3, defensive: 0.2 },
+                ranged: { aggressive: 0.2, balanced: 0.4, defensive: 0.4 },
+                aoe: { aggressive: 0.3, balanced: 0.5, defensive: 0.2 },
+                heal: { aggressive: 0.1, balanced: 0.3, defensive: 0.6 },
+                buff: { aggressive: 0.2, balanced: 0.5, defensive: 0.3 }
+            }
+        }
     },
     // 武器配置列表
     weapons: [
@@ -144,9 +229,84 @@ const GAME_CONFIG = {
         { emoji: '🍼', name: '奶瓶', attack: 1, heal: 20, type: 'heal', range: 220, attackSpeed: 1200, maxCharges: 4, cooldownTime: 2000, defaultDirection: 'top', effectType: 'heal' },
         { emoji: '💊', name: '药丸', attack: 1, heal: 28, type: 'heal', range: 200, attackSpeed: 1000, maxCharges: 3, cooldownTime: 3000, defaultDirection: 'top', effectType: 'heal' },
         { emoji: '💉', name: '兴奋剂', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 1, cooldownTime: 3000, defaultDirection: 'top', buffDuration: 3500, buffMultiplier: 3.0, effectType: 'buff' },
-        { emoji: '🚀', name: '自爆火箭', attack: 180, type: 'melee', range: 20, attackSpeed: 500, maxCharges: 1, cooldownTime: 0, defaultDirection: 'right', aoeRadius: 150, chargeSpeed: 300, effectType: 'explosion' }
+        { emoji: '🚀', name: '自爆火箭', attack: 180, type: 'melee', range: 20, attackSpeed: 500, maxCharges: 1, cooldownTime: 0, defaultDirection: 'right', aoeRadius: 150, chargeSpeed: 300, deathExplosionMultiplier: 0.50, isSelfDestruct: true, effectType: 'explosion' }
     ]
 };
+
+const WEAPON_BEHAVIORS = {
+    heal: {
+        update: function(iconData, context) {
+            handleHealerBehavior(iconData);
+        }
+    },
+    buff: {
+        update: function(iconData, context) {
+            handleBuffBehavior(iconData);
+        }
+    },
+    selfDestruct: {
+        update: function(iconData, context) {
+            handleRocketCharge(iconData);
+        }
+    },
+    combat: {
+        update: function(iconData, context) {
+            const { isVictory, squadBattleMode } = context;
+            
+            if (squadBattleMode) {
+                if (squadLeaders[`player${iconData.player}`] === iconData) {
+                    handleSquadLeaderBehavior(iconData);
+                } else {
+                    handleSquadMemberBehavior(iconData);
+                }
+            } else {
+                if (isVictory) {
+                    moveTowardsTarget(iconData);
+                } else {
+                    const enemyPlayer = iconData.player === 1 ? 2 : 1;
+                    const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+                    const aiConfig = getAIConfig(iconData.aiType);
+                    
+                    if (shouldRetreatByAI(iconData, enemies)) {
+                        const retreatPos = findRetreatPosition(iconData, enemies);
+                        iconData.targetX = retreatPos.x;
+                        iconData.targetY = retreatPos.y;
+                        moveTowardsTarget(iconData);
+                    } else {
+                        const enemy = findTargetByAI(iconData);
+                        if (enemy) {
+                            const distance = getDistanceBetween(iconData, enemy);
+                            const effectiveRange = iconData.weapon.range * iconSize;
+                            const meleeOffset = (iconData.weapon.type === 'melee' ? GAME_CONFIG.movement.meleeApproachOffset * iconSize : 0);
+                            const approachOffset = meleeOffset * aiConfig.approachBias;
+                            
+                            if (distance < effectiveRange) {
+                                attack(iconData, enemy);
+                            } else {
+                                iconData.targetX = enemy.x + (iconData.player === 2 ? approachOffset : -approachOffset);
+                                iconData.targetY = enemy.y;
+                                moveTowardsTarget(iconData);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
+
+function getWeaponBehavior(iconData) {
+    if (iconData.weapon.isSelfDestruct) {
+        return WEAPON_BEHAVIORS.selfDestruct;
+    }
+    if (iconData.weapon.type === 'heal') {
+        return WEAPON_BEHAVIORS.heal;
+    }
+    if (iconData.weapon.type === 'buff') {
+        return WEAPON_BEHAVIORS.buff;
+    }
+    return WEAPON_BEHAVIORS.combat;
+}
 
 // 播放游戏音效
 // @param {string} type - 音效类型，如'attack'、'hit'、'kill'等
@@ -323,8 +483,32 @@ function generateRandomStats() {
         attack: Math.floor(Math.random() * (GAME_CONFIG.randomStats.attack.max - GAME_CONFIG.randomStats.attack.min)) + GAME_CONFIG.randomStats.attack.min,
         defense: Math.floor(Math.random() * (GAME_CONFIG.randomStats.defense.max - GAME_CONFIG.randomStats.defense.min)) + GAME_CONFIG.randomStats.defense.min,
         armor: Math.floor(Math.random() * (GAME_CONFIG.randomStats.armor.max - GAME_CONFIG.randomStats.armor.min)) + GAME_CONFIG.randomStats.armor.min,
-        speed: Math.floor(Math.random() * (GAME_CONFIG.randomStats.speed.max - GAME_CONFIG.randomStats.speed.min)) + GAME_CONFIG.randomStats.speed.min
+        speed: Math.floor(Math.random() * (GAME_CONFIG.randomStats.speed.max - GAME_CONFIG.randomStats.speed.min)) + GAME_CONFIG.randomStats.speed.min,
+        critRate: GAME_CONFIG.combat.damage.baseCritRate + Math.random() * 0.1,
+        critDamage: GAME_CONFIG.combat.damage.baseCritDamage + Math.random() * 0.5,
+        lifeSteal: GAME_CONFIG.combat.damage.baseLifeSteal + Math.random() * 0.05
     };
+}
+
+function assignAIType(weaponType) {
+    const bias = GAME_CONFIG.combat.ai.weaponTypeBias[weaponType] || 
+                 GAME_CONFIG.combat.ai.weaponTypeBias['melee'];
+    
+    const rand = Math.random();
+    let cumulative = 0;
+    
+    for (const type of GAME_CONFIG.combat.ai.types) {
+        cumulative += bias[type] || 0;
+        if (rand <= cumulative) {
+            return type;
+        }
+    }
+    
+    return 'balanced';
+}
+
+function getAIConfig(aiType) {
+    return GAME_CONFIG.combat.ai[aiType] || GAME_CONFIG.combat.ai.balanced;
 }
 
 function triggerUpload(player) {
@@ -912,6 +1096,7 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
         isDead: false,
         hasBeenKilled: false,
         weapon: weaponData,
+        aiType: assignAIType(weaponData.type),
         currentCharges: weaponData.maxCharges,
         isOnCooldown: false,
         cooldownEndTime: 0,
@@ -977,8 +1162,8 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
             const newX = initialX + (e.clientX - startX);
             const newY = initialY + (e.clientY - startY);
             
-            iconData.x = Math.max(50 * iconSize, Math.min(rect.width - 50 * iconSize, newX));
-            iconData.y = Math.max(50 * iconSize, Math.min(rect.height - 50 * iconSize, newY));
+            iconData.x = Math.max(GAME_CONFIG.movement.boundaryMargin * iconSize, Math.min(rect.width - GAME_CONFIG.movement.boundaryMargin * iconSize, newX));
+            iconData.y = Math.max(GAME_CONFIG.movement.boundaryMargin * iconSize, Math.min(rect.height - GAME_CONFIG.movement.boundaryMargin * iconSize, newY));
             iconData.targetX = iconData.x;
             iconData.targetY = iconData.y;
             
@@ -1015,8 +1200,8 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
             const newX = initialX + (touch.clientX - startX);
             const newY = initialY + (touch.clientY - startY);
             
-            iconData.x = Math.max(50 * iconSize, Math.min(rect.width - 50 * iconSize, newX));
-            iconData.y = Math.max(50 * iconSize, Math.min(rect.height - 50 * iconSize, newY));
+            iconData.x = Math.max(GAME_CONFIG.movement.boundaryMargin * iconSize, Math.min(rect.width - GAME_CONFIG.movement.boundaryMargin * iconSize, newX));
+            iconData.y = Math.max(GAME_CONFIG.movement.boundaryMargin * iconSize, Math.min(rect.height - GAME_CONFIG.movement.boundaryMargin * iconSize, newY));
             iconData.targetX = iconData.x;
             iconData.targetY = iconData.y;
             
@@ -1051,8 +1236,8 @@ function LevelUp(iconData) {
     iconData.stats.attack = Math.round(iconData.stats.attack * statMultiplier);
     iconData.stats.defense = Math.round(iconData.stats.defense * statMultiplier);
     iconData.stats.speed = Math.round(iconData.stats.speed * statMultiplier);
-    iconData.stats.maxHealth = Math.round(iconData.stats.maxHealth * statMultiplier * 1.1);
-    iconData.stats.health = Math.min(iconData.stats.health + Math.round(iconData.stats.maxHealth * 0.3), iconData.stats.maxHealth);
+    iconData.stats.maxHealth = Math.round(iconData.stats.maxHealth * statMultiplier * GAME_CONFIG.combat.damage.levelUpMaxHealthBonus);
+    iconData.stats.health = Math.min(iconData.stats.health + Math.round(iconData.stats.maxHealth * GAME_CONFIG.combat.damage.levelUpHealPercent), iconData.stats.maxHealth);
     
     const levelBadge = iconData.element.querySelector('.level-badge');
     if (levelBadge) {
@@ -1140,14 +1325,26 @@ function calculateDamageWithDefense(attacker, target) {
     const baseDamage = totalAttack;
     const defense = target.stats.defense;
     const armor = target.stats.armor;
-    const randomFactor = Math.random() * 0.4 + 0.8;
+    const { randomMin, randomMax, defenseFactor } = GAME_CONFIG.combat.damage;
+    const randomFactor = Math.random() * (randomMax - randomMin) + randomMin;
     
-    const dodgeChance = target.stats.speed * 0.03;
+    const dodgeChance = target.stats.speed * GAME_CONFIG.combat.dodge.speedFactor;
     const isDodged = Math.random() < dodgeChance;
     
-    const damage = isDodged ? 0 : Math.max(1, Math.floor((baseDamage - defense / 2) * randomFactor / armor));
+    let isCrit = false;
+    let critMultiplier = 1;
     
-    return { damage, isDodged };
+    if (!isDodged) {
+        const critRate = attacker.stats.critRate || GAME_CONFIG.combat.damage.baseCritRate;
+        isCrit = Math.random() < critRate;
+        if (isCrit) {
+            critMultiplier = attacker.stats.critDamage || GAME_CONFIG.combat.damage.baseCritDamage;
+        }
+    }
+    
+    const damage = isDodged ? 0 : Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor((baseDamage - defense * defenseFactor) * randomFactor * critMultiplier / armor));
+    
+    return { damage, isDodged, isCrit };
 }
 
 // 应用伤害效果
@@ -1155,20 +1352,34 @@ function calculateDamageWithDefense(attacker, target) {
 // @param {Object} target - 目标对象
 // @param {number} damage - 伤害值
 // @param {string} effectType - 伤害效果类型，如'normal'、'slash'、'stab'等
-function applyDamageEffects(attacker, target, damage, effectType = 'normal') {
+function applyDamageEffects(attacker, target, damage, effectType = 'normal', isCrit = false) {
     if (damage === 0) {
         playSound('dodge');
-        // 使用EffectText类创建闪避文字，使用青色
-        new EffectText(target.element, '闪避!', '#00ffff', 'dodge').show();
+        createEffectText(target.element, '闪避!', '#00ffff', 'dodge').show();
     } else {
         playSound('hit');
         target.stats.health -= damage;
         
         target.element.classList.add('hit');
-        showDamageText(target, damage, effectType);
+        
+        if (isCrit) {
+            createEffectText(target.element, `暴击!${damage}`, '#ffd700', 'crit').show();
+        } else {
+            showDamageText(target, damage, effectType);
+        }
         
         if (effectType) {
             showWeaponEffect(attacker, target, effectType);
+        }
+        
+        const lifeSteal = attacker.stats.lifeSteal || 0;
+        if (lifeSteal > 0 && attacker.stats.health < attacker.stats.maxHealth) {
+            const healAmount = Math.floor(damage * lifeSteal);
+            if (healAmount > 0) {
+                attacker.stats.health = Math.min(attacker.stats.maxHealth, attacker.stats.health + healAmount);
+                updateHealthBar(attacker);
+                showHealText(attacker, healAmount);
+            }
         }
         
         setTimeout(() => {
@@ -1215,6 +1426,14 @@ function handleTargetDeath(attacker, target) {
         // 检查升级
         checkLevelUp(attacker);
         
+        // 自爆火箭死亡时触发被动自爆
+        if (target.weapon.isSelfDestruct) {
+            triggerDeathExplosion(target);
+        }
+        
+        EventBus.emit(GameEvents.ICON_DIED, { target, attacker });
+        EventBus.emit(GameEvents.ICON_KILLED, { killer: attacker, victim: target });
+        
         // 延迟移除死亡的战斗图标
         setTimeout(() => {
             removeBattleIcon(target);
@@ -1253,32 +1472,41 @@ function updateHealthBar(iconData) {
 
 // 特效文字管理类
 class EffectText {
-    constructor(parentElement, text, color = '#ffffff', type = 'normal') {
-        this.parentElement = parentElement;
-        this.text = text;
-        this.color = color;
-        this.type = type;
+    constructor() {
         this.element = null;
+        this.parentElement = null;
+        this._timer = null;
     }
     
-    show() {
-        // 创建文字元素
-        this.element = document.createElement('div');
-        this.element.className = 'effect-text';
-        this.element.classList.add(`${this.type}-text`);
+    init(parentElement, text, color = '#ffffff', type = 'normal') {
+        this.parentElement = parentElement;
         
-        // 设置样式
-        this.element.textContent = this.text;
+        if (!this.element) {
+            this.element = document.createElement('div');
+            this.element.className = 'effect-text';
+        }
+        
+        this.element.className = 'effect-text';
+        this.element.classList.add(`${type}-text`);
+        this.element.textContent = text;
         this.element.style.left = '50%';
         this.element.style.top = '0';
         this.element.style.transform = 'translateX(-50%)';
-        this.element.style.color = this.color;
+        this.element.style.color = color;
+        this.element.style.display = '';
         
-        // 添加到父元素
+        return this;
+    }
+    
+    show() {
+        if (!this.parentElement || !this.element) return this;
+        
         this.parentElement.appendChild(this.element);
         
-        // 自动移除
-        setTimeout(() => {
+        if (this._timer) {
+            clearTimeout(this._timer);
+        }
+        this._timer = setTimeout(() => {
             this.remove();
         }, GAME_CONFIG.timing.mediumDelay);
         
@@ -1286,11 +1514,46 @@ class EffectText {
     }
     
     remove() {
+        if (this._timer) {
+            clearTimeout(this._timer);
+            this._timer = null;
+        }
+        
         if (this.element && this.element.parentNode) {
-            this.element.remove();
-            this.element = null;
+            this.element.parentNode.removeChild(this.element);
+        }
+        
+        EffectTextPool.return(this);
+    }
+}
+
+const EffectTextPool = {
+    pool: [],
+    maxSize: 50,
+    
+    get: function() {
+        if (this.pool.length > 0) {
+            return this.pool.pop();
+        }
+        return new EffectText();
+    },
+    
+    return: function(effectText) {
+        if (this.pool.length < this.maxSize) {
+            if (effectText.element) {
+                effectText.element.className = 'effect-text';
+                effectText.element.style.display = 'none';
+            }
+            effectText.parentElement = null;
+            this.pool.push(effectText);
         }
     }
+};
+
+function createEffectText(parentElement, text, color, type) {
+    const effectText = EffectTextPool.get();
+    effectText.init(parentElement, text, color, type);
+    return effectText;
 }
 
 function showDamageText(iconData, damage, damageType = 'normal') {
@@ -1313,12 +1576,12 @@ function showDamageText(iconData, damage, damageType = 'normal') {
     const color = damageColors[damageType] || damageColors['normal'];
     
     // 使用EffectText类创建伤害文字
-    new EffectText(iconData.element, `-${damage}`, color, 'damage').show();
+    createEffectText(iconData.element, `-${damage}`, color, 'damage').show();
 }
 
 function showHealText(iconData, healAmount) {
     // 使用EffectText类创建治疗文字，使用绿色
-    new EffectText(iconData.element, `+${healAmount}`, '#2ecc71', 'heal').show();
+    createEffectText(iconData.element, `+${healAmount}`, '#2ecc71', 'heal').show();
 }
 
 function addHealBattleInfo(attacker, target, healAmount) {
@@ -1378,8 +1641,8 @@ function createBaseEffect(attacker, defender, battleArea, className, options = {
     const effect = document.createElement('div');
     effect.className = `weapon-effect ${className}`;
     
-    const effectX = defender.x + 40;
-    const effectY = defender.y + 40;
+    const effectX = defender.x + 40 * iconSize;
+    const effectY = defender.y + 45 * iconSize;
     
     effect.style.left = `${effectX}px`;
     effect.style.top = `${effectY}px`;
@@ -1424,9 +1687,7 @@ function createChopEffect(attacker, defender, battleArea) {
 }
 
 function createSmashEffect(attacker, defender, battleArea) {
-    const effect = createBaseEffect(attacker, defender, battleArea, 'smash-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
-    
-    effect.style.setProperty('--icon-size', iconSize * 1.5);
+    createBaseEffect(attacker, defender, battleArea, 'smash-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
     
     const isPortrait = window.matchMedia('(orientation: portrait)').matches;
     const shakeAnimation = isPortrait ? 'shake-portrait' : 'shake';
@@ -1486,35 +1747,34 @@ function createFireSingleEffect(attacker, defender, battleArea) {
 function createHealEffect(attacker, defender, battleArea) {
     const effect = createBaseEffect(attacker, defender, battleArea, 'heal-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
     
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 8; i++) {
         setTimeout(() => {
             const particle = document.createElement('div');
             particle.className = 'heal-particle';
-            particle.style.left = `${Math.random() * 50 - 25}px`;
-            particle.style.top = `${Math.random() * 50 - 25}px`;
-            particle.style.transform = `scale(${0.3 + Math.random() * 0.7}) rotate(${Math.random() * 360}deg)`;
-            particle.textContent = '❤';
-            particle.style.animationDelay = `${i * 80}ms`;
+            particle.style.left = `${Math.random() * 40 - 20}px`;
+            particle.style.top = `${Math.random() * 40 - 20}px`;
+            particle.style.transform = `scale(${0.4 + Math.random() * 0.6}) rotate(${Math.random() * 360}deg)`;
+            particle.textContent = '✦';
+            particle.style.animationDelay = `${i * 60}ms`;
             effect.appendChild(particle);
-        }, i * 50);
+        }, i * 40);
     }
 }
 
 function createBuffEffect(attacker, defender, battleArea) {
-    const effect = createBaseEffect(attacker, defender, battleArea, 'buff-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
+    const effect = createBaseEffect(attacker, defender, battleArea, 'buff-single-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
     
-    // 添加光芒效果
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
         setTimeout(() => {
             const glow = document.createElement('div');
-            glow.className = 'buff-glow';
+            glow.className = 'buff-single-glow';
             glow.style.left = '0';
             glow.style.top = '0';
             glow.style.width = '100%';
             glow.style.height = '100%';
-            glow.style.animationDelay = `${i * 200}ms`;
+            glow.style.animationDelay = `${i * 150}ms`;
             effect.appendChild(glow);
-        }, i * 100);
+        }, i * 80);
     }
 }
 
@@ -1523,7 +1783,10 @@ function createDefaultEffect(attacker, defender, battleArea) {
 }
 
 function addBattleInfo(attacker, defender, value, actionType = 'attack') {
-    const battleInfo = document.getElementById('battleInfo');
+    if (!battleInfoElement) {
+        battleInfoElement = document.getElementById('battleInfo');
+    }
+    const battleInfo = battleInfoElement;
     const infoItem = document.createElement('div');
     infoItem.className = 'battle-info-item';
     infoItem.dataset.player = attacker.player;
@@ -1556,7 +1819,7 @@ function addBattleInfo(attacker, defender, value, actionType = 'attack') {
         infoItem.innerHTML = `<span class="heal-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>治疗<span class="target">${defenderName}(Lv${defenderLevel})</span>，恢复 ${value} 点生命</span>`;
     } else if (actionType === 'lightning' || actionType === 'fire' || actionType === 'ice' || actionType === 'explosion') {
         // AOE攻击事件
-        const aoeRadius = attacker.weapon.aoeRadius || 150;
+        const aoeRadius = attacker.weapon.aoeRadius || GAME_CONFIG.combat.weaponDefaults.aoeRadius;
         const weaponEmoji = attacker.weapon.emoji || '💣';
         const attackName = {
             'lightning': '闪电攻击',
@@ -1567,8 +1830,8 @@ function addBattleInfo(attacker, defender, value, actionType = 'attack') {
         infoItem.innerHTML = `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>使用<span class="weapon">${weaponEmoji}</span>释放了${attackName}，范围${aoeRadius}</span>`;
     } else if (actionType === 'burn') {
         // 燃烧效果事件
-        const burnDamage = Math.max(1, Math.floor(value / 2));
-        const burnInterval = (attacker.weapon.burnInterval || 500) / gameSpeed;
+        const burnDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor(value * GAME_CONFIG.combat.burn.damageFactor));
+        const burnInterval = (attacker.weapon.burnInterval || GAME_CONFIG.combat.burn.defaultInterval) / gameSpeed;
         const defenderName = defender?.name || '未知图标';
         const defenderLevel = defender?.level || 1;
         infoItem.innerHTML = `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>用<span class="weapon">${weaponName}</span>对<span class="target">${defenderName}(Lv${defenderLevel})</span>施加了燃烧效果，每${Math.round(burnInterval)}毫秒造成${burnDamage}点伤害</span>`;
@@ -1644,16 +1907,17 @@ function calculateDamage(attacker, defender) {
     const baseDamage = attacker.stats.attack + (attacker.weapon.attack || 0);
     const defense = defender.stats.defense;
     const armor = defender.stats.armor;
-    const randomFactor = Math.random() * 0.4 + 0.8;
+    const { randomMin, randomMax, defenseFactor } = GAME_CONFIG.combat.damage;
+    const randomFactor = Math.random() * (randomMax - randomMin) + randomMin;
     
-    const dodgeChance = defender.stats.speed * 0.03;
+    const dodgeChance = defender.stats.speed * GAME_CONFIG.combat.dodge.speedFactor;
     const isDodged = Math.random() < dodgeChance;
     
     if (isDodged) {
         return 0;
     }
     
-    const damage = Math.max(1, Math.floor((baseDamage - defense / 2) * randomFactor / armor));
+    const damage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor((baseDamage - defense * defenseFactor) * randomFactor / armor));
     return damage;
 }
 
@@ -1779,7 +2043,7 @@ function attack(attacker, defender) {
             // 如果目标是队友，进行治疗
             if (target.player === attacker.player) {
                 // 计算治疗量，使用武器的治疗值或默认值
-                const healAmount = attacker.weapon.heal || 18;
+                const healAmount = attacker.weapon.heal || GAME_CONFIG.combat.weaponDefaults.healAmount;
                 // 计算实际治疗量，不超过最大生命值
                 const actualHeal = Math.min(healAmount, target.stats.maxHealth - target.stats.health);
                 
@@ -1809,24 +2073,29 @@ function attack(attacker, defender) {
                 }
             } else {
                 // 计算伤害
-                const { damage } = calculateDamageWithDefense(attacker, target);
+                const { damage, isCrit } = calculateDamageWithDefense(attacker, target);
                 
                 addBattleInfo(attacker, target, damage);
                 
                 // 应用伤害效果
-                applyDamageEffects(attacker, target, damage, 'normal');
+                applyDamageEffects(attacker, target, damage, 'normal', isCrit);
             }
         } else if (attacker.weapon.type === 'aoe') {
             applyAOEDamage(attacker, target);
         } else {
-            const damage = attacker.weapon.ignoreDefense ? 
-                Math.max(1, attacker.stats.attack + (attacker.weapon.attack || 0)) :
-                calculateDamage(attacker, target);
+            let damage, isCrit = false;
+            if (attacker.weapon.ignoreDefense) {
+                damage = Math.max(GAME_CONFIG.combat.damage.minDamage, attacker.stats.attack + (attacker.weapon.attack || 0));
+            } else {
+                const result = calculateDamageWithDefense(attacker, target);
+                damage = result.damage;
+                isCrit = result.isCrit;
+            }
             
             addBattleInfo(attacker, target, damage);
             
             // 应用伤害效果
-            applyDamageEffects(attacker, target, damage, attacker.weapon.effectType);
+            applyDamageEffects(attacker, target, damage, attacker.weapon.effectType, isCrit);
             
             // 处理目标死亡
             handleTargetDeath(attacker, target);
@@ -1913,6 +2182,11 @@ function attack(attacker, defender) {
             // 添加击杀记录到战斗信息面板
             addBattleInfo(attacker, target, 0, 'kill');
             
+            // 自爆火箭死亡时触发被动自爆
+            if (target.weapon.isSelfDestruct) {
+                triggerDeathExplosion(target);
+            }
+            
             // 延迟移除死亡的战斗图标
             setTimeout(() => {
                 removeBattleIcon(target);
@@ -1924,7 +2198,7 @@ function attack(attacker, defender) {
 }
 
 function applyAOEDamage(attacker, target) {
-    const aoeRadius = (attacker.weapon.aoeRadius || 150) * iconSize;
+    const aoeRadius = (attacker.weapon.aoeRadius || GAME_CONFIG.combat.weaponDefaults.aoeRadius) * iconSize;
     const targetPlayer = attacker.player === 1 ? 2 : 1;
     const enemies = battleIcons[`player${targetPlayer}`];
     
@@ -1951,7 +2225,7 @@ function applyAOEDamage(attacker, target) {
     
     if ((attacker.weapon.emoji && attacker.weapon.emoji === '⚡') || (attacker.weapon.emoji && attacker.weapon.emoji === '🔥')) {
         const damage = attacker.weapon.ignoreDefense ? 
-            Math.max(1, attacker.stats.attack + attacker.weapon.attack) :
+            Math.max(GAME_CONFIG.combat.damage.minDamage, attacker.stats.attack + attacker.weapon.attack) :
             calculateDamage(attacker, target);
         
         addBattleInfo(attacker, target, damage);
@@ -1997,10 +2271,11 @@ function showAOEExplosion(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     const explosion = document.createElement('div');
     explosion.className = 'aoe-explosion';
-    explosion.style.left = `${x + 40 - radius}px`;
-    explosion.style.top = `${y + 40 - radius}px`;
-    explosion.style.width = `${radius * 2}px`;
-    explosion.style.height = `${radius * 2}px`;
+    const effectRadius = radius * 0.7;
+    explosion.style.left = `${x + 40 * iconSize - effectRadius}px`;
+    explosion.style.top = `${y + 45 * iconSize - effectRadius}px`;
+    explosion.style.width = `${effectRadius * 2}px`;
+    explosion.style.height = `${effectRadius * 2}px`;
     explosion.style.setProperty('--icon-size', iconSize);
     battleArea.appendChild(explosion);
     
@@ -2013,10 +2288,11 @@ function showLightningEffect(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     const lightning = document.createElement('div');
     lightning.className = 'lightning-effect';
-    lightning.style.left = `${x + 40 - radius}px`;
-    lightning.style.top = `${y + 40 - radius}px`;
-    lightning.style.width = `${radius * 2}px`;
-    lightning.style.height = `${radius * 2}px`;
+    const effectRadius = radius * 0.7;
+    lightning.style.left = `${x + 40 * iconSize - effectRadius}px`;
+    lightning.style.top = `${y + 45 * iconSize - effectRadius}px`;
+    lightning.style.width = `${effectRadius * 2}px`;
+    lightning.style.height = `${effectRadius * 2}px`;
     lightning.style.setProperty('--icon-size', iconSize);
     battleArea.appendChild(lightning);
     
@@ -2025,8 +2301,8 @@ function showLightningEffect(x, y, radius) {
         setTimeout(() => {
             const bolt = document.createElement('div');
             bolt.className = 'lightning-bolt';
-            bolt.style.left = `${Math.random() * radius * 2}px`;
-            bolt.style.top = `${Math.random() * radius * 2}px`;
+            bolt.style.left = `${Math.random() * effectRadius * 2}px`;
+            bolt.style.top = `${Math.random() * effectRadius * 2}px`;
             bolt.style.height = `${Math.random() * 50 + 30}px`;
             bolt.style.transform = `rotate(${Math.random() * 360}deg)`;
             lightning.appendChild(bolt);
@@ -2046,10 +2322,11 @@ function showFireEffect(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     const fire = document.createElement('div');
     fire.className = 'fire-effect';
-    fire.style.left = `${x + 40 - radius}px`;
-    fire.style.top = `${y + 40 - radius}px`;
-    fire.style.width = `${radius * 2}px`;
-    fire.style.height = `${radius * 2}px`;
+    const effectRadius = radius * 0.7;
+    fire.style.left = `${x + 40 * iconSize - effectRadius}px`;
+    fire.style.top = `${y + 45 * iconSize - effectRadius}px`;
+    fire.style.width = `${effectRadius * 2}px`;
+    fire.style.height = `${effectRadius * 2}px`;
     fire.style.setProperty('--icon-size', iconSize);
     battleArea.appendChild(fire);
     
@@ -2058,8 +2335,8 @@ function showFireEffect(x, y, radius) {
         setTimeout(() => {
             const flame = document.createElement('div');
             flame.className = 'flame';
-            flame.style.left = `${Math.random() * radius * 2}px`;
-            flame.style.top = `${Math.random() * radius * 2}px`;
+            flame.style.left = `${Math.random() * effectRadius * 2}px`;
+            flame.style.top = `${Math.random() * effectRadius * 2}px`;
             flame.style.width = `${Math.random() * 30 + 20}px`;
             flame.style.height = `${Math.random() * 30 + 20}px`;
             flame.style.transform = `rotate(${Math.random() * 360}deg)`;
@@ -2080,9 +2357,9 @@ function applyBurnEffect(target, attacker, damage) {
     if (target.isBurning) return;
     
     target.isBurning = true;
-    const burnDamage = Math.max(1, Math.floor(damage / 2));
-    const burnInterval = (attacker.weapon.burnInterval || 500) / gameSpeed;
-    const burnDuration = (attacker.weapon.burnDuration || 2000) / gameSpeed;
+    const burnDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor(damage * GAME_CONFIG.combat.burn.damageFactor));
+    const burnInterval = (attacker.weapon.burnInterval || GAME_CONFIG.combat.burn.defaultInterval) / gameSpeed;
+    const burnDuration = (attacker.weapon.burnDuration || GAME_CONFIG.combat.burn.defaultDuration) / gameSpeed;
     const numTicks = Math.floor(burnDuration / burnInterval);
     let currentTick = 0;
     let lastTickTime = performance.now();
@@ -2134,6 +2411,11 @@ function applyBurnEffect(target, attacker, damage) {
                 
                 // 使用addBattleInfo记录燃烧击杀
                 addBattleInfo(attacker, target, 0, 'kill');
+                
+                // 自爆火箭死亡时触发被动自爆
+                if (target.weapon.isSelfDestruct) {
+                    triggerDeathExplosion(target);
+                }
                 
                 setTimeout(() => {
                     removeBattleIcon(target);
@@ -2218,7 +2500,7 @@ function applyFreeze(attacker, target, duration) {
     target.element.classList.add('frozen');
     
     // 使用EffectText类创建冰冻文字，使用蓝色
-    new EffectText(target.element, '冰冻!', '#3498db', 'freeze').show();
+    createEffectText(target.element, '冰冻!', '#3498db', 'freeze').show();
     
     // 使用addBattleInfo记录冰冻效果
     addBattleInfo(attacker, target, duration, 'freeze');
@@ -2234,8 +2516,8 @@ function applyFreeze(attacker, target, duration) {
 function applyBuff(attacker, target) {
     if (target.isDead || target.isBuffed) return;
     
-    const buffDuration = (attacker.weapon.buffDuration || 3000) / gameSpeed;
-    const buffMultiplier = attacker.weapon.buffMultiplier || 1.8;
+    const buffDuration = (attacker.weapon.buffDuration || GAME_CONFIG.combat.buff.defaultDuration) / gameSpeed;
+    const buffMultiplier = attacker.weapon.buffMultiplier || GAME_CONFIG.combat.buff.defaultMultiplier;
     
     target.originalStats = {
         attack: target.stats.attack,
@@ -2255,9 +2537,9 @@ function applyBuff(attacker, target) {
     playSound('buff');
     
     // 使用EffectText类创建兴奋文字，使用黄色
-    new EffectText(target.element, '兴奋!', '#f1c40f', 'buff').show();
+    createEffectText(target.element, '兴奋!', '#f1c40f', 'buff').show();
     
-    showBuffEffect(target.x + 40 * iconSize, target.y + 40 * iconSize, 60 * iconSize);
+    showBuffEffect(target.x + GAME_CONFIG.movement.effectOffset * iconSize, target.y + GAME_CONFIG.movement.effectOffset * iconSize, 60 * iconSize);
     
     // 使用addBattleInfo记录兴奋剂效果
     addBattleInfo(attacker, target, 0, 'buff');
@@ -2296,7 +2578,7 @@ function showSoundWaveEffect(x, y, radius) {
                 ring.style.width = `${currentRadius * 2}px`;
                 ring.style.height = `${currentRadius * 2}px`;
                 ring.style.opacity = 1 - progress;
-                ring.style.transform = `translate(-50%, -50%) scale(${iconSize})`;
+                ring.style.transform = 'translate(-50%, -50%)';
                 
                 if (progress < 1) {
                     requestAnimationFrame(animateRing);
@@ -2318,12 +2600,13 @@ function showIceEffect(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     const iceEffect = document.createElement('div');
     iceEffect.className = 'ice-effect';
-    iceEffect.style.left = `${x + 40 - radius}px`;
-    iceEffect.style.top = `${y + 40 - radius}px`;
-    iceEffect.style.width = `${radius * 2}px`;
-    iceEffect.style.height = `${radius * 2}px`;
+    const effectRadius = radius * 0.7;
+    iceEffect.style.left = `${x + 40 * iconSize - effectRadius}px`;
+    iceEffect.style.top = `${y + 45 * iconSize - effectRadius}px`;
+    iceEffect.style.width = `${effectRadius * 2}px`;
+    iceEffect.style.height = `${effectRadius * 2}px`;
     iceEffect.style.setProperty('--icon-size', iconSize);
-    iceEffect.style.setProperty('--ice-radius', radius);
+    iceEffect.style.setProperty('--ice-radius', effectRadius);
     battleArea.appendChild(iceEffect);
     
     const numRings = 4;
@@ -2345,11 +2628,11 @@ function showIceEffect(x, y, radius) {
                 const elapsed = currentTime - ringStartTime;
                 const progress = Math.min(elapsed / ringDuration, 1);
                 
-                const currentRadius = radius * progress;
+                const currentRadius = effectRadius * progress;
                 ring.style.width = `${currentRadius * 2}px`;
                 ring.style.height = `${currentRadius * 2}px`;
                 ring.style.opacity = 1 - progress;
-                ring.style.transform = `translate(-50%, -50%) scale(${iconSize})`;
+                ring.style.transform = 'translate(-50%, -50%)';
                 
                 if (progress < 1) {
                     requestAnimationFrame(animateRing);
@@ -2373,7 +2656,7 @@ function showIceEffect(x, y, radius) {
         const particle = document.createElement('div');
         particle.className = 'ice-particle';
         const angle = (i / 12) * Math.PI * 2;
-        const distance = radius * 0.8;
+        const distance = effectRadius * 0.8;
         const startX = Math.cos(angle) * distance;
         const startY = Math.sin(angle) * distance;
         
@@ -2392,8 +2675,8 @@ function showBuffEffect(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     const buffEffect = document.createElement('div');
     buffEffect.className = 'buff-effect';
-    buffEffect.style.left = `${x + 40 - radius}px`;
-    buffEffect.style.top = `${y + 40 - radius}px`;
+    buffEffect.style.left = `${x + 40 * iconSize - radius}px`;
+    buffEffect.style.top = `${y + 45 * iconSize - radius}px`;
     buffEffect.style.width = `${radius * 2}px`;
     buffEffect.style.height = `${radius * 2}px`;
     buffEffect.style.setProperty('--icon-size', iconSize);
@@ -2463,6 +2746,41 @@ function showBuffEffect(x, y, radius) {
 
 // 移动战斗图标向目标位置
 // @param {Object} iconData - 战斗图标数据对象，包含位置、目标位置、速度等信息
+function clampIconPosition(iconData) {
+    if (!battleAreaElement) {
+        battleAreaElement = document.getElementById('battleArea');
+    }
+    if (!battleAreaElement) return;
+    
+    const rect = battleAreaElement.getBoundingClientRect();
+    const margin = GAME_CONFIG.movement.boundaryMargin * iconSize;
+    
+    const maxX = rect.width - margin;
+    const maxY = rect.height - margin;
+    
+    iconData.x = Math.max(margin, Math.min(maxX, iconData.x));
+    iconData.y = Math.max(margin, Math.min(maxY, iconData.y));
+    
+    if (iconData.targetX !== undefined) {
+        iconData.targetX = Math.max(margin, Math.min(maxX, iconData.targetX));
+    }
+    if (iconData.targetY !== undefined) {
+        iconData.targetY = Math.max(margin, Math.min(maxY, iconData.targetY));
+    }
+    
+    iconData.element.style.left = `${iconData.x}px`;
+    iconData.element.style.top = `${iconData.y}px`;
+    iconData.element.style.zIndex = Math.floor(iconData.y);
+}
+
+function clampAllIconsToBounds() {
+    [...battleIcons.player1, ...battleIcons.player2].forEach(iconData => {
+        if (!iconData.isDead) {
+            clampIconPosition(iconData);
+        }
+    });
+}
+
 function moveTowardsTarget(iconData) {
     if (iconData.isDead || iconData.isFrozen) return;
     
@@ -2489,9 +2807,7 @@ function moveTowardsTarget(iconData) {
         iconData.x += moveX;
         iconData.y += moveY;
         
-        iconData.element.style.left = `${iconData.x}px`;
-        iconData.element.style.top = `${iconData.y}px`;
-        iconData.element.style.zIndex = Math.floor(iconData.y);
+        clampIconPosition(iconData);
         
         iconData.element.classList.add('moving');
         
@@ -2629,6 +2945,66 @@ function removeBattleIcon(iconData) {
     }
 }
 
+function getDistance(x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+function getDistanceSq(x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    return dx * dx + dy * dy;
+}
+
+function getDistanceBetween(a, b) {
+    return getDistance(a.x, a.y, b.x, b.y);
+}
+
+function getDistanceSqBetween(a, b) {
+    return getDistanceSq(a.x, a.y, b.x, b.y);
+}
+
+const EventBus = {
+    events: {},
+    
+    on: function(event, callback) {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
+        this.events[event].push(callback);
+        return () => this.off(event, callback);
+    },
+    
+    off: function(event, callback) {
+        if (!this.events[event]) return;
+        this.events[event] = this.events[event].filter(cb => cb !== callback);
+    },
+    
+    emit: function(event, data) {
+        if (!this.events[event]) return;
+        this.events[event].forEach(callback => {
+            try {
+                callback(data);
+            } catch (e) {
+                console.error(`EventBus error in ${event}:`, e);
+            }
+        });
+    }
+};
+
+const GameEvents = {
+    ICON_DAMAGED: 'icon:damaged',
+    ICON_DIED: 'icon:died',
+    ICON_KILLED: 'icon:killed',
+    ICON_LEVEL_UP: 'icon:levelUp',
+    ICON_HEALED: 'icon:healed',
+    ICON_BUFFED: 'icon:buffed',
+    ATTACK_LANDED: 'attack:landed',
+    BATTLE_START: 'battle:start',
+    BATTLE_END: 'battle:end'
+};
+
 function findNearestEnemy(iconData) {
     const enemyPlayer = iconData.player === 1 ? 2 : 1;
     const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
@@ -2636,15 +3012,13 @@ function findNearestEnemy(iconData) {
     if (enemies.length === 0) return null;
     
     let nearest = enemies[0];
-    let minDistance = Infinity;
+    let minDistanceSq = Infinity;
     
     enemies.forEach(enemy => {
-        const dx = enemy.x - iconData.x;
-        const dy = enemy.y - iconData.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distSq = getDistanceSqBetween(iconData, enemy);
         
-        if (distance < minDistance) {
-            minDistance = distance;
+        if (distSq < minDistanceSq) {
+            minDistanceSq = distSq;
             nearest = enemy;
         }
     });
@@ -2652,31 +3026,110 @@ function findNearestEnemy(iconData) {
     return nearest;
 }
 
+function findTargetByAI(iconData) {
+    const enemyPlayer = iconData.player === 1 ? 2 : 1;
+    const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+    
+    if (enemies.length === 0) return null;
+    
+    const aiConfig = getAIConfig(iconData.aiType);
+    
+    if (aiConfig.targetPriority === 'lowestHealth') {
+        enemies.sort((a, b) => {
+            const healthPercentA = a.stats.health / a.stats.maxHealth;
+            const healthPercentB = b.stats.health / b.stats.maxHealth;
+            return healthPercentA - healthPercentB;
+        });
+    } else {
+        enemies.sort((a, b) => {
+            return getDistanceSqBetween(iconData, a) - getDistanceSqBetween(iconData, b);
+        });
+    }
+    
+    return enemies[0];
+}
+
+function shouldRetreatByAI(iconData, enemies) {
+    const aiConfig = getAIConfig(iconData.aiType);
+    const healthPercent = iconData.stats.health / iconData.stats.maxHealth;
+    
+    if (healthPercent > aiConfig.retreatThreshold) {
+        return false;
+    }
+    
+    if (enemies.length === 0) {
+        return false;
+    }
+    
+    const effectiveRange = iconData.weapon.range * iconSize;
+    const nearbyEnemies = enemies.filter(e => getDistanceBetween(iconData, e) < effectiveRange * 1.5);
+    
+    return nearbyEnemies.length > 0;
+}
+
+function territoryHealForPlayer(player, currentTime) {
+    const battleZone = player === 1 ? player1BattleZoneElement : player2BattleZoneElement;
+    const zoneRect = battleZone.getBoundingClientRect();
+    const battleAreaRect = battleAreaElement.getBoundingClientRect();
+    const healIntervalKey = player === 1 ? 'territoryHealIntervalPlayer1' : 'territoryHealIntervalPlayer2';
+    
+    battleIcons[`player${player}`].forEach(iconData => {
+        if (iconData.isDead || iconData.stats.health >= iconData.stats.maxHealth) return;
+        
+        const isInTerritory = 
+            iconData.x >= zoneRect.left - battleAreaRect.left &&
+            iconData.x <= zoneRect.right - battleAreaRect.left &&
+            iconData.y >= zoneRect.top - battleAreaRect.top &&
+            iconData.y <= zoneRect.bottom - battleAreaRect.top;
+        
+        if (isInTerritory && currentTime - iconData.lastHealTime >= GAME_CONFIG.timing[healIntervalKey] / gameSpeed) {
+            iconData.stats.health = Math.min(iconData.stats.maxHealth, iconData.stats.health + 1);
+            iconData.lastHealTime = currentTime;
+            updateHealthBar(iconData);
+        }
+    });
+}
+
+function updateIconBehavior(iconData, isVictory) {
+    if (iconData.isDead) return;
+    
+    const behavior = getWeaponBehavior(iconData);
+    behavior.update(iconData, { isVictory, squadBattleMode });
+}
+
 // 游戏主循环函数，负责驱动游戏的所有更新逻辑
 // 使用requestAnimationFrame实现平滑的游戏更新
 const TARGET_FPS = 60;
-const FRAME_INTERVAL = 1000 / TARGET_FPS;
+const FIXED_TIMESTEP = 1000 / TARGET_FPS;
 let lastFrameTime = 0;
+let accumulator = 0;
+const MAX_ACCUMULATOR = 1000 / 10;
 
 function gameLoop(timestamp) {
-    // 计算自上次更新以来的时间
-    const elapsed = timestamp - lastFrameTime;
-    
-    if (gamePaused) {
-        requestAnimationFrame(gameLoop);
-        return;
+    if (!lastFrameTime) {
+        lastFrameTime = timestamp;
     }
     
-    // 确保帧率不超过60fps
-    if (elapsed >= FRAME_INTERVAL) {
-        // 更新上次更新时间
-        lastFrameTime = timestamp - (elapsed % FRAME_INTERVAL);
-    } else {
-        // 如果时间间隔不够，继续等待
-        requestAnimationFrame(gameLoop);
-        return;
+    let frameTime = timestamp - lastFrameTime;
+    lastFrameTime = timestamp;
+    
+    if (frameTime > MAX_ACCUMULATOR) {
+        frameTime = MAX_ACCUMULATOR;
     }
     
+    if (!gamePaused) {
+        accumulator += frameTime;
+        
+        while (accumulator >= FIXED_TIMESTEP) {
+            updateGame(FIXED_TIMESTEP);
+            accumulator -= FIXED_TIMESTEP;
+        }
+    }
+    
+    requestAnimationFrame(gameLoop);
+}
+
+function updateGame(deltaTime) {
     const player1Alive = battleIcons.player1.filter(icon => !icon.isDead).length;
     const player2Alive = battleIcons.player2.filter(icon => !icon.isDead).length;
     
@@ -2705,45 +3158,8 @@ function gameLoop(timestamp) {
         }
     });
     
-    battleIcons.player1.forEach(iconData => {
-        if (iconData.isDead || iconData.stats.health >= iconData.stats.maxHealth) return;
-        
-        const player1BattleZone = document.getElementById('player1BattleZone');
-        const zoneRect = player1BattleZone.getBoundingClientRect();
-        const battleAreaRect = battleArea.getBoundingClientRect();
-        
-        const isInTerritory = 
-            iconData.x >= zoneRect.left - battleAreaRect.left &&
-            iconData.x <= zoneRect.right - battleAreaRect.left &&
-            iconData.y >= zoneRect.top - battleAreaRect.top &&
-            iconData.y <= zoneRect.bottom - battleAreaRect.top;
-        
-        if (isInTerritory && currentTime - iconData.lastHealTime >= GAME_CONFIG.timing.territoryHealIntervalPlayer1 / gameSpeed) {
-            iconData.stats.health = Math.min(iconData.stats.maxHealth, iconData.stats.health + 1);
-            iconData.lastHealTime = currentTime;
-            updateHealthBar(iconData);
-        }
-    });
-    
-    battleIcons.player2.forEach(iconData => {
-        if (iconData.isDead || iconData.stats.health >= iconData.stats.maxHealth) return;
-        
-        const player2BattleZone = document.getElementById('player2BattleZone');
-        const zoneRect = player2BattleZone.getBoundingClientRect();
-        const battleAreaRect = battleArea.getBoundingClientRect();
-        
-        const isInTerritory = 
-            iconData.x >= zoneRect.left - battleAreaRect.left &&
-            iconData.x <= zoneRect.right - battleAreaRect.left &&
-            iconData.y >= zoneRect.top - battleAreaRect.top &&
-            iconData.y <= zoneRect.bottom - battleAreaRect.top;
-        
-        if (isInTerritory && currentTime - iconData.lastHealTime >= GAME_CONFIG.timing.territoryHealIntervalPlayer2 / gameSpeed) {
-            iconData.stats.health = Math.min(iconData.stats.maxHealth, iconData.stats.health + 1);
-            iconData.lastHealTime = currentTime;
-            updateHealthBar(iconData);
-        }
-    });
+    territoryHealForPlayer(1, currentTime);
+    territoryHealForPlayer(2, currentTime);
     
     let isVictory = (player1Alive === 0 && player2Alive > 0) || (player2Alive === 0 && player1Alive > 0);
     let winner = 0;
@@ -2790,119 +3206,11 @@ function gameLoop(timestamp) {
         });
     }
     
-    if (isVictory) {
-        const winnerIcons = battleIcons[`player${winner}`].filter(icon => !icon.isDead && icon.weapon.type !== 'heal');
-        
-        battleIcons.player1.forEach(iconData => {
-            if (iconData.isDead) return;
-            
-            if (iconData.weapon.type === 'heal') {
-                handleHealerBehavior(iconData);
-            } else if (iconData.weapon.type === 'buff') {
-                handleBuffBehavior(iconData);
-            } else if (iconData.weapon.name === '自爆火箭') {
-                handleRocketCharge(iconData);
-            } else if (squadBattleMode) {
-                if (squadLeaders.player1 === iconData) {
-                    handleSquadLeaderBehavior(iconData);
-                } else {
-                    handleSquadMemberBehavior(iconData);
-                }
-            } else {
-                moveTowardsTarget(iconData);
-            }
-        });
-        
-        battleIcons.player2.forEach(iconData => {
-            if (iconData.isDead) return;
-            
-            if (iconData.weapon.type === 'heal') {
-                handleHealerBehavior(iconData);
-            } else if (iconData.weapon.type === 'buff') {
-                handleBuffBehavior(iconData);
-            } else if (iconData.weapon.name === '自爆火箭') {
-                handleRocketCharge(iconData);
-            } else if (squadBattleMode) {
-                if (squadLeaders.player2 === iconData) {
-                    handleSquadLeaderBehavior(iconData);
-                } else {
-                    handleSquadMemberBehavior(iconData);
-                }
-            } else {
-                moveTowardsTarget(iconData);
-            }
-        });
-    } else {
-        battleIcons.player1.forEach(iconData => {
-            if (iconData.isDead) return;
-            
-            if (iconData.weapon.type === 'heal') {
-                handleHealerBehavior(iconData);
-            } else if (iconData.weapon.type === 'buff') {
-                handleBuffBehavior(iconData);
-            } else if (iconData.weapon.name === '自爆火箭') {
-                handleRocketCharge(iconData);
-            } else if (squadBattleMode) {
-                if (squadLeaders.player1 === iconData) {
-                    handleSquadLeaderBehavior(iconData);
-                } else {
-                    handleSquadMemberBehavior(iconData);
-                }
-            } else {
-                const enemy = findNearestEnemy(iconData);
-                if (enemy) {
-                    const dx = enemy.x - iconData.x;
-                    const dy = enemy.y - iconData.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const effectiveRange = iconData.weapon.range * iconSize;
-                    
-                    if (distance < effectiveRange) {
-                        attack(iconData, enemy);
-                    } else {
-                        iconData.targetX = enemy.x - (iconData.weapon.type === 'melee' ? 50 * iconSize : 0);
-                        iconData.targetY = enemy.y;
-                        moveTowardsTarget(iconData);
-                    }
-                }
-            }
-        });
-        
-        battleIcons.player2.forEach(iconData => {
-            if (iconData.isDead) return;
-            
-            if (iconData.weapon.type === 'heal') {
-                handleHealerBehavior(iconData);
-            } else if (iconData.weapon.type === 'buff') {
-                handleBuffBehavior(iconData);
-            } else if (iconData.weapon.name === '自爆火箭') {
-                handleRocketCharge(iconData);
-            } else if (squadBattleMode) {
-                if (squadLeaders.player2 === iconData) {
-                    handleSquadLeaderBehavior(iconData);
-                } else {
-                    handleSquadMemberBehavior(iconData);
-                }
-            } else {
-                const enemy = findNearestEnemy(iconData);
-                if (enemy) {
-                    const dx = enemy.x - iconData.x;
-                    const dy = enemy.y - iconData.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const effectiveRange = iconData.weapon.range * iconSize;
-                    
-                    if (distance < effectiveRange) {
-                        attack(iconData, enemy);
-                    } else {
-                        iconData.targetX = enemy.x + (iconData.weapon.type === 'melee' ? 50 * iconSize : 0);
-                        iconData.targetY = enemy.y;
-                        moveTowardsTarget(iconData);
-                    }
-                }
-            }
-        });
-    }
+    [...battleIcons.player1, ...battleIcons.player2].forEach(iconData => {
+        updateIconBehavior(iconData, isVictory);
+    });
     
-    requestAnimationFrame(gameLoop);
+    clampAllIconsToBounds();
 }
 
 function handleHealerBehavior(iconData) {
@@ -2910,8 +3218,7 @@ function handleHealerBehavior(iconData) {
     const enemyPlayer = iconData.player === 1 ? 2 : 1;
     const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
     
-    const battleArea = document.getElementById('battleArea');
-    const rect = battleArea.getBoundingClientRect();
+    const rect = battleAreaRect;
     
     const injuredAllies = allies.filter(ally => ally.stats.health < ally.stats.maxHealth);
     
@@ -3002,7 +3309,7 @@ function handleHealerBehavior(iconData) {
         const dx = target.x - iconData.x;
         const dy = target.y - iconData.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const attackRange = 60 * iconSize;
+        const attackRange = GAME_CONFIG.movement.buffAttackRange * iconSize;
         
         if (distance > attackRange) {
             iconData.targetX = target.x;
@@ -3026,8 +3333,7 @@ function handleBuffBehavior(iconData) {
     const enemyPlayer = iconData.player === 1 ? 2 : 1;
     const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
     
-    const battleArea = document.getElementById('battleArea');
-    const rect = battleArea.getBoundingClientRect();
+    const rect = battleAreaRect;
     
     const combatAllies = allies.filter(ally => ally.weapon.type !== 'heal' && ally.weapon.type !== 'buff');
     
@@ -3050,8 +3356,8 @@ function handleBuffBehavior(iconData) {
             }
         }
         
-        const safeDistance = 120 * iconSize;
-        const minDistance = 60 * iconSize;
+        const safeDistance = GAME_CONFIG.movement.healerSafeDistance * iconSize;
+        const minDistance = GAME_CONFIG.movement.healerMinDistance * iconSize;
         
         if (distance > safeDistance) {
             iconData.targetX = target.x;
@@ -3201,6 +3507,11 @@ function deployAllIcons(player) {
 }
 
 function init() {
+    battleAreaElement = document.getElementById('battleArea');
+    player1BattleZoneElement = document.getElementById('player1BattleZone');
+    player2BattleZoneElement = document.getElementById('player2BattleZone');
+    battleInfoElement = document.getElementById('battleInfo');
+    
     setupBattleZoneDrop();
     requestAnimationFrame(gameLoop);
     initBattleInfoDrag();
@@ -3222,6 +3533,7 @@ function init() {
         mobileSlider.max = maxSize;
     }
     initFilterTabs();
+    setupMobileOptimizations();
     setupMobileTabs();
     
     addRandomIcons(1, 7);
@@ -3248,6 +3560,44 @@ function init() {
         const optionsDropdown = document.getElementById('optionsDropdown');
         if (!event.target.closest('.options-container') && optionsDropdown.classList.contains('show')) {
             optionsDropdown.classList.remove('show');
+        }
+    });
+
+    // 初始化后自动勾选三个选项
+    const squadCheckbox = document.getElementById('squadBattleMode');
+    if (squadCheckbox) {
+        squadCheckbox.checked = true;
+        toggleSquadBattleMode();
+    }
+
+    const autoAddCheckbox = document.getElementById('autoAddRandom');
+    if (autoAddCheckbox) {
+        autoAddCheckbox.checked = true;
+        toggleAutoAddRandom();
+    }
+
+    const autoDeployCheckbox = document.getElementById('autoDeploy');
+    if (autoDeployCheckbox) {
+        autoDeployCheckbox.checked = true;
+        toggleAutoDeploy();
+    }
+    
+    initEventSubscriptions();
+    
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            battleAreaRect = null;
+            clampAllIconsToBounds();
+        }, 100);
+    });
+}
+
+function initEventSubscriptions() {
+    EventBus.on(GameEvents.ICON_DIED, (data) => {
+        if (data.target.weapon.isSelfDestruct) {
+            triggerDeathExplosion(data.target);
         }
     });
 }
@@ -3738,7 +4088,7 @@ function isSquadMember(iconData) {
 }
 
 function canBeSquadLeader(iconData) {
-    return (iconData.weapon.type === 'melee' || iconData.weapon.type === 'ranged' || iconData.weapon.type === 'aoe') && iconData.weapon.name !== '自爆火箭';
+    return (iconData.weapon.type === 'melee' || iconData.weapon.type === 'ranged' || iconData.weapon.type === 'aoe') && !iconData.weapon.isSelfDestruct;
 }
 
 function selectSquadLeaders() {
@@ -3857,28 +4207,229 @@ function calculateSquadFormation(leader, members) {
     
     if (memberCount === 0) return formation;
     
-    const gridSize = Math.ceil(Math.sqrt(memberCount));
-    const spacing = 60 * iconSize;
+    const meleeMembers = [];
+    const rangedMembers = [];
+    const aoeMembers = [];
+    const supportMembers = [];
     
-    const startX = leader.x - (gridSize - 1) * spacing / 2;
-    const startY = leader.y - (gridSize - 1) * spacing / 2;
+    members.forEach((member, index) => {
+        const type = member.weapon.type;
+        if (type === 'melee') {
+            meleeMembers.push({ member, index });
+        } else if (type === 'ranged') {
+            rangedMembers.push({ member, index });
+        } else if (type === 'aoe') {
+            aoeMembers.push({ member, index });
+        } else {
+            supportMembers.push({ member, index });
+        }
+    });
+    
+    const frontRowSpacing = 90 * iconSize;
+    const backRowSpacing = 100 * iconSize;
+    const rowDistance = 80 * iconSize;
+    
+    const totalFront = meleeMembers.length + aoeMembers.length;
+    const totalBack = rangedMembers.length;
+    const totalSupport = supportMembers.length;
+    
+    const frontStartX = leader.x - (totalFront - 1) * frontRowSpacing / 2;
+    const backStartX = leader.x - (totalBack - 1) * backRowSpacing / 2;
+    const supportStartX = leader.x - (totalSupport - 1) * backRowSpacing / 2;
+    
+    let frontIndex = 0;
+    let backIndex = 0;
+    let supportIndex = 0;
+    
+    const formationMap = new Map();
+    
+    meleeMembers.forEach(item => {
+        formationMap.set(item.index, {
+            x: frontStartX + frontIndex * frontRowSpacing,
+            y: leader.y - rowDistance * 0.6
+        });
+        frontIndex++;
+    });
+    
+    aoeMembers.forEach(item => {
+        formationMap.set(item.index, {
+            x: frontStartX + frontIndex * frontRowSpacing,
+            y: leader.y - rowDistance * 0.3
+        });
+        frontIndex++;
+    });
+    
+    rangedMembers.forEach(item => {
+        formationMap.set(item.index, {
+            x: backStartX + backIndex * backRowSpacing,
+            y: leader.y + rowDistance * 0.5
+        });
+        backIndex++;
+    });
+    
+    supportMembers.forEach(item => {
+        formationMap.set(item.index, {
+            x: supportStartX + supportIndex * backRowSpacing,
+            y: leader.y + rowDistance * 1.2
+        });
+        supportIndex++;
+    });
     
     for (let i = 0; i < memberCount; i++) {
-        const row = Math.floor(i / gridSize);
-        const col = i % gridSize;
-        formation.push({
-            x: startX + col * spacing,
-            y: startY + row * spacing
-        });
+        if (formationMap.has(i)) {
+            formation.push(formationMap.get(i));
+        } else {
+            formation.push({ x: leader.x, y: leader.y });
+        }
     }
     
     return formation;
 }
 
 function getMonitorRange(memberCount) {
-    const baseRange = 350 ;
-    const additionalRange = Math.floor(memberCount / 8) * 40 ;
+    const baseRange = 500;
+    const additionalRange = Math.floor(memberCount / 8) * 50;
     return baseRange + additionalRange;
+}
+
+function getSquadTargetPriority(enemy, squadMembers) {
+    let priority = 0;
+    
+    if (enemy.weapon.type === 'ranged' || enemy.weapon.type === 'aoe') {
+        priority += 30;
+    }
+    
+    if (enemy.weapon.type === 'heal' || enemy.weapon.type === 'buff') {
+        priority += 40;
+    }
+    
+    const healthPercent = enemy.stats.health / enemy.stats.maxHealth;
+    priority += Math.floor((1 - healthPercent) * 50);
+    
+    const totalAttack = squadMembers.reduce((sum, m) => sum + m.stats.attack + m.weapon.attack, 0);
+    if (totalAttack > enemy.stats.health + enemy.stats.armor + enemy.stats.defense) {
+        priority += 25;
+    }
+    
+    return priority;
+}
+
+function findSquadFocusTarget(iconData, enemies) {
+    const squadMembers = [...getSquadMembers(iconData.player), iconData];
+    const player = iconData.player;
+    const enemyPlayer = player === 1 ? 2 : 1;
+    
+    let bestTarget = null;
+    let bestScore = -Infinity;
+    
+    enemies.forEach(enemy => {
+        if (enemy.isDead) return;
+        
+        const dx = enemy.x - iconData.x;
+        const dy = enemy.y - iconData.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        const effectiveRange = iconData.weapon.range * iconSize;
+        if (distance > effectiveRange * 2.5) return;
+        
+        const priority = getSquadTargetPriority(enemy, squadMembers);
+        const distancePenalty = distance / (effectiveRange * 2);
+        const score = priority - distancePenalty * 20;
+        
+        if (score > bestScore) {
+            bestScore = score;
+            bestTarget = enemy;
+        }
+    });
+    
+    return bestTarget;
+}
+
+function getIdealAttackDistance(attacker, target) {
+    const weaponRange = attacker.weapon.range * iconSize;
+    const targetIsMelee = target.weapon.type === 'melee';
+    
+    if (attacker.weapon.type === 'melee') {
+        return weaponRange * 0.7;
+    } else if (attacker.weapon.type === 'ranged') {
+        if (targetIsMelee) {
+            return weaponRange * 0.85;
+        }
+        return weaponRange * 0.7;
+    } else if (attacker.weapon.type === 'aoe') {
+        if (targetIsMelee) {
+            return weaponRange * 0.8;
+        }
+        return weaponRange * 0.65;
+    }
+    return weaponRange * 0.7;
+}
+
+function shouldRetreat(iconData, enemies) {
+    if (iconData.weapon.type === 'melee') return false;
+    
+    const healthPercent = iconData.stats.health / iconData.stats.maxHealth;
+    if (healthPercent > 0.6) return false;
+    
+    const effectiveRange = iconData.weapon.range * iconSize;
+    
+    for (const enemy of enemies) {
+        if (enemy.isDead) continue;
+        if (enemy.weapon.type !== 'melee') continue;
+        
+        const dx = enemy.x - iconData.x;
+        const dy = enemy.y - iconData.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < effectiveRange * 0.4) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+function findRetreatPosition(iconData, enemies) {
+    let awayX = 0;
+    let awayY = 0;
+    let count = 0;
+    
+    for (const enemy of enemies) {
+        if (enemy.isDead) continue;
+        if (enemy.weapon.type !== 'melee') continue;
+        
+        const dx = iconData.x - enemy.x;
+        const dy = iconData.y - enemy.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 0) {
+            awayX += dx / distance;
+            awayY += dy / distance;
+            count++;
+        }
+    }
+    
+    if (count === 0) {
+        const battleZone = document.getElementById(`player${iconData.player}BattleZone`);
+        const zoneRect = battleZone.getBoundingClientRect();
+        const battleArea = document.getElementById('battleArea');
+        const areaRect = battleArea.getBoundingClientRect();
+        const centerX = zoneRect.left - areaRect.left + zoneRect.width / 2;
+        const centerY = zoneRect.top - areaRect.top + zoneRect.height / 2;
+        return { x: centerX, y: centerY };
+    }
+    
+    const magnitude = Math.sqrt(awayX * awayX + awayY * awayY);
+    if (magnitude > 0) {
+        awayX /= magnitude;
+        awayY /= magnitude;
+    }
+    
+    const retreatDistance = GAME_CONFIG.movement.retreatDistance * iconSize;
+    return {
+        x: iconData.x + awayX * retreatDistance,
+        y: iconData.y + awayY * retreatDistance
+    };
 }
 
 function checkAllMembersInRange(leader, members, range) {
@@ -3907,36 +4458,47 @@ function handleSquadLeaderBehavior(iconData) {
     
     if (enemies.length > 0) {
         const effectiveRange = iconData.weapon.range * iconSize;
-        const enemiesInRange = enemies.filter(enemy => {
-            const dx = enemy.x - iconData.x;
-            const dy = enemy.y - iconData.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            return distance < effectiveRange;
-        });
+        const focusTarget = findSquadFocusTarget(iconData, enemies);
         
-        let target;
-        if (enemiesInRange.length > 0) {
-            enemiesInRange.sort((a, b) => a.stats.health - b.stats.health);
-            target = enemiesInRange[0];
+        if (focusTarget) {
+            const dx = focusTarget.x - iconData.x;
+            const dy = focusTarget.y - iconData.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const idealDistance = getIdealAttackDistance(iconData, focusTarget);
+            
+            if (distance <= effectiveRange) {
+                attack(iconData, focusTarget);
+                
+                if (iconData.weapon.type !== 'melee' && distance < idealDistance * 0.6) {
+                    iconData.targetX = iconData.x - dx * 0.3;
+                    iconData.targetY = iconData.y - dy * 0.3;
+                    moveTowardsTarget(iconData);
+                }
+            } else {
+                if (checkAllMembersInRange(iconData, members, monitorRange)) {
+                    const approachDist = idealDistance;
+                    const ratio = (distance - approachDist) / distance;
+                    iconData.targetX = iconData.x + dx * ratio;
+                    iconData.targetY = iconData.y + dy * ratio;
+                    moveTowardsTarget(iconData);
+                }
+            }
         } else {
             enemies.sort((a, b) => {
                 const distA = Math.sqrt((a.x - iconData.x) ** 2 + (a.y - iconData.y) ** 2);
                 const distB = Math.sqrt((b.x - iconData.x) ** 2 + (b.y - iconData.y) ** 2);
                 return distA - distB;
             });
-            target = enemies[0];
-        }
-        
-        const dx = target.x - iconData.x;
-        const dy = target.y - iconData.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < effectiveRange) {
-            attack(iconData, target);
-        } else {
+            const target = enemies[0];
+            
             if (checkAllMembersInRange(iconData, members, monitorRange)) {
-                iconData.targetX = target.x - (iconData.weapon.type === 'melee' ? 50 * iconSize : 0);
-                iconData.targetY = target.y;
+                const idealDist = getIdealAttackDistance(iconData, target);
+                const dx = target.x - iconData.x;
+                const dy = target.y - iconData.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const ratio = Math.max(0, (dist - idealDist) / dist);
+                iconData.targetX = iconData.x + dx * ratio;
+                iconData.targetY = iconData.y + dy * ratio;
                 moveTowardsTarget(iconData);
             }
         }
@@ -3965,8 +4527,10 @@ function handleSquadMemberBehavior(iconData) {
             if (distance < effectiveRange) {
                 attack(iconData, enemy);
             } else {
-                iconData.targetX = enemy.x - (iconData.weapon.type === 'melee' ? 50 * iconSize : 0);
-                iconData.targetY = enemy.y;
+                const idealDist = getIdealAttackDistance(iconData, enemy);
+                const ratio = Math.max(0, (distance - idealDist) / distance);
+                iconData.targetX = iconData.x + dx * ratio;
+                iconData.targetY = iconData.y + dy * ratio;
                 moveTowardsTarget(iconData);
             }
         }
@@ -3975,6 +4539,16 @@ function handleSquadMemberBehavior(iconData) {
     
     const enemyPlayer = iconData.player === 1 ? 2 : 1;
     const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+    
+    const weaponType = iconData.weapon.type;
+    const effectiveRange = iconData.weapon.range * iconSize;
+    const members = getSquadMembers(iconData.player);
+    const monitorRange = getMonitorRange(members.length);
+    
+    if (weaponType === 'heal' || weaponType === 'buff') {
+        handleSupportBehavior(iconData, leader, enemies, members, monitorRange);
+        return;
+    }
     
     let nearestEnemyDistance = Infinity;
     if (enemies.length > 0) {
@@ -3986,41 +4560,57 @@ function handleSquadMemberBehavior(iconData) {
         });
     }
     
-    if (nearestEnemyDistance < 450) {
-        const effectiveRange = iconData.weapon.range * iconSize;
-        const enemiesInRange = enemies.filter(enemy => {
-            const dx = enemy.x - iconData.x;
-            const dy = enemy.y - iconData.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            return distance < effectiveRange;
-        });
+    const battleEngageRange = monitorRange * 0.7;
+    
+    if (nearestEnemyDistance < battleEngageRange && enemies.length > 0) {
+        if (shouldRetreat(iconData, enemies)) {
+            const retreatPos = findRetreatPosition(iconData, enemies);
+            iconData.targetX = retreatPos.x;
+            iconData.targetY = retreatPos.y;
+            moveTowardsTarget(iconData);
+            return;
+        }
         
-        let target;
-        if (enemiesInRange.length > 0) {
-            enemiesInRange.sort((a, b) => a.stats.health - b.stats.health);
-            target = enemiesInRange[0];
+        const focusTarget = findSquadFocusTarget(iconData, enemies);
+        
+        if (focusTarget) {
+            const dx = focusTarget.x - iconData.x;
+            const dy = focusTarget.y - iconData.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const idealDistance = getIdealAttackDistance(iconData, focusTarget);
+            
+            if (distance <= effectiveRange) {
+                attack(iconData, focusTarget);
+                
+                if (weaponType !== 'melee' && distance < idealDistance * 0.5) {
+                    iconData.targetX = iconData.x - dx * 0.25;
+                    iconData.targetY = iconData.y - dy * 0.25;
+                    moveTowardsTarget(iconData);
+                }
+            } else {
+                const approachDist = idealDistance;
+                const ratio = Math.max(0, (distance - approachDist) / distance);
+                iconData.targetX = iconData.x + dx * ratio;
+                iconData.targetY = iconData.y + dy * ratio;
+                moveTowardsTarget(iconData);
+            }
         } else {
             enemies.sort((a, b) => {
                 const distA = Math.sqrt((a.x - iconData.x) ** 2 + (a.y - iconData.y) ** 2);
                 const distB = Math.sqrt((b.x - iconData.x) ** 2 + (b.y - iconData.y) ** 2);
                 return distA - distB;
             });
-            target = enemies[0];
-        }
-        
-        const dx = target.x - iconData.x;
-        const dy = target.y - iconData.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < effectiveRange) {
-            attack(iconData, target);
-        } else {
-            iconData.targetX = target.x - (iconData.weapon.type === 'melee' ? 50 * iconSize : 0);
-            iconData.targetY = target.y;
+            const target = enemies[0];
+            const dx = target.x - iconData.x;
+            const dy = target.y - iconData.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const idealDist = getIdealAttackDistance(iconData, target);
+            const ratio = Math.max(0, (dist - idealDist) / dist);
+            iconData.targetX = iconData.x + dx * ratio;
+            iconData.targetY = iconData.y + dy * ratio;
             moveTowardsTarget(iconData);
         }
     } else {
-        const members = getSquadMembers(iconData.player);
         const formation = calculateSquadFormation(leader, members);
         const memberIndex = members.indexOf(iconData);
         
@@ -4030,11 +4620,115 @@ function handleSquadMemberBehavior(iconData) {
             const dy = targetPos.y - iconData.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance > GAME_CONFIG.movement.arrivalThreshold * iconSize) {
+            if (distance > GAME_CONFIG.movement.arrivalThreshold * iconSize * 2) {
                 iconData.targetX = targetPos.x;
                 iconData.targetY = targetPos.y;
                 moveTowardsTarget(iconData);
             }
+        }
+    }
+}
+
+function handleSupportBehavior(iconData, leader, enemies, members, monitorRange) {
+    const player = iconData.player;
+    const allAllies = [...members, leader].filter(m => !m.isDead && m !== iconData);
+    const healRange = iconData.weapon.range * iconSize;
+    
+    let targetAlly = null;
+    let lowestHealthPercent = 1;
+    
+    allAllies.forEach(ally => {
+        const dx = ally.x - iconData.x;
+        const dy = ally.y - iconData.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < healRange * 1.5) {
+            const healthPercent = ally.stats.health / ally.stats.maxHealth;
+            if (healthPercent < lowestHealthPercent && healthPercent < 0.9) {
+                lowestHealthPercent = healthPercent;
+                targetAlly = ally;
+            }
+        }
+    });
+    
+    const hasLowHealthAlly = targetAlly && lowestHealthPercent < 0.75;
+    
+    if (hasLowHealthAlly && iconData.weapon.type === 'heal') {
+        const dx = targetAlly.x - iconData.x;
+        const dy = targetAlly.y - iconData.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < healRange) {
+            attack(iconData, targetAlly);
+        } else {
+            iconData.targetX = targetAlly.x;
+            iconData.targetY = targetAlly.y;
+            moveTowardsTarget(iconData);
+        }
+        return;
+    }
+    
+    if (iconData.weapon.type === 'buff') {
+        let bestBuffTarget = null;
+        let bestBuffScore = -Infinity;
+        
+        allAllies.forEach(ally => {
+            const dx = ally.x - iconData.x;
+            const dy = ally.y - iconData.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < healRange * 1.5) {
+                const hasBuff = ally.buffActive;
+                const attackPower = ally.stats.attack + ally.weapon.attack;
+                const score = attackPower * (hasBuff ? 0.3 : 1);
+                
+                if (score > bestBuffScore) {
+                    bestBuffScore = score;
+                    bestBuffTarget = ally;
+                }
+            }
+        });
+        
+        if (bestBuffTarget && !bestBuffTarget.buffActive) {
+            const dx = bestBuffTarget.x - iconData.x;
+            const dy = bestBuffTarget.y - iconData.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < healRange) {
+                attack(iconData, bestBuffTarget);
+                return;
+            }
+        }
+    }
+    
+    const nearestEnemyDist = enemies.reduce((min, e) => {
+        const d = Math.sqrt((e.x - iconData.x) ** 2 + (e.y - iconData.y) ** 2);
+        return Math.min(min, d);
+    }, Infinity);
+    
+    const safeDistance = 300 * iconSize;
+    
+    if (nearestEnemyDist < safeDistance && enemies.some(e => e.weapon.type === 'melee')) {
+        const retreatPos = findRetreatPosition(iconData, enemies);
+        iconData.targetX = retreatPos.x;
+        iconData.targetY = retreatPos.y;
+        moveTowardsTarget(iconData);
+        return;
+    }
+    
+    const formation = calculateSquadFormation(leader, members);
+    const memberIndex = members.indexOf(iconData);
+    
+    if (memberIndex >= 0 && memberIndex < formation.length) {
+        const targetPos = formation[memberIndex];
+        const dx = targetPos.x - iconData.x;
+        const dy = targetPos.y - iconData.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > GAME_CONFIG.movement.arrivalThreshold * iconSize * 2) {
+            iconData.targetX = targetPos.x;
+            iconData.targetY = targetPos.y;
+            moveTowardsTarget(iconData);
         }
     }
 }
@@ -4657,17 +5351,14 @@ function handleRocketCharge(iconData) {
         }
         
         // 以冲锋速度向目标移动
-        const chargeSpeed = iconData.weapon.chargeSpeed || 300;
-        const moveX = (dx / distance) * chargeSpeed * (16 / 1000) * gameSpeed;
-        const moveY = (dy / distance) * chargeSpeed * (16 / 1000) * gameSpeed;
+        const chargeSpeed = iconData.weapon.chargeSpeed || GAME_CONFIG.combat.weaponDefaults.chargeSpeed;
+        const moveX = (dx / distance) * chargeSpeed * (FIXED_TIMESTEP / 1000) * gameSpeed;
+        const moveY = (dy / distance) * chargeSpeed * (FIXED_TIMESTEP / 1000) * gameSpeed;
         
         iconData.x += moveX;
         iconData.y += moveY;
         
-        // 更新位置
-        iconData.element.style.left = `${iconData.x}px`;
-        iconData.element.style.top = `${iconData.y}px`;
-        iconData.element.style.zIndex = Math.floor(iconData.y);
+        clampIconPosition(iconData);
         
         // 更新朝向
         const weaponWrapper = iconData.element.querySelector('.weapon-wrapper');
@@ -4707,27 +5398,105 @@ function handleRocketCharge(iconData) {
     }
 }
 
+// 自爆火箭死亡时被动自爆
+function triggerDeathExplosion(iconData) {
+    const enemyPlayer = iconData.player === 1 ? 2 : 1;
+    const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+    const aoeRadius = (iconData.weapon.aoeRadius || GAME_CONFIG.combat.weaponDefaults.aoeRadius) * iconSize;
+    const damageMultiplier = iconData.weapon.deathExplosionMultiplier || GAME_CONFIG.combat.weaponDefaults.deathExplosionMultiplier;
+    
+    enemies.forEach(enemy => {
+        const distance = Math.sqrt((enemy.x - iconData.x) ** 2 + (enemy.y - iconData.y) ** 2);
+        if (distance <= aoeRadius) {
+            const distanceFactor = 1 - (distance / aoeRadius) * (1 - GAME_CONFIG.combat.damage.aoeEdgeDamageFactor);
+            const baseDamage = (iconData.stats.attack + iconData.weapon.attack) * damageMultiplier;
+            const damageBeforeDefense = Math.floor(baseDamage * distanceFactor);
+            
+            const defense = enemy.stats.defense;
+            const armor = enemy.stats.armor;
+            const { randomMin, randomMax, defenseFactor } = GAME_CONFIG.combat.damage;
+            const randomFactor = Math.random() * (randomMax - randomMin) + randomMin;
+            const actualDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor((damageBeforeDefense - defense * defenseFactor) * randomFactor / armor));
+            
+            enemy.stats.health -= actualDamage;
+            
+            addBattleInfo(iconData, enemy, actualDamage, '死亡自爆');
+            
+            if (enemy.stats.health <= 0 && !enemy.hasBeenKilled) {
+                enemy.stats.health = 0;
+                enemy.isDead = true;
+                enemy.hasBeenKilled = true;
+                
+                enemy.element.classList.add('dead');
+                if (iconData.x < enemy.x) {
+                    enemy.element.classList.add('fall-right');
+                } else {
+                    enemy.element.classList.add('fall-left');
+                }
+                enemy.element.classList.remove('moving');
+                enemy.element.classList.remove('attacking');
+                enemy.element.classList.remove('facing-right');
+                enemy.element.classList.remove('facing-left');
+                playSound('death');
+                
+                if (enemy.listItem) {
+                    enemy.listItem.classList.add('dead');
+                    enemy.listItem.querySelector('.icon-health').textContent = `0/${enemy.stats.maxHealth}`;
+                }
+                
+                iconData.kills++;
+                battleStats[`player${iconData.player}`].kills++;
+                updateBattleStats();
+                
+                addBattleInfo(iconData, enemy, actualDamage, 'kill');
+                
+                updateHealthBar(enemy);
+                
+                // 自爆火箭被击杀时触发死亡自爆（链式爆炸）
+                if (enemy.weapon.isSelfDestruct) {
+                    triggerDeathExplosion(enemy);
+                }
+                
+                setTimeout(() => {
+                    removeBattleIcon(enemy);
+                }, GAME_CONFIG.timing.shortDelay);
+            } else if (!enemy.isDead) {
+                updateHealthBar(enemy);
+                playSound('hit');
+                enemy.element.classList.add('hit');
+                setTimeout(() => {
+                    enemy.element.classList.remove('hit');
+                }, GAME_CONFIG.animation.effectDuration);
+            }
+        }
+    });
+    
+    showExplosionEffect(iconData.x, iconData.y, aoeRadius * 0.7);
+    
+    addBattleInfo(iconData, null, 0, '死亡自爆');
+}
+
 // 执行自爆效果和AOE伤害
 function executeRocketExplosion(iconData) {
     if (iconData.isDead) return;
     
     const enemyPlayer = iconData.player === 1 ? 2 : 1;
     const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
-    const aoeRadius = (iconData.weapon.aoeRadius || 150) * iconSize;
-    const damage = iconData.weapon.attack || 120;
+    const aoeRadius = (iconData.weapon.aoeRadius || GAME_CONFIG.combat.weaponDefaults.aoeRadius) * iconSize;
+    const damage = iconData.weapon.attack || GAME_CONFIG.combat.weaponDefaults.attack;
     
     // 对AOE范围内的所有敌人造成伤害
     enemies.forEach(enemy => {
         const distance = Math.sqrt((enemy.x - iconData.x) ** 2 + (enemy.y - iconData.y) ** 2);
         if (distance <= aoeRadius) {
             // 计算伤害（距离越近伤害越高）
-            const distanceFactor = 1 - (distance / aoeRadius) * 0.5;
+            const distanceFactor = 1 - (distance / aoeRadius) * (1 - GAME_CONFIG.combat.damage.aoeEdgeDamageFactor);
             
             // 自爆伤害计算：
             // 1. 基础伤害 = 攻击力 + 武器攻击力
-            // 2. 距离因子 = 1 - (距离 / 爆炸半径) * 0.5
+            // 2. 距离因子 = 1 - (距离 / 爆炸半径) * (1 - 边缘伤害比例)
             //    - 中心（距离=0）：因子 = 1（100%伤害）
-            //    - 边缘（距离=150）：因子 = 0.5（50%伤害）
+            //    - 边缘（距离=aoeRadius）：因子 = 边缘伤害比例
             // 3. 最终伤害 = 基础伤害 * 距离因子
             // 4. 考虑防御和护甲
             const baseDamage = iconData.stats.attack + iconData.weapon.attack;
@@ -4736,8 +5505,9 @@ function executeRocketExplosion(iconData) {
             // 应用防御和护甲
             const defense = enemy.stats.defense;
             const armor = enemy.stats.armor;
-            const randomFactor = Math.random() * 0.4 + 0.8;
-            const actualDamage = Math.max(1, Math.floor((damageBeforeDefense - defense / 2) * randomFactor / armor));
+            const { randomMin, randomMax, defenseFactor } = GAME_CONFIG.combat.damage;
+            const randomFactor = Math.random() * (randomMax - randomMin) + randomMin;
+            const actualDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor((damageBeforeDefense - defense * defenseFactor) * randomFactor / armor));
             
             enemy.stats.health -= actualDamage;
             
@@ -4780,6 +5550,11 @@ function executeRocketExplosion(iconData) {
                 
                 // 更新生命值条
                 updateHealthBar(enemy);
+                
+                // 自爆火箭被击杀时触发死亡自爆（链式爆炸）
+                if (enemy.weapon.isSelfDestruct) {
+                    triggerDeathExplosion(enemy);
+                }
                 
                 // 延迟销毁图标元素
                 setTimeout(() => {
@@ -4841,16 +5616,17 @@ function executeRocketExplosion(iconData) {
 function showExplosionEffect(x, y, radius) {
     const battleArea = document.getElementById('battleArea');
     
-    const centerX = x + 40;
-    const centerY = y + 40;
+    const centerX = x + 40 * iconSize;
+    const centerY = y + 45 * iconSize;
+    const effectRadius = radius * 0.7;
     
     const explosion = document.createElement('div');
     explosion.className = 'explosion-effect';
     explosion.style.position = 'absolute';
     explosion.style.left = `${centerX}px`;
     explosion.style.top = `${centerY}px`;
-    explosion.style.width = `${radius * 2}px`;
-    explosion.style.height = `${radius * 2}px`;
+    explosion.style.width = `${effectRadius * 2}px`;
+    explosion.style.height = `${effectRadius * 2}px`;
     explosion.style.borderRadius = '50%';
     explosion.style.background = 'radial-gradient(circle, rgba(255, 100, 0, 0.8) 0%, rgba(255, 50, 0, 0.5) 50%, transparent 100%)';
     explosion.style.transform = 'translate(-50%, -50%)';
@@ -4873,7 +5649,7 @@ function showExplosionEffect(x, y, radius) {
     ring.style.pointerEvents = 'none';
     ring.style.zIndex = GAME_CONFIG.ui.explosionZIndex + 1;
     ring.style.setProperty('--icon-size', iconSize);
-    ring.style.setProperty('--ring-radius', radius / 10);
+    ring.style.setProperty('--ring-radius', effectRadius / 10);
     ring.style.animation = 'ring-expand 0.5s ease-out forwards';
     
     battleArea.appendChild(ring);
@@ -4885,27 +5661,27 @@ function showExplosionEffect(x, y, radius) {
         style.textContent = `
             @keyframes explosion {
                 0% {
-                    transform: translate(-50%, -50%) scale(calc(0 * var(--icon-size, 1)));
+                    transform: translate(-50%, -50%) scale(0);
                     opacity: 1;
                 }
                 50% {
-                    transform: translate(-50%, -50%) scale(calc(1.2 * var(--icon-size, 1)));
+                    transform: translate(-50%, -50%) scale(1.2);
                     opacity: 0.8;
                 }
                 100% {
-                    transform: translate(-50%, -50%) scale(calc(1 * var(--icon-size, 1)));
+                    transform: translate(-50%, -50%) scale(1);
                     opacity: 0;
                 }
             }
             
             @keyframes ring-expand {
                 0% {
-                    transform: translate(-50%, -50%) scale(calc(1 * var(--icon-size, 1)));
+                    transform: translate(-50%, -50%) scale(1);
                     opacity: 1;
                     border-width: 3px;
                 }
                 100% {
-                    transform: translate(-50%, -50%) scale(calc(var(--ring-radius, 1) * var(--icon-size, 1)));
+                    transform: translate(-50%, -50%) scale(var(--ring-radius, 1));
                     opacity: 0;
                     border-width: 1px;
                 }
@@ -4922,6 +5698,58 @@ function showExplosionEffect(x, y, radius) {
 }
 
 let activeMobilePanel = null;
+let isMobileDevice = false;
+
+function detectMobileDevice() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const mobileKeywords = ['android', 'webos', 'iphone', 'ipad', 'ipod', 'blackberry', 'windows phone', 'mobile'];
+    isMobileDevice = mobileKeywords.some(keyword => 
+        userAgent.toLowerCase().includes(keyword)
+    ) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    
+    if (isMobileDevice) {
+        document.body.classList.add('mobile-device');
+    }
+    
+    return isMobileDevice;
+}
+
+function preventZoomOnDoubleTap() {
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
+}
+
+function setupMobileOptimizations() {
+    if (!detectMobileDevice()) return;
+    
+    preventZoomOnDoubleTap();
+    
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            if (typeof clampAllIconsToBounds === 'function') {
+                clampAllIconsToBounds();
+            }
+        }, 100);
+    });
+    
+    document.addEventListener('touchmove', (e) => {
+        if (e.target.closest('.battle-info') || 
+            e.target.closest('.ready-content') ||
+            e.target.closest('.search-results') ||
+            e.target.closest('.weapon-config-form') ||
+            e.target.closest('.combat-config-form')) {
+            e.stopPropagation();
+        }
+    }, { passive: false });
+}
 
 function setupMobileTabs() {
     const mobileTabs = document.getElementById('mobileTabs');
@@ -5317,5 +6145,335 @@ function removeOptionsPanel() {
         optionsPanel.remove();
     }
 }
+
+const DEFAULT_WEAPONS_CONFIG = JSON.parse(JSON.stringify(GAME_CONFIG.weapons));
+const DEFAULT_COMBAT_CONFIG = JSON.parse(JSON.stringify(GAME_CONFIG.combat));
+
+const WEAPON_FIELD_META = {
+    name: { label: '武器名称', type: 'text', desc: '' },
+    emoji: { label: '表情图标', type: 'text', desc: '' },
+    attack: { label: '攻击力', type: 'number', desc: '基础攻击伤害', min: 0 },
+    type: { label: '武器类型', type: 'select', desc: '', options: ['melee', 'ranged', 'aoe', 'heal', 'buff'] },
+    range: { label: '攻击范围', type: 'number', desc: '像素', min: 1 },
+    attackSpeed: { label: '攻击速度', type: 'number', desc: '毫秒/次', min: 100 },
+    maxCharges: { label: '弹夹容量', type: 'number', desc: '每次装填弹药数', min: 1 },
+    cooldownTime: { label: '换弹时间', type: 'number', desc: '毫秒', min: 0 },
+    heal: { label: '治疗量', type: 'number', desc: '治疗武器专用', min: 0 },
+    aoeRadius: { label: 'AOE半径', type: 'number', desc: 'AOE武器专用', min: 0 },
+    knockbackDistance: { label: '击退距离', type: 'number', desc: '像素', min: 0 },
+    ignoreDefense: { label: '无视防御', type: 'checkbox', desc: '伤害不计算防御' },
+    burnDuration: { label: '燃烧持续', type: 'number', desc: '毫秒', min: 0 },
+    burnInterval: { label: '燃烧间隔', type: 'number', desc: '毫秒', min: 100 },
+    freezeDuration: { label: '冰冻持续', type: 'number', desc: '毫秒', min: 0 },
+    buffDuration: { label: '增益持续', type: 'number', desc: '毫秒', min: 0 },
+    buffMultiplier: { label: '增益倍率', type: 'number', desc: '属性倍率', min: 0, step: 0.1 },
+    chargeSpeed: { label: '冲锋速度', type: 'number', desc: '自爆武器专用', min: 0 },
+    deathExplosionMultiplier: { label: '死亡自爆倍率', type: 'number', desc: '死亡时爆炸伤害比例', min: 0, step: 0.05 },
+    defaultDirection: { label: '默认朝向', type: 'select', desc: '', options: ['top', 'bottom', 'left', 'right'] },
+    effectType: { label: '特效类型', type: 'select', desc: '', options: ['slash', 'stab', 'chop', 'smash', 'pierce', 'dig', 'arrow', 'bullet', 'explosion', 'lightning', 'fire', 'ice', 'heal', 'buff'] }
+};
+
+function getCombatFieldMeta() {
+    return {
+        'damage.randomMin': { label: '伤害随机最小', type: 'number', desc: '伤害浮动下限', min: 0.1, step: 0.05, section: '伤害系统' },
+        'damage.randomMax': { label: '伤害随机最大', type: 'number', desc: '伤害浮动上限', min: 0.1, step: 0.05, section: '伤害系统' },
+        'damage.defenseFactor': { label: '防御减免系数', type: 'number', desc: '防御值×该系数=减伤', min: 0, step: 0.05, section: '伤害系统' },
+        'damage.aoeEdgeDamageFactor': { label: 'AOE边缘伤害', type: 'number', desc: 'AOE边缘伤害比例', min: 0, step: 0.05, section: '伤害系统' },
+        'damage.levelUpHealPercent': { label: '升级回血比例', type: 'number', desc: '升级时回血百分比', min: 0, step: 0.05, section: '伤害系统' },
+        'damage.levelUpMaxHealthBonus': { label: '升级生命加成', type: 'number', desc: '升级最大生命倍率', min: 1, step: 0.05, section: '伤害系统' },
+        'damage.minDamage': { label: '最小伤害', type: 'number', desc: '最低伤害值', min: 1, section: '伤害系统' },
+        'dodge.speedFactor': { label: '闪避系数', type: 'number', desc: '速度×该系数=闪避率', min: 0, step: 0.005, section: '闪避系统' },
+        'burn.damageFactor': { label: '燃烧伤害比例', type: 'number', desc: '每次跳伤害占初始伤害比例', min: 0, step: 0.05, section: '燃烧DOT' },
+        'burn.defaultDuration': { label: '燃烧默认持续', type: 'number', desc: '毫秒', min: 0, section: '燃烧DOT' },
+        'burn.defaultInterval': { label: '燃烧默认间隔', type: 'number', desc: '毫秒', min: 100, section: '燃烧DOT' },
+        'weaponDefaults.aoeRadius': { label: '默认AOE半径', type: 'number', desc: '像素', min: 0, section: '武器默认值' },
+        'weaponDefaults.healAmount': { label: '默认治疗量', type: 'number', desc: '', min: 0, section: '武器默认值' },
+        'weaponDefaults.attack': { label: '默认攻击力', type: 'number', desc: '', min: 0, section: '武器默认值' },
+        'weaponDefaults.chargeSpeed': { label: '默认冲锋速度', type: 'number', desc: '', min: 0, section: '武器默认值' },
+        'weaponDefaults.deathExplosionMultiplier': { label: '默认死亡自爆倍率', type: 'number', desc: '', min: 0, step: 0.05, section: '武器默认值' },
+        'buff.defaultDuration': { label: '默认增益持续', type: 'number', desc: '毫秒', min: 0, section: '增益系统' },
+        'buff.defaultMultiplier': { label: '默认增益倍率', type: 'number', desc: '', min: 0, step: 0.1, section: '增益系统' },
+        'squad.meleeIdealRangeVsMelee': { label: '近战vs近战', type: 'number', desc: '理想射程比例', min: 0, step: 0.05, section: '小队战斗' },
+        'squad.meleeIdealRangeVsRanged': { label: '近战vs远程', type: 'number', desc: '理想射程比例', min: 0, step: 0.05, section: '小队战斗' },
+        'squad.rangedIdealRangeVsMelee': { label: '远程vs近战', type: 'number', desc: '理想射程比例', min: 0, step: 0.05, section: '小队战斗' },
+        'squad.rangedIdealRangeVsRanged': { label: '远程vs远程', type: 'number', desc: '理想射程比例', min: 0, step: 0.05, section: '小队战斗' },
+        'squad.aoeIdealRangeVsMelee': { label: 'AOEvs近战', type: 'number', desc: '理想射程比例', min: 0, step: 0.05, section: '小队战斗' },
+        'squad.aoeIdealRangeVsRanged': { label: 'AOEvs远程', type: 'number', desc: '理想射程比例', min: 0, step: 0.05, section: '小队战斗' },
+        'squad.retreatHealthThreshold': { label: '后撤血量阈值', type: 'number', desc: '低于该比例后撤', min: 0, step: 0.05, section: '小队战斗' },
+        'squad.retreatCloseRangeFactor': { label: '后撤贴脸比例', type: 'number', desc: '', min: 0, step: 0.05, section: '小队战斗' },
+        'squad.retreatDistance': { label: '后撤距离', type: 'number', desc: '像素', min: 0, section: '小队战斗' },
+        'squad.supportPriorityHealPercent': { label: '辅助治疗阈值', type: 'number', desc: '低于该比例优先治疗', min: 0, step: 0.05, section: '小队战斗' }
+    };
+}
+
+function openConfigModal() {
+    const modal = document.getElementById('configModal');
+    if (modal) {
+        modal.classList.add('active');
+        initWeaponSelect();
+        renderCombatConfig();
+    }
+}
+
+function closeConfigModal() {
+    const modal = document.getElementById('configModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+function switchConfigTab(tabName) {
+    document.querySelectorAll('.config-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === tabName);
+    });
+    document.getElementById('weaponsConfig').style.display = tabName === 'weapons' ? 'flex' : 'none';
+    document.getElementById('combatConfig').style.display = tabName === 'combat' ? 'flex' : 'none';
+}
+
+function initWeaponSelect() {
+    const select = document.getElementById('weaponSelect');
+    select.innerHTML = '';
+    GAME_CONFIG.weapons.forEach((weapon, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `${weapon.emoji} ${weapon.name}`;
+        select.appendChild(option);
+    });
+    if (GAME_CONFIG.weapons.length > 0) {
+        selectWeaponConfig(0);
+    }
+}
+
+function selectWeaponConfig(index) {
+    const weapon = GAME_CONFIG.weapons[index];
+    const form = document.getElementById('weaponConfigForm');
+    form.innerHTML = '';
+    
+    const fields = Object.keys(WEAPON_FIELD_META);
+    fields.forEach(field => {
+        if (!(field in weapon) && field !== 'heal' && field !== 'aoeRadius' && field !== 'knockbackDistance' 
+            && field !== 'ignoreDefense' && field !== 'burnDuration' && field !== 'burnInterval'
+            && field !== 'freezeDuration' && field !== 'buffDuration' && field !== 'buffMultiplier'
+            && field !== 'chargeSpeed' && field !== 'deathExplosionMultiplier') {
+            return;
+        }
+        
+        const meta = WEAPON_FIELD_META[field];
+        const value = weapon[field] !== undefined ? weapon[field] : (meta.type === 'checkbox' ? false : 0);
+        
+        const fieldDiv = document.createElement('div');
+        fieldDiv.className = 'config-field';
+        
+        const label = document.createElement('label');
+        label.innerHTML = `${meta.label}${meta.desc ? `<span class="field-desc">(${meta.desc})</span>` : ''}`;
+        fieldDiv.appendChild(label);
+        
+        let input;
+        if (meta.type === 'select') {
+            input = document.createElement('select');
+            meta.options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt;
+                option.textContent = opt;
+                if (value === opt) option.selected = true;
+                input.appendChild(option);
+            });
+        } else if (meta.type === 'checkbox') {
+            input = document.createElement('input');
+            input.type = 'checkbox';
+            input.checked = value;
+        } else {
+            input = document.createElement('input');
+            input.type = meta.type;
+            input.value = value;
+            if (meta.min !== undefined) input.min = meta.min;
+            if (meta.max !== undefined) input.max = meta.max;
+            if (meta.step !== undefined) input.step = meta.step;
+        }
+        
+        input.dataset.field = field;
+        input.dataset.weaponIndex = index;
+        input.addEventListener('change', (e) => onWeaponFieldChange(e, index, field));
+        fieldDiv.appendChild(input);
+        form.appendChild(fieldDiv);
+    });
+}
+
+function onWeaponFieldChange(e, index, field) {
+    const weapon = GAME_CONFIG.weapons[index];
+    const meta = WEAPON_FIELD_META[field];
+    
+    if (meta.type === 'checkbox') {
+        weapon[field] = e.target.checked;
+    } else if (meta.type === 'number') {
+        weapon[field] = parseFloat(e.target.value) || 0;
+    } else {
+        weapon[field] = e.target.value;
+    }
+    
+    updateWeaponInBattle(index);
+}
+
+function updateWeaponInBattle(index) {
+    const weapon = GAME_CONFIG.weapons[index];
+    ['player1', 'player2'].forEach(playerKey => {
+        battleIcons[playerKey].forEach(icon => {
+            if (icon.weapon.name === weapon.name) {
+                icon.weapon = { ...weapon };
+            }
+        });
+    });
+}
+
+function renderCombatConfig() {
+    const form = document.getElementById('combatConfigForm');
+    form.innerHTML = '';
+    
+    const metaMap = getCombatFieldMeta();
+    let currentSection = '';
+    
+    Object.keys(metaMap).forEach(path => {
+        const meta = metaMap[path];
+        
+        if (meta.section && meta.section !== currentSection) {
+            currentSection = meta.section;
+            const sectionTitle = document.createElement('div');
+            sectionTitle.className = 'config-section-title';
+            sectionTitle.textContent = currentSection;
+            form.appendChild(sectionTitle);
+        }
+        
+        const value = getNestedValue(GAME_CONFIG.combat, path);
+        
+        const fieldDiv = document.createElement('div');
+        fieldDiv.className = 'config-field';
+        
+        const label = document.createElement('label');
+        label.innerHTML = `${meta.label}${meta.desc ? `<span class="field-desc">(${meta.desc})</span>` : ''}`;
+        fieldDiv.appendChild(label);
+        
+        const input = document.createElement('input');
+        input.type = meta.type;
+        input.value = value;
+        if (meta.min !== undefined) input.min = meta.min;
+        if (meta.max !== undefined) input.max = meta.max;
+        if (meta.step !== undefined) input.step = meta.step;
+        
+        input.dataset.path = path;
+        input.addEventListener('change', (e) => onCombatFieldChange(e, path));
+        fieldDiv.appendChild(input);
+        form.appendChild(fieldDiv);
+    });
+}
+
+function getNestedValue(obj, path) {
+    return path.split('.').reduce((o, key) => o[key], obj);
+}
+
+function setNestedValue(obj, path, value) {
+    const keys = path.split('.');
+    const lastKey = keys.pop();
+    const target = keys.reduce((o, key) => o[key], obj);
+    target[lastKey] = value;
+}
+
+function onCombatFieldChange(e, path) {
+    const value = parseFloat(e.target.value) || 0;
+    setNestedValue(GAME_CONFIG.combat, path, value);
+}
+
+function saveConfig() {
+    try {
+        localStorage.setItem('iconBattle_weaponsConfig', JSON.stringify(GAME_CONFIG.weapons));
+        localStorage.setItem('iconBattle_combatConfig', JSON.stringify(GAME_CONFIG.combat));
+        
+        showConfigToast('配置已保存！');
+        closeConfigModal();
+    } catch (e) {
+        showConfigToast('保存失败：' + e.message);
+    }
+}
+
+function resetConfig() {
+    if (!confirm('确定要重置所有配置为默认值吗？')) return;
+    
+    GAME_CONFIG.weapons = JSON.parse(JSON.stringify(DEFAULT_WEAPONS_CONFIG));
+    GAME_CONFIG.combat = JSON.parse(JSON.stringify(DEFAULT_COMBAT_CONFIG));
+    
+    localStorage.removeItem('iconBattle_weaponsConfig');
+    localStorage.removeItem('iconBattle_combatConfig');
+    
+    initWeaponSelect();
+    renderCombatConfig();
+    
+    ['player1', 'player2'].forEach(playerKey => {
+        battleIcons[playerKey].forEach(icon => {
+            const defaultWeapon = DEFAULT_WEAPONS_CONFIG.find(w => w.name === icon.weapon.name);
+            if (defaultWeapon) {
+                icon.weapon = { ...defaultWeapon };
+            }
+        });
+    });
+    
+    showConfigToast('已重置为默认配置');
+}
+
+function loadSavedConfig() {
+    try {
+        const savedWeapons = localStorage.getItem('iconBattle_weaponsConfig');
+        const savedCombat = localStorage.getItem('iconBattle_combatConfig');
+        
+        if (savedWeapons) {
+            const parsedWeapons = JSON.parse(savedWeapons);
+            GAME_CONFIG.weapons = GAME_CONFIG.weapons.map((defaultWeapon, index) => {
+                if (parsedWeapons[index]) {
+                    return { ...defaultWeapon, ...parsedWeapons[index] };
+                }
+                return defaultWeapon;
+            });
+        }
+        if (savedCombat) {
+            const parsedCombat = JSON.parse(savedCombat);
+            GAME_CONFIG.combat = deepMerge(GAME_CONFIG.combat, parsedCombat);
+        }
+    } catch (e) {
+        console.warn('加载保存的配置失败:', e);
+    }
+}
+
+function deepMerge(target, source) {
+    const result = { ...target };
+    for (const key in source) {
+        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+            result[key] = deepMerge(result[key] || {}, source[key]);
+        } else {
+            result[key] = source[key];
+        }
+    }
+    return result;
+}
+
+function showConfigToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.9);
+        color: #fff;
+        padding: 15px 30px;
+        border-radius: 10px;
+        z-index: 9999;
+        font-size: 16px;
+        animation: fadeInOut 2s ease forwards;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.remove(), 2000);
+}
+
+loadSavedConfig();
 
 window.addEventListener('load', init);

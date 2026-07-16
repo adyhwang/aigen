@@ -87,6 +87,9 @@
                     <label class="option-item" onclick="toggleGameSpeed()">
                         <span id="gameSpeed">1x倍速</span>
                     </label>
+                    <label class="option-item" onclick="openConfigModal()">
+                        <span>⚙️ 参数配置</span>
+                    </label>
                     <label class="option-item">
                         <span>图标大小</span>
                         <input type="range" id="iconSizeSlider" min="0.2" max="5" step="0.1" value="1" oninput="updateIconSize(this.value)">
@@ -157,6 +160,38 @@
                     </label>
                 </div>
                 <div class="search-results" id="searchResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-modal config-modal" id="configModal">
+        <div class="modal-content config-modal-content">
+            <div class="modal-header">
+                <h3>⚙️ 参数配置</h3>
+                <button class="close-btn" onclick="closeConfigModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="config-tabs">
+                    <button class="config-tab active" data-tab="weapons" onclick="switchConfigTab('weapons')">武器配置</button>
+                    <button class="config-tab" data-tab="combat" onclick="switchConfigTab('combat')">战斗配置</button>
+                </div>
+                <div class="config-content" id="weaponsConfig">
+                    <div class="weapon-selector">
+                        <label>选择武器：</label>
+                        <select id="weaponSelect" onchange="selectWeaponConfig(this.value)">
+                        </select>
+                    </div>
+                    <div class="weapon-config-form" id="weaponConfigForm">
+                    </div>
+                </div>
+                <div class="config-content" id="combatConfig" style="display: none;">
+                    <div class="combat-config-form" id="combatConfigForm">
+                    </div>
+                </div>
+                <div class="config-actions">
+                    <button class="btn-config-reset" onclick="resetConfig()">重置默认</button>
+                    <button class="btn-config-save" onclick="saveConfig()">保存配置</button>
+                </div>
             </div>
         </div>
     </div>
