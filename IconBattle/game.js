@@ -6682,6 +6682,43 @@ function addNewWeapon() {
     showConfigToast('新武器已添加！');
 }
 
+function deleteWeapon() {
+    const select = document.getElementById('weaponSelect');
+    const selectedIndex = parseInt(select.value);
+    
+    if (GAME_CONFIG.weapons.length <= 1) {
+        showConfigToast('至少保留一个武器！');
+        return;
+    }
+    
+    if (selectedIndex === -1 || !GAME_CONFIG.weapons[selectedIndex]) {
+        showConfigToast('请先选择一个武器！');
+        return;
+    }
+    
+    const weapon = GAME_CONFIG.weapons[selectedIndex];
+    if (!confirm(`确定要删除武器「${weapon.emoji} ${weapon.name}」吗？`)) {
+        return;
+    }
+    
+    GAME_CONFIG.weapons.splice(selectedIndex, 1);
+    
+    const newIndex = Math.min(selectedIndex, GAME_CONFIG.weapons.length - 1);
+    initWeaponSelect();
+    selectWeaponConfig(newIndex);
+    
+    ['player1', 'player2'].forEach(playerKey => {
+        battleIcons[playerKey].forEach(icon => {
+            if (icon.weapon.name === weapon.name) {
+                icon.weapon = { ...GAME_CONFIG.weapons[0] };
+                icon.currentCharges = icon.weapon.maxCharges;
+            }
+        });
+    });
+    
+    showConfigToast('武器已删除！');
+}
+
 function loadSavedConfig() {
     try {
         const savedWeapons = localStorage.getItem('iconBattle_weaponsConfig');

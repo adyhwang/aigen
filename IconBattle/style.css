@@ -2704,6 +2704,29 @@ body {
     box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
 }
 
+.btn-delete-weapon {
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-delete-weapon:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
+}
+
+.btn-delete-weapon:disabled {
+    background: #4b5563;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 .weapon-config-form,
 .combat-config-form {
     display: grid;
@@ -3095,6 +3118,11 @@ body {
     }
 
     .btn-add-weapon {
+        padding: 3px 8px;
+        font-size: 10px;
+    }
+
+    .btn-delete-weapon {
         padding: 3px 8px;
         font-size: 10px;
     }
