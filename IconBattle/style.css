@@ -493,7 +493,8 @@ body {
 }
 
 .ready-area {
-    height: 220px;
+    height: auto;
+    min-height: 100px;
     display: flex;
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(10px);
@@ -547,7 +548,6 @@ body {
 }
 
 .ready-content {
-    flex: 1;
     background: rgba(255,255,255,0.1);
     border-radius: 10px;
     padding: 10px;
@@ -633,13 +633,13 @@ body {
 
 .icon-weapon-emoji {
     position: absolute;
-    bottom: 2px;
-    left: 2px;
-    font-size: 18px;
+    bottom: calc(2px * var(--icon-size, 1));
+    left: calc(2px * var(--icon-size, 1));
+    font-size: calc(18px * var(--icon-size, 1));
     background: rgba(0, 0, 0, 0.7);
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    width: calc(24px * var(--icon-size, 1));
+    height: calc(24px * var(--icon-size, 1));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -648,13 +648,13 @@ body {
 
 .icon-level-badge {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
-    font-size: 10px;
+    bottom: calc(2px * var(--icon-size, 1));
+    right: calc(2px * var(--icon-size, 1));
+    font-size: calc(10px * var(--icon-size, 1));
     background: rgba(255, 215, 0, 0.9);
     color: #000;
     border-radius: 3px;
-    padding: 1px 4px;
+    padding: calc(1px * var(--icon-size, 1)) calc(4px * var(--icon-size, 1));
     font-weight: bold;
     z-index: 10;
 }
@@ -2621,25 +2621,25 @@ body {
 }
 
 .config-modal .modal-content {
-    max-width: 900px;
+    max-width: 850px;
 }
 
 .config-tabs {
     display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 6px;
+    margin-bottom: 12px;
     border-bottom: 2px solid rgba(255,255,255,0.1);
-    padding-bottom: 10px;
+    padding-bottom: 6px;
 }
 
 .config-tab {
-    padding: 10px 20px;
+    padding: 6px 14px;
     background: rgba(255,255,255,0.1);
     border: none;
     color: #ccc;
-    border-radius: 8px 8px 0 0;
+    border-radius: 6px 6px 0 0;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     transition: all 0.3s ease;
 }
 
@@ -2662,24 +2662,24 @@ body {
 .weapon-selector {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 8px;
 }
 
 .weapon-selector label {
     color: #fff;
-    font-size: 14px;
-    min-width: 80px;
+    font-size: 13px;
+    min-width: 60px;
 }
 
 .weapon-selector select {
     flex: 1;
-    padding: 10px 15px;
+    padding: 6px 12px;
     background: rgba(0,0,0,0.5);
     border: 2px solid #ddd;
-    border-radius: 8px;
+    border-radius: 6px;
     color: #fff;
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
 }
 
@@ -2688,45 +2688,70 @@ body {
     border-color: #667eea;
 }
 
+.btn-add-weapon {
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-add-weapon:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
+}
+
 .weapon-config-form,
 .combat-config-form {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    max-height: 50vh;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    max-height: 55vh;
     overflow-y: auto;
-    padding-right: 10px;
+    overflow-x: hidden;
+    padding-right: 6px;
+    box-sizing: border-box;
 }
 
 .config-field {
     display: flex;
-    flex-direction: column;
-    gap: 5px;
+    flex-direction: row;
+    align-items: center;
+    gap: 3px;
+    min-width: 0;
+    width: 100%;
 }
 
 .config-field label {
     color: #ccc;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+    font-size: 10px;
+    white-space: normal;
+    word-break: break-all;
+    flex: 0 0 55%;
+    max-width: 80px;
+    line-height: 1.3;
 }
 
 .config-field label .field-desc {
-    color: #888;
-    font-size: 11px;
-    font-weight: normal;
+    display: none;
 }
 
 .config-field input[type="number"],
 .config-field input[type="text"] {
-    padding: 8px 12px;
+    padding: 2px 4px;
     background: rgba(0,0,0,0.5);
     border: 1px solid #555;
-    border-radius: 6px;
+    border-radius: 3px;
     color: #fff;
-    font-size: 14px;
+    font-size: 10px;
     transition: border-color 0.3s ease;
+    flex: 1;
+    min-width: 0;
+    max-width: 70px;
+    box-sizing: border-box;
 }
 
 .config-field input[type="number"]:focus,
@@ -2736,38 +2761,74 @@ body {
 }
 
 .config-field input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     cursor: pointer;
+    flex-shrink: 0;
+}
+
+.config-field select {
+    padding: 2px 3px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid #555;
+    border-radius: 3px;
+    color: #fff;
+    font-size: 9px;
+    flex: 1;
+    min-width: 0;
+    max-width: 60px;
+    box-sizing: border-box;
 }
 
 .config-section-title {
     grid-column: 1 / -1;
     color: #fff;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: bold;
-    padding: 10px 0;
+    padding: 5px 0;
     border-bottom: 1px solid rgba(255,255,255,0.2);
-    margin-top: 10px;
+    margin-top: 4px;
 }
 
 .config-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 15px;
-    margin-top: 20px;
-    padding-top: 15px;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 10px;
     border-top: 2px solid rgba(255,255,255,0.1);
 }
 
 .btn-config-save,
-.btn-config-reset {
-    padding: 12px 25px;
+.btn-config-reset,
+.btn-config-import,
+.btn-config-export {
+    padding: 8px 16px;
     border: none;
-    border-radius: 8px;
-    font-size: 14px;
+    border-radius: 6px;
+    font-size: 13px;
     cursor: pointer;
     transition: all 0.3s ease;
+}
+
+.btn-config-import {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.btn-config-import:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
+}
+
+.btn-config-export {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.btn-config-export:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(245, 158, 11, 0.4);
 }
 
 .btn-config-save {
@@ -2794,12 +2855,30 @@ body {
 @media (max-width: 768px) {
     .weapon-config-form,
     .combat-config-form {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px 4px;
+        overflow-x: hidden;
     }
     
     .config-modal .modal-content {
         max-width: 95%;
-        padding: 15px;
+        padding: 12px;
+    }
+
+    .config-field label {
+        max-width: 70px;
+        font-size: 10px;
+        white-space: normal;
+        word-break: break-all;
+        line-height: 1.3;
+    }
+
+    .config-field input[type="number"],
+    .config-field input[type="text"],
+    .config-field select {
+        padding: 2px 4px;
+        font-size: 10px;
+        max-width: 60px;
     }
 }
 
@@ -2896,8 +2975,7 @@ body {
     }
 
     .icon-item {
-        min-width: 60px;
-        min-height: 60px;
+        /* 移除最小尺寸限制，允许图标随iconSize无限缩小 */
     }
 
     .search-modal .modal-content,
@@ -2987,16 +3065,81 @@ body {
     .config-modal .modal-content {
         width: 98%;
         max-width: 98%;
-        padding: 10px;
+        padding: 8px;
     }
 
     .config-tabs {
-        gap: 5px;
+        gap: 4px;
+        margin-bottom: 8px;
+        padding-bottom: 4px;
     }
 
     .config-tab {
-        padding: 8px 12px;
-        font-size: 12px;
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+
+    .weapon-selector {
+        gap: 6px;
+        margin-bottom: 6px;
+    }
+
+    .weapon-selector label {
+        font-size: 10px;
+        min-width: 45px;
+    }
+
+    .weapon-selector select {
+        padding: 3px 6px;
+        font-size: 10px;
+    }
+
+    .btn-add-weapon {
+        padding: 3px 8px;
+        font-size: 10px;
+    }
+
+    .weapon-config-form,
+    .combat-config-form {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 5px 3px;
+        padding-right: 4px;
+    }
+
+    .config-field label {
+        font-size: 9px;
+        max-width: 60px;
+        white-space: normal;
+        word-break: break-all;
+        line-height: 1.3;
+    }
+
+    .config-field input[type="number"],
+    .config-field input[type="text"],
+    .config-field select {
+        padding: 2px 3px;
+        font-size: 9px;
+        max-width: 50px;
+    }
+
+    .config-section-title {
+        font-size: 11px;
+        padding: 3px 0;
+        margin-top: 3px;
+    }
+
+    .config-actions {
+        gap: 6px;
+        margin-top: 8px;
+        padding-top: 6px;
+    }
+
+    .btn-config-save,
+    .btn-config-reset,
+    .btn-config-import,
+    .btn-config-export {
+        padding: 5px 10px;
+        font-size: 10px;
     }
 
     .weapons-grid {

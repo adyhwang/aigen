@@ -107,7 +107,7 @@ const GAME_CONFIG = {
         arrivalThreshold: 5,            // 到达目标的阈值（像素）
         squadFollowDistance: 200,       // 小队跟随距离（像素）
         squadMonitorRange: 800,         // 小队监控范围（像素）
-        boundaryMargin: 50,             // 边界边距（像素，乘以iconSize）
+        boundaryMargin: 150,             // 边界边距（像素，乘以iconSize）
         meleeApproachOffset: 50,        // 近战接近目标的偏移距离（像素，乘以iconSize）
         healerSafeDistance: 120,        // 治疗者安全距离（像素，乘以iconSize）
         healerMinDistance: 60,          // 治疗者最小距离（像素，乘以iconSize）
@@ -165,6 +165,14 @@ const GAME_CONFIG = {
         buff: {
             defaultDuration: 3000,       // 默认buff持续时间（毫秒）
             defaultMultiplier: 1.8       // 默认buff属性倍率
+        },
+        backToWall: {
+            enabled: true,              // 是否启用背水一战
+            edgeThreshold: 50,          // 边缘阈值（像素，乘以iconSize）
+            attackMultiplier: 1.5,      // 攻击力加成倍率
+            defenseMultiplier: 1.3,     // 防御力加成倍率
+            critRateBonus: 0.15,        // 暴击率额外加成
+            critDamageMultiplier: 1.2   // 暴击伤害加成倍率
         },
         squad: {
             meleeIdealRangeVsMelee: 0.7,  // 近战对近战的理想射程比例
@@ -587,6 +595,7 @@ function addIconToReadyZone(player, imageUrl, name = '') {
     const readyIconSize = readyBaseSize * (iconSize / defaultIconSize);
     iconItem.style.width = `${readyIconSize}px`;
     iconItem.style.height = `${readyIconSize}px`;
+    iconItem.style.setProperty('--icon-size', iconSize / defaultIconSize);
     
     const randomWeaponIndex = Math.floor(Math.random() * GAME_CONFIG.weapons.length);
     iconItem.dataset.assignedWeaponIndex = randomWeaponIndex;
@@ -1327,9 +1336,12 @@ function prepareAttack(attacker, target) {
 // @property {number} damage - 计算出的伤害值
 // @property {boolean} isDodged - 目标是否闪避了攻击
 function calculateDamageWithDefense(attacker, target) {
-    const totalAttack = attacker.stats.attack + (attacker.weapon.attack || 0);
+    const attackerBonus = getBackToWallBonus(attacker);
+    const defenderBonus = getBackToWallBonus(target);
+    
+    const totalAttack = (attacker.stats.attack + (attacker.weapon.attack || 0)) * attackerBonus.attack;
     const baseDamage = totalAttack;
-    const defense = target.stats.defense;
+    const defense = target.stats.defense * defenderBonus.defense;
     const armor = target.stats.armor;
     const { randomMin, randomMax, defenseFactor } = GAME_CONFIG.combat.damage;
     const randomFactor = Math.random() * (randomMax - randomMin) + randomMin;
@@ -1341,16 +1353,16 @@ function calculateDamageWithDefense(attacker, target) {
     let critMultiplier = 1;
     
     if (!isDodged) {
-        const critRate = attacker.stats.critRate || GAME_CONFIG.combat.damage.baseCritRate;
+        const critRate = (attacker.stats.critRate || GAME_CONFIG.combat.damage.baseCritRate) + attackerBonus.critRate;
         isCrit = Math.random() < critRate;
         if (isCrit) {
-            critMultiplier = attacker.stats.critDamage || GAME_CONFIG.combat.damage.baseCritDamage;
+            critMultiplier = (attacker.stats.critDamage || GAME_CONFIG.combat.damage.baseCritDamage) * attackerBonus.critDamage;
         }
     }
     
     const damage = isDodged ? 0 : Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor((baseDamage - defense * defenseFactor) * randomFactor * critMultiplier / armor));
     
-    return { damage, isDodged, isCrit };
+    return { damage, isDodged, isCrit, backToWall: attackerBonus.attack > 1 };
 }
 
 // 应用伤害效果
@@ -1910,8 +1922,11 @@ function addBattleInfo(attacker, defender, value, actionType = 'attack') {
 // @param {Object} defender - 防御者对象，包含防御力和护甲等属性
 // @returns {number} - 计算出的伤害值
 function calculateDamage(attacker, defender) {
-    const baseDamage = attacker.stats.attack + (attacker.weapon.attack || 0);
-    const defense = defender.stats.defense;
+    const attackerBonus = getBackToWallBonus(attacker);
+    const defenderBonus = getBackToWallBonus(defender);
+    
+    const baseDamage = (attacker.stats.attack + (attacker.weapon.attack || 0)) * attackerBonus.attack;
+    const defense = defender.stats.defense * defenderBonus.defense;
     const armor = defender.stats.armor;
     const { randomMin, randomMax, defenseFactor } = GAME_CONFIG.combat.damage;
     const randomFactor = Math.random() * (randomMax - randomMin) + randomMin;
@@ -2787,6 +2802,61 @@ function clampAllIconsToBounds() {
     });
 }
 
+function checkBackToWall(iconData) {
+    if (!GAME_CONFIG.combat.backToWall.enabled) {
+        return false;
+    }
+    
+    const margin = GAME_CONFIG.movement.boundaryMargin * iconSize;
+    const edgeThreshold = GAME_CONFIG.combat.backToWall.edgeThreshold * iconSize;
+    
+    if (!battleAreaElement) {
+        battleAreaElement = document.getElementById('battleArea');
+    }
+    if (!battleAreaElement) return false;
+    
+    const rect = battleAreaElement.getBoundingClientRect();
+    const maxX = rect.width - margin;
+    const maxY = rect.height - margin;
+    
+    const distToLeft = iconData.x - margin;
+    const distToRight = maxX - iconData.x;
+    const distToTop = iconData.y - margin;
+    const distToBottom = maxY - iconData.y;
+    
+    const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom);
+    
+    if (minDist <= edgeThreshold) {
+        if (iconData.targetX !== undefined && iconData.targetY !== undefined) {
+            const targetDistToLeft = iconData.targetX - margin;
+            const targetDistToRight = maxX - iconData.targetX;
+            const targetDistToTop = iconData.targetY - margin;
+            const targetDistToBottom = maxY - iconData.targetY;
+            
+            const targetMinDist = Math.min(targetDistToLeft, targetDistToRight, targetDistToTop, targetDistToBottom);
+            
+            return targetMinDist <= edgeThreshold;
+        }
+        return true;
+    }
+    
+    return false;
+}
+
+function getBackToWallBonus(iconData) {
+    if (!checkBackToWall(iconData)) {
+        return { attack: 1, defense: 1, critRate: 0, critDamage: 1 };
+    }
+    
+    const config = GAME_CONFIG.combat.backToWall;
+    return {
+        attack: config.attackMultiplier,
+        defense: config.defenseMultiplier,
+        critRate: config.critRateBonus,
+        critDamage: config.critDamageMultiplier
+    };
+}
+
 function moveTowardsTarget(iconData) {
     if (iconData.isDead || iconData.isFrozen) return;
     
@@ -3548,6 +3618,14 @@ function init() {
     const readyContents = document.querySelectorAll('.ready-content');
     readyContents.forEach(content => {
         content.addEventListener('dragleave', handleDragLeave);
+    });
+    
+    const defaultIconSize = 0.8;
+    const readyBaseSize = 70;
+    const readyIconSize = readyBaseSize * (iconSize / defaultIconSize);
+    const rowHeight = readyIconSize + 30;
+    readyContents.forEach(content => {
+        content.style.height = `${rowHeight}px`;
     });
     
     // 竖屏模式下初始化后直接显示待命区
@@ -4858,6 +4936,13 @@ function updateIconSize(value) {
     allReadyIcons.forEach(icon => {
         icon.style.width = `${readyIconSize}px`;
         icon.style.height = `${readyIconSize}px`;
+        icon.style.setProperty('--icon-size', iconSize / defaultIconSize);
+    });
+    
+    const rowHeight = readyIconSize + 30;
+    const allReadyContents = document.querySelectorAll('.ready-content');
+    allReadyContents.forEach(content => {
+        content.style.height = `${rowHeight}px`;
     });
     
     const mobileIconSlider = document.querySelector('.options-panel #iconSizeSlider');
@@ -6333,6 +6418,7 @@ function selectWeaponConfig(index) {
         
         const label = document.createElement('label');
         label.innerHTML = `${meta.label}${meta.desc ? `<span class="field-desc">(${meta.desc})</span>` : ''}`;
+        label.title = `${meta.label}${meta.desc ? ` (${meta.desc})` : ''}`;
         fieldDiv.appendChild(label);
         
         let input;
@@ -6417,6 +6503,7 @@ function renderCombatConfig() {
         
         const label = document.createElement('label');
         label.innerHTML = `${meta.label}${meta.desc ? `<span class="field-desc">(${meta.desc})</span>` : ''}`;
+        label.title = `${meta.label}${meta.desc ? ` (${meta.desc})` : ''}`;
         fieldDiv.appendChild(label);
         
         const input = document.createElement('input');
@@ -6461,6 +6548,94 @@ function saveConfig() {
     }
 }
 
+function exportConfig() {
+    try {
+        const config = {
+            weapons: GAME_CONFIG.weapons,
+            combat: GAME_CONFIG.combat,
+            version: '1.0',
+            exportTime: new Date().toISOString()
+        };
+        
+        const json = JSON.stringify(config, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `iconbattle_config_${new Date().toLocaleDateString().replace(/\//g, '-')}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showConfigToast('配置已导出！');
+    } catch (e) {
+        showConfigToast('导出失败：' + e.message);
+    }
+}
+
+function importConfig() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.style.display = 'none';
+    
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const config = JSON.parse(event.target.result);
+                
+                if (!config || typeof config !== 'object') {
+                    throw new Error('配置文件格式不正确');
+                }
+                
+                if (config.weapons) {
+                    if (!Array.isArray(config.weapons)) {
+                        throw new Error('weapons 必须是数组');
+                    }
+                    GAME_CONFIG.weapons = config.weapons;
+                }
+                if (config.combat) {
+                    if (typeof config.combat !== 'object') {
+                        throw new Error('combat 必须是对象');
+                    }
+                    GAME_CONFIG.combat = deepMerge(GAME_CONFIG.combat, config.combat);
+                }
+                
+                localStorage.setItem('iconBattle_weaponsConfig', JSON.stringify(GAME_CONFIG.weapons));
+                localStorage.setItem('iconBattle_combatConfig', JSON.stringify(GAME_CONFIG.combat));
+                
+                initWeaponSelect();
+                renderCombatConfig();
+                
+                ['player1', 'player2'].forEach(playerKey => {
+                    battleIcons[playerKey].forEach(icon => {
+                        const newWeapon = GAME_CONFIG.weapons.find(w => w.name === icon.weapon.name);
+                        if (newWeapon) {
+                            icon.weapon = { ...newWeapon };
+                        }
+                    });
+                });
+                
+                showConfigToast('配置已导入！');
+            } catch (e) {
+                showConfigToast('导入失败：' + e.message);
+            }
+        };
+        
+        reader.readAsText(file);
+    };
+    
+    document.body.appendChild(input);
+    input.click();
+    document.body.removeChild(input);
+}
+
 function resetConfig() {
     if (!confirm('确定要重置所有配置为默认值吗？')) return;
     
@@ -6485,6 +6660,28 @@ function resetConfig() {
     showConfigToast('已重置为默认配置');
 }
 
+function addNewWeapon() {
+    const weaponCount = GAME_CONFIG.weapons.length;
+    const newWeapon = {
+        emoji: '🔮',
+        name: `新武器${weaponCount + 1}`,
+        attack: 10,
+        type: 'melee',
+        range: 100,
+        attackSpeed: 600,
+        maxCharges: 999,
+        cooldownTime: 0,
+        defaultDirection: 'top',
+        effectType: 'slash'
+    };
+    
+    GAME_CONFIG.weapons.push(newWeapon);
+    initWeaponSelect();
+    selectWeaponConfig(weaponCount);
+    
+    showConfigToast('新武器已添加！');
+}
+
 function loadSavedConfig() {
     try {
         const savedWeapons = localStorage.getItem('iconBattle_weaponsConfig');
@@ -6492,12 +6689,9 @@ function loadSavedConfig() {
         
         if (savedWeapons) {
             const parsedWeapons = JSON.parse(savedWeapons);
-            GAME_CONFIG.weapons = GAME_CONFIG.weapons.map((defaultWeapon, index) => {
-                if (parsedWeapons[index]) {
-                    return { ...defaultWeapon, ...parsedWeapons[index] };
-                }
-                return defaultWeapon;
-            });
+            if (Array.isArray(parsedWeapons) && parsedWeapons.length > 0) {
+                GAME_CONFIG.weapons = parsedWeapons;
+            }
         }
         if (savedCombat) {
             const parsedCombat = JSON.parse(savedCombat);
