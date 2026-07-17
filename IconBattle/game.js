@@ -5566,7 +5566,7 @@ function showIconDetailPanel(iconData, player) {
             </div>
             <div class="detail-item">
                 <span class="detail-label">攻击力:</span>
-                <span class="detail-value attack" id="detail-attack">${iconData.stats.attack + iconData.weapon.attack}</span>
+                <span class="detail-value attack" id="detail-attack">${iconData.stats.attack + (iconData.weapon.attack || 0)}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">防御力:</span>
@@ -5656,7 +5656,7 @@ function updateIconDetailPanel(iconData) {
     currentDetailPanel.querySelector('#detail-name').textContent = `${iconData.name || '未知图标'}(#${iconData.element.dataset.iconId})`;
     currentDetailPanel.querySelector('#detail-level').textContent = iconData.level;
     currentDetailPanel.querySelector('#detail-health').textContent = `${iconData.stats.health}/${iconData.stats.maxHealth}`;
-    currentDetailPanel.querySelector('#detail-attack').textContent = iconData.stats.attack + iconData.weapon.attack;
+    currentDetailPanel.querySelector('#detail-attack').textContent = iconData.stats.attack + (iconData.weapon.attack || 0);
     currentDetailPanel.querySelector('#detail-defense').textContent = iconData.stats.defense;
     currentDetailPanel.querySelector('#detail-speed').textContent = iconData.stats.speed;
     currentDetailPanel.querySelector('#detail-armor').textContent = iconData.stats.armor;
