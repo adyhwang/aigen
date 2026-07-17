@@ -2,171 +2,216 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI生成项目</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#6366F1',
-                        secondary: '#8B5CF6',
-                        dark: '#0F172A',
-                        light: '#F1F5F9'
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-    <style>
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .animate-fade-in-up {
-            animation: fadeInUp 0.6s ease-out forwards;
-        }
-        
-        .card-item {
-            opacity: 0;
-            animation: fadeInUp 0.6s ease-out forwards;
-        }
-        
-        .card-item:nth-child(1) { animation-delay: 0.1s; }
-        .card-item:nth-child(2) { animation-delay: 0.2s; }
-        .card-item:nth-child(3) { animation-delay: 0.3s; }
-        .card-item:nth-child(4) { animation-delay: 0.4s; }
-        .card-item:nth-child(5) { animation-delay: 0.5s; }
-        .card-item:nth-child(6) { animation-delay: 0.6s; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>图标大战</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-white min-h-screen font-sans text-dark">
-    <div class="container mx-auto px-6 py-20 max-w-5xl">
-        <header class="text-center mb-20 animate-fade-in-up">
-            <h1 class="text-5xl font-bold text-dark mb-4 tracking-tight">
-                AI生成项目
-            </h1>
-            <p class="text-gray-500 text-lg">
-                探索由人工智能创建的创意项目
-            </p>
-        </header>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <a href="/aigen/IconBattle/" class="card-item block">
-                <div class="group bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border border-transparent hover:border-primary/20">
-                    <div class="w-14 h-14 bg-gradient-to-br from-red-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                        <i class="fa fa-gamepad text-white text-2xl"></i>
-                    </div>
-                    <h2 class="text-xl font-semibold text-dark mb-3">图标大战</h2>
-                    <p class="text-gray-500 text-sm leading-relaxed">
-                        搜索、上传、选择图标组建军队，与对手展开激烈战斗
-                    </p>
-                    <div class="mt-6 flex items-center text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        开始游戏
-                        <i class="fa fa-arrow-right ml-2"></i>
-                    </div>
-                </div>
-            </a>
-            
-            <a href="/aigen/mandown/" class="card-item block">
-                <div class="group bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-500 border border-transparent hover:border-amber-500/20">
-                    <div class="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                        <i class="fa fa-male text-white text-2xl"></i>
-                    </div>
-                    <h2 class="text-xl font-semibold text-dark mb-3">就下100层</h2>
-                    <p class="text-gray-500 text-sm leading-relaxed">
-                        挑战反应速度，不断向下跳跃到达100层
-                    </p>
-                    <div class="mt-6 flex items-center text-amber-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        开始挑战
-                        <i class="fa fa-arrow-right ml-2"></i>
-                    </div>
-                </div>
-            </a>
-            
-            <a href="/aigen/tetris-puzzle/" class="card-item block">
-                <div class="group bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-500 border border-transparent hover:border-emerald-500/20">
-                    <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                        <i class="fa fa-cubes text-white text-2xl"></i>
-                    </div>
-                    <h2 class="text-xl font-semibold text-dark mb-3">新俄罗斯方块拼图</h2>
-                    <p class="text-gray-500 text-sm leading-relaxed">
-                        经典拼图游戏，全新设计的方块带来新挑战
-                    </p>
-                    <div class="mt-6 flex items-center text-emerald-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        开始游戏
-                        <i class="fa fa-arrow-right ml-2"></i>
-                    </div>
-                </div>
-            </a>
-            
-            <a href="/aigen/Math-Problem-Generator/" class="card-item block">
-                <div class="group bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 border border-transparent hover:border-primary/20">
-                    <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                        <i class="fa fa-calculator text-white text-2xl"></i>
-                    </div>
-                    <h2 class="text-xl font-semibold text-dark mb-3">四则运算生成器</h2>
-                    <p class="text-gray-500 text-sm leading-relaxed">
-                        生成不同难度的四则运算问题用于练习学习
-                    </p>
-                    <div class="mt-6 flex items-center text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        访问项目
-                        <i class="fa fa-arrow-right ml-2"></i>
-                    </div>
-                </div>
-            </a>
-            
-            <!-- <a href="https://github.com/adyhwang/AndyTAB" class="card-item block" target="_blank">
-                <div class="group bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-2xl hover:shadow-secondary/10 transition-all duration-500 border border-transparent hover:border-secondary/20">
-                    <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                        <i class="fa fa-chrome text-white text-2xl"></i>
-                    </div>
-                    <h2 class="text-xl font-semibold text-dark mb-3">AndyTAB Chrome扩展</h2>
-                    <p class="text-gray-500 text-sm leading-relaxed">
-                        自定义Chrome新标签页，支持WebDAV数据同步
-                    </p>
-                    <div class="mt-6 flex items-center text-secondary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        查看项目
-                        <i class="fa fa-arrow-right ml-2"></i>
-                    </div>
-                </div>
-            </a>
-            
-           <a href="https://github.com/adyhwang/WinVClip/" class="card-item block" target="_blank">
-                <div class="group bg-gray-50 rounded-xl p-8 hover:bg-white hover:shadow-2xl hover:shadow-cyan-500/10 transition-all duration-500 border border-transparent hover:border-cyan-500/20">
-                    <div class="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                        <i class="fa fa-clipboard text-white text-2xl"></i>
-                    </div>
-                    <h2 class="text-xl font-semibold text-dark mb-3">WinVClip</h2>
-                    <p class="text-gray-500 text-sm leading-relaxed">
-                        Windows剪贴板管理工具，支持多类型捕获和历史记录
-                    </p>
-                    <div class="mt-6 flex items-center text-cyan-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        查看项目
-                        <i class="fa fa-arrow-right ml-2"></i>
-                    </div>
-                </div>
-            </a> -->
-            
+<body>
+    <div class="game-container">
+         <div class="options-container" id="optionsContainer">
+                <button class="btn-options hide-option" onclick="openConfigModal()">⚙️</button>
+            </div>
+        <div class="battle-info-wrapper" id="battleInfoWrapper">
+            <div class="battle-info-filters-left">
+                <button class="filter-tab active" data-filter="player" data-value="all">全部</button>
+                <button class="filter-tab" data-filter="player" data-value="1">玩家1</button>
+                <button class="filter-tab" data-filter="player" data-value="2">玩家2</button>
+            </div>
+            <div class="battle-info" id="battleInfo"></div>
+            <div class="battle-info-filters-right">
+                <button class="filter-tab active" data-filter="action" data-value="all">全部</button>
+                <button class="filter-tab" data-filter="action" data-value="attack">攻击</button>
+                <button class="filter-tab" data-filter="action" data-value="heal">治疗</button>
+                <button class="filter-tab" data-filter="action" data-value="kill">击杀</button>
+                <button class="filter-tab" data-filter="action" data-value="special">其他</button>
+            </div>
         </div>
-        
-        <footer class="mt-24 text-center">
-            <p class="text-gray-400 text-sm">
-                使用AI技术精心创建
-            </p>
-        </footer>
+        <header class="game-header">
+            <h1>图标大战</h1>
+        </header>
+
+        <div class="battle-area" id="battleArea">
+            <div class="battle-zone player1-zone" id="player1BattleZone">
+                <div class="zone-label">玩家1领地</div>
+                <div class="stats-info" id="player1Stats">
+                    <div class="stat-item">总击杀: <span id="player1Kills">0</span></div>
+                    <div class="stat-item">总血量: <span id="player1Health">0</span></div>
+                    <div class="stat-item">总攻击: <span id="player1Attack">0</span></div>
+                    <div class="stat-item">总防御: <span id="player1Defense">0</span></div>
+                    <div class="battle-icons-list" id="player1IconsList"></div>
+                </div>
+            </div>
+            <div class="battle-zone player2-zone" id="player2BattleZone">
+                <div class="zone-label">玩家2领地</div>
+                <div class="stats-info" id="player2Stats">
+                    <div class="stat-item">总击杀: <span id="player2Kills">0</span></div>
+                    <div class="stat-item">总血量: <span id="player2Health">0</span></div>
+                    <div class="stat-item">总攻击: <span id="player2Attack">0</span></div>
+                    <div class="stat-item">总防御: <span id="player2Defense">0</span></div>
+                    <div class="battle-icons-list" id="player2IconsList"></div>
+                </div>
+            </div>
+            
+           
+        </div>
+
+        <div class="ready-area" id="readyarea">
+            <div class="ready-zone player1-ready" id="player1Ready">
+                <div class="ready-header">
+                    <h2>玩家1待命区</h2>
+                    <div class="add-buttons">
+                        <button class="btn-upload" onclick="triggerUpload(1)">上传图标</button>
+                        <button class="btn-search" onclick="openSearchModal(1)">图标搜索</button>
+                        <button class="btn-battle" onclick="addRandomIcons(1)">添加随机图标</button>
+                        <button class="btn-battle" onclick="deployAllIcons(1)">全部参战</button>
+                    </div>
+                </div>
+                <div class="ready-content" id="player1ReadyContent" ondrop="handleDrop(event, 1)" ondragover="handleDragOver(event)">
+                    <div class="drop-hint">批量拖入图标到此处</div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="ready-zone player2-ready" id="player2Ready">
+                <div class="ready-header">
+                    <h2>玩家2待命区</h2>
+                    <div class="add-buttons">
+                        <button class="btn-upload" onclick="triggerUpload(2)">上传图标</button>
+                        <button class="btn-search" onclick="openSearchModal(2)">图标搜索</button>
+                        <button class="btn-battle" onclick="addRandomIcons(2)">添加随机图标</button>
+                        <button class="btn-battle" onclick="deployAllIcons(2)">全部参战</button>
+                    </div>
+                </div>
+                <div class="ready-content" id="player2ReadyContent" ondrop="handleDrop(event, 2)" ondragover="handleDragOver(event)">
+                    <div class="drop-hint">批量拖入图标到此处</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="portrait-tabs" id="portraitTabs">
+            <button class="portrait-tab" data-panel="battleInfo">战斗信息</button>
+            <button class="portrait-tab" data-panel="iconsStats">图标状态</button>
+            <button class="portrait-tab" data-panel="readyarea">待命区</button>
+            <button class="portrait-tab" data-panel="options">选项</button>
+        </div>
     </div>
+
+    <input type="file" id="fileInput" accept="image/*" multiple style="display: none;" onchange="handleFileSelect(event)">
+
+    <div class="search-modal" id="searchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>搜索图标</h3>
+                <button class="close-btn" onclick="closeSearchModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-controls">
+                    <input type="text" id="searchInput" placeholder="输入关键词搜索..." onkeypress="handleSearchKeyPress(event)">
+                    <button class="btn-search-action" onclick="searchIcons()">搜索</button>
+                </div>
+                <div class="search-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="onlineSearch" onchange="handleOnlineSearchChange()">
+                        <span>在线</span>
+                    </label>
+                </div>
+                <div class="search-results" id="searchResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-modal config-modal" id="configModal">
+        <div class="modal-content config-modal-content">
+            <div class="modal-header">
+                <h3>选项</h3>
+                <button class="close-btn" onclick="closeConfigModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="config-tabs">
+                    <button class="config-tab active" data-tab="basic" onclick="switchConfigTab('basic')">基本设置</button>
+                    <button class="config-tab" data-tab="weapons" onclick="switchConfigTab('weapons')">武器配置</button>
+                    <button class="config-tab" data-tab="combat" onclick="switchConfigTab('combat')">战斗配置</button>
+                </div>
+                <div class="config-content" id="basicConfig">
+                    <div class="config-row">
+                        <label class="option-item">
+                            <input type="checkbox" id="squadBattleMode" onchange="toggleSquadBattleMode()">
+                            <span>小队模式</span>
+                        </label>
+                        <label class="option-item">
+                            <input type="checkbox" id="autoAddRandom" onchange="toggleAutoAddRandom()">
+                            <span>自动添加图标</span>
+                        </label>
+                        <label class="option-item">
+                            <input type="checkbox" id="autoDeploy" onchange="toggleAutoDeploy()">
+                            <span>自动参战</span>
+                        </label>
+                    </div>
+                    <div class="config-row">
+                        <label class="option-item hide-option">
+                            <input type="checkbox" id="hideBattleInfo" onchange="toggleHideBattleInfo()">
+                            <span>隐藏战斗信息</span>
+                        </label>
+                        <label class="option-item hide-option">
+                            <input type="checkbox" id="hideStats" onchange="toggleHideStats()">
+                            <span>隐藏玩家状态</span>
+                        </label>
+                        <label class="option-item hide-option">
+                            <input type="checkbox" id="hideReadyArea" onchange="toggleHideReadyArea()">
+                            <span>隐藏玩家待命区</span>
+                        </label>
+                    </div>
+                    <div class="config-row">
+                        <label class="option-item">
+                            <input type="checkbox" id="pauseGame" onchange="togglePauseGame()">
+                            <span>暂停</span>
+                        </label>
+                        <label class="option-item">
+                            <input type="checkbox" id="fullscreenMode" onchange="toggleFullscreen()">
+                            <span>全屏</span>
+                        </label>
+                        <label class="option-item" onclick="toggleGameSpeed()">
+                            <span id="gameSpeed">1x倍速</span>
+                        </label>
+                    </div>
+                    <div class="config-row">
+                        <label class="option-item">
+                            <span>图标大小</span>
+                            <input type="range" id="iconSizeSlider" min="0.2" max="5" step="0.1" value="1" oninput="updateIconSize(this.value)">
+                        </label>
+                        <label class="option-item">
+                            <span>UI大小</span>
+                            <input type="range" id="uiSizeSlider" min="0.5" max="2" step="0.1" value="1" oninput="updateUISize(this.value)">
+                        </label>
+                    </div>
+                </div>
+                <div class="config-content" id="weaponsConfig" style="display: none;">
+                    <div class="weapon-selector">
+                        <label>选择武器：</label>
+                        <select id="weaponSelect" onchange="selectWeaponConfig(this.value)">
+                        </select>
+                        <button class="btn-delete-weapon" onclick="deleteWeapon()">- 删除武器</button>
+                        <button class="btn-add-weapon" onclick="addNewWeapon()">+ 新增武器</button>
+                    </div>
+                    <div class="weapon-config-form" id="weaponConfigForm">
+                    </div>
+                </div>
+                <div class="config-content" id="combatConfig" style="display: none;">
+                    <div class="combat-config-form" id="combatConfigForm">
+                    </div>
+                </div>
+                <div class="config-actions">
+                    <button class="btn-config-import" onclick="importConfig()">导入配置</button>
+                    <button class="btn-config-export" onclick="exportConfig()">导出配置</button>
+                    <button class="btn-config-reset" onclick="resetConfig()">重置默认</button>
+                    <button class="btn-config-save" onclick="saveConfig()">保存配置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="defaultIcons.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
