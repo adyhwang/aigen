@@ -24,6 +24,8 @@ let iconSize = 0.8;
 const uiSizes = [0.5, 2];
 // UI元素当前缩放比例
 let uiSize = 1;
+// UI元素当前透明度
+let uiOpacity = 1;
 
 // 战斗信息面板是否正在拖动
 let battleInfoDragging = false;
@@ -66,6 +68,9 @@ const BattleState = {
 let currentDetailPanel = null;  // 当前显示的详情面板元素
 let currentIconData = null;     // 当前详情面板对应的图标数据
 let detailPanelUpdateInterval = null;
+let detailPanelLocked = false;  // 详情面板是否已锁定（锁定后可拖动，点击外部不关闭）
+let detailPanelDragging = false; // 详情面板是否正在拖动
+const detailPanelDragOffset = { x: 0, y: 0 }; // 拖动偏移量
 
 let battleAreaElement = null;
 let battleAreaRect = null;
@@ -84,7 +89,6 @@ let developerPanelOffset = { x: 0, y: 0 };  // 开发者面板拖动时的偏移
 
 // 每帧缓存的存活图标数组，避免重复filter
 let cachedAliveIcons = { player1: [], player2: [] };
-let cachedDeadIcons = { player1: [], player2: [] };
 let cacheDirty = true;
 
 // 战斗信息面板最多显示的条目数
@@ -142,7 +146,6 @@ const GAME_CONFIG = {
         veryLongDelay: 3000,                  // 很长延迟（毫秒）
         extraLongDelay: 5000,                 // 极长延迟（毫秒）
         ringDuration: 500,                    // 光环持续时间（毫秒）
-        ringDurationShort: 400,               // 短光环持续时间（毫秒）
         territoryHealIntervalPlayer1: 500,    // 玩家1领地治疗间隔（毫秒）
         territoryHealIntervalPlayer2: 1000    // 玩家2领地治疗间隔（毫秒）
     },
@@ -272,7 +275,7 @@ const GAME_CONFIG = {
         { emoji: '🚀', name: '自爆火箭', attack: 180, type: 'melee', range: 20, attackSpeed: 500, maxCharges: 1, cooldownTime: 0, defaultDirection: 'right', aoeRadius: 150, chargeSpeed: 300, deathExplosionMultiplier: 0.50, isSelfDestruct: true, effectType: 'explosion' },
         { emoji: '🦠', name: '毒药', attack: 6, type: 'ranged', range: 200, attackSpeed: 700, maxCharges: 3, cooldownTime: 2500, defaultDirection: 'top', poisonDuration: 4000, poisonInterval: 1000, maxPoisonStacks: 3, effectType: 'poison' },
         { emoji: '🛡️', name: '护盾', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 2, cooldownTime: 3500, defaultDirection: 'top', shieldAmount: 50, shieldDuration: 3000, effectType: 'shield' },
-        { emoji: '🦇', name: '吸血鬼', attack: 10, type: 'melee', range: 80, attackSpeed: 600, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', lifestealRatio: 0.3, effectType: 'slash' }
+        { emoji: '🦇', name: '吸血鬼', attack: 10, type: 'melee', range: 80, attackSpeed: 600, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', lifestealRatio: 0.6, effectType: 'slash' }
     ]
 };
 
@@ -532,7 +535,7 @@ function generateRandomStats() {
         speed: Math.floor(Math.random() * (GAME_CONFIG.randomStats.speed.max - GAME_CONFIG.randomStats.speed.min)) + GAME_CONFIG.randomStats.speed.min,
         critRate: GAME_CONFIG.combat.damage.baseCritRate + Math.random() * 0.1,
         critDamage: GAME_CONFIG.combat.damage.baseCritDamage + Math.random() * 0.5,
-        lifeSteal: GAME_CONFIG.combat.damage.baseLifeSteal + Math.random() * 0.05
+        lifeSteal: 0
     };
 }
 
@@ -1334,6 +1337,7 @@ function LevelUp(iconData) {
     levelUpText.className = 'levelup-text';
     levelUpText.textContent = `Lv${iconData.level}!`;
     iconData.element.appendChild(levelUpText);
+    addBattleInfo(iconData, null, iconData.level, 'levelup');
     
     setTimeout(() => {
         levelUpText.remove();
@@ -1941,8 +1945,6 @@ const BATTLE_INFO_TEMPLATES = {
         wrapper: 'heal-message',
         template: ctx => `玩家${ctx.attacker.player}：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span><span class="weapon">${ctx.weaponName}</span>治疗<span class="target">${ctx.defenderName}(Lv${ctx.defenderLevel})</span>，恢复 ${ctx.value} 点生命`
     },
-    'lightning': { wrapper: 'special-message', aoeAttack: '闪电攻击' },
-    'fire':      { wrapper: 'special-message', aoeAttack: '火焰攻击' },
     'ice':       { wrapper: 'special-message', aoeAttack: '冰冻攻击' },
     'explosion': { wrapper: 'special-message', aoeAttack: '爆炸攻击' },
     'burn': {
@@ -1965,10 +1967,22 @@ const BATTLE_INFO_TEMPLATES = {
         wrapper: 'special-message',
         // join 类型: defender 是旧武器对象，value 是新武器对象
         template: ctx => `玩家${ctx.attacker.player}：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span>从<span class="weapon">${ctx.defender.emoji}</span>切换为<span class="weapon">${ctx.value.emoji}</span>加入战斗！`
+    },
+    'lifesteal': {
+        wrapper: 'heal-message',
+        template: ctx => `玩家${ctx.attacker.player}：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span>吸血恢复 ${ctx.value} 点生命`
+    },
+    'levelup': {
+        wrapper: 'special-message',
+        template: ctx => `<span class="player">玩家${ctx.attacker.player}</span>：<span class="attacker">${ctx.attackerName}</span>升级到 <span class="weapon">Lv${ctx.value}</span>！`
+    },
+    'knockback': {
+        wrapper: 'special-message',
+        template: ctx => `玩家${ctx.attacker.player}：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span>用<span class="weapon">${ctx.weaponName}</span>击退了<span class="target">${ctx.defenderName}(Lv${ctx.defenderLevel})</span>`
     }
 };
 
-function generateBattleInfoHTML(attacker, defender, value, actionType) {
+function generateBattleInfoHTML(attacker, defender, value, actionType, isCrit = false) {
     const attackerName = attacker.name || '未知图标';
     const weaponName = attacker.weapon.emoji || attacker.weapon.name;
     const attackerLevel = attacker.level || 1;
@@ -1999,11 +2013,12 @@ function generateBattleInfoHTML(attacker, defender, value, actionType) {
     if (value === 0) {
         return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，被闪避`;
     }
-    return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，伤害值 <span class="damage">${value}</span>`;
+    const critMark = isCrit ? '<span style="color:#ffd700;font-weight:bold;">暴击!</span>' : '';
+    return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>${critMark}攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，伤害值 <span class="damage">${value}</span>`;
 }
 
-function addBattleInfo(attacker, defender, value, actionType = 'attack') {
-    BattleState.battleInfoQueue.push({ attacker, defender, value, actionType });
+function addBattleInfo(attacker, defender, value, actionType = 'attack', isCrit = false) {
+    BattleState.battleInfoQueue.push({ attacker, defender, value, actionType, isCrit });
 }
 
 function flushBattleInfoQueue() {
@@ -2018,10 +2033,10 @@ function flushBattleInfoQueue() {
     
     for (const item of BattleState.battleInfoQueue) {
         const infoItem = document.createElement('div');
-        infoItem.className = 'battle-info-item';
+        infoItem.className = `battle-info-item player-${item.attacker.player}`;
         infoItem.dataset.player = item.attacker.player;
         infoItem.dataset.action = item.actionType;
-        infoItem.innerHTML = generateBattleInfoHTML(item.attacker, item.defender, item.value, item.actionType);
+        infoItem.innerHTML = generateBattleInfoHTML(item.attacker, item.defender, item.value, item.actionType, item.isCrit);
         
         const itemPlayer = String(infoItem.dataset.player);
         const itemAction = infoItem.dataset.action;
@@ -2034,8 +2049,12 @@ function flushBattleInfoQueue() {
         
         if (currentActionFilter !== 'all') {
             if (currentActionFilter === 'special') {
-                const excludedActions = ['attack', 'heal', 'kill'];
+                const excludedActions = ['attack', 'heal', 'kill', 'lifesteal'];
                 if (excludedActions.includes(itemAction)) {
+                    showItem = false;
+                }
+            } else if (currentActionFilter === 'heal') {
+                if (itemAction !== 'heal' && itemAction !== 'lifesteal') {
                     showItem = false;
                 }
             } else {
@@ -2199,12 +2218,12 @@ function attack(attacker, defender) {
                 }
             } else {
                 // 如果目标是敌人，造成伤害
-                const { damage } = calculateDamageWithDefense(attacker, target);
-                
-                addBattleInfo(attacker, target, damage);
-                
+                const { damage, isCrit } = calculateDamageWithDefense(attacker, target);
+
+                addBattleInfo(attacker, target, damage, 'attack', isCrit);
+
                 // 应用伤害效果
-                applyDamageEffects(attacker, target, damage, 'normal');
+                applyDamageEffects(attacker, target, damage, 'normal', isCrit);
                 
                 // 处理目标死亡
                 handleTargetDeath(attacker, target);
@@ -2246,8 +2265,8 @@ function attack(attacker, defender) {
             } else {
                 // 计算伤害
                 const { damage, isCrit } = calculateDamageWithDefense(attacker, target);
-                
-                addBattleInfo(attacker, target, damage);
+
+                addBattleInfo(attacker, target, damage, 'attack', isCrit);
                 
                 // 应用伤害效果
                 applyDamageEffects(attacker, target, damage, 'normal', isCrit);
@@ -2263,8 +2282,8 @@ function attack(attacker, defender) {
                 damage = result.damage;
                 isCrit = result.isCrit;
             }
-            
-            addBattleInfo(attacker, target, damage);
+
+            addBattleInfo(attacker, target, damage, 'attack', isCrit);
 
             // 应用伤害效果
             applyDamageEffects(attacker, target, damage, attacker.weapon.effectType, isCrit);
@@ -2435,75 +2454,6 @@ function showAOEExplosion(x, y, radius) {
     }, GAME_CONFIG.timing.shortDelay);
 }
 
-function showLightningEffect(x, y, radius) {
-    const battleArea = document.getElementById('battleArea');
-    const lightning = document.createElement('div');
-    lightning.className = 'lightning-effect';
-    const effectRadius = radius * 0.7;
-    lightning.style.left = `${x + 40 - effectRadius}px`;
-    lightning.style.top = `${y + 40 - effectRadius}px`;
-    lightning.style.width = `${effectRadius * 2}px`;
-    lightning.style.height = `${effectRadius * 2}px`;
-    lightning.style.setProperty('--icon-size', iconSize);
-    battleArea.appendChild(lightning);
-    
-    const numBolts = 5;
-    for (let i = 0; i < numBolts; i++) {
-        setTimeout(() => {
-            const bolt = document.createElement('div');
-            bolt.className = 'lightning-bolt';
-            bolt.style.left = `${Math.random() * effectRadius * 2}px`;
-            bolt.style.top = `${Math.random() * effectRadius * 2}px`;
-            bolt.style.height = `${Math.random() * 50 + 30}px`;
-            bolt.style.transform = `rotate(${Math.random() * 360}deg)`;
-            lightning.appendChild(bolt);
-            
-            setTimeout(() => {
-                bolt.remove();
-            }, GAME_CONFIG.animation.effectDuration);
-        }, i * 50);
-    }
-    
-    setTimeout(() => {
-        lightning.remove();
-    }, GAME_CONFIG.timing.shortDelay);
-}
-
-function showFireEffect(x, y, radius) {
-    const battleArea = document.getElementById('battleArea');
-    const fire = document.createElement('div');
-    fire.className = 'fire-effect';
-    const effectRadius = radius * 0.7;
-    fire.style.left = `${x + 40 - effectRadius}px`;
-    fire.style.top = `${y + 40 - effectRadius}px`;
-    fire.style.width = `${effectRadius * 2}px`;
-    fire.style.height = `${effectRadius * 2}px`;
-    fire.style.setProperty('--icon-size', iconSize);
-    battleArea.appendChild(fire);
-    
-    const numFlames = 8;
-    for (let i = 0; i < numFlames; i++) {
-        setTimeout(() => {
-            const flame = document.createElement('div');
-            flame.className = 'flame';
-            flame.style.left = `${Math.random() * effectRadius * 2}px`;
-            flame.style.top = `${Math.random() * effectRadius * 2}px`;
-            flame.style.width = `${Math.random() * 30 + 20}px`;
-            flame.style.height = `${Math.random() * 30 + 20}px`;
-            flame.style.transform = `rotate(${Math.random() * 360}deg)`;
-            fire.appendChild(flame);
-            
-            setTimeout(() => {
-                flame.remove();
-            }, GAME_CONFIG.timing.shortDelay);
-        }, i * 60);
-    }
-    
-    setTimeout(() => {
-        fire.remove();
-    }, GAME_CONFIG.timing.shortDelay);
-}
-
 function applyBurnEffect(target, attacker, damage) {
     target.isBurning = true;
     target.burnDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor(damage * GAME_CONFIG.combat.burn.damageFactor));
@@ -2550,11 +2500,11 @@ function applyLifesteal(attacker, damage) {
     const statRatio = attacker.stats.lifeSteal || 0;
     const totalRatio = weaponRatio + statRatio;
     if (totalRatio <= 0) return;
-    const healAmount = Math.floor(damage * totalRatio);
-    if (healAmount <= 0) return;
+    const healAmount = Math.max(1, Math.round(damage * totalRatio));
     attacker.stats.health = Math.min(attacker.stats.maxHealth, attacker.stats.health + healAmount);
     showHealText(attacker, healAmount);
     updateHealthBar(attacker);
+    addBattleInfo(attacker, attacker, healAmount, 'lifesteal');
 }
 
 function applyShield(attacker, target) {
@@ -2600,6 +2550,7 @@ function applyKnockback(attacker, target, distance) {
     }
     
     target.element.classList.add('knocked-back');
+    addBattleInfo(attacker, target, distance, 'knockback');
 
     const startTime = performance.now();
     const duration = attacker.weapon.knockbackDuration || GAME_CONFIG.combat.knockback.defaultDuration;
@@ -2671,57 +2622,6 @@ function applyBuff(attacker, target) {
     
     // 使用addBattleInfo记录兴奋剂效果
     addBattleInfo(attacker, target, 0, 'buff');
-}
-
-function showSoundWaveEffect(x, y, radius) {
-    const battleArea = document.getElementById('battleArea');
-    const soundWave = document.createElement('div');
-    soundWave.className = 'sound-wave-effect';
-    soundWave.style.left = `${x - radius}px`;
-    soundWave.style.top = `${y - radius}px`;
-    soundWave.style.width = `${radius * 2}px`;
-    soundWave.style.height = `${radius * 2}px`;
-    battleArea.appendChild(soundWave);
-    
-    const numRings = 3;
-    for (let i = 0; i < numRings; i++) {
-        setTimeout(() => {
-            const ring = document.createElement('div');
-            ring.className = 'sound-wave-ring';
-            ring.style.left = '50%';
-            ring.style.top = '50%';
-            ring.style.transform = 'translate(-50%, -50%)';
-            ring.style.width = '0px';
-            ring.style.height = '0px';
-            soundWave.appendChild(ring);
-            
-            const ringStartTime = performance.now();
-            const ringDuration = GAME_CONFIG.timing.ringDurationShort;
-            
-            function animateRing(currentTime) {
-                const elapsed = currentTime - ringStartTime;
-                const progress = Math.min(elapsed / ringDuration, 1);
-                
-                const currentRadius = radius * progress;
-                ring.style.width = `${currentRadius * 2}px`;
-                ring.style.height = `${currentRadius * 2}px`;
-                ring.style.opacity = 1 - progress;
-                ring.style.transform = 'translate(-50%, -50%)';
-                
-                if (progress < 1) {
-                    requestAnimationFrame(animateRing);
-                } else {
-                    ring.remove();
-                }
-            }
-            
-            requestAnimationFrame(animateRing);
-        }, i * 100);
-    }
-    
-    setTimeout(() => {
-        soundWave.remove();
-    }, 600);
 }
 
 function showIceEffect(x, y, radius) {
@@ -4013,6 +3913,7 @@ function init() {
         uiSizeSlider.max = uiMaxSize;
     }
     document.documentElement.style.setProperty('--ui-scale', uiSize);
+    document.documentElement.style.setProperty('--ui-opacity', uiOpacity);
 
     initFilterTabs();
     setupTouchOptimizations();
@@ -4040,6 +3941,10 @@ function init() {
         const modal = document.getElementById('searchModal');
         if (event.target === modal) {
             closeSearchModal();
+        }
+        const configModal = document.getElementById('configModal');
+        if (event.target === configModal) {
+            closeConfigModal();
         }
     });
     
@@ -4564,10 +4469,6 @@ function toggleSquadBattleMode() {
 }
 
 function isBattleIcon(iconData) {
-    return iconData.weapon.type === 'melee' || iconData.weapon.type === 'ranged' || iconData.weapon.type === 'aoe';
-}
-
-function isSquadMember(iconData) {
     return iconData.weapon.type === 'melee' || iconData.weapon.type === 'ranged' || iconData.weapon.type === 'aoe';
 }
 
@@ -5393,6 +5294,20 @@ function updateUISize(value) {
     saveOptionsConfig();
 }
 
+function updateUIOpacity(value) {
+    uiOpacity = Math.min(1, Math.max(0.1, parseFloat(value)));
+
+    // 通过CSS变量驱动战斗信息、玩家信息、选项按钮的透明度
+    document.documentElement.style.setProperty('--ui-opacity', uiOpacity);
+
+    const uiOpacitySlider = document.getElementById('uiOpacitySlider');
+    if (uiOpacitySlider) {
+        uiOpacitySlider.value = uiOpacity;
+    }
+
+    saveOptionsConfig();
+}
+
 function checkReadyZoneEmpty(player) {
     const readyContent = document.getElementById(`player${player}ReadyContent`);
     const iconItems = readyContent.querySelectorAll('.icon-item');
@@ -5592,6 +5507,7 @@ function showIconDetailPanel(iconData, player) {
     
     // 填充面板内容
     detailPanel.innerHTML = `
+        <button class="detail-lock-btn" onclick="event.stopPropagation(); toggleDetailPanelLock()" title="锁定面板（锁定后可拖动，点击外部不关闭）">🔓</button>
         <div class="icon-detail-left"></div>
         <div class="icon-detail-right">
             <div class="detail-item">
@@ -5621,6 +5537,18 @@ function showIconDetailPanel(iconData, player) {
             <div class="detail-item">
                 <span class="detail-label">护甲:</span>
                 <span class="detail-value armor" id="detail-armor">${iconData.stats.armor}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">暴击率:</span>
+                <span class="detail-value crit" id="detail-critrate">${(iconData.stats.critRate * 100).toFixed(1)}%</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">暴击伤害:</span>
+                <span class="detail-value crit" id="detail-critdamage">${iconData.stats.critDamage.toFixed(1)}x</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">吸血:</span>
+                <span class="detail-value lifesteal" id="detail-lifesteal">${((iconData.stats.lifeSteal || 0) * 100).toFixed(1)}%</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">武器:</span>
@@ -5697,6 +5625,9 @@ function updateIconDetailPanel(iconData) {
     currentDetailPanel.querySelector('#detail-cooldown').textContent = iconData.weapon.cooldownTime > 0 ? `${iconData.weapon.cooldownTime}ms` : '无';
     currentDetailPanel.querySelector('#detail-ai').textContent = iconData.aiType;
     currentDetailPanel.querySelector('#detail-kills').textContent = iconData.kills;
+    currentDetailPanel.querySelector('#detail-critrate').textContent = `${(iconData.stats.critRate * 100).toFixed(1)}%`;
+    currentDetailPanel.querySelector('#detail-critdamage').textContent = `${iconData.stats.critDamage.toFixed(1)}x`;
+    currentDetailPanel.querySelector('#detail-lifesteal').textContent = `${((iconData.stats.lifeSteal || 0) * 100).toFixed(1)}%`;
 
     // 动态生成状态信息
     const statusEl = currentDetailPanel.querySelector('#detail-status');
@@ -5784,25 +5715,36 @@ function updateIconDetailPanel(iconData) {
 // 关闭战斗图标详情面板函数
 function closeIconDetailPanel() {
     if (!currentDetailPanel) return;
-    
+
+    // 清理拖动事件和锁定状态
+    if (detailPanelLocked) {
+        currentDetailPanel.removeEventListener('mousedown', startDetailPanelDrag);
+        document.removeEventListener('mousemove', onDetailPanelDrag);
+        document.removeEventListener('mouseup', stopDetailPanelDrag);
+        detailPanelLocked = false;
+        detailPanelDragging = false;
+    }
+
     // 清除更新定时器
     if (detailPanelUpdateInterval) {
         clearInterval(detailPanelUpdateInterval);
         detailPanelUpdateInterval = null;
     }
-    
+
     // 移除点击外部关闭面板的事件监听器
     document.removeEventListener('click', handleClickOutsideDetailPanel);
-    
+
     // 移除面板
     currentDetailPanel.remove();
-    
+
     // 重置当前面板和图标数据
     currentDetailPanel = null;
     currentIconData = null;
 }
 
 function handleClickOutsideDetailPanel(event) {
+    // 锁定状态下点击外部不关闭
+    if (detailPanelLocked) return;
     if (currentDetailPanel && !currentDetailPanel.contains(event.target)) {
         // 检查点击的是否是战斗图标列表项
         const iconListItem = event.target.closest('.battle-icon-item');
@@ -5810,6 +5752,56 @@ function handleClickOutsideDetailPanel(event) {
             closeIconDetailPanel();
         }
     }
+}
+
+// 切换详情面板锁定状态（锁定后可拖动，点击外部不关闭）
+function toggleDetailPanelLock() {
+    if (!currentDetailPanel) return;
+    detailPanelLocked = !detailPanelLocked;
+    const btn = currentDetailPanel.querySelector('.detail-lock-btn');
+    if (detailPanelLocked) {
+        if (btn) btn.textContent = '🔒';
+        currentDetailPanel.classList.add('draggable');
+        currentDetailPanel.addEventListener('mousedown', startDetailPanelDrag);
+        document.addEventListener('mousemove', onDetailPanelDrag);
+        document.addEventListener('mouseup', stopDetailPanelDrag);
+    } else {
+        if (btn) btn.textContent = '🔓';
+        currentDetailPanel.classList.remove('draggable');
+        currentDetailPanel.removeEventListener('mousedown', startDetailPanelDrag);
+        document.removeEventListener('mousemove', onDetailPanelDrag);
+        document.removeEventListener('mouseup', stopDetailPanelDrag);
+    }
+}
+
+function startDetailPanelDrag(e) {
+    if (!detailPanelLocked || !currentDetailPanel) return;
+    // 点击🔒按钮本身时不触发拖动
+    if (e.target.closest('.detail-lock-btn')) return;
+
+    detailPanelDragging = true;
+    const rect = currentDetailPanel.getBoundingClientRect();
+    detailPanelDragOffset.x = e.clientX - rect.left;
+    detailPanelDragOffset.y = e.clientY - rect.top;
+
+    // 切换为固定定位以便自由拖动
+    currentDetailPanel.style.position = 'fixed';
+    currentDetailPanel.style.left = rect.left + 'px';
+    currentDetailPanel.style.top = rect.top + 'px';
+    currentDetailPanel.style.right = 'auto';
+    currentDetailPanel.style.transform = 'none';
+
+    e.preventDefault();
+}
+
+function onDetailPanelDrag(e) {
+    if (!detailPanelDragging || !currentDetailPanel) return;
+    currentDetailPanel.style.left = (e.clientX - detailPanelDragOffset.x) + 'px';
+    currentDetailPanel.style.top = (e.clientY - detailPanelDragOffset.y) + 'px';
+}
+
+function stopDetailPanelDrag() {
+    detailPanelDragging = false;
 }
 
 // 武器类型转换为中文
@@ -6598,35 +6590,6 @@ function removeIconsStatsPanel() {
     }
 }
 
-function showPlayerStatsPanel(player) {
-    removePlayerStatsPanels();
-    
-    const statsInfo = document.getElementById(`player${player}Stats`);
-    if (!statsInfo) return;
-    
-    const panel = document.createElement('div');
-    panel.className = `player${player}-stats-panel`;
-    panel.innerHTML = statsInfo.innerHTML;
-    
-    document.body.appendChild(panel);
-    panel.classList.add('show');
-    
-    activePortraitPanel = `player${player}Stats`;
-}
-
-function removePlayerStatsPanels() {
-    const player1Panel = document.querySelector('.player1-stats-panel');
-    const player2Panel = document.querySelector('.player2-stats-panel');
-    
-    if (player1Panel) {
-        player1Panel.remove();
-    }
-    
-    if (player2Panel) {
-        player2Panel.remove();
-    }
-}
-
 function showReadyAreaPanel() {
     const readyArea = document.getElementById('readyarea');
     if (readyArea) {
@@ -6713,7 +6676,7 @@ const SPECIAL_ABILITIES = {
         label: '吸血',
         desc: '将伤害转化为自身生命值',
         fields: {
-            lifestealRatio: { label: '吸血比例', type: 'number', desc: '伤害转血量比例', min: 0, step: 0.05, default: 0.3 }
+            lifestealRatio: { label: '吸血比例', type: 'number', desc: '伤害转血量比例', min: 0, step: 0.05, default: 0.6 }
         }
     },
     knockback: {
@@ -7421,7 +7384,8 @@ function saveOptionsConfig() {
             autoDeployEnabled: autoDeployEnabled,
             gameSpeed: gameSpeed,
             iconSize: iconSize,
-            uiSize: uiSize
+            uiSize: uiSize,
+            uiOpacity: uiOpacity
         };
         localStorage.setItem('iconBattle_options', JSON.stringify(options));
     } catch (e) {
@@ -7474,6 +7438,11 @@ function loadOptionsConfig() {
             if (options.uiSize !== undefined) {
                 uiSize = options.uiSize;
                 updateUISize(uiSize);
+            }
+
+            if (options.uiOpacity !== undefined) {
+                uiOpacity = options.uiOpacity;
+                updateUIOpacity(uiOpacity);
             }
         }
     } catch (e) {
