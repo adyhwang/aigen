@@ -80,7 +80,13 @@ let developerPanelDragging = false;  // 开发者面板是否正在拖动
 let developerPanelOffset = { x: 0, y: 0 };  // 开发者面板拖动时的偏移量
 
 // 战斗信息面板最多显示的条目数
-const MAX_BATTLE_INFO_ITEMS = 500;
+const MAX_BATTLE_INFO_ITEMS = 100;
+const BATTLE_INFO_UPDATE_INTERVAL = 3;
+let battleInfoQueue = [];
+let battleInfoUpdateCounter = 0;
+
+const MAX_ACTIVE_EFFECTS = 15;
+let activeEffectsCount = 0;
 
 // 音频上下文，用于播放游戏音效
 const audioContext = new (window.AudioContext || window.webkitAudioContext());
@@ -1665,6 +1671,10 @@ function showWeaponEffect(attacker, defender, effectType) {
 
 // 武器特效函数库
 function createBaseEffect(attacker, defender, battleArea, className, options = {}) {
+    if (activeEffectsCount >= MAX_ACTIVE_EFFECTS) {
+        return null;
+    }
+    
     const effect = document.createElement('div');
     effect.className = `weapon-effect ${className}`;
     
@@ -1680,10 +1690,12 @@ function createBaseEffect(attacker, defender, battleArea, className, options = {
     if (options.backgroundColor) effect.style.backgroundColor = options.backgroundColor;
     
     battleArea.appendChild(effect);
+    activeEffectsCount++;
     
     const removeDelay = options.removeDelay || GAME_CONFIG.timing.shortDelay;
     setTimeout(() => {
         effect.remove();
+        activeEffectsCount--;
     }, removeDelay);
     
     return effect;
@@ -1691,6 +1703,7 @@ function createBaseEffect(attacker, defender, battleArea, className, options = {
 
 function createSlashEffect(attacker, defender, battleArea) {
     const effect = createBaseEffect(attacker, defender, battleArea, 'slash-effect');
+    if (!effect) return;
     
     // 添加额外的视觉效果
     const slash1 = document.createElement('div');
@@ -1742,6 +1755,7 @@ function createBulletEffect(attacker, defender, battleArea) {
 
 function createLightningSingleEffect(attacker, defender, battleArea) {
     const effect = createBaseEffect(attacker, defender, battleArea, 'lightning-single-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
+    if (!effect) return;
     
     for (let i = 0; i < 3; i++) {
         setTimeout(() => {
@@ -1757,6 +1771,7 @@ function createLightningSingleEffect(attacker, defender, battleArea) {
 
 function createFireSingleEffect(attacker, defender, battleArea) {
     const effect = createBaseEffect(attacker, defender, battleArea, 'fire-single-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
+    if (!effect) return;
     
     for (let i = 0; i < 5; i++) {
         setTimeout(() => {
@@ -1773,6 +1788,7 @@ function createFireSingleEffect(attacker, defender, battleArea) {
 
 function createHealEffect(attacker, defender, battleArea) {
     const effect = createBaseEffect(attacker, defender, battleArea, 'heal-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
+    if (!effect) return;
     
     for (let i = 0; i < 8; i++) {
         setTimeout(() => {
@@ -1790,6 +1806,7 @@ function createHealEffect(attacker, defender, battleArea) {
 
 function createBuffEffect(attacker, defender, battleArea) {
     const effect = createBaseEffect(attacker, defender, battleArea, 'buff-single-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
+    if (!effect) return;
     
     for (let i = 0; i < 4; i++) {
         setTimeout(() => {
@@ -1809,16 +1826,7 @@ function createDefaultEffect(attacker, defender, battleArea) {
     createBaseEffect(attacker, defender, battleArea, 'default-effect');
 }
 
-function addBattleInfo(attacker, defender, value, actionType = 'attack') {
-    if (!battleInfoElement) {
-        battleInfoElement = document.getElementById('battleInfo');
-    }
-    const battleInfo = battleInfoElement;
-    const infoItem = document.createElement('div');
-    infoItem.className = 'battle-info-item';
-    infoItem.dataset.player = attacker.player;
-    infoItem.dataset.action = actionType;
-    
+function generateBattleInfoHTML(attacker, defender, value, actionType) {
     const attackerName = attacker.name || '未知图标';
     const weaponName = attacker.weapon.emoji || attacker.weapon.name;
     const attackerLevel = attacker.level || 1;
@@ -1826,26 +1834,24 @@ function addBattleInfo(attacker, defender, value, actionType = 'attack') {
     if (actionType === '开始冲锋') {
         const defenderName = defender?.name || '未知图标';
         const defenderLevel = defender?.level || 1;
-        infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>开始冲锋<span class="target">${defenderName}(Lv${defenderLevel})</span>`;
+        return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>开始冲锋<span class="target">${defenderName}(Lv${defenderLevel})</span>`;
     } else if (actionType === '自爆伤害') {
         const defenderName = defender?.name || '未知图标';
         const defenderLevel = defender?.level || 1;
-        infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>自爆伤害<span class="target">${defenderName}(Lv${defenderLevel})</span>，伤害值 <span class="damage">${value}</span>`;
+        return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>自爆伤害<span class="target">${defenderName}(Lv${defenderLevel})</span>，伤害值 <span class="damage">${value}</span>`;
     } else if (actionType === '自爆死亡') {
-        infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>自爆死亡`;
+        return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>自爆死亡`;
     } else if (actionType.includes('血量全满')) {
-        infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}</span><span class="weapon">${weaponName}</span>${actionType}`;
+        return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}</span><span class="weapon">${weaponName}</span>${actionType}`;
     } else if (actionType === 'kill') {
         const defenderName = defender?.name || '未知图标';
         const defenderLevel = defender?.level || 1;
-        infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>击杀<span class="target">${defenderName}(Lv${defenderLevel})</span>`;
+        return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>击杀<span class="target">${defenderName}(Lv${defenderLevel})</span>`;
     } else if (actionType === 'heal') {
-        // 治疗事件
         const defenderName = defender?.name || '未知图标';
         const defenderLevel = defender?.level || 1;
-        infoItem.innerHTML = `<span class="heal-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>治疗<span class="target">${defenderName}(Lv${defenderLevel})</span>，恢复 ${value} 点生命</span>`;
+        return `<span class="heal-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>治疗<span class="target">${defenderName}(Lv${defenderLevel})</span>，恢复 ${value} 点生命</span>`;
     } else if (actionType === 'lightning' || actionType === 'fire' || actionType === 'ice' || actionType === 'explosion') {
-        // AOE攻击事件
         const aoeRadius = attacker.weapon.aoeRadius || GAME_CONFIG.combat.weaponDefaults.aoeRadius;
         const weaponEmoji = attacker.weapon.emoji || '💣';
         const attackName = {
@@ -1854,76 +1860,96 @@ function addBattleInfo(attacker, defender, value, actionType = 'attack') {
             'ice': '冰冻攻击',
             'explosion': '爆炸攻击'
         }[actionType];
-        infoItem.innerHTML = `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>使用<span class="weapon">${weaponEmoji}</span>释放了${attackName}，范围${aoeRadius}</span>`;
+        return `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>使用<span class="weapon">${weaponEmoji}</span>释放了${attackName}，范围${aoeRadius}</span>`;
     } else if (actionType === 'burn') {
-        // 燃烧效果事件
         const burnDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor(value * GAME_CONFIG.combat.burn.damageFactor));
         const burnInterval = (attacker.weapon.burnInterval || GAME_CONFIG.combat.burn.defaultInterval) / gameSpeed;
         const defenderName = defender?.name || '未知图标';
         const defenderLevel = defender?.level || 1;
-        infoItem.innerHTML = `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>用<span class="weapon">${weaponName}</span>对<span class="target">${defenderName}(Lv${defenderLevel})</span>施加了燃烧效果，每${Math.round(burnInterval)}毫秒造成${burnDamage}点伤害</span>`;
+        return `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>用<span class="weapon">${weaponName}</span>对<span class="target">${defenderName}(Lv${defenderLevel})</span>施加了燃烧效果，每${Math.round(burnInterval)}毫秒造成${burnDamage}点伤害</span>`;
     } else if (actionType === 'freeze') {
-        // 冰冻效果事件
         const actualDuration = value / gameSpeed;
         const defenderName = defender?.name || '未知图标';
         const defenderLevel = defender?.level || 1;
-        infoItem.innerHTML = `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>用<span class="weapon">${weaponName}</span>冰冻了<span class="target">${defenderName}(Lv${defenderLevel})</span>，持续${Math.round(actualDuration)}毫秒</span>`;
+        return `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>用<span class="weapon">${weaponName}</span>冰冻了<span class="target">${defenderName}(Lv${defenderLevel})</span>，持续${Math.round(actualDuration)}毫秒</span>`;
     } else if (actionType === 'buff') {
-        // 兴奋剂效果事件
         const defenderName = defender?.name || '未知图标';
         const defenderLevel = defender?.level || 1;
-        infoItem.innerHTML = `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">💉</span>给<span class="target">${defenderName}(Lv${defenderLevel})</span>使用了兴奋剂</span>`;
+        return `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">💉</span>给<span class="target">${defenderName}(Lv${defenderLevel})</span>使用了兴奋剂</span>`;
     } else if (actionType === 'join') {
-        // 图标加入战斗事件
-        const oldWeapon = defender; // 这里defender参数实际是oldWeapon
-        const newWeapon = value; // 这里value参数实际是newWeapon
-        infoItem.innerHTML = `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>从<span class="weapon">${oldWeapon.emoji}</span>切换为<span class="weapon">${newWeapon.emoji}</span>加入战斗！</span>`;
+        const oldWeapon = defender;
+        const newWeapon = value;
+        return `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>从<span class="weapon">${oldWeapon.emoji}</span>切换为<span class="weapon">${newWeapon.emoji}</span>加入战斗！</span>`;
     } else {
         const defenderName = defender?.name || '未知图标';
         const defenderLevel = defender?.level || 1;
         
         if (value === 0) {
-            infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，被闪避`;
+            return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，被闪避`;
         } else {
-            infoItem.innerHTML = `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，伤害值 <span class="damage">${value}</span>`;
+            return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，伤害值 <span class="damage">${value}</span>`;
         }
     }
+}
+
+function addBattleInfo(attacker, defender, value, actionType = 'attack') {
+    battleInfoQueue.push({ attacker, defender, value, actionType });
+}
+
+function flushBattleInfoQueue() {
+    if (battleInfoQueue.length === 0) return;
     
-    battleInfo.appendChild(infoItem);
+    if (!battleInfoElement) {
+        battleInfoElement = document.getElementById('battleInfo');
+    }
+    const battleInfo = battleInfoElement;
+    
+    const fragment = document.createDocumentFragment();
+    
+    for (const item of battleInfoQueue) {
+        const infoItem = document.createElement('div');
+        infoItem.className = 'battle-info-item';
+        infoItem.dataset.player = item.attacker.player;
+        infoItem.dataset.action = item.actionType;
+        infoItem.innerHTML = generateBattleInfoHTML(item.attacker, item.defender, item.value, item.actionType);
+        
+        const itemPlayer = String(infoItem.dataset.player);
+        const itemAction = infoItem.dataset.action;
+        
+        let showItem = true;
+        
+        if (currentPlayerFilter !== 'all' && itemPlayer !== currentPlayerFilter) {
+            showItem = false;
+        }
+        
+        if (currentActionFilter !== 'all') {
+            if (currentActionFilter === 'special') {
+                const excludedActions = ['attack', 'heal', 'kill'];
+                if (excludedActions.includes(itemAction)) {
+                    showItem = false;
+                }
+            } else {
+                if (itemAction !== currentActionFilter) {
+                    showItem = false;
+                }
+            }
+        }
+        
+        if (!showItem) {
+            infoItem.classList.add('hidden');
+        }
+        
+        fragment.appendChild(infoItem);
+    }
+    
+    battleInfo.appendChild(fragment);
     battleInfo.scrollTop = battleInfo.scrollHeight;
     
     while (battleInfo.children.length > MAX_BATTLE_INFO_ITEMS) {
         battleInfo.removeChild(battleInfo.firstChild);
     }
     
-    const itemPlayer = String(infoItem.dataset.player);
-    const itemAction = infoItem.dataset.action;
-    
-    let showItem = true;
-    
-    if (currentPlayerFilter !== 'all' && itemPlayer !== currentPlayerFilter) {
-        showItem = false;
-    }
-    
-    if (currentActionFilter !== 'all') {
-        if (currentActionFilter === 'special') {
-            // 其他tab应该显示除了攻击、治疗和击杀以外的所有事件
-            const excludedActions = ['attack', 'heal', 'kill'];
-            if (excludedActions.includes(itemAction)) {
-                showItem = false;
-            }
-        } else {
-            if (itemAction !== currentActionFilter) {
-                showItem = false;
-            }
-        }
-    }
-    
-    if (showItem) {
-        infoItem.classList.remove('hidden');
-    } else {
-        infoItem.classList.add('hidden');
-    }
+    battleInfoQueue = [];
 }
 
 // 计算伤害值（简化版，仅返回伤害值）
@@ -3145,7 +3171,8 @@ function shouldRetreatByAI(iconData, enemies) {
     }
     
     const effectiveRange = getEffectiveRange(iconData);
-    const nearbyEnemies = enemies.filter(e => getDistanceBetween(iconData, e) < effectiveRange * 1.5);
+    const effectiveRangeSq = Math.pow(effectiveRange * 1.5, 2);
+    const nearbyEnemies = enemies.filter(e => getDistanceSqBetween(iconData, e) < effectiveRangeSq);
     
     return nearbyEnemies.length > 0;
 }
@@ -3294,6 +3321,12 @@ function updateGame(deltaTime) {
     });
     
     clampAllIconsToBounds();
+    
+    battleInfoUpdateCounter++;
+    if (battleInfoUpdateCounter >= BATTLE_INFO_UPDATE_INTERVAL) {
+        flushBattleInfoQueue();
+        battleInfoUpdateCounter = 0;
+    }
 }
 
 function handleHealerBehavior(iconData) {
@@ -4520,12 +4553,9 @@ function findRetreatPosition(iconData, enemies) {
 }
 
 function checkAllMembersInRange(leader, members, range) {
+    const rangeSq = range * range;
     for (const member of members) {
-        const dx = member.x - leader.x;
-        const dy = member.y - leader.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance > range) {
+        if (getDistanceSqBetween(leader, member) > rangeSq) {
             return false;
         }
     }
@@ -5388,12 +5418,9 @@ function handleRocketCharge(iconData) {
                 const rect = battleArea.getBoundingClientRect();
                 
                 if (enemies.length > 0) {
-                    const enemiesInRange = enemies.filter(enemy => {
-                        const dx = enemy.x - iconData.x;
-                        const dy = enemy.y - iconData.y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-                        return distance < GAME_CONFIG.movement.squadMonitorRange / iconSize;
-                    });
+                    const monitorRange = GAME_CONFIG.movement.squadMonitorRange / iconSize;
+                    const monitorRangeSq = monitorRange * monitorRange;
+                    const enemiesInRange = enemies.filter(enemy => getDistanceSqBetween(iconData, enemy) < monitorRangeSq);
                     
                     if (enemiesInRange.length > 0) {
                         // 有敌人在400范围内，发起冲锋
