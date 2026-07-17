@@ -3051,6 +3051,48 @@ function initBattleInfoDrag() {
     document.addEventListener('mouseup', () => {
         battleInfoDragging = false;
     });
+
+    // 触摸事件支持
+    battleInfoWrapper.addEventListener('touchstart', (e) => {
+        if (e.target.classList.contains('filter-tab')) return;
+
+        battleInfoDragging = true;
+        const touch = e.touches[0];
+        const rect = battleInfoWrapper.getBoundingClientRect();
+        battleInfoOffset.x = touch.clientX - rect.left;
+        battleInfoOffset.y = touch.clientY - rect.top;
+        battleInfoWrapper.style.left = `${rect.left}px`;
+        battleInfoWrapper.style.top = `${rect.top}px`;
+        battleInfoWrapper.style.right = 'auto';
+        battleInfoWrapper.style.bottom = 'auto';
+        battleInfoWrapper.style.transform = `translate(0, 0) scale(${uiSize})`;
+        e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!battleInfoDragging) return;
+
+        const touch = e.touches[0];
+        const battleArea = document.getElementById('battleArea');
+        const battleAreaRect = battleArea.getBoundingClientRect();
+
+        let newX = touch.clientX - battleAreaRect.left - battleInfoOffset.x;
+        let newY = touch.clientY - battleAreaRect.top - battleInfoOffset.y;
+
+        const maxX = battleAreaRect.width - battleInfoWrapper.offsetWidth;
+        const maxY = battleAreaRect.height - battleInfoWrapper.offsetHeight;
+
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+
+        battleInfoWrapper.style.left = `${newX}px`;
+        battleInfoWrapper.style.top = `${newY}px`;
+        e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => {
+        battleInfoDragging = false;
+    });
 }
 
 function removeBattleIcon(iconData) {
@@ -5719,8 +5761,11 @@ function closeIconDetailPanel() {
     // 清理拖动事件和锁定状态
     if (detailPanelLocked) {
         currentDetailPanel.removeEventListener('mousedown', startDetailPanelDrag);
+        currentDetailPanel.removeEventListener('touchstart', startDetailPanelDrag);
         document.removeEventListener('mousemove', onDetailPanelDrag);
+        document.removeEventListener('touchmove', onDetailPanelDrag);
         document.removeEventListener('mouseup', stopDetailPanelDrag);
+        document.removeEventListener('touchend', stopDetailPanelDrag);
         detailPanelLocked = false;
         detailPanelDragging = false;
     }
@@ -5763,14 +5808,20 @@ function toggleDetailPanelLock() {
         if (btn) btn.textContent = '🔒';
         currentDetailPanel.classList.add('draggable');
         currentDetailPanel.addEventListener('mousedown', startDetailPanelDrag);
+        currentDetailPanel.addEventListener('touchstart', startDetailPanelDrag, { passive: false });
         document.addEventListener('mousemove', onDetailPanelDrag);
+        document.addEventListener('touchmove', onDetailPanelDrag, { passive: false });
         document.addEventListener('mouseup', stopDetailPanelDrag);
+        document.addEventListener('touchend', stopDetailPanelDrag);
     } else {
         if (btn) btn.textContent = '🔓';
         currentDetailPanel.classList.remove('draggable');
         currentDetailPanel.removeEventListener('mousedown', startDetailPanelDrag);
+        currentDetailPanel.removeEventListener('touchstart', startDetailPanelDrag);
         document.removeEventListener('mousemove', onDetailPanelDrag);
+        document.removeEventListener('touchmove', onDetailPanelDrag);
         document.removeEventListener('mouseup', stopDetailPanelDrag);
+        document.removeEventListener('touchend', stopDetailPanelDrag);
     }
 }
 
@@ -5780,9 +5831,10 @@ function startDetailPanelDrag(e) {
     if (e.target.closest('.detail-lock-btn')) return;
 
     detailPanelDragging = true;
+    const point = e.touches ? e.touches[0] : e;
     const rect = currentDetailPanel.getBoundingClientRect();
-    detailPanelDragOffset.x = e.clientX - rect.left;
-    detailPanelDragOffset.y = e.clientY - rect.top;
+    detailPanelDragOffset.x = point.clientX - rect.left;
+    detailPanelDragOffset.y = point.clientY - rect.top;
 
     // 切换为固定定位以便自由拖动
     currentDetailPanel.style.position = 'fixed';
@@ -5796,8 +5848,10 @@ function startDetailPanelDrag(e) {
 
 function onDetailPanelDrag(e) {
     if (!detailPanelDragging || !currentDetailPanel) return;
-    currentDetailPanel.style.left = (e.clientX - detailPanelDragOffset.x) + 'px';
-    currentDetailPanel.style.top = (e.clientY - detailPanelDragOffset.y) + 'px';
+    const point = e.touches ? e.touches[0] : e;
+    currentDetailPanel.style.left = (point.clientX - detailPanelDragOffset.x) + 'px';
+    currentDetailPanel.style.top = (point.clientY - detailPanelDragOffset.y) + 'px';
+    e.preventDefault();
 }
 
 function stopDetailPanelDrag() {

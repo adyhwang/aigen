@@ -2552,7 +2552,7 @@ body {
 
     .weapon-config-form,
     .combat-config-form {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
         gap: 6px 4px;
         overflow-x: hidden;
         padding-right: 4px;
@@ -2768,12 +2768,14 @@ body {
 
 .config-row {
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
     align-items: center;
 }
 
 .config-row .option-item {
-    flex: 1;
+    flex: 1 1 140px;
+    min-width: 140px;
     padding: 4px 8px;
     gap: 4px;
 }
@@ -2791,6 +2793,8 @@ body {
 .config-row .option-item input[type="range"] {
     margin-left: 4px;
     width: 120px;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .weapon-selector {
@@ -2864,7 +2868,7 @@ body {
 .weapon-config-form,
 .combat-config-form {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 6px;
     max-height: 55vh;
     overflow-y: auto;
