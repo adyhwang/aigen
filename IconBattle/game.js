@@ -4127,6 +4127,9 @@ function toggleHideReadyArea() {
 }
 
 function toggleHideBattleInfo() {
+    const isLandscape = window.matchMedia('(orientation: landscape)').matches;
+    if (!isLandscape) return;
+    
     const hideBattleInfo = document.getElementById('hideBattleInfo').checked;
     const battleInfoWrapper = document.getElementById('battleInfoWrapper');
     
@@ -5956,6 +5959,7 @@ function hideAllPanels() {
 function showBattleInfoPanel() {
     const battleInfoWrapper = document.getElementById('battleInfoWrapper');
     if (battleInfoWrapper) {
+        battleInfoWrapper.classList.remove('hidden');
         battleInfoWrapper.classList.add('show');
         activePortraitPanel = 'battleInfo';
     }
