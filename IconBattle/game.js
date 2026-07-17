@@ -88,8 +88,6 @@ let battleInfoUpdateCounter = 0;
 const MAX_ACTIVE_EFFECTS = 15;
 let activeEffectsCount = 0;
 
-let iconsToUpdate = [];
-
 // 音频上下文，用于播放游戏音效
 const audioContext = new (window.AudioContext || window.webkitAudioContext());
 
@@ -1119,6 +1117,8 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
         healthBarFill: healthBarFill,
         statsDisplay: statsDisplay,
         weaponWrapper: weaponWrapper,
+        defaultDirection: weaponData.defaultDirection,
+        currentDirection: player === 1 ? 'right' : 'left',
         stats: stats,
         player: player,
         x: x,
@@ -1151,9 +1151,7 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
         kills: 0,
         isCharging: false,
         chargeTarget: null,
-        chargeStartTime: 0,
-        isMoving: false,
-        facing: player === 1 ? 'right' : 'left'
+        chargeStartTime: 0
     };
     
     if (level > 1) {
@@ -1313,8 +1311,8 @@ function prepareAttack(attacker, target) {
     attacker.element.classList.add('attacking');
     playSound('attack');
     
-    const weaponWrapper = attacker.element.querySelector('.weapon-wrapper');
-    const defaultDirection = weaponWrapper.dataset.defaultDirection;
+    const weaponWrapper = attacker.weaponWrapper;
+    const defaultDirection = attacker.defaultDirection;
     
     const dx = target.x - attacker.x;
     
@@ -2808,16 +2806,12 @@ function showBuffEffect(x, y, radius) {
 // 移动战斗图标向目标位置
 // @param {Object} iconData - 战斗图标数据对象，包含位置、目标位置、速度等信息
 function clampIconPosition(iconData) {
-    if (!battleAreaElement) {
-        battleAreaElement = document.getElementById('battleArea');
-    }
-    if (!battleAreaElement) return;
+    if (!battleAreaRect) return;
     
-    const rect = battleAreaElement.getBoundingClientRect();
     const margin = GAME_CONFIG.movement.boundaryMargin * iconSize;
     
-    const maxX = rect.width - margin;
-    const maxY = rect.height - margin;
+    const maxX = battleAreaRect.width - margin;
+    const maxY = battleAreaRect.height - margin;
     
     iconData.x = Math.max(margin, Math.min(maxX, iconData.x));
     iconData.y = Math.max(margin, Math.min(maxY, iconData.y));
@@ -2828,16 +2822,22 @@ function clampIconPosition(iconData) {
     if (iconData.targetY !== undefined) {
         iconData.targetY = Math.max(margin, Math.min(maxY, iconData.targetY));
     }
-    
-    iconData.element.style.left = `${iconData.x}px`;
-    iconData.element.style.top = `${iconData.y}px`;
-    iconData.element.style.zIndex = Math.floor(iconData.y);
 }
 
 function clampAllIconsToBounds() {
     [...battleIcons.player1, ...battleIcons.player2].forEach(iconData => {
         if (!iconData.isDead) {
             clampIconPosition(iconData);
+        }
+    });
+}
+
+function updateAllIconsPositions() {
+    [...battleIcons.player1, ...battleIcons.player2].forEach(iconData => {
+        if (!iconData.isDead) {
+            iconData.element.style.left = `${iconData.x}px`;
+            iconData.element.style.top = `${iconData.y}px`;
+            iconData.element.style.zIndex = Math.floor(iconData.y);
         }
     });
 }
@@ -2907,9 +2907,13 @@ function moveTowardsTarget(iconData) {
     if (distance > GAME_CONFIG.movement.arrivalThreshold * iconSize) {
         let speed = iconData.stats.speed * gameSpeed;
         
-        if (squadBattleMode && iconData.squadMinSpeed !== undefined) {
-            if (iconData.stats.speed > iconData.squadMinSpeed) {
-                speed = speed * (iconData.squadMinSpeed / iconData.stats.speed);
+        if (squadBattleMode) {
+            const members = getSquadMembers(iconData.player);
+            const minSpeed = Math.min(...members.map(m => m.stats.speed));
+            
+            if (iconData.stats.speed > minSpeed) {
+                const speedRatio = minSpeed / iconData.stats.speed;
+                speed = speed * speedRatio;
             }
         }
         
@@ -2919,82 +2923,51 @@ function moveTowardsTarget(iconData) {
         iconData.x += moveX;
         iconData.y += moveY;
         
-        if (battleAreaRect) {
-            const margin = GAME_CONFIG.movement.boundaryMargin * iconSize;
-            iconData.x = Math.max(margin, Math.min(battleAreaRect.width - margin, iconData.x));
-            iconData.y = Math.max(margin, Math.min(battleAreaRect.height - margin, iconData.y));
-        }
+        clampIconPosition(iconData);
         
-        iconData.isMoving = true;
+        iconData.element.classList.add('moving');
         
-        if (moveX > 0) {
-            iconData.facing = 'right';
-        } else if (moveX < 0) {
-            iconData.facing = 'left';
-        }
+        const newDirection = moveX > 0.5 ? 'right' : (moveX < -0.5 ? 'left' : iconData.currentDirection);
         
-        if (!iconsToUpdate.includes(iconData)) {
-            iconsToUpdate.push(iconData);
+        if (newDirection !== iconData.currentDirection) {
+            iconData.currentDirection = newDirection;
+            
+            const weaponWrapper = iconData.weaponWrapper;
+            const defaultDirection = iconData.defaultDirection;
+            
+            if (newDirection === 'right') {
+                iconData.element.classList.remove('facing-left');
+                iconData.element.classList.add('facing-right');
+                
+                weaponWrapper.style.right = '-30px';
+                weaponWrapper.style.left = 'auto';
+                
+                if (defaultDirection === 'top') {
+                    weaponWrapper.style.transform = 'rotate(90deg)';
+                } else if (defaultDirection === 'right') {
+                    weaponWrapper.style.transform = 'scaleX(1)';
+                } else if (defaultDirection === 'left') {
+                    weaponWrapper.style.transform = 'scaleX(-1)';
+                }
+            } else {
+                iconData.element.classList.remove('facing-right');
+                iconData.element.classList.add('facing-left');
+                
+                weaponWrapper.style.left = '-30px';
+                weaponWrapper.style.right = 'auto';
+                
+                if (defaultDirection === 'top') {
+                    weaponWrapper.style.transform = 'rotate(-90deg)';
+                } else if (defaultDirection === 'right') {
+                    weaponWrapper.style.transform = 'scaleX(-1)';
+                } else if (defaultDirection === 'left') {
+                    weaponWrapper.style.transform = 'scaleX(1)';
+                }
+            }
         }
     } else {
-        iconData.isMoving = false;
-        
-        if (!iconsToUpdate.includes(iconData)) {
-            iconsToUpdate.push(iconData);
-        }
+        iconData.element.classList.remove('moving');
     }
-}
-
-function batchUpdateIconsDOM() {
-    for (const iconData of iconsToUpdate) {
-        if (!iconData.element) continue;
-        
-        iconData.element.style.transform = `translate(${iconData.x}px, ${iconData.y}px) scale(${iconSize})`;
-        
-        if (iconData.isMoving) {
-            iconData.element.classList.add('moving');
-        } else {
-            iconData.element.classList.remove('moving');
-        }
-        
-        if (iconData.facing === 'right') {
-            iconData.element.classList.remove('facing-left');
-            iconData.element.classList.add('facing-right');
-            
-            if (iconData.weaponWrapper) {
-                iconData.weaponWrapper.style.right = '-30px';
-                iconData.weaponWrapper.style.left = 'auto';
-                
-                const defaultDirection = iconData.weaponWrapper.dataset.defaultDirection;
-                if (defaultDirection === 'top') {
-                    iconData.weaponWrapper.style.transform = 'rotate(90deg)';
-                } else if (defaultDirection === 'right') {
-                    iconData.weaponWrapper.style.transform = 'scaleX(1)';
-                } else if (defaultDirection === 'left') {
-                    iconData.weaponWrapper.style.transform = 'scaleX(-1)';
-                }
-            }
-        } else if (iconData.facing === 'left') {
-            iconData.element.classList.remove('facing-right');
-            iconData.element.classList.add('facing-left');
-            
-            if (iconData.weaponWrapper) {
-                iconData.weaponWrapper.style.left = '-30px';
-                iconData.weaponWrapper.style.right = 'auto';
-                
-                const defaultDirection = iconData.weaponWrapper.dataset.defaultDirection;
-                if (defaultDirection === 'top') {
-                    iconData.weaponWrapper.style.transform = 'rotate(-90deg)';
-                } else if (defaultDirection === 'right') {
-                    iconData.weaponWrapper.style.transform = 'scaleX(-1)';
-                } else if (defaultDirection === 'left') {
-                    iconData.weaponWrapper.style.transform = 'scaleX(1)';
-                }
-            }
-        }
-    }
-    
-    iconsToUpdate = [];
 }
 
 function updateBattleStats() {
@@ -3354,13 +3327,12 @@ function updateGame(deltaTime) {
         });
     }
     
-    updateSquadMinSpeedCache();
-    
     [...battleIcons.player1, ...battleIcons.player2].forEach(iconData => {
         updateIconBehavior(iconData, isVictory);
     });
     
-    batchUpdateIconsDOM();
+    clampAllIconsToBounds();
+    updateAllIconsPositions();
     
     battleInfoUpdateCounter++;
     if (battleInfoUpdateCounter >= BATTLE_INFO_UPDATE_INTERVAL) {
@@ -4302,21 +4274,6 @@ function clearSquadLeaders() {
             leader.element.classList.remove('squad-leader');
             squadLeaders[`player${player}`] = null;
         }
-    });
-}
-
-function updateSquadMinSpeedCache() {
-    if (!squadBattleMode) return;
-    
-    [1, 2].forEach(player => {
-        const members = battleIcons[`player${player}`].filter(icon => !icon.isDead);
-        if (members.length === 0) return;
-        
-        const minSpeed = Math.min(...members.map(m => m.stats.speed));
-        
-        members.forEach(icon => {
-            icon.squadMinSpeed = minSpeed;
-        });
     });
 }
 
@@ -5566,36 +5523,42 @@ function handleRocketCharge(iconData) {
         clampIconPosition(iconData);
         
         // 更新朝向
-        const weaponWrapper = iconData.element.querySelector('.weapon-wrapper');
-        const defaultDirection = weaponWrapper.dataset.defaultDirection;
+        const newDirection = moveX > 0.5 ? 'right' : (moveX < -0.5 ? 'left' : iconData.currentDirection);
         
-        if (moveX > 0) {
-            iconData.element.classList.remove('facing-left');
-            iconData.element.classList.add('facing-right');
+        if (newDirection !== iconData.currentDirection) {
+            iconData.currentDirection = newDirection;
             
-            weaponWrapper.style.right = '-30px';
-            weaponWrapper.style.left = 'auto';
+            const weaponWrapper = iconData.weaponWrapper;
+            const defaultDirection = iconData.defaultDirection;
             
-            if (defaultDirection === 'top') {
-                weaponWrapper.style.transform = 'rotate(90deg)';
-            } else if (defaultDirection === 'right') {
-                weaponWrapper.style.transform = 'scaleX(1)';
-            } else if (defaultDirection === 'left') {
-                weaponWrapper.style.transform = 'scaleX(-1)';
-            }
-        } else if (moveX < 0) {
-            iconData.element.classList.remove('facing-right');
-            iconData.element.classList.add('facing-left');
-            
-            weaponWrapper.style.left = '-30px';
-            weaponWrapper.style.right = 'auto';
-            
-            if (defaultDirection === 'top') {
-                weaponWrapper.style.transform = 'rotate(-90deg)';
-            } else if (defaultDirection === 'right') {
-                weaponWrapper.style.transform = 'scaleX(-1)';
-            } else if (defaultDirection === 'left') {
-                weaponWrapper.style.transform = 'scaleX(1)';
+            if (newDirection === 'right') {
+                iconData.element.classList.remove('facing-left');
+                iconData.element.classList.add('facing-right');
+                
+                weaponWrapper.style.right = '-30px';
+                weaponWrapper.style.left = 'auto';
+                
+                if (defaultDirection === 'top') {
+                    weaponWrapper.style.transform = 'rotate(90deg)';
+                } else if (defaultDirection === 'right') {
+                    weaponWrapper.style.transform = 'scaleX(1)';
+                } else if (defaultDirection === 'left') {
+                    weaponWrapper.style.transform = 'scaleX(-1)';
+                }
+            } else {
+                iconData.element.classList.remove('facing-right');
+                iconData.element.classList.add('facing-left');
+                
+                weaponWrapper.style.left = '-30px';
+                weaponWrapper.style.right = 'auto';
+                
+                if (defaultDirection === 'top') {
+                    weaponWrapper.style.transform = 'rotate(-90deg)';
+                } else if (defaultDirection === 'right') {
+                    weaponWrapper.style.transform = 'scaleX(-1)';
+                } else if (defaultDirection === 'left') {
+                    weaponWrapper.style.transform = 'scaleX(1)';
+                }
             }
         }
         
