@@ -112,7 +112,7 @@ const GAME_CONFIG = {
     },
     // 随机属性范围配置
     randomStats: {
-        health: { min: 100, max: 150 },   // 生命值范围
+        health: { min: 150, max: 250 },   // 生命值范围
         attack: { min: 10, max: 30 },      // 攻击力范围
         defense: { min: 5, max: 15 },      // 防御力范围
         armor: { min: 1, max: 4 },         // 护甲值范围
@@ -2496,8 +2496,6 @@ function showFireEffect(x, y, radius) {
 }
 
 function applyBurnEffect(target, attacker, damage) {
-    if (target.isBurning) return;
-    
     target.isBurning = true;
     target.burnDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor(damage * GAME_CONFIG.combat.burn.damageFactor));
     const burnInterval = attacker.weapon.burnInterval || GAME_CONFIG.combat.burn.defaultInterval;
@@ -2619,8 +2617,8 @@ function applyKnockback(attacker, target, distance) {
 }
 
 function applyFreeze(attacker, target, duration) {
-    if (target.isDead || target.isFrozen) return;
-    
+    if (target.isDead) return;
+
     target.isFrozen = true;
     target.freezeRemaining = duration;
     
@@ -6595,7 +6593,17 @@ function getCombatFieldMeta() {
         'squad.retreatHealthThreshold': { label: '后撤血量阈值', type: 'number', desc: '低于该比例后撤', min: 0, step: 0.05, section: '小队战斗' },
         'squad.retreatCloseRangeFactor': { label: '后撤贴脸比例', type: 'number', desc: '', min: 0, step: 0.05, section: '小队战斗' },
         'squad.retreatDistance': { label: '后撤距离', type: 'number', desc: '像素', min: 0, section: '小队战斗' },
-        'squad.supportPriorityHealPercent': { label: '辅助治疗阈值', type: 'number', desc: '低于该比例优先治疗', min: 0, step: 0.05, section: '小队战斗' }
+        'squad.supportPriorityHealPercent': { label: '辅助治疗阈值', type: 'number', desc: '低于该比例优先治疗', min: 0, step: 0.05, section: '小队战斗' },
+        'randomStats.health.min': { label: '血量下限', type: 'number', desc: '随机生成最小血量', min: 50, step: 10, section: '随机属性' },
+        'randomStats.health.max': { label: '血量上限', type: 'number', desc: '随机生成最大血量', min: 50, step: 10, section: '随机属性' },
+        'randomStats.attack.min': { label: '攻击下限', type: 'number', desc: '', min: 1, step: 1, section: '随机属性' },
+        'randomStats.attack.max': { label: '攻击上限', type: 'number', desc: '', min: 1, step: 1, section: '随机属性' },
+        'randomStats.defense.min': { label: '防御下限', type: 'number', desc: '', min: 0, step: 1, section: '随机属性' },
+        'randomStats.defense.max': { label: '防御上限', type: 'number', desc: '', min: 0, step: 1, section: '随机属性' },
+        'randomStats.armor.min': { label: '护甲下限', type: 'number', desc: '', min: 0, step: 1, section: '随机属性' },
+        'randomStats.armor.max': { label: '护甲上限', type: 'number', desc: '', min: 0, step: 1, section: '随机属性' },
+        'randomStats.speed.min': { label: '速度下限', type: 'number', desc: '', min: 1, step: 1, section: '随机属性' },
+        'randomStats.speed.max': { label: '速度上限', type: 'number', desc: '', min: 1, step: 1, section: '随机属性' }
     };
 }
 
