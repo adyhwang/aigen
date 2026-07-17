@@ -50,51 +50,7 @@
             </div>
             
             <div class="options-container" id="optionsContainer">
-                <button class="btn-options hide-option" onclick="toggleOptions()">选项</button>
-                <div class="options-dropdown" id="optionsDropdown">
-                    <label class="option-item">
-                        <input type="checkbox" id="squadBattleMode" onchange="toggleSquadBattleMode()">
-                        <span>小队模式</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="autoAddRandom" onchange="toggleAutoAddRandom()">
-                        <span>自动添加图标</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="autoDeploy" onchange="toggleAutoDeploy()">
-                        <span>自动参战</span>
-                    </label>
-                    <label class="option-item hide-option">
-                        <input type="checkbox" id="hideBattleInfo" onchange="toggleHideBattleInfo()">
-                        <span>隐藏战斗信息</span>
-                    </label>
-                    <label class="option-item hide-option">
-                        <input type="checkbox" id="hideStats" onchange="toggleHideStats()">
-                        <span>隐藏玩家状态</span>
-                    </label>
-                    <label class="option-item hide-option">
-                        <input type="checkbox" id="hideReadyArea" onchange="toggleHideReadyArea()">
-                        <span>隐藏玩家待命区</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="pauseGame" onchange="togglePauseGame()">
-                        <span>暂停</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="fullscreenMode" onchange="toggleFullscreen()">
-                        <span>全屏</span>
-                    </label>
-                    <label class="option-item" onclick="toggleGameSpeed()">
-                        <span id="gameSpeed">1x倍速</span>
-                    </label>
-                    <label class="option-item" onclick="openConfigModal()">
-                        <span>⚙️ 参数配置</span>
-                    </label>
-                    <label class="option-item">
-                        <span>图标大小</span>
-                        <input type="range" id="iconSizeSlider" min="0.2" max="5" step="0.1" value="1" oninput="updateIconSize(this.value)">
-                    </label>
-                </div>
+                <button class="btn-options hide-option" onclick="openConfigModal()">选项</button>
             </div>
         </div>
 
@@ -167,15 +123,69 @@
     <div class="search-modal config-modal" id="configModal">
         <div class="modal-content config-modal-content">
             <div class="modal-header">
-                <h3>⚙️ 参数配置</h3>
+                <h3>选项</h3>
                 <button class="close-btn" onclick="closeConfigModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="config-tabs">
-                    <button class="config-tab active" data-tab="weapons" onclick="switchConfigTab('weapons')">武器配置</button>
+                    <button class="config-tab active" data-tab="basic" onclick="switchConfigTab('basic')">基本设置</button>
+                    <button class="config-tab" data-tab="weapons" onclick="switchConfigTab('weapons')">武器配置</button>
                     <button class="config-tab" data-tab="combat" onclick="switchConfigTab('combat')">战斗配置</button>
                 </div>
-                <div class="config-content" id="weaponsConfig">
+                <div class="config-content" id="basicConfig">
+                    <div class="config-row">
+                        <label class="option-item">
+                            <input type="checkbox" id="squadBattleMode" onchange="toggleSquadBattleMode()">
+                            <span>小队模式</span>
+                        </label>
+                        <label class="option-item">
+                            <input type="checkbox" id="autoAddRandom" onchange="toggleAutoAddRandom()">
+                            <span>自动添加图标</span>
+                        </label>
+                        <label class="option-item">
+                            <input type="checkbox" id="autoDeploy" onchange="toggleAutoDeploy()">
+                            <span>自动参战</span>
+                        </label>
+                    </div>
+                    <div class="config-row">
+                        <label class="option-item hide-option">
+                            <input type="checkbox" id="hideBattleInfo" onchange="toggleHideBattleInfo()">
+                            <span>隐藏战斗信息</span>
+                        </label>
+                        <label class="option-item hide-option">
+                            <input type="checkbox" id="hideStats" onchange="toggleHideStats()">
+                            <span>隐藏玩家状态</span>
+                        </label>
+                        <label class="option-item hide-option">
+                            <input type="checkbox" id="hideReadyArea" onchange="toggleHideReadyArea()">
+                            <span>隐藏玩家待命区</span>
+                        </label>
+                    </div>
+                    <div class="config-row">
+                        <label class="option-item">
+                            <input type="checkbox" id="pauseGame" onchange="togglePauseGame()">
+                            <span>暂停</span>
+                        </label>
+                        <label class="option-item">
+                            <input type="checkbox" id="fullscreenMode" onchange="toggleFullscreen()">
+                            <span>全屏</span>
+                        </label>
+                        <label class="option-item" onclick="toggleGameSpeed()">
+                            <span id="gameSpeed">1x倍速</span>
+                        </label>
+                    </div>
+                    <div class="config-row">
+                        <label class="option-item">
+                            <span>图标大小</span>
+                            <input type="range" id="iconSizeSlider" min="0.2" max="5" step="0.1" value="1" oninput="updateIconSize(this.value)">
+                        </label>
+                        <label class="option-item">
+                            <span>UI大小</span>
+                            <input type="range" id="uiSizeSlider" min="0.5" max="2" step="0.1" value="1" oninput="updateUISize(this.value)">
+                        </label>
+                    </div>
+                </div>
+                <div class="config-content" id="weaponsConfig" style="display: none;">
                     <div class="weapon-selector">
                         <label>选择武器：</label>
                         <select id="weaponSelect" onchange="selectWeaponConfig(this.value)">

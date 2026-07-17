@@ -20,6 +20,11 @@ const iconSizes = [0.2, 1.4];
 // 战斗图标默认大小
 let iconSize = 0.8;
 
+// UI元素大小范围（战斗信息、玩家信息、玩家待命区）
+const uiSizes = [0.5, 2];
+// UI元素当前缩放比例
+let uiSize = 1;
+
 // 战斗信息面板是否正在拖动
 let battleInfoDragging = false;
 // 战斗信息面板拖动时的偏移量
@@ -3600,6 +3605,16 @@ function init() {
         iconSizeSlider.min = minSize;
         iconSizeSlider.max = maxSize;
     }
+
+    // 初始化UI大小滑块的最小值、最大值并应用当前值
+    const [uiMinSize, uiMaxSize] = uiSizes;
+    const uiSizeSlider = document.getElementById('uiSizeSlider');
+    if (uiSizeSlider) {
+        uiSizeSlider.min = uiMinSize;
+        uiSizeSlider.max = uiMaxSize;
+    }
+    document.documentElement.style.setProperty('--ui-scale', uiSize);
+
     initFilterTabs();
     setupTouchOptimizations();
     setupPortraitTabs();
@@ -3611,14 +3626,8 @@ function init() {
     readyContents.forEach(content => {
         content.addEventListener('dragleave', handleDragLeave);
     });
-    
-    const defaultIconSize = 0.8;
-    const readyBaseSize = 70;
-    const readyIconSize = readyBaseSize * (iconSize / defaultIconSize);
-    const rowHeight = readyIconSize + 30;
-    readyContents.forEach(content => {
-        content.style.height = `${rowHeight}px`;
-    });
+
+    updateReadyAreaLayout();
     
     // 竖屏模式下初始化后直接显示待命区
     const isPortrait = window.matchMedia('(orientation: portrait)').matches;
@@ -3631,11 +3640,10 @@ function init() {
         if (event.target === modal) {
             closeSearchModal();
         }
-        
-        const optionsContainer = document.querySelector('.options-container');
-        const optionsDropdown = document.getElementById('optionsDropdown');
-        if (!event.target.closest('.options-container') && optionsDropdown.classList.contains('show')) {
-            optionsDropdown.classList.remove('show');
+
+        const configModal = document.getElementById('configModal');
+        if (event.target === configModal) {
+            closeConfigModal();
         }
     });
 
@@ -3670,7 +3678,6 @@ function init() {
         resizeTimeout = setTimeout(() => {
             battleAreaRect = null;
             clampAllIconsToBounds();
-            updateOptionsDropdownHeight();
         }, 100);
     });
 }
@@ -3681,59 +3688,6 @@ function initEventSubscriptions() {
             triggerDeathExplosion(data.target);
         }
     });
-}
-
-function updateOptionsDropdownHeight() {
-    const optionsDropdown = document.getElementById('optionsDropdown');
-    const optionsContainer = document.querySelector('.options-container');
-    const btnOptions = document.querySelector('.btn-options');
-    
-    if (!optionsDropdown || !optionsDropdown.classList.contains('show') || !optionsContainer || !btnOptions) {
-        return;
-    }
-    
-    const containerRect = optionsContainer.getBoundingClientRect();
-    const buttonRect = btnOptions.getBoundingClientRect();
-    
-    const isPortrait = window.matchMedia('(orientation: portrait)').matches;
-    
-    const headerHeight = 60;
-    const portraitTabsHeight = 60;
-    
-    let availableHeight;
-    
-    if (isPortrait) {
-        const distanceToBottom = window.innerHeight - containerRect.bottom - portraitTabsHeight;
-        availableHeight = Math.max(200, Math.min(distanceToBottom - 20, window.innerHeight - 150));
-        optionsDropdown.style.bottom = 'auto';
-        optionsDropdown.style.top = `${buttonRect.height + 10}px`;
-    } else {
-        const distanceToTop = containerRect.top - headerHeight;
-        availableHeight = Math.max(200, Math.min(distanceToTop - 20, window.innerHeight - 120));
-        optionsDropdown.style.bottom = `${buttonRect.height + 10}px`;
-        optionsDropdown.style.top = 'auto';
-    }
-    
-    optionsDropdown.style.maxHeight = `${availableHeight}px`;
-}
-
-function toggleOptions() {
-    const optionsDropdown = document.getElementById('optionsDropdown');
-    
-    if (optionsDropdown.classList.contains('show')) {
-        optionsDropdown.classList.remove('show');
-        optionsDropdown.style.maxHeight = '';
-        optionsDropdown.style.bottom = '';
-        optionsDropdown.style.top = '';
-        return;
-    }
-    
-    optionsDropdown.classList.add('show');
-    updateOptionsDropdownHeight();
-    
-    setTimeout(() => {
-        optionsDropdown.scrollTop = 0;
-    }, 0);
 }
 
 function showDeveloperModeMessage() {
@@ -4922,35 +4876,61 @@ function toggleGameSpeed() {
 function updateIconSize(value) {
     const [minSize, maxSize] = iconSizes;
     iconSize = Math.min(maxSize, Math.max(minSize, parseFloat(value)));
-    
+
     const allIcons = document.querySelectorAll('.battle-icon');
     allIcons.forEach(icon => {
         icon.style.transform = `scale(${iconSize})`;
         icon.style.setProperty('--icon-size', iconSize);
     });
-    
+
     const defaultIconSize = 0.8;
     const readyBaseSize = 70;
     const readyIconSize = readyBaseSize * (iconSize / defaultIconSize);
-    
+
     const allReadyIcons = document.querySelectorAll('.icon-item');
     allReadyIcons.forEach(icon => {
         icon.style.width = `${readyIconSize}px`;
         icon.style.height = `${readyIconSize}px`;
         icon.style.setProperty('--icon-size', iconSize / defaultIconSize);
     });
-    
-    const rowHeight = readyIconSize + 30;
-    const allReadyContents = document.querySelectorAll('.ready-content');
-    allReadyContents.forEach(content => {
-        content.style.height = `${rowHeight}px`;
-    });
-    
+
+    updateReadyAreaLayout();
+
     const iconSizeSlider = document.getElementById('iconSizeSlider');
     if (iconSizeSlider) {
         iconSizeSlider.value = value;
     }
-    
+
+    saveOptionsConfig();
+}
+
+// 重新计算玩家待命区行高（受 iconSize 和 uiSize 共同影响）
+function updateReadyAreaLayout() {
+    const defaultIconSize = 0.8;
+    const readyBaseSize = 70;
+    const readyIconSize = readyBaseSize * (iconSize / defaultIconSize);
+    const rowHeight = readyIconSize + 30 * uiSize;
+    const allReadyContents = document.querySelectorAll('.ready-content');
+    allReadyContents.forEach(content => {
+        content.style.height = `${rowHeight}px`;
+    });
+}
+
+function updateUISize(value) {
+    const [minSize, maxSize] = uiSizes;
+    uiSize = Math.min(maxSize, Math.max(minSize, parseFloat(value)));
+
+    // 通过CSS变量驱动战斗信息、玩家信息的缩放
+    document.documentElement.style.setProperty('--ui-scale', uiSize);
+
+    // 玩家待命区高度需要实际改变以影响布局流，通过JS重新计算行高
+    updateReadyAreaLayout();
+
+    const uiSizeSlider = document.getElementById('uiSizeSlider');
+    if (uiSizeSlider) {
+        uiSizeSlider.value = uiSize;
+    }
+
     saveOptionsConfig();
 }
 
@@ -5908,13 +5888,13 @@ function setupPortraitTabs() {
                 }
                 hideAllPanels();
             } else {
-                if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.options-panel')) {
+                if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.config-modal')) {
                     hideAllPanels();
                 }
             }
         }
     });
-    
+
     document.addEventListener('touchstart', (e) => {
         if (activePortraitPanel && !e.target.closest('.portrait-tabs')) {
             if (activePortraitPanel === 'readyarea') {
@@ -5923,7 +5903,7 @@ function setupPortraitTabs() {
                 }
                 hideAllPanels();
             } else {
-                if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.options-panel')) {
+                if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.config-modal')) {
                     hideAllPanels();
                 }
             }
@@ -6113,174 +6093,12 @@ function showReadyAreaPanel() {
 }
 
 function showOptionsPanel() {
-    removeOptionsPanel();
-    
-    const optionsDropdown = document.getElementById('optionsDropdown');
-    if (!optionsDropdown) return;
-    
-    const panel = document.createElement('div');
-    panel.className = 'options-panel';
-    panel.innerHTML = optionsDropdown.innerHTML;
-    
-    document.body.appendChild(panel);
-    panel.classList.add('show');
-    
     activePortraitPanel = 'options';
-    
-    // 重新绑定所有选项的事件
-    const squadBattleModeCheckbox = panel.querySelector('#squadBattleMode');
-    if (squadBattleModeCheckbox) {
-        squadBattleModeCheckbox.checked = document.getElementById('squadBattleMode').checked;
-        squadBattleModeCheckbox.onchange = function() {
-            squadBattleMode = this.checked;
-            document.getElementById('squadBattleMode').checked = this.checked;
-            if (squadBattleMode) {
-                selectSquadLeaders();
-            } else {
-                clearSquadLeaders();
-            }
-            saveOptionsConfig();
-        };
-    }
-    
-    const autoAddRandomCheckbox = panel.querySelector('#autoAddRandom');
-    if (autoAddRandomCheckbox) {
-        autoAddRandomCheckbox.checked = document.getElementById('autoAddRandom').checked;
-        autoAddRandomCheckbox.onchange = function() {
-            autoAddRandomEnabled = this.checked;
-            document.getElementById('autoAddRandom').checked = this.checked;
-            saveOptionsConfig();
-        };
-    }
-    
-    const autoDeployCheckbox = panel.querySelector('#autoDeploy');
-    if (autoDeployCheckbox) {
-        autoDeployCheckbox.checked = document.getElementById('autoDeploy').checked;
-        autoDeployCheckbox.onchange = function() {
-            autoDeployEnabled = this.checked;
-            document.getElementById('autoDeploy').checked = this.checked;
-            saveOptionsConfig();
-        };
-    }
-    
-    const hideBattleInfoCheckbox = panel.querySelector('#hideBattleInfo');
-    if (hideBattleInfoCheckbox) {
-        hideBattleInfoCheckbox.checked = document.getElementById('hideBattleInfo').checked;
-        hideBattleInfoCheckbox.onchange = function() {
-            const hideBattleInfo = this.checked;
-            const battleInfoWrapper = document.getElementById('battleInfoWrapper');
-            document.getElementById('hideBattleInfo').checked = this.checked;
-            if (hideBattleInfo) {
-                battleInfoWrapper.classList.add('hidden');
-            } else {
-                battleInfoWrapper.classList.remove('hidden');
-            }
-        };
-    }
-    
-    const hideStatsCheckbox = panel.querySelector('#hideStats');
-    if (hideStatsCheckbox) {
-        hideStatsCheckbox.checked = document.getElementById('hideStats').checked;
-        hideStatsCheckbox.onchange = function() {
-            const hideStats = this.checked;
-            const player1Stats = document.getElementById('player1Stats');
-            const player2Stats = document.getElementById('player2Stats');
-            document.getElementById('hideStats').checked = this.checked;
-            if (hideStats) {
-                player1Stats.classList.add('hidden');
-                player2Stats.classList.add('hidden');
-            } else {
-                player1Stats.classList.remove('hidden');
-                player2Stats.classList.remove('hidden');
-            }
-        };
-    }
-    
-    const hideReadyAreaCheckbox = panel.querySelector('#hideReadyArea');
-    if (hideReadyAreaCheckbox) {
-        hideReadyAreaCheckbox.checked = document.getElementById('hideReadyArea').checked;
-        hideReadyAreaCheckbox.onchange = function() {
-            const hideReadyArea = this.checked;
-            const readyArea = document.getElementById('readyarea');
-            document.getElementById('hideReadyArea').checked = this.checked;
-            if (hideReadyArea) {
-                readyArea.classList.add('hidden');
-            } else {
-                readyArea.classList.remove('hidden');
-            }
-        };
-    }
-    
-    const pauseGameCheckbox = panel.querySelector('#pauseGame');
-    if (pauseGameCheckbox) {
-        pauseGameCheckbox.checked = document.getElementById('pauseGame').checked;
-        pauseGameCheckbox.onchange = function() {
-            gamePaused = this.checked;
-            document.getElementById('pauseGame').checked = this.checked;
-        };
-    }
-    
-    const fullscreenModeCheckbox = panel.querySelector('#fullscreenMode');
-    if (fullscreenModeCheckbox) {
-        fullscreenModeCheckbox.checked = document.getElementById('fullscreenMode').checked;
-        fullscreenModeCheckbox.onchange = function() {
-            document.getElementById('fullscreenMode').checked = this.checked;
-            if (this.checked) {
-                document.documentElement.requestFullscreen().catch(err => console.log(err));
-            } else {
-                if (document.fullscreenElement) {
-                    document.exitFullscreen();
-                }
-            }
-        };
-    }
-    
-    const gameSpeedLabel = panel.querySelector('#gameSpeed');
-    if (gameSpeedLabel) {
-        gameSpeedLabel.textContent = document.getElementById('gameSpeed').textContent;
-        gameSpeedLabel.parentElement.onclick = function() {
-            const currentIndex = gameSpeeds.indexOf(gameSpeed);
-            const nextIndex = (currentIndex + 1) % gameSpeeds.length;
-            gameSpeed = gameSpeeds[nextIndex];
-            
-            const gameSpeedElement = this.querySelector('#gameSpeed');
-            const originalGameSpeedElement = document.getElementById('gameSpeed');
-            
-            if(gameSpeed != 1) {
-                gameSpeedElement.textContent = `⏩︎${gameSpeed}x倍速`;
-                originalGameSpeedElement.textContent = `⏩︎${gameSpeed}x倍速`;
-            } else {
-                gameSpeedElement.textContent = `${gameSpeed}x倍速`;
-                originalGameSpeedElement.textContent = `${gameSpeed}x倍速`;
-            }
-            
-            if (gameSpeed === 1) {
-                gameSpeedElement.classList.remove('fast');
-                originalGameSpeedElement.classList.remove('fast');
-            } else {
-                gameSpeedElement.classList.add('fast');
-                originalGameSpeedElement.classList.add('fast');
-            }
-            
-            saveOptionsConfig();
-        };
-    }
-    
-    const iconSizeSlider = panel.querySelector('#iconSizeSlider');
-    if (iconSizeSlider) {
-        iconSizeSlider.value = iconSize;
-        iconSizeSlider.oninput = function() {
-            updateIconSize(this.value);
-            document.getElementById('iconSizeSlider').value = this.value;
-        };
-    }
+    openConfigModal();
 }
 
 function removeOptionsPanel() {
-    const optionsPanel = document.querySelector('.options-panel');
-    if (optionsPanel) {
-        optionsPanel.remove();
-    }
+    closeConfigModal();
 }
 
 const DEFAULT_WEAPONS_CONFIG = JSON.parse(JSON.stringify(GAME_CONFIG.weapons));
@@ -6348,6 +6166,7 @@ function openConfigModal() {
     const modal = document.getElementById('configModal');
     if (modal) {
         modal.classList.add('active');
+        switchConfigTab('basic');
         initWeaponSelect();
         renderCombatConfig();
     }
@@ -6364,6 +6183,7 @@ function switchConfigTab(tabName) {
     document.querySelectorAll('.config-tab').forEach(tab => {
         tab.classList.toggle('active', tab.dataset.tab === tabName);
     });
+    document.getElementById('basicConfig').style.display = tabName === 'basic' ? 'flex' : 'none';
     document.getElementById('weaponsConfig').style.display = tabName === 'weapons' ? 'flex' : 'none';
     document.getElementById('combatConfig').style.display = tabName === 'combat' ? 'flex' : 'none';
 }
@@ -6656,9 +6476,9 @@ function addNewWeapon() {
     const newWeapon = {
         emoji: '🔮',
         name: `新武器${weaponCount + 1}`,
-        attack: 10,
+        attack: 6,
         type: 'melee',
-        range: 100,
+        range: 75,
         attackSpeed: 600,
         maxCharges: 999,
         cooldownTime: 0,
@@ -6737,7 +6557,8 @@ function saveOptionsConfig() {
             autoAddRandomEnabled: autoAddRandomEnabled,
             autoDeployEnabled: autoDeployEnabled,
             gameSpeed: gameSpeed,
-            iconSize: iconSize
+            iconSize: iconSize,
+            uiSize: uiSize
         };
         localStorage.setItem('iconBattle_options', JSON.stringify(options));
     } catch (e) {
@@ -6785,6 +6606,11 @@ function loadOptionsConfig() {
             if (options.iconSize !== undefined) {
                 iconSize = options.iconSize;
                 updateIconSize(iconSize);
+            }
+
+            if (options.uiSize !== undefined) {
+                uiSize = options.uiSize;
+                updateUISize(uiSize);
             }
         }
     } catch (e) {
