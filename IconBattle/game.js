@@ -79,6 +79,11 @@ let developerPanel = null;  // 开发者面板元素
 let developerPanelDragging = false;  // 开发者面板是否正在拖动
 let developerPanelOffset = { x: 0, y: 0 };  // 开发者面板拖动时的偏移量
 
+// 每帧缓存的存活图标数组，避免重复filter
+let cachedAliveIcons = { player1: [], player2: [] };
+let cachedDeadIcons = { player1: [], player2: [] };
+let cacheDirty = true;
+
 // 战斗信息面板最多显示的条目数
 const MAX_BATTLE_INFO_ITEMS = 100;
 const BATTLE_INFO_UPDATE_INTERVAL = 3;
@@ -166,6 +171,19 @@ const GAME_CONFIG = {
             defaultDuration: 2000,       // 默认燃烧持续时间（毫秒）
             defaultInterval: 500         // 默认燃烧跳伤害间隔（毫秒）
         },
+        poison: {
+            damageFactor: 0.15,          // 默认毒伤系数（占初始伤害比例）
+            defaultDuration: 4000,       // 默认中毒持续时间（毫秒）
+            defaultInterval: 1000,       // 默认中毒跳伤害间隔（毫秒）
+            defaultMaxStacks: 3          // 默认最大叠加层数
+        },
+        shield: {
+            defaultAmount: 50,           // 默认护盾值
+            defaultDuration: 3000        // 默认护盾持续时间（毫秒）
+        },
+        knockback: {
+            defaultDuration: 300         // 默认击退动画持续时间（毫秒）
+        },
         weaponDefaults: {
             aoeRadius: 150,              // 默认AOE半径
             healAmount: 18,              // 默认治疗量
@@ -232,23 +250,26 @@ const GAME_CONFIG = {
         { emoji: '🗡️', name: '匕首', attack: 8, type: 'melee', range: 80, attackSpeed: 450, maxCharges: 999, cooldownTime: 0, defaultDirection: 'right', effectType: 'stab' },
         { emoji: '🪓', name: '斧头', attack: 14, type: 'melee', range: 90, attackSpeed: 750, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', effectType: 'chop' },
         { emoji: '🔨', name: '锤子', attack: 16, type: 'melee', range: 70, attackSpeed: 800, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', effectType: 'smash' },
-        { emoji: '🔱', name: '三叉戟', attack: 11, type: 'melee', range: 110, attackSpeed: 600, maxCharges: 999, cooldownTime: 0, defaultDirection: 'top', effectType: 'pierce' },
-        { emoji: '⛏️', name: '镐子', attack: 10, type: 'melee', range: 75, attackSpeed: 600, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', effectType: 'dig' },
+        { emoji: '🔱', name: '三叉戟', attack: 11, type: 'melee', range: 95, attackSpeed: 600, maxCharges: 999, cooldownTime: 0, defaultDirection: 'top', effectType: 'pierce' },
+        { emoji: '⛏️', name: '镐子', attack: 10, type: 'melee', range: 85, attackSpeed: 600, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', effectType: 'dig' },
         { emoji: '🧱', name: '砖头', attack: 12, type: 'melee', range: 85, attackSpeed: 650, maxCharges: 999, cooldownTime: 0, defaultDirection: 'right', effectType: 'smash' },
         { emoji: '🦴', name: '骨棒', attack: 11, type: 'melee', range: 95, attackSpeed: 550, maxCharges: 999, cooldownTime: 0, defaultDirection: 'top', effectType: 'stab' },
         { emoji: '🔪', name: '菜刀', attack: 11, type: 'melee', range: 80, attackSpeed: 550, maxCharges: 999, cooldownTime: 0, defaultDirection: 'right', effectType: 'slash' },
         { emoji: '🏏', name: '板球拍', attack: 12, type: 'melee', range: 100, attackSpeed: 650, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', effectType: 'smash' },
-        { emoji: '🏹', name: '弓箭', attack: 9, type: 'ranged', range: 250, attackSpeed: 600, maxCharges: 1, cooldownTime: 1000, defaultDirection: 'right', effectType: 'arrow' },
+        { emoji: '🏹', name: '弓箭', attack: 10, type: 'ranged', range: 250, attackSpeed: 600, maxCharges: 3, cooldownTime: 1500, defaultDirection: 'right', effectType: 'arrow' },
         { emoji: '🔫', name: '枪', attack: 15, type: 'ranged', range: 300, attackSpeed: 600, maxCharges: 6, cooldownTime: 3000, defaultDirection: 'left', effectType: 'bullet' },
-        { emoji: '🏐', name: '排球', attack: 9, type: 'ranged', range: 150, attackSpeed: 500, maxCharges: 3, cooldownTime: 1500, defaultDirection: 'right', knockbackDistance: 40, effectType: 'arrow' },
+        { emoji: '🏐', name: '排球', attack: 11, type: 'ranged', range: 180, attackSpeed: 500, maxCharges: 3, cooldownTime: 1500, defaultDirection: 'right', knockbackDistance: 40, effectType: 'arrow' },
         { emoji: '💣', name: '炸弹', attack: 20, type: 'aoe', range: 180, attackSpeed: 900, maxCharges: 2, cooldownTime: 2500, defaultDirection: 'right', aoeRadius: 120, effectType: 'explosion' },
         { emoji: '⚡', name: '闪电', attack: 14, type: 'ranged', range: 170, attackSpeed: 700, maxCharges: 2, cooldownTime: 3000, defaultDirection: 'top', ignoreDefense: true, effectType: 'lightning' },
         { emoji: '🔥', name: '火', attack: 12, type: 'ranged', range: 180, attackSpeed: 600, maxCharges: 2, cooldownTime: 4000, defaultDirection: 'top', burnDuration: 5000, burnInterval: 500, effectType: 'fire' },
         { emoji: '🧊', name: '冰冻', attack: 10, type: 'aoe', range: 220, attackSpeed: 700, maxCharges: 1, cooldownTime: 2500, defaultDirection: 'right', aoeRadius: 120, freezeDuration: 1500, effectType: 'ice' },
         { emoji: '🍼', name: '奶瓶', attack: 1, heal: 20, type: 'heal', range: 220, attackSpeed: 1200, maxCharges: 4, cooldownTime: 2000, defaultDirection: 'top', effectType: 'heal' },
         { emoji: '💊', name: '药丸', attack: 1, heal: 28, type: 'heal', range: 200, attackSpeed: 1000, maxCharges: 3, cooldownTime: 3000, defaultDirection: 'top', effectType: 'heal' },
-        { emoji: '💉', name: '兴奋剂', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 1, cooldownTime: 3000, defaultDirection: 'top', buffDuration: 3500, buffMultiplier: 3.0, effectType: 'buff' },
-        { emoji: '🚀', name: '自爆火箭', attack: 180, type: 'melee', range: 20, attackSpeed: 500, maxCharges: 1, cooldownTime: 0, defaultDirection: 'right', aoeRadius: 150, chargeSpeed: 300, deathExplosionMultiplier: 0.50, isSelfDestruct: true, effectType: 'explosion' }
+        { emoji: '💉', name: '兴奋剂', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 1, cooldownTime: 3000, defaultDirection: 'top', buffDuration: 3500, buffMultiplier: 2.5, effectType: 'buff' },
+        { emoji: '🚀', name: '自爆火箭', attack: 180, type: 'melee', range: 20, attackSpeed: 500, maxCharges: 1, cooldownTime: 0, defaultDirection: 'right', aoeRadius: 150, chargeSpeed: 300, deathExplosionMultiplier: 0.50, isSelfDestruct: true, effectType: 'explosion' },
+        { emoji: '🦠', name: '毒药', attack: 6, type: 'ranged', range: 200, attackSpeed: 700, maxCharges: 3, cooldownTime: 2500, defaultDirection: 'top', poisonDuration: 4000, poisonInterval: 1000, maxPoisonStacks: 3, effectType: 'poison' },
+        { emoji: '🛡️', name: '护盾', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 2, cooldownTime: 3500, defaultDirection: 'top', shieldAmount: 50, shieldDuration: 3000, effectType: 'shield' },
+        { emoji: '🦇', name: '吸血鬼', attack: 10, type: 'melee', range: 80, attackSpeed: 600, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', lifestealRatio: 0.3, effectType: 'slash' }
     ]
 };
 
@@ -286,8 +307,7 @@ const WEAPON_BEHAVIORS = {
                 if (isVictory) {
                     moveTowardsTarget(iconData);
                 } else {
-                    const enemyPlayer = iconData.player === 1 ? 2 : 1;
-                    const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+                    const enemies = getAliveEnemies(iconData.player);
                     const aiConfig = getAIConfig(iconData.aiType);
                     
                     if (shouldRetreatByAI(iconData, enemies)) {
@@ -605,12 +625,11 @@ function addIconToReadyZone(player, imageUrl, name = '') {
     iconItem.dataset.name = name;
     iconItem.dataset.level = 1;
     
-    const defaultIconSize = 0.8;
     const readyBaseSize = 70;
-    const readyIconSize = readyBaseSize * (iconSize / defaultIconSize);
+    const readyIconSize = readyBaseSize * uiSize;
     iconItem.style.width = `${readyIconSize}px`;
     iconItem.style.height = `${readyIconSize}px`;
-    iconItem.style.setProperty('--icon-size', iconSize / defaultIconSize);
+    iconItem.style.setProperty('--icon-size', uiSize);
     
     const randomWeaponIndex = Math.floor(Math.random() * GAME_CONFIG.weapons.length);
     iconItem.dataset.assignedWeaponIndex = randomWeaponIndex;
@@ -1132,7 +1151,7 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
         aiType: assignAIType(weaponData.type),
         currentCharges: weaponData.maxCharges,
         isOnCooldown: false,
-        cooldownEndTime: 0,
+        cooldownRemaining: 0,
         name: name,
         lastHealTime: 0,
         lastTarget: null,
@@ -1140,13 +1159,26 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
         isStunned: false,
         stunEndTime: 0,
         isFrozen: false,
-        freezeEndTime: 0,
+        freezeRemaining: 0,
         isKnockedBack: false,
         knockbackTargetX: x,
         knockbackTargetY: y,
         isBuffed: false,
         buffEndTime: 0,
         originalStats: null,
+        isBurning: false,
+        burnRemaining: 0,
+        burnIntervalRemaining: 0,
+        burnDamage: 0,
+        burnAttacker: null,
+        isPoisoned: false,
+        poisonStacks: 0,
+        poisonRemaining: 0,
+        poisonIntervalRemaining: 0,
+        poisonDamage: 0,
+        poisonAttacker: null,
+        shield: 0,
+        shieldRemaining: 0,
         level: 1,
         kills: 0,
         isCharging: false,
@@ -1394,6 +1426,23 @@ function applyDamageEffects(attacker, target, damage, effectType = 'normal', isC
         createEffectText(target.element, '闪避!', '#00ffff', 'dodge').show();
     } else {
         playSound('hit');
+        
+        // 护盾吸收伤害
+        if (target.shield > 0) {
+            if (target.shield >= damage) {
+                target.shield -= damage;
+                createEffectText(target.element, `护盾-${damage}`, '#3498db', 'shield').show();
+                damage = 0;
+            } else {
+                createEffectText(target.element, `护盾-${target.shield}`, '#3498db', 'shield').show();
+                damage -= target.shield;
+                target.shield = 0;
+            }
+            if (target.shield <= 0) {
+                target.element.classList.remove('shielded');
+            }
+        }
+        
         target.stats.health -= damage;
         
         target.element.classList.add('hit');
@@ -1447,6 +1496,10 @@ function handleTargetDeath(attacker, target) {
         target.element.classList.remove('attacking');
         target.element.classList.remove('facing-right');
         target.element.classList.remove('facing-left');
+        target.element.classList.remove('poisoned');
+        target.element.classList.remove('shielded');
+        target.isPoisoned = false;
+        target.shield = 0;
         
         if (target.listItem) {
             target.listItem.classList.add('dead');
@@ -1478,7 +1531,7 @@ function handleTargetDeath(attacker, target) {
 }
 // 更新血条
 function updateHealthBar(iconData) {
-    const healthBarFill = iconData.element.querySelector('.health-bar-fill');
+    const healthBarFill = iconData.healthBarFill;
     const healthPercent = (iconData.stats.health / iconData.stats.maxHealth) * 100;
     healthBarFill.style.width = `${Math.max(0, healthPercent)}%`;
     
@@ -1497,7 +1550,7 @@ function updateHealthBar(iconData) {
     
     healthBarFill.style.background = healthColor;
     
-    const statsDisplay = iconData.element.querySelector('.stats-display');
+    const statsDisplay = iconData.statsDisplay;
     statsDisplay.innerHTML = `AT:${iconData.stats.attack} DE:${iconData.stats.defense} AR:${iconData.stats.armor}`;
     
     if (iconData.listItem) {
@@ -1605,6 +1658,7 @@ function showDamageText(iconData, damage, damageType = 'normal') {
         'bullet': '#f39c12',
         'lightning': '#f1c40f',
         'fire': '#e74c3c',
+        'poison': '#9b59b6',
         'explosion': '#e67e22',
         'normal': '#ffffff'
     };
@@ -1666,6 +1720,12 @@ function showWeaponEffect(attacker, defender, effectType) {
             break;
         case 'buff':
             createBuffEffect(attacker, defender, battleArea);
+            break;
+        case 'poison':
+            createPoisonEffect(attacker, defender, battleArea);
+            break;
+        case 'shield':
+            createShieldEffect(attacker, defender, battleArea);
             break;
         default:
             createDefaultEffect(attacker, defender, battleArea);
@@ -1825,6 +1885,42 @@ function createBuffEffect(attacker, defender, battleArea) {
     }
 }
 
+function createPoisonEffect(attacker, defender, battleArea) {
+    const effect = createBaseEffect(attacker, defender, battleArea, 'poison-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
+    if (!effect) return;
+
+    for (let i = 0; i < 6; i++) {
+        setTimeout(() => {
+            const bubble = document.createElement('div');
+            bubble.className = 'poison-bubble';
+            bubble.style.left = `${Math.random() * 40 - 20}px`;
+            bubble.style.top = `${Math.random() * 40 - 20}px`;
+            bubble.style.transform = `scale(${0.5 + Math.random() * 0.6})`;
+            bubble.textContent = '🟢';
+            bubble.style.animationDelay = `${i * 70}ms`;
+            effect.appendChild(bubble);
+        }, i * 50);
+    }
+}
+
+function createShieldEffect(attacker, defender, battleArea) {
+    const effect = createBaseEffect(attacker, defender, battleArea, 'shield-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
+    if (!effect) return;
+
+    for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+            const ring = document.createElement('div');
+            ring.className = 'shield-ring';
+            ring.style.left = '0';
+            ring.style.top = '0';
+            ring.style.width = '100%';
+            ring.style.height = '100%';
+            ring.style.animationDelay = `${i * 150}ms`;
+            effect.appendChild(ring);
+        }, i * 80);
+    }
+}
+
 function createDefaultEffect(attacker, defender, battleArea) {
     createBaseEffect(attacker, defender, battleArea, 'default-effect');
 }
@@ -1866,12 +1962,12 @@ function generateBattleInfoHTML(attacker, defender, value, actionType) {
         return `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>使用<span class="weapon">${weaponEmoji}</span>释放了${attackName}，范围${aoeRadius}</span>`;
     } else if (actionType === 'burn') {
         const burnDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor(value * GAME_CONFIG.combat.burn.damageFactor));
-        const burnInterval = (attacker.weapon.burnInterval || GAME_CONFIG.combat.burn.defaultInterval) / gameSpeed;
+        const burnInterval = attacker.weapon.burnInterval || GAME_CONFIG.combat.burn.defaultInterval;
         const defenderName = defender?.name || '未知图标';
         const defenderLevel = defender?.level || 1;
         return `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>用<span class="weapon">${weaponName}</span>对<span class="target">${defenderName}(Lv${defenderLevel})</span>施加了燃烧效果，每${Math.round(burnInterval)}毫秒造成${burnDamage}点伤害</span>`;
     } else if (actionType === 'freeze') {
-        const actualDuration = value / gameSpeed;
+        const actualDuration = value;
         const defenderName = defender?.name || '未知图标';
         const defenderLevel = defender?.level || 1;
         return `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>用<span class="weapon">${weaponName}</span>冰冻了<span class="target">${defenderName}(Lv${defenderLevel})</span>，持续${Math.round(actualDuration)}毫秒</span>`;
@@ -2044,9 +2140,11 @@ function attack(attacker, defender) {
         allyTargeting: attacker.weapon.type === 'heal' || attacker.weapon.type === 'buff',  // 治疗和增益武器可以攻击队友
         allyFilter: attacker.weapon.type === 'heal' ? 
             (ally) => ally.stats.health < ally.stats.maxHealth :  // 治疗武器只选择生命值未满的队友
+            attacker.weapon.effectType === 'shield' ?
+            (ally) => ['melee', 'ranged', 'aoe'].includes(ally.weapon.type) && ally.shield <= 0 :  // 护盾武器选择没有护盾的战斗型队友
             (ally) => ['melee', 'ranged', 'aoe'].includes(ally.weapon.type),  // 增益武器只选择战斗型队友
-        allySort: attacker.weapon.type === 'heal' ? 
-            // 治疗武器优先选择生命值比例最低的队友
+        allySort: attacker.weapon.type === 'heal' || attacker.weapon.effectType === 'shield' ? 
+            // 治疗和护盾武器优先选择生命值比例最低的队友
             (a, b) => (a.stats.health / a.stats.maxHealth) - (b.stats.health / b.stats.maxHealth) : 
             // 增益武器优先选择综合属性最高的队友
             (a, b) => {
@@ -2083,7 +2181,11 @@ function attack(attacker, defender) {
             
             // 如果目标是队友，施加增益效果
             if (target.player === attacker.player) {
-                applyBuff(attacker, target);
+                if (attacker.weapon.effectType === 'shield') {
+                    applyShield(attacker, target);
+                } else {
+                    applyBuff(attacker, target);
+                }
             } else {
                 // 如果目标是敌人，造成伤害
                 const { damage } = calculateDamageWithDefense(attacker, target);
@@ -2152,21 +2254,38 @@ function attack(attacker, defender) {
             }
             
             addBattleInfo(attacker, target, damage);
-            
+
             // 应用伤害效果
             applyDamageEffects(attacker, target, damage, attacker.weapon.effectType, isCrit);
-            
+
+            // 处理特殊效果（在死亡判定前触发，确保多个能力都能生效）
+            if (damage > 0) {
+                // 吸血（攻击者回血，不受目标存活状态影响）
+                if (attacker.weapon.lifestealRatio) {
+                    applyLifesteal(attacker, damage);
+                }
+                // 以下状态效果仅对存活目标生效
+                if (target.stats.health > 0) {
+                    if (attacker.weapon.burnDuration !== undefined) {
+                        applyBurnEffect(target, attacker, damage);
+                    }
+
+                    if (attacker.weapon.poisonDuration !== undefined) {
+                        applyPoisonEffect(target, attacker, damage);
+                    }
+
+                    if (attacker.weapon.freezeDuration) {
+                        applyFreeze(attacker, target, attacker.weapon.freezeDuration);
+                    }
+
+                    if (attacker.weapon.knockbackDistance) {
+                        applyKnockback(attacker, target, attacker.weapon.knockbackDistance);
+                    }
+                }
+            }
+
             // 处理目标死亡
             handleTargetDeath(attacker, target);
-            
-            // 处理特殊效果
-            if (attacker.weapon.effectType === 'fire') {
-                applyBurnEffect(target, attacker, damage);
-            }
-            
-            if (attacker.weapon.knockbackDistance) {
-                applyKnockback(attacker, target, attacker.weapon.knockbackDistance);
-            }
         }
         
         // 消耗弹药
@@ -2174,12 +2293,10 @@ function attack(attacker, defender) {
         
         // 处理武器冷却
         if (attacker.currentCharges <= 0 && attacker.weapon.cooldownTime > 0) {
-            playSound('cooldown');  // 播放冷却音效
-            attacker.isOnCooldown = true;  // 设置冷却状态
-            const actualCooldownTime = attacker.weapon.cooldownTime / gameSpeed;  // 根据游戏速度调整冷却时间
-            attacker.cooldownEndTime = Date.now() + actualCooldownTime;  // 记录冷却结束时间
+            playSound('cooldown');
+            attacker.isOnCooldown = true;
+            attacker.cooldownRemaining = attacker.weapon.cooldownTime / gameSpeed;
             
-            // 显示冷却文本
             const cooldownText = document.createElement('div');
             cooldownText.className = 'cooldown-text';
             cooldownText.textContent = '冷却中!';
@@ -2188,16 +2305,9 @@ function attack(attacker, defender) {
             cooldownText.style.transform = 'translateX(-50%)';
             attacker.element.appendChild(cooldownText);
             
-            // 移除冷却文本
             setTimeout(() => {
                 cooldownText.remove();
             }, GAME_CONFIG.timing.mediumDelay);
-            
-            // 冷却结束后恢复弹药和状态
-            setTimeout(() => {
-                attacker.isOnCooldown = false;
-                attacker.currentCharges = attacker.weapon.maxCharges;
-            }, actualCooldownTime);
         }
         
         // 更新战斗统计数据
@@ -2264,15 +2374,7 @@ function applyAOEDamage(attacker, target) {
     const explosionX = target.x;
     const explosionY = target.y;
     
-    if (attacker.weapon.emoji && attacker.weapon.emoji === '⚡') {
-        playSound('lightning');
-        showLightningEffect(explosionX, explosionY, aoeRadius);        
-        addBattleInfo(attacker, target, 0, 'lightning');
-    } else if (attacker.weapon.emoji && attacker.weapon.emoji === '🔥') {
-        playSound('fire');
-        showFireEffect(explosionX, explosionY, aoeRadius);
-        addBattleInfo(attacker, target, 0, 'fire');
-    } else if (attacker.weapon.emoji && attacker.weapon.emoji === '🧊') {
+    if (attacker.weapon.effectType === 'ice') {
         playSound('ice');
         showIceEffect(explosionX, explosionY, aoeRadius);
         addBattleInfo(attacker, target, 0, 'ice');
@@ -2282,48 +2384,29 @@ function applyAOEDamage(attacker, target) {
         addBattleInfo(attacker, target, 0, 'explosion');
     }
     
-    if ((attacker.weapon.emoji && attacker.weapon.emoji === '⚡') || (attacker.weapon.emoji && attacker.weapon.emoji === '🔥')) {
-        const damage = attacker.weapon.ignoreDefense ? 
-            Math.max(GAME_CONFIG.combat.damage.minDamage, attacker.stats.attack + attacker.weapon.attack) :
-            calculateDamage(attacker, target);
+    const aoeRadiusSq = aoeRadius * aoeRadius;
+    enemies.forEach(enemy => {
+        if (enemy.isDead) return;
         
-        addBattleInfo(attacker, target, damage);
-        applyDamageEffects(attacker, target, damage, attacker.weapon.effectType);
+        const dx = enemy.x - explosionX;
+        const dy = enemy.y - explosionY;
+        const distSq = dx * dx + dy * dy;
         
-        // 处理火焰效果
-        if (attacker.weapon.emoji && attacker.weapon.emoji === '🔥') {
-            applyBurnEffect(target, attacker, damage);
-        }
-        
-        // 使用handleTargetDeath处理目标死亡
-        handleTargetDeath(attacker, target);
-    } else {
-        enemies.forEach(enemy => {
-            if (enemy.isDead) return;
+        if (distSq <= aoeRadiusSq) {
+            const damage = calculateDamage(attacker, enemy);                
+            addBattleInfo(attacker, enemy, damage);
             
-            const dx = enemy.x - explosionX;
-            const dy = enemy.y - explosionY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance <= aoeRadius) {
-                const damage = calculateDamage(attacker, enemy);                
-                addBattleInfo(attacker, enemy, damage);
+            if (damage > 0) {
+                applyDamageEffects(attacker, enemy, damage, attacker.weapon.effectType);
                 
-                if (damage > 0) {
-                    // 使用applyDamageEffects处理伤害效果
-                    applyDamageEffects(attacker, enemy, damage, attacker.weapon.effectType);
-                    
-                    if (attacker.weapon.freezeDuration) {
+                if (attacker.weapon.freezeDuration) {
                     applyFreeze(attacker, enemy, attacker.weapon.freezeDuration);
                 }
-                    
-                    // 使用handleTargetDeath处理目标死亡
-                    handleTargetDeath(attacker, enemy);
-                    
-                }
+                
+                handleTargetDeath(attacker, enemy);
             }
-        });
-    }
+        }
+    });
 }
 
 function showAOEExplosion(x, y, radius) {
@@ -2416,82 +2499,68 @@ function applyBurnEffect(target, attacker, damage) {
     if (target.isBurning) return;
     
     target.isBurning = true;
-    const burnDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor(damage * GAME_CONFIG.combat.burn.damageFactor));
-    const burnInterval = (attacker.weapon.burnInterval || GAME_CONFIG.combat.burn.defaultInterval) / gameSpeed;
-    const burnDuration = (attacker.weapon.burnDuration || GAME_CONFIG.combat.burn.defaultDuration) / gameSpeed;
-    const numTicks = Math.floor(burnDuration / burnInterval);
-    let currentTick = 0;
-    let lastTickTime = performance.now();
+    target.burnDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor(damage * GAME_CONFIG.combat.burn.damageFactor));
+    const burnInterval = attacker.weapon.burnInterval || GAME_CONFIG.combat.burn.defaultInterval;
+    const burnDuration = attacker.weapon.burnDuration || GAME_CONFIG.combat.burn.defaultDuration;
+    target.burnRemaining = burnDuration;
+    target.burnIntervalRemaining = burnInterval;
+    target.burnInterval = burnInterval;
+    target.burnAttacker = attacker;
     
-    // 使用addBattleInfo记录燃烧效果
     addBattleInfo(attacker, target, damage, 'burn');
-    
-    function burnTick(currentTime) {
-        if (target.isDead || currentTick >= numTicks) {
-            target.isBurning = false;
-            return;
-        }
-        
-        if (currentTime - lastTickTime >= burnInterval) {
-            target.stats.health -= burnDamage;
-            showDamageText(target, burnDamage, 'fire');
-            updateHealthBar(target);
-            
-            if (target.stats.health <= 0 && !target.hasBeenKilled) {
-                playSound('kill');
-                playSound('death');
-                target.isDead = true;
-                target.hasBeenKilled = true;
-                
-                // 确定倒地方向：根据攻击者位置
-                target.element.classList.add('dead');
-                if (attacker.x < target.x) {
-                    // 攻击者在左侧，目标向右倒
-                    target.element.classList.add('fall-right');
-                } else {
-                    // 攻击者在右侧，目标向左倒
-                    target.element.classList.add('fall-left');
-                }
-                target.element.classList.remove('moving');
-                target.element.classList.remove('attacking');
-                target.element.classList.remove('facing-right');
-                target.element.classList.remove('facing-left');
-                
-                if (target.listItem) {
-                    target.listItem.classList.add('dead');
-                    target.listItem.querySelector('.icon-health').textContent = `0/${target.stats.maxHealth}`;
-                }
-                
-                battleStats[`player${attacker.player}`].kills++;
-                updateBattleStats();
-                
-                attacker.kills++;
-                checkLevelUp(attacker);
-                
-                // 使用addBattleInfo记录燃烧击杀
-                addBattleInfo(attacker, target, 0, 'kill');
-                
-                // 自爆火箭死亡时触发被动自爆
-                if (target.weapon.isSelfDestruct) {
-                    triggerDeathExplosion(target);
-                }
-                
-                setTimeout(() => {
-                    removeBattleIcon(target);
-                }, GAME_CONFIG.timing.extraLongDelay);
-                
-                target.isBurning = false;
-                return;
-            }
-            
-            lastTickTime = currentTime;
-            currentTick++;
-        }
-        
-        requestAnimationFrame(burnTick);
+}
+
+function applyPoisonEffect(target, attacker, damage) {
+    if (target.isDead) return;
+
+    const cfg = GAME_CONFIG.combat.poison;
+    const maxStacks = attacker.weapon.maxPoisonStacks || cfg.defaultMaxStacks;
+    const poisonInterval = attacker.weapon.poisonInterval || cfg.defaultInterval;
+    const poisonDuration = attacker.weapon.poisonDuration || cfg.defaultDuration;
+    const poisonDamageFactor = attacker.weapon.poisonDamageFactor || cfg.damageFactor;
+
+    if (!target.isPoisoned) {
+        target.isPoisoned = true;
+        target.poisonStacks = 1;
+        target.poisonDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor(damage * poisonDamageFactor));
+        target.poisonRemaining = poisonDuration;
+        target.poisonIntervalRemaining = poisonInterval;
+        target.poisonInterval = poisonInterval;
+        target.poisonAttacker = attacker;
+        target.element.classList.add('poisoned');
+    } else if (target.poisonStacks < maxStacks) {
+        target.poisonStacks++;
+        target.poisonRemaining = poisonDuration;
     }
+
+    createEffectText(target.element, '中毒!', '#9b59b6', 'poison').show();
+    addBattleInfo(attacker, target, damage, 'poison');
+}
+
+function applyLifesteal(attacker, damage) {
+    if (attacker.isDead) return;
+    const healAmount = Math.floor(damage * attacker.weapon.lifestealRatio);
+    if (healAmount <= 0) return;
     
-    requestAnimationFrame(burnTick);
+    attacker.stats.health = Math.min(attacker.stats.maxHealth, attacker.stats.health + healAmount);
+    showHealText(attacker, healAmount);
+    updateHealthBar(attacker);
+}
+
+function applyShield(attacker, target) {
+    if (target.isDead) return;
+
+    const cfg = GAME_CONFIG.combat.shield;
+    const shieldAmount = attacker.weapon.shieldAmount || cfg.defaultAmount;
+    const shieldDuration = attacker.weapon.shieldDuration || cfg.defaultDuration;
+
+    target.shield = shieldAmount;
+    target.shieldRemaining = shieldDuration;
+    target.element.classList.add('shielded');
+
+    playSound('heal');
+    createEffectText(target.element, '护盾!', '#3498db', 'shield').show();
+    addHealBattleInfo(attacker, target, shieldAmount);
 }
 
 function applyKnockback(attacker, target, distance) {
@@ -2520,9 +2589,9 @@ function applyKnockback(attacker, target, distance) {
     target.knockbackTargetY = Math.max(0, Math.min(maxY, target.knockbackTargetY));
     
     target.element.classList.add('knocked-back');
-    
+
     const startTime = performance.now();
-    const duration = 300;
+    const duration = attacker.weapon.knockbackDuration || GAME_CONFIG.combat.knockback.defaultDuration;
     const startX = target.x;
     const startY = target.y;
     
@@ -2553,29 +2622,18 @@ function applyFreeze(attacker, target, duration) {
     if (target.isDead || target.isFrozen) return;
     
     target.isFrozen = true;
-    const actualDuration = duration / gameSpeed;
-    target.freezeEndTime = Date.now() + actualDuration;
+    target.freezeRemaining = duration;
     
     target.element.classList.add('frozen');
     
-    // 使用EffectText类创建冰冻文字，使用蓝色
     createEffectText(target.element, '冰冻!', '#3498db', 'freeze').show();
-    
-    // 使用addBattleInfo记录冰冻效果
     addBattleInfo(attacker, target, duration, 'freeze');
-    
-    setTimeout(() => {
-        if (!target.isDead) {
-            target.isFrozen = false;
-            target.element.classList.remove('frozen');
-        }
-    }, actualDuration);
 }
 
 function applyBuff(attacker, target) {
     if (target.isDead || target.isBuffed) return;
     
-    const buffDuration = (attacker.weapon.buffDuration || GAME_CONFIG.combat.buff.defaultDuration) / gameSpeed;
+    const buffDuration = attacker.weapon.buffDuration || GAME_CONFIG.combat.buff.defaultDuration;
     const buffMultiplier = attacker.weapon.buffMultiplier || GAME_CONFIG.combat.buff.defaultMultiplier;
     
     target.originalStats = {
@@ -2970,42 +3028,42 @@ function moveTowardsTarget(iconData) {
     }
 }
 
+let statsUpdatePending = false;
 function updateBattleStats() {
-    document.getElementById('player1Kills').textContent = battleStats.player1.kills;
+    if (statsUpdatePending) return;
+    statsUpdatePending = true;
     
-    const player1CurrentHealth = battleIcons.player1
-        .filter(icon => !icon.isDead)
-        .reduce((sum, icon) => sum + Math.max(0, icon.stats.health), 0);
-    document.getElementById('player1Health').textContent = player1CurrentHealth;
-    
-    const player1TotalAttack = battleIcons.player1
-        .filter(icon => !icon.isDead)
-        .reduce((sum, icon) => sum + (icon.stats.attack || 0) + (icon.weapon.attack || 0), 0);
-    document.getElementById('player1Attack').textContent = player1TotalAttack;
-    
-    const player1TotalDefense = battleIcons.player1
-        .filter(icon => !icon.isDead)
-        .reduce((sum, icon) => sum + (icon.stats.defense || 0) + (icon.stats.armor || 0), 0);
-    document.getElementById('player1Defense').textContent = player1TotalDefense;
-    
-    document.getElementById('player2Kills').textContent = battleStats.player2.kills;
-    
-    const player2CurrentHealth = battleIcons.player2
-        .filter(icon => !icon.isDead)
-        .reduce((sum, icon) => sum + Math.max(0, icon.stats.health), 0);
-    document.getElementById('player2Health').textContent = player2CurrentHealth;
-    
-    const player2TotalAttack = battleIcons.player2
-        .filter(icon => !icon.isDead)
-        .reduce((sum, icon) => sum + (icon.stats.attack || 0) + (icon.weapon.attack || 0), 0);
-    document.getElementById('player2Attack').textContent = player2TotalAttack;
-    
-    const player2TotalDefense = battleIcons.player2
-        .filter(icon => !icon.isDead)
-        .reduce((sum, icon) => sum + (icon.stats.defense || 0) + (icon.stats.armor || 0), 0);
-    document.getElementById('player2Defense').textContent = player2TotalDefense;
-    
-    updateIconsStatsPanel();
+    requestAnimationFrame(() => {
+        statsUpdatePending = false;
+        
+        const player1Alive = battleIcons.player1.filter(icon => !icon.isDead);
+        const player2Alive = battleIcons.player2.filter(icon => !icon.isDead);
+        
+        let p1Health = 0, p1Attack = 0, p1Defense = 0;
+        for (const icon of player1Alive) {
+            p1Health += Math.max(0, icon.stats.health);
+            p1Attack += (icon.stats.attack || 0) + (icon.weapon.attack || 0);
+            p1Defense += (icon.stats.defense || 0) + (icon.stats.armor || 0);
+        }
+        
+        let p2Health = 0, p2Attack = 0, p2Defense = 0;
+        for (const icon of player2Alive) {
+            p2Health += Math.max(0, icon.stats.health);
+            p2Attack += (icon.stats.attack || 0) + (icon.weapon.attack || 0);
+            p2Defense += (icon.stats.defense || 0) + (icon.stats.armor || 0);
+        }
+        
+        document.getElementById('player1Kills').textContent = battleStats.player1.kills;
+        document.getElementById('player1Health').textContent = p1Health;
+        document.getElementById('player1Attack').textContent = p1Attack;
+        document.getElementById('player1Defense').textContent = p1Defense;
+        document.getElementById('player2Kills').textContent = battleStats.player2.kills;
+        document.getElementById('player2Health').textContent = p2Health;
+        document.getElementById('player2Attack').textContent = p2Attack;
+        document.getElementById('player2Defense').textContent = p2Defense;
+        
+        updateIconsStatsPanel();
+    });
 }
 
 function initBattleInfoDrag() {
@@ -3077,6 +3135,26 @@ function getDistanceSq(x1, y1, x2, y2) {
     return dx * dx + dy * dy;
 }
 
+function refreshAliveCache() {
+    cachedAliveIcons.player1 = battleIcons.player1.filter(icon => !icon.isDead);
+    cachedAliveIcons.player2 = battleIcons.player2.filter(icon => !icon.isDead);
+    cacheDirty = false;
+}
+
+function markCacheDirty() {
+    cacheDirty = true;
+}
+
+function getAliveEnemies(player) {
+    if (cacheDirty) refreshAliveCache();
+    return player === 1 ? cachedAliveIcons.player2 : cachedAliveIcons.player1;
+}
+
+function getAliveAllies(player) {
+    if (cacheDirty) refreshAliveCache();
+    return player === 1 ? cachedAliveIcons.player1 : cachedAliveIcons.player2;
+}
+
 function getDistanceBetween(a, b) {
     return getDistance(a.x, a.y, b.x, b.y);
 }
@@ -3126,8 +3204,7 @@ const GameEvents = {
 };
 
 function findNearestEnemy(iconData) {
-    const enemyPlayer = iconData.player === 1 ? 2 : 1;
-    const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+    const enemies = getAliveEnemies(iconData.player);
     
     if (enemies.length === 0) return null;
     
@@ -3147,26 +3224,37 @@ function findNearestEnemy(iconData) {
 }
 
 function findTargetByAI(iconData) {
-    const enemyPlayer = iconData.player === 1 ? 2 : 1;
-    const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+    const enemies = getAliveEnemies(iconData.player);
     
     if (enemies.length === 0) return null;
     
     const aiConfig = getAIConfig(iconData.aiType);
     
     if (aiConfig.targetPriority === 'lowestHealth') {
-        enemies.sort((a, b) => {
-            const healthPercentA = a.stats.health / a.stats.maxHealth;
-            const healthPercentB = b.stats.health / b.stats.maxHealth;
-            return healthPercentA - healthPercentB;
-        });
+        let target = enemies[0];
+        let lowestHealthPercent = target.stats.health / target.stats.maxHealth;
+        
+        for (let i = 1; i < enemies.length; i++) {
+            const healthPercent = enemies[i].stats.health / enemies[i].stats.maxHealth;
+            if (healthPercent < lowestHealthPercent) {
+                lowestHealthPercent = healthPercent;
+                target = enemies[i];
+            }
+        }
+        return target;
     } else {
-        enemies.sort((a, b) => {
-            return getDistanceSqBetween(iconData, a) - getDistanceSqBetween(iconData, b);
-        });
+        let target = enemies[0];
+        let minDistSq = getDistanceSqBetween(iconData, target);
+        
+        for (let i = 1; i < enemies.length; i++) {
+            const distSq = getDistanceSqBetween(iconData, enemies[i]);
+            if (distSq < minDistSq) {
+                minDistSq = distSq;
+                target = enemies[i];
+            }
+        }
+        return target;
     }
-    
-    return enemies[0];
 }
 
 function shouldRetreatByAI(iconData, enemies) {
@@ -3251,8 +3339,9 @@ function gameLoop(timestamp) {
 }
 
 function updateGame(deltaTime) {
-    const player1Alive = battleIcons.player1.filter(icon => !icon.isDead).length;
-    const player2Alive = battleIcons.player2.filter(icon => !icon.isDead).length;
+    refreshAliveCache();
+    const player1Alive = cachedAliveIcons.player1.length;
+    const player2Alive = cachedAliveIcons.player2.length;
     
     autoAddRandomIconsIfNeeded();
     
@@ -3276,6 +3365,144 @@ function updateGame(deltaTime) {
             }
             iconData.isBuffed = false;
             iconData.element.classList.remove('buffed');
+        }
+        
+        // 冰冻倒计时（冰冻期间CD也暂停）
+        if (iconData.isFrozen) {
+            iconData.freezeRemaining -= deltaTime;
+            if (iconData.freezeRemaining <= 0) {
+                iconData.isFrozen = false;
+                iconData.element.classList.remove('frozen');
+            }
+        }
+        
+        // CD倒计时（冰冻期间不恢复CD）
+        if (iconData.isOnCooldown && !iconData.isFrozen) {
+            iconData.cooldownRemaining -= deltaTime;
+            if (iconData.cooldownRemaining <= 0) {
+                iconData.isOnCooldown = false;
+                iconData.currentCharges = iconData.weapon.maxCharges;
+            }
+        }
+        
+        // 燃烧伤害（冰冻期间不造成燃烧伤害）
+        if (iconData.isBurning && !iconData.isFrozen && !iconData.isDead) {
+            iconData.burnRemaining -= deltaTime;
+            iconData.burnIntervalRemaining -= deltaTime;
+            
+            if (iconData.burnIntervalRemaining <= 0 && iconData.burnRemaining > 0) {
+                iconData.burnIntervalRemaining += iconData.burnInterval;
+                iconData.stats.health -= iconData.burnDamage;
+                showDamageText(iconData, iconData.burnDamage, 'fire');
+                updateHealthBar(iconData);
+                
+                if (iconData.stats.health <= 0 && !iconData.hasBeenKilled) {
+                    playSound('kill');
+                    playSound('death');
+                    iconData.isDead = true;
+                    iconData.hasBeenKilled = true;
+                    iconData.element.classList.add('dead');
+                    if (iconData.burnAttacker && iconData.burnAttacker.x < iconData.x) {
+                        iconData.element.classList.add('fall-right');
+                    } else {
+                        iconData.element.classList.add('fall-left');
+                    }
+                    iconData.element.classList.remove('moving', 'attacking', 'facing-right', 'facing-left');
+                    
+                    if (iconData.listItem) {
+                        iconData.listItem.classList.add('dead');
+                        const healthEl = iconData.listItem.querySelector('.icon-health');
+                        if (healthEl) healthEl.textContent = `0/${iconData.stats.maxHealth}`;
+                    }
+                    
+                    if (iconData.burnAttacker) {
+                        battleStats[`player${iconData.burnAttacker.player}`].kills++;
+                        iconData.burnAttacker.kills++;
+                        checkLevelUp(iconData.burnAttacker);
+                        addBattleInfo(iconData.burnAttacker, iconData, 0, 'kill');
+                    }
+                    updateBattleStats();
+                    
+                    if (iconData.weapon.isSelfDestruct) {
+                        triggerDeathExplosion(iconData);
+                    }
+                    
+                    const deadIcon = iconData;
+                    setTimeout(() => removeBattleIcon(deadIcon), GAME_CONFIG.timing.extraLongDelay);
+                    
+                    iconData.isBurning = false;
+                }
+            }
+            
+            if (iconData.burnRemaining <= 0) {
+                iconData.isBurning = false;
+            }
+        }
+        
+        // 毒药伤害（冰冻期间不造成毒伤）
+        if (iconData.isPoisoned && !iconData.isFrozen && !iconData.isDead) {
+            iconData.poisonRemaining -= deltaTime;
+            iconData.poisonIntervalRemaining -= deltaTime;
+            
+            if (iconData.poisonIntervalRemaining <= 0 && iconData.poisonRemaining > 0) {
+                iconData.poisonIntervalRemaining += iconData.poisonInterval;
+                const totalPoisonDamage = iconData.poisonDamage * iconData.poisonStacks;
+                iconData.stats.health -= totalPoisonDamage;
+                showDamageText(iconData, totalPoisonDamage, 'poison');
+                updateHealthBar(iconData);
+                
+                if (iconData.stats.health <= 0 && !iconData.hasBeenKilled) {
+                    playSound('kill');
+                    playSound('death');
+                    iconData.isDead = true;
+                    iconData.hasBeenKilled = true;
+                    iconData.element.classList.add('dead');
+                    if (iconData.poisonAttacker && iconData.poisonAttacker.x < iconData.x) {
+                        iconData.element.classList.add('fall-right');
+                    } else {
+                        iconData.element.classList.add('fall-left');
+                    }
+                    iconData.element.classList.remove('moving', 'attacking', 'facing-right', 'facing-left', 'poisoned');
+                    
+                    if (iconData.listItem) {
+                        iconData.listItem.classList.add('dead');
+                        const healthEl = iconData.listItem.querySelector('.icon-health');
+                        if (healthEl) healthEl.textContent = `0/${iconData.stats.maxHealth}`;
+                    }
+                    
+                    if (iconData.poisonAttacker) {
+                        battleStats[`player${iconData.poisonAttacker.player}`].kills++;
+                        iconData.poisonAttacker.kills++;
+                        checkLevelUp(iconData.poisonAttacker);
+                        addBattleInfo(iconData.poisonAttacker, iconData, 0, 'kill');
+                    }
+                    updateBattleStats();
+                    
+                    if (iconData.weapon.isSelfDestruct) {
+                        triggerDeathExplosion(iconData);
+                    }
+                    
+                    const deadIcon = iconData;
+                    setTimeout(() => removeBattleIcon(deadIcon), GAME_CONFIG.timing.extraLongDelay);
+                    
+                    iconData.isPoisoned = false;
+                }
+            }
+            
+            if (iconData.poisonRemaining <= 0) {
+                iconData.isPoisoned = false;
+                iconData.poisonStacks = 0;
+                iconData.element.classList.remove('poisoned');
+            }
+        }
+        
+        // 护盾倒计时
+        if (iconData.shield > 0) {
+            iconData.shieldRemaining -= deltaTime;
+            if (iconData.shieldRemaining <= 0) {
+                iconData.shield = 0;
+                iconData.element.classList.remove('shielded');
+            }
         }
     });
     
@@ -3342,26 +3569,29 @@ function updateGame(deltaTime) {
 }
 
 function handleHealerBehavior(iconData) {
-    const allies = battleIcons[`player${iconData.player}`].filter(ally => !ally.isDead);
-    const enemyPlayer = iconData.player === 1 ? 2 : 1;
-    const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+    const allies = getAliveAllies(iconData.player);
+    const enemies = getAliveEnemies(iconData.player);
     
     const rect = battleAreaRect;
     
     const injuredAllies = allies.filter(ally => ally.stats.health < ally.stats.maxHealth);
     
     if (injuredAllies.length > 0) {
-        injuredAllies.sort((a, b) => {
-            const healthPercentA = a.stats.health / a.stats.maxHealth;
-            const healthPercentB = b.stats.health / b.stats.maxHealth;
-            return healthPercentA - healthPercentB;
-        });
+        let target = injuredAllies[0];
+        let lowestHealthPercent = target.stats.health / target.stats.maxHealth;
         
-        const target = injuredAllies[0];
-        const distance = getDistanceBetween(iconData, target);
+        for (let i = 1; i < injuredAllies.length; i++) {
+            const healthPercent = injuredAllies[i].stats.health / injuredAllies[i].stats.maxHealth;
+            if (healthPercent < lowestHealthPercent) {
+                lowestHealthPercent = healthPercent;
+                target = injuredAllies[i];
+            }
+        }
+        
+        const distanceSq = getDistanceSqBetween(iconData, target);
         const effectiveRange = getEffectiveRange(iconData);
         
-        if (distance <= effectiveRange) {
+        if (distanceSq <= effectiveRange * effectiveRange) {
             if (!iconData.isAttacking && !iconData.isOnCooldown) {
                 attack(iconData, target);
             }
@@ -3377,14 +3607,18 @@ function handleHealerBehavior(iconData) {
         const combatAllies = allies.filter(ally => ally.weapon.type !== 'heal' && ally.weapon.type !== 'buff');
         
         if (combatAllies.length > 0) {
-            combatAllies.sort((a, b) => {
-                const distA = Math.sqrt(Math.pow(a.x - iconData.x, 2) + Math.pow(a.y - iconData.y, 2));
-                const distB = Math.sqrt(Math.pow(b.x - iconData.x, 2) + Math.pow(b.y - iconData.y, 2));
-                return distA - distB;
-            });
+            let target = combatAllies[0];
+            let minDistSq = getDistanceSqBetween(iconData, target);
             
-            const target = combatAllies[0];
-            const distance = getDistanceBetween(iconData, target);
+            for (let i = 1; i < combatAllies.length; i++) {
+                const distSq = getDistanceSqBetween(iconData, combatAllies[i]);
+                if (distSq < minDistSq) {
+                    minDistSq = distSq;
+                    target = combatAllies[i];
+                }
+            }
+            
+            const distance = Math.sqrt(minDistSq);
             const followDistance = 80 * iconSize;
             
             if (distance > followDistance) {
@@ -3425,14 +3659,18 @@ function handleHealerBehavior(iconData) {
     }
     
     if (enemies.length > 0) {
-        enemies.sort((a, b) => {
-            const distA = Math.sqrt(Math.pow(a.x - iconData.x, 2) + Math.pow(a.y - iconData.y, 2));
-            const distB = Math.sqrt(Math.pow(b.x - iconData.x, 2) + Math.pow(b.y - iconData.y, 2));
-            return distA - distB;
-        });
+        let target = enemies[0];
+        let minDistSq = getDistanceSqBetween(iconData, target);
         
-        const target = enemies[0];
-        const distance = getDistanceBetween(iconData, target);
+        for (let i = 1; i < enemies.length; i++) {
+            const distSq = getDistanceSqBetween(iconData, enemies[i]);
+            if (distSq < minDistSq) {
+                minDistSq = distSq;
+                target = enemies[i];
+            }
+        }
+        
+        const distance = Math.sqrt(minDistSq);
         const attackRange = GAME_CONFIG.movement.buffAttackRange * iconSize;
         
         if (distance > attackRange) {
@@ -3453,9 +3691,8 @@ function handleHealerBehavior(iconData) {
 }
 
 function handleBuffBehavior(iconData) {
-    const allies = battleIcons[`player${iconData.player}`].filter(ally => !ally.isDead && ally !== iconData);
-    const enemyPlayer = iconData.player === 1 ? 2 : 1;
-    const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+    const allies = getAliveAllies(iconData.player).filter(ally => ally !== iconData);
+    const enemies = getAliveEnemies(iconData.player);
     
     const rect = battleAreaRect;
     
@@ -3687,11 +3924,6 @@ function init() {
         const modal = document.getElementById('searchModal');
         if (event.target === modal) {
             closeSearchModal();
-        }
-
-        const configModal = document.getElementById('configModal');
-        if (event.target === configModal) {
-            closeConfigModal();
         }
     });
     
@@ -4578,8 +4810,7 @@ function handleSquadLeaderBehavior(iconData) {
     const members = getSquadMembers(iconData.player);
     const monitorRange = getMonitorRange(members.length);
     
-    const enemyPlayer = iconData.player === 1 ? 2 : 1;
-    const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
+    const enemies = getAliveEnemies(iconData.player);
     
     const battleArea = document.getElementById('battleArea');
     const battleZone = document.getElementById(`player${iconData.player}BattleZone`);
@@ -4919,19 +5150,6 @@ function updateIconSize(value) {
         icon.style.setProperty('--icon-size', iconSize);
     });
 
-    const defaultIconSize = 0.8;
-    const readyBaseSize = 70;
-    const readyIconSize = readyBaseSize * (iconSize / defaultIconSize);
-
-    const allReadyIcons = document.querySelectorAll('.icon-item');
-    allReadyIcons.forEach(icon => {
-        icon.style.width = `${readyIconSize}px`;
-        icon.style.height = `${readyIconSize}px`;
-        icon.style.setProperty('--icon-size', iconSize / defaultIconSize);
-    });
-
-    updateReadyAreaLayout();
-
     const iconSizeSlider = document.getElementById('iconSizeSlider');
     if (iconSizeSlider) {
         iconSizeSlider.value = value;
@@ -4940,15 +5158,22 @@ function updateIconSize(value) {
     saveOptionsConfig();
 }
 
-// 重新计算玩家待命区行高（受 iconSize 和 uiSize 共同影响）
+// 重新计算玩家待命区行高（受 uiSize 影响）
 function updateReadyAreaLayout() {
-    const defaultIconSize = 0.8;
     const readyBaseSize = 70;
-    const readyIconSize = readyBaseSize * (iconSize / defaultIconSize);
+    const readyIconSize = readyBaseSize * uiSize;
     const rowHeight = readyIconSize + 30 * uiSize;
     const allReadyContents = document.querySelectorAll('.ready-content');
     allReadyContents.forEach(content => {
         content.style.height = `${rowHeight}px`;
+    });
+
+    // 更新待命区图标尺寸
+    const allReadyIcons = document.querySelectorAll('.icon-item');
+    allReadyIcons.forEach(icon => {
+        icon.style.width = `${readyIconSize}px`;
+        icon.style.height = `${readyIconSize}px`;
+        icon.style.setProperty('--icon-size', uiSize);
     });
 }
 
@@ -5193,8 +5418,33 @@ function showIconDetailPanel(iconData, player) {
             </div>
             <div class="detail-item">
                 <span class="detail-label">武器:</span>
-                <span class="detail-value weapon" id="detail-weapon">${iconData.weapon.name}(${weaponTypeToChinese(iconData.weapon.type)})</span>
+                <span class="detail-value weapon" id="detail-weapon">${iconData.weapon.emoji} ${iconData.weapon.name}(${weaponTypeToChinese(iconData.weapon.type)})</span>
             </div>
+            <div class="detail-item">
+                <span class="detail-label">射程:</span>
+                <span class="detail-value" id="detail-range">${iconData.weapon.range}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">攻速:</span>
+                <span class="detail-value" id="detail-attackspeed">${iconData.weapon.attackSpeed}ms</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">弹药:</span>
+                <span class="detail-value" id="detail-charges">${iconData.currentCharges}/${iconData.weapon.maxCharges}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">冷却:</span>
+                <span class="detail-value" id="detail-cooldown">${iconData.weapon.cooldownTime > 0 ? `${iconData.weapon.cooldownTime}ms` : '无'}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">AI:</span>
+                <span class="detail-value" id="detail-ai">${iconData.aiType}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">状态:</span>
+                <span class="detail-value" id="detail-status">正常</span>
+            </div>
+            <div class="detail-abilities" id="detail-abilities"></div>
             <div class="detail-item">
                 <span class="detail-label">击杀数:</span>
                 <span class="detail-value kills" id="detail-kills">${iconData.kills}</span>
@@ -5225,7 +5475,7 @@ function showIconDetailPanel(iconData, player) {
 
 function updateIconDetailPanel(iconData) {
     if (!currentDetailPanel) return;
-    
+
     // 更新各项数据
     currentDetailPanel.querySelector('#detail-name').textContent = `${iconData.name || '未知图标'}(#${iconData.element.dataset.iconId})`;
     currentDetailPanel.querySelector('#detail-level').textContent = iconData.level;
@@ -5234,8 +5484,45 @@ function updateIconDetailPanel(iconData) {
     currentDetailPanel.querySelector('#detail-defense').textContent = iconData.stats.defense;
     currentDetailPanel.querySelector('#detail-speed').textContent = iconData.stats.speed;
     currentDetailPanel.querySelector('#detail-armor').textContent = iconData.stats.armor;
-    currentDetailPanel.querySelector('#detail-weapon').textContent = `${iconData.weapon.name}(${weaponTypeToChinese(iconData.weapon.type)})`;
+    currentDetailPanel.querySelector('#detail-weapon').textContent = `${iconData.weapon.emoji} ${iconData.weapon.name}(${weaponTypeToChinese(iconData.weapon.type)})`;
+    currentDetailPanel.querySelector('#detail-range').textContent = iconData.weapon.range;
+    currentDetailPanel.querySelector('#detail-attackspeed').textContent = `${iconData.weapon.attackSpeed}ms`;
+    currentDetailPanel.querySelector('#detail-charges').textContent = `${iconData.currentCharges}/${iconData.weapon.maxCharges}`;
+    currentDetailPanel.querySelector('#detail-cooldown').textContent = iconData.weapon.cooldownTime > 0 ? `${iconData.weapon.cooldownTime}ms` : '无';
+    currentDetailPanel.querySelector('#detail-ai').textContent = iconData.aiType;
     currentDetailPanel.querySelector('#detail-kills').textContent = iconData.kills;
+
+    // 动态生成状态信息
+    const statusEl = currentDetailPanel.querySelector('#detail-status');
+    const statuses = [];
+    if (iconData.isDead) statuses.push('已阵亡');
+    if (iconData.isAttacking) statuses.push('攻击中');
+    if (iconData.isFrozen) statuses.push(`冰冻(${Math.ceil(iconData.freezeRemaining / 1000)}s)`);
+    if (iconData.isStunned) statuses.push('眩晕');
+    if (iconData.isBurning) statuses.push(`燃烧(${Math.ceil(iconData.burnRemaining / 1000)}s)`);
+    if (iconData.isPoisoned) statuses.push(`中毒x${iconData.poisonStacks}(${Math.ceil(iconData.poisonRemaining / 1000)}s)`);
+    if (iconData.shield > 0) statuses.push(`护盾${iconData.shield}(${Math.ceil(iconData.shieldRemaining / 1000)}s)`);
+    if (iconData.isBuffed) statuses.push('增益中');
+    if (iconData.isKnockedBack) statuses.push('击退中');
+    if (iconData.isOnCooldown) statuses.push(`冷却中(${Math.ceil(iconData.cooldownRemaining / 1000)}s)`);
+    if (iconData.isCharging) statuses.push('冲锋中');
+    statusEl.textContent = statuses.length > 0 ? statuses.join('、') : '正常';
+    statusEl.style.color = statuses.length > 0 ? '#ff6b6b' : '#4ade80';
+
+    // 动态生成特殊能力信息
+    const abilitiesContainer = currentDetailPanel.querySelector('#detail-abilities');
+    const abilities = detectWeaponAbilities(iconData.weapon);
+    abilitiesContainer.innerHTML = abilities.length > 0
+        ? abilities.map(key => {
+            const def = SPECIAL_ABILITIES[key];
+            const params = Object.keys(def.fields).map(f => {
+                const v = iconData.weapon[f];
+                const display = def.fields[f].type === 'checkbox' ? (v ? '是' : '否') : v;
+                return `${def.fields[f].label}:${display}`;
+            }).join(' ');
+            return `<div class="detail-item detail-ability"><span class="detail-label ability-name">${def.label}</span><span class="detail-value">${params}</span></div>`;
+        }).join('')
+        : '<div class="detail-item"><span class="detail-label">特殊能力:</span><span class="detail-value">无</span></div>';
     
     // 更新左侧战斗图标状态
     const detailLeft = currentDetailPanel.querySelector('.icon-detail-left');
@@ -6144,30 +6431,124 @@ function removeOptionsPanel() {
 const DEFAULT_WEAPONS_CONFIG = JSON.parse(JSON.stringify(GAME_CONFIG.weapons));
 const DEFAULT_COMBAT_CONFIG = JSON.parse(JSON.stringify(GAME_CONFIG.combat));
 
+// 武器字段元数据：基本信息 + 基础能力
 const WEAPON_FIELD_META = {
-    name: { label: '武器名称', type: 'text', desc: '' },
-    emoji: { label: '表情图标', type: 'text', desc: '' },
-    attack: { label: '攻击力', type: 'number', desc: '基础攻击伤害', min: 0 },
-    type: { label: '武器类型', type: 'select', desc: '', options: ['melee', 'ranged', 'aoe', 'heal', 'buff'] },
-    range: { label: '攻击范围', type: 'number', desc: '像素', min: 1 },
-    attackSpeed: { label: '攻击速度', type: 'number', desc: '毫秒/次', min: 100 },
-    maxCharges: { label: '弹夹容量', type: 'number', desc: '每次装填弹药数', min: 1 },
-    cooldownTime: { label: '换弹时间', type: 'number', desc: '毫秒', min: 0 },
-    heal: { label: '治疗量', type: 'number', desc: '治疗武器专用', min: 0 },
-    aoeRadius: { label: 'AOE半径', type: 'number', desc: 'AOE武器专用', min: 0 },
-    knockbackDistance: { label: '击退距离', type: 'number', desc: '像素', min: 0 },
-    ignoreDefense: { label: '无视防御', type: 'checkbox', desc: '伤害不计算防御' },
-    burnDuration: { label: '燃烧持续', type: 'number', desc: '毫秒', min: 0 },
-    burnInterval: { label: '燃烧间隔', type: 'number', desc: '毫秒', min: 100 },
-    freezeDuration: { label: '冰冻持续', type: 'number', desc: '毫秒', min: 0 },
-    buffDuration: { label: '增益持续', type: 'number', desc: '毫秒', min: 0 },
-    buffMultiplier: { label: '增益倍率', type: 'number', desc: '属性倍率', min: 0, step: 0.1 },
-    chargeSpeed: { label: '冲锋速度', type: 'number', desc: '自爆武器专用', min: 0 },
-    deathExplosionMultiplier: { label: '死亡自爆倍率', type: 'number', desc: '死亡时爆炸伤害比例', min: 0, step: 0.05 },
-    isSelfDestruct: { label: '是否自爆', type: 'checkbox', desc: '武器是否为自爆类型' },
-    defaultDirection: { label: '默认朝向', type: 'select', desc: '', options: ['top', 'bottom', 'left', 'right'] },
-    effectType: { label: '特效类型', type: 'select', desc: '', options: ['slash', 'stab', 'chop', 'smash', 'pierce', 'dig', 'arrow', 'bullet', 'explosion', 'lightning', 'fire', 'ice', 'heal', 'buff'] }
+    // 基本信息
+    emoji: { label: '表情图标', type: 'text', group: 'basic' },
+    name: { label: '武器名称', type: 'text', group: 'basic' },
+    type: { label: '武器类型', type: 'select', group: 'basic', options: ['melee', 'ranged', 'aoe', 'heal', 'buff'] },
+    defaultDirection: { label: '默认朝向', type: 'select', group: 'basic', options: ['top', 'bottom', 'left', 'right'] },
+    effectType: { label: '特效类型', type: 'select', group: 'basic', options: ['slash', 'stab', 'chop', 'smash', 'pierce', 'dig', 'arrow', 'bullet', 'explosion', 'lightning', 'fire', 'ice', 'heal', 'buff', 'poison', 'shield'] },
+    // 基础能力
+    attack: { label: '攻击力', type: 'number', group: 'combat', desc: '基础攻击伤害', min: 0 },
+    range: { label: '攻击范围', type: 'number', group: 'combat', desc: '像素', min: 1 },
+    attackSpeed: { label: '攻击速度', type: 'number', group: 'combat', desc: '毫秒/次', min: 100 },
+    maxCharges: { label: '弹夹容量', type: 'number', group: 'combat', desc: '每次装填弹药数', min: 1 },
+    cooldownTime: { label: '换弹时间', type: 'number', group: 'combat', desc: '毫秒', min: 0 }
 };
+
+// 特殊能力定义：每个武器最多3个特殊能力
+const SPECIAL_ABILITIES = {
+    burn: {
+        label: '燃烧',
+        desc: '使目标持续受到火焰伤害',
+        fields: {
+            burnDuration: { label: '持续', type: 'number', desc: '毫秒', min: 0, default: 5000 },
+            burnInterval: { label: '间隔', type: 'number', desc: '毫秒', min: 100, default: 500 }
+        }
+    },
+    freeze: {
+        label: '冰冻',
+        desc: '冻结目标，无法行动且CD暂停',
+        fields: {
+            freezeDuration: { label: '持续', type: 'number', desc: '毫秒', min: 0, default: 1500 }
+        }
+    },
+    poison: {
+        label: '中毒',
+        desc: '可叠加的持续毒伤',
+        fields: {
+            poisonDuration: { label: '持续', type: 'number', desc: '毫秒', min: 0, default: 4000 },
+            poisonInterval: { label: '间隔', type: 'number', desc: '毫秒', min: 100, default: 1000 },
+            maxPoisonStacks: { label: '最大层数', type: 'number', desc: '可叠加层数', min: 1, default: 3 },
+            poisonDamageFactor: { label: '毒伤系数', type: 'number', desc: '占初始伤害比例', min: 0, step: 0.05, default: 0.15 }
+        }
+    },
+    shield: {
+        label: '护盾',
+        desc: '为队友提供伤害吸收护盾',
+        fields: {
+            shieldAmount: { label: '护盾值', type: 'number', desc: '吸收量', min: 0, default: 50 },
+            shieldDuration: { label: '持续', type: 'number', desc: '毫秒', min: 0, default: 3000 }
+        }
+    },
+    lifesteal: {
+        label: '吸血',
+        desc: '将伤害转化为自身生命值',
+        fields: {
+            lifestealRatio: { label: '吸血比例', type: 'number', desc: '伤害转血量比例', min: 0, step: 0.05, default: 0.3 }
+        }
+    },
+    knockback: {
+        label: '击退',
+        desc: '击退目标',
+        fields: {
+            knockbackDistance: { label: '距离', type: 'number', desc: '像素', min: 0, default: 40 },
+            knockbackDuration: { label: '动画时间', type: 'number', desc: '毫秒', min: 0, default: 300 }
+        }
+    },
+    heal: {
+        label: '治疗',
+        desc: '治疗队友生命值',
+        fields: {
+            heal: { label: '治疗量', type: 'number', desc: '', min: 0, default: 20 }
+        }
+    },
+    buff: {
+        label: '增益',
+        desc: '提升队友属性',
+        fields: {
+            buffDuration: { label: '持续', type: 'number', desc: '毫秒', min: 0, default: 3000 },
+            buffMultiplier: { label: '倍率', type: 'number', desc: '属性倍率', min: 0, step: 0.1, default: 2.0 }
+        }
+    },
+    aoe: {
+        label: '范围伤害',
+        desc: '范围爆炸伤害',
+        fields: {
+            aoeRadius: { label: '半径', type: 'number', desc: '像素', min: 0, default: 120 }
+        }
+    },
+    selfDestruct: {
+        label: '自爆',
+        desc: '冲锋自爆，死亡时爆炸',
+        fields: {
+            chargeSpeed: { label: '冲锋速度', type: 'number', desc: '', min: 0, default: 300 },
+            deathExplosionMultiplier: { label: '死亡自爆倍率', type: 'number', desc: '死亡时爆炸伤害比例', min: 0, step: 0.05, default: 0.5 },
+            isSelfDestruct: { label: '启用自爆', type: 'checkbox', desc: '', default: true }
+        }
+    },
+    ignoreDefense: {
+        label: '无视防御',
+        desc: '伤害不计算防御',
+        fields: {
+            ignoreDefense: { label: '启用', type: 'checkbox', desc: '', default: true }
+        }
+    }
+};
+
+// 检测武器拥有哪些特殊能力
+function detectWeaponAbilities(weapon) {
+    const abilities = [];
+    for (const [abilityKey, abilityDef] of Object.entries(SPECIAL_ABILITIES)) {
+        const fieldKeys = Object.keys(abilityDef.fields);
+        // 如果武器拥有该能力的任一字段，则认为拥有该能力
+        if (fieldKeys.some(fk => weapon[fk] !== undefined)) {
+            abilities.push(abilityKey);
+        }
+    }
+    return abilities;
+}
 
 function getCombatFieldMeta() {
     return {
@@ -6178,10 +6559,20 @@ function getCombatFieldMeta() {
         'damage.levelUpHealPercent': { label: '升级回血比例', type: 'number', desc: '升级时回血百分比', min: 0, step: 0.05, section: '伤害系统' },
         'damage.levelUpMaxHealthBonus': { label: '升级生命加成', type: 'number', desc: '升级最大生命倍率', min: 1, step: 0.05, section: '伤害系统' },
         'damage.minDamage': { label: '最小伤害', type: 'number', desc: '最低伤害值', min: 1, section: '伤害系统' },
+        'damage.baseCritRate': { label: '基础暴击率', type: 'number', desc: '暴击触发概率', min: 0, step: 0.01, section: '伤害系统' },
+        'damage.baseCritDamage': { label: '基础暴击伤害', type: 'number', desc: '暴击伤害倍率', min: 1, step: 0.1, section: '伤害系统' },
+        'damage.baseLifeSteal': { label: '基础吸血比例', type: 'number', desc: '伤害转血量比例', min: 0, step: 0.05, section: '伤害系统' },
         'dodge.speedFactor': { label: '闪避系数', type: 'number', desc: '速度×该系数=闪避率', min: 0, step: 0.005, section: '闪避系统' },
         'burn.damageFactor': { label: '燃烧伤害比例', type: 'number', desc: '每次跳伤害占初始伤害比例', min: 0, step: 0.05, section: '燃烧DOT' },
         'burn.defaultDuration': { label: '燃烧默认持续', type: 'number', desc: '毫秒', min: 0, section: '燃烧DOT' },
         'burn.defaultInterval': { label: '燃烧默认间隔', type: 'number', desc: '毫秒', min: 100, section: '燃烧DOT' },
+        'poison.damageFactor': { label: '毒伤系数', type: 'number', desc: '占初始伤害比例', min: 0, step: 0.05, section: '中毒DOT' },
+        'poison.defaultDuration': { label: '中毒默认持续', type: 'number', desc: '毫秒', min: 0, section: '中毒DOT' },
+        'poison.defaultInterval': { label: '中毒默认间隔', type: 'number', desc: '毫秒', min: 100, section: '中毒DOT' },
+        'poison.defaultMaxStacks': { label: '默认最大层数', type: 'number', desc: '可叠加层数', min: 1, section: '中毒DOT' },
+        'shield.defaultAmount': { label: '默认护盾值', type: 'number', desc: '', min: 0, section: '护盾系统' },
+        'shield.defaultDuration': { label: '默认护盾持续', type: 'number', desc: '毫秒', min: 0, section: '护盾系统' },
+        'knockback.defaultDuration': { label: '默认击退动画', type: 'number', desc: '毫秒', min: 0, section: '击退系统' },
         'weaponDefaults.aoeRadius': { label: '默认AOE半径', type: 'number', desc: '像素', min: 0, section: '武器默认值' },
         'weaponDefaults.healAmount': { label: '默认治疗量', type: 'number', desc: '', min: 0, section: '武器默认值' },
         'weaponDefaults.attack': { label: '默认攻击力', type: 'number', desc: '', min: 0, section: '武器默认值' },
@@ -6189,6 +6580,12 @@ function getCombatFieldMeta() {
         'weaponDefaults.deathExplosionMultiplier': { label: '默认死亡自爆倍率', type: 'number', desc: '', min: 0, step: 0.05, section: '武器默认值' },
         'buff.defaultDuration': { label: '默认增益持续', type: 'number', desc: '毫秒', min: 0, section: '增益系统' },
         'buff.defaultMultiplier': { label: '默认增益倍率', type: 'number', desc: '', min: 0, step: 0.1, section: '增益系统' },
+        'backToWall.enabled': { label: '启用背水一战', type: 'checkbox', desc: '边缘作战加成', section: '背水一战' },
+        'backToWall.edgeThreshold': { label: '边缘阈值', type: 'number', desc: '像素×iconSize', min: 0, section: '背水一战' },
+        'backToWall.attackMultiplier': { label: '攻击加成', type: 'number', desc: '倍率', min: 1, step: 0.05, section: '背水一战' },
+        'backToWall.defenseMultiplier': { label: '防御加成', type: 'number', desc: '倍率', min: 1, step: 0.05, section: '背水一战' },
+        'backToWall.critRateBonus': { label: '暴击率加成', type: 'number', desc: '', min: 0, step: 0.01, section: '背水一战' },
+        'backToWall.critDamageMultiplier': { label: '暴击伤害加成', type: 'number', desc: '倍率', min: 1, step: 0.05, section: '背水一战' },
         'squad.meleeIdealRangeVsMelee': { label: '近战vs近战', type: 'number', desc: '理想射程比例', min: 0, step: 0.05, section: '小队战斗' },
         'squad.meleeIdealRangeVsRanged': { label: '近战vs远程', type: 'number', desc: '理想射程比例', min: 0, step: 0.05, section: '小队战斗' },
         'squad.rangedIdealRangeVsMelee': { label: '远程vs近战', type: 'number', desc: '理想射程比例', min: 0, step: 0.05, section: '小队战斗' },
@@ -6247,31 +6644,21 @@ function selectWeaponConfig(index) {
     if (select) {
         select.value = index;
     }
-    
+
     const weapon = GAME_CONFIG.weapons[index];
     const form = document.getElementById('weaponConfigForm');
     form.innerHTML = '';
-    
-    const fields = Object.keys(WEAPON_FIELD_META);
-    fields.forEach(field => {
-        if (!(field in weapon) && field !== 'heal' && field !== 'aoeRadius' && field !== 'knockbackDistance' 
-            && field !== 'ignoreDefense' && field !== 'burnDuration' && field !== 'burnInterval'
-            && field !== 'freezeDuration' && field !== 'buffDuration' && field !== 'buffMultiplier'
-            && field !== 'chargeSpeed' && field !== 'deathExplosionMultiplier' && field !== 'isSelfDestruct') {
-            return;
-        }
-        
-        const meta = WEAPON_FIELD_META[field];
-        const value = weapon[field] !== undefined ? weapon[field] : (meta.type === 'checkbox' ? false : 0);
-        
+
+    // 渲染单个字段（基本信息/基础能力/特殊能力参数共用）
+    const renderField = (field, meta, value, index) => {
         const fieldDiv = document.createElement('div');
         fieldDiv.className = 'config-field';
-        
+
         const label = document.createElement('label');
         label.innerHTML = `${meta.label}${meta.desc ? `<span class="field-desc">(${meta.desc})</span>` : ''}`;
         label.title = `${meta.label}${meta.desc ? ` (${meta.desc})` : ''}`;
         fieldDiv.appendChild(label);
-        
+
         let input;
         if (meta.type === 'select') {
             input = document.createElement('select');
@@ -6294,27 +6681,141 @@ function selectWeaponConfig(index) {
             if (meta.max !== undefined) input.max = meta.max;
             if (meta.step !== undefined) input.step = meta.step;
         }
-        
+
         input.dataset.field = field;
         input.dataset.weaponIndex = index;
-        input.addEventListener('change', (e) => onWeaponFieldChange(e, index, field));
+        input.addEventListener('change', (e) => onWeaponFieldChange(e, index, field, meta.type));
         fieldDiv.appendChild(input);
-        form.appendChild(fieldDiv);
+        return fieldDiv;
+    };
+
+    // 1. 基本信息
+    const basicTitle = document.createElement('div');
+    basicTitle.className = 'config-section-title';
+    basicTitle.textContent = '基本信息';
+    form.appendChild(basicTitle);
+    Object.keys(WEAPON_FIELD_META).filter(f => WEAPON_FIELD_META[f].group === 'basic').forEach(field => {
+        const meta = WEAPON_FIELD_META[field];
+        const value = weapon[field] !== undefined ? weapon[field] : '';
+        form.appendChild(renderField(field, meta, value, index));
     });
+
+    // 2. 基础能力
+    const combatTitle = document.createElement('div');
+    combatTitle.className = 'config-section-title';
+    combatTitle.textContent = '基础能力';
+    form.appendChild(combatTitle);
+    Object.keys(WEAPON_FIELD_META).filter(f => WEAPON_FIELD_META[f].group === 'combat').forEach(field => {
+        const meta = WEAPON_FIELD_META[field];
+        const value = weapon[field] !== undefined ? weapon[field] : 0;
+        form.appendChild(renderField(field, meta, value, index));
+    });
+
+    // 3. 特殊能力（最多3个）
+    const abilityTitle = document.createElement('div');
+    abilityTitle.className = 'config-section-title';
+    abilityTitle.textContent = '特殊能力（最多3个）';
+    form.appendChild(abilityTitle);
+
+    const currentAbilities = detectWeaponAbilities(weapon);
+    currentAbilities.forEach(abilityKey => {
+        const abilityDef = SPECIAL_ABILITIES[abilityKey];
+        const abilityGroup = document.createElement('div');
+        abilityGroup.className = 'ability-group';
+
+        // 能力标题行
+        const abilityHeader = document.createElement('div');
+        abilityHeader.className = 'ability-header';
+        const abilityLabel = document.createElement('span');
+        abilityLabel.className = 'ability-label';
+        abilityLabel.textContent = abilityDef.label;
+        abilityLabel.title = abilityDef.desc;
+        abilityHeader.appendChild(abilityLabel);
+
+        // 移除能力按钮
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'btn-remove-ability';
+        removeBtn.textContent = '移除';
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeWeaponAbility(index, abilityKey);
+        });
+        abilityHeader.appendChild(removeBtn);
+        abilityGroup.appendChild(abilityHeader);
+
+        // 能力参数
+        Object.keys(abilityDef.fields).forEach(field => {
+            const fieldMeta = abilityDef.fields[field];
+            const value = weapon[field] !== undefined ? weapon[field] : fieldMeta.default;
+            abilityGroup.appendChild(renderField(field, fieldMeta, value, index));
+        });
+
+        form.appendChild(abilityGroup);
+    });
+
+    // 添加能力选择器（如果未满3个）
+    if (currentAbilities.length < 3) {
+        const addDiv = document.createElement('div');
+        addDiv.className = 'config-field add-ability-field';
+        const addLabel = document.createElement('label');
+        addLabel.textContent = '添加特殊能力';
+        addDiv.appendChild(addLabel);
+        const addSelect = document.createElement('select');
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = '-- 选择能力 --';
+        addSelect.appendChild(defaultOption);
+        Object.keys(SPECIAL_ABILITIES).forEach(abilityKey => {
+            if (!currentAbilities.includes(abilityKey)) {
+                const option = document.createElement('option');
+                option.value = abilityKey;
+                option.textContent = `${SPECIAL_ABILITIES[abilityKey].label} - ${SPECIAL_ABILITIES[abilityKey].desc}`;
+                addSelect.appendChild(option);
+            }
+        });
+        addSelect.addEventListener('change', (e) => {
+            if (e.target.value) {
+                addWeaponAbility(index, e.target.value);
+            }
+        });
+        addDiv.appendChild(addSelect);
+        form.appendChild(addDiv);
+    }
 }
 
-function onWeaponFieldChange(e, index, field) {
+function addWeaponAbility(index, abilityKey) {
     const weapon = GAME_CONFIG.weapons[index];
-    const meta = WEAPON_FIELD_META[field];
-    
-    if (meta.type === 'checkbox') {
+    const abilityDef = SPECIAL_ABILITIES[abilityKey];
+    Object.keys(abilityDef.fields).forEach(field => {
+        if (weapon[field] === undefined) {
+            weapon[field] = abilityDef.fields[field].default;
+        }
+    });
+    updateWeaponInBattle(index);
+    selectWeaponConfig(index);
+}
+
+function removeWeaponAbility(index, abilityKey) {
+    const weapon = GAME_CONFIG.weapons[index];
+    const abilityDef = SPECIAL_ABILITIES[abilityKey];
+    Object.keys(abilityDef.fields).forEach(field => {
+        delete weapon[field];
+    });
+    updateWeaponInBattle(index);
+    selectWeaponConfig(index);
+}
+
+function onWeaponFieldChange(e, index, field, fieldType) {
+    const weapon = GAME_CONFIG.weapons[index];
+
+    if (fieldType === 'checkbox') {
         weapon[field] = e.target.checked;
-    } else if (meta.type === 'number') {
+    } else if (fieldType === 'number') {
         weapon[field] = parseFloat(e.target.value) || 0;
     } else {
         weapon[field] = e.target.value;
     }
-    
+
     updateWeaponInBattle(index);
 }
 
@@ -6359,13 +6860,17 @@ function renderCombatConfig() {
         
         const input = document.createElement('input');
         input.type = meta.type;
-        input.value = value;
+        if (meta.type === 'checkbox') {
+            input.checked = !!value;
+        } else {
+            input.value = value;
+        }
         if (meta.min !== undefined) input.min = meta.min;
         if (meta.max !== undefined) input.max = meta.max;
         if (meta.step !== undefined) input.step = meta.step;
-        
+
         input.dataset.path = path;
-        input.addEventListener('change', (e) => onCombatFieldChange(e, path));
+        input.addEventListener('change', (e) => onCombatFieldChange(e, path, meta.type));
         fieldDiv.appendChild(input);
         form.appendChild(fieldDiv);
     });
@@ -6382,8 +6887,8 @@ function setNestedValue(obj, path, value) {
     target[lastKey] = value;
 }
 
-function onCombatFieldChange(e, path) {
-    const value = parseFloat(e.target.value) || 0;
+function onCombatFieldChange(e, path, fieldType) {
+    const value = fieldType === 'checkbox' ? e.target.checked : (parseFloat(e.target.value) || 0);
     setNestedValue(GAME_CONFIG.combat, path, value);
 }
 
@@ -6586,12 +7091,13 @@ function addNewWeapon() {
         name: `新武器${weaponCount + 1}`,
         attack: 6,
         type: 'melee',
-        range: 75,
+        range: 55,
         attackSpeed: 600,
         maxCharges: 999,
         cooldownTime: 0,
         defaultDirection: 'top',
-        effectType: 'slash'
+        effectType: 'slash',
+        ignoreDefense: 'true'
     };
     
     GAME_CONFIG.weapons.push(newWeapon);
@@ -6642,11 +7148,23 @@ function loadSavedConfig() {
     try {
         const savedWeapons = localStorage.getItem('iconBattle_weaponsConfig');
         const savedCombat = localStorage.getItem('iconBattle_combatConfig');
-        
+
         if (savedWeapons) {
             const parsedWeapons = JSON.parse(savedWeapons);
             if (Array.isArray(parsedWeapons) && parsedWeapons.length > 0) {
-                GAME_CONFIG.weapons = parsedWeapons;
+                // 合并策略：以 localStorage 为主，将程序内新增的武器（localStorage 中不存在的）追加到末尾
+                // 使用 emoji 作为唯一标识，因为用户可能修改了 name
+                const savedEmojis = new Set(parsedWeapons.map(w => w.emoji));
+                const newWeapons = DEFAULT_WEAPONS_CONFIG.filter(w => !savedEmojis.has(w.emoji));
+                if (newWeapons.length > 0) {
+                    const mergedWeapons = parsedWeapons.concat(newWeapons);
+                    GAME_CONFIG.weapons = mergedWeapons;
+                    // 持久化合并后的数据，避免下次重复合并
+                    localStorage.setItem('iconBattle_weaponsConfig', JSON.stringify(mergedWeapons));
+                    console.log(`已合并 ${newWeapons.length} 个新增武器:`, newWeapons.map(w => `${w.emoji}${w.name}`).join(', '));
+                } else {
+                    GAME_CONFIG.weapons = parsedWeapons;
+                }
             }
         }
         if (savedCombat) {

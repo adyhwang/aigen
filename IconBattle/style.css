@@ -95,7 +95,7 @@ body {
 
 .option-item input[type="range"] {
     margin-left: 10px;
-    width: 100px;
+    width: 200px;
     cursor: pointer;
 }
 
@@ -1838,6 +1838,89 @@ body {
 }
 }
 
+.battle-icon.poisoned {
+    animation: poisoned 1s ease-in-out infinite alternate;
+}
+
+@keyframes poisoned {
+    0% { filter: brightness(1) saturate(1); }
+    100% { filter: brightness(0.8) saturate(1.5) hue-rotate(90deg); }
+}
+
+.battle-icon.shielded {
+    box-shadow: 0 0 15px 3px rgba(52, 152, 219, 0.6), inset 0 0 10px rgba(52, 152, 219, 0.3);
+    animation: shieldPulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes shieldPulse {
+    0% { box-shadow: 0 0 10px 2px rgba(52, 152, 219, 0.4), inset 0 0 8px rgba(52, 152, 219, 0.2); }
+    100% { box-shadow: 0 0 18px 4px rgba(52, 152, 219, 0.7), inset 0 0 12px rgba(52, 152, 219, 0.4); }
+}
+
+.poison-effect {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(155, 93, 182, 0.5) 0%, rgba(128, 0, 128, 0.3) 50%, transparent 100%);
+    box-shadow: 0 0 25px rgba(155, 93, 182, 0.6), inset 0 0 20px rgba(186, 130, 204, 0.4);
+    animation: poison-pulse 0.6s ease-out forwards;
+}
+
+@keyframes poison-pulse {
+    0% { transform: translate(-50%, -50%) scale(calc(0.2 * var(--icon-size, 1))); opacity: 0.8; }
+    50% { transform: translate(-50%, -50%) scale(calc(1.1 * var(--icon-size, 1))); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(calc(0.8 * var(--icon-size, 1))); opacity: 0; }
+}
+
+.poison-bubble {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    font-size: 12px;
+    text-align: center;
+    line-height: 14px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-shadow: 0 0 6px rgba(155, 93, 182, 0.9);
+    animation: poison-bubble-float 0.8s ease-out forwards;
+}
+
+@keyframes poison-bubble-float {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(0.4); }
+    60% { opacity: 1; transform: translate(-50%, calc(-50% - 25px)) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, calc(-50% - 40px)) scale(0.3); }
+}
+
+.shield-effect {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(52, 152, 219, 0.4) 0%, rgba(41, 128, 185, 0.3) 50%, transparent 100%);
+    box-shadow: 0 0 25px rgba(52, 152, 219, 0.6), inset 0 0 20px rgba(133, 193, 233, 0.4);
+    animation: shield-effect-pulse 0.6s ease-out forwards;
+}
+
+@keyframes shield-effect-pulse {
+    0% { transform: translate(-50%, -50%) scale(calc(0.2 * var(--icon-size, 1))); opacity: 0.8; }
+    50% { transform: translate(-50%, -50%) scale(calc(1.2 * var(--icon-size, 1))); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(calc(1.0 * var(--icon-size, 1))); opacity: 0; }
+}
+
+.shield-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(52, 152, 219, 0.9);
+    box-shadow: 0 0 15px rgba(52, 152, 219, 0.7), inset 0 0 8px rgba(133, 193, 233, 0.4);
+    animation: shield-ring-expand 0.7s ease-out forwards;
+}
+
+@keyframes shield-ring-expand {
+    0% { opacity: 0; transform: scale(0.4); }
+    50% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0; transform: scale(1.4); }
+}
+
 .battle-icon.knocked-back {
     transition: left 0.3s ease-out, top 0.3s ease-out;
 }
@@ -1947,17 +2030,17 @@ body {
 /* 战斗图标详情面板样式 */
 .icon-detail-panel {
     position: absolute;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
     border-radius: 8px;
     padding: 10px;
     z-index: 1000;
     backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     display: flex;
-    min-width: 300px;
+    min-width: 280px;
     min-height: 150px;
     max-width: 400px;
-    max-height: 300px;
+    max-height: 500px;
     overflow: hidden;
 }
 
@@ -1975,6 +2058,7 @@ body {
     width: 80px;
     height: 80px;
     flex-shrink: 0;
+    align-self: center;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2798,7 +2882,7 @@ body {
 
 .config-row .option-item input[type="range"] {
     margin-left: 4px;
-    width: 60px;
+    width: 120px;
 }
 
 .weapon-selector {
@@ -2953,6 +3037,67 @@ body {
     padding: 5px 0;
     border-bottom: 1px solid rgba(255,255,255,0.2);
     margin-top: 4px;
+}
+
+/* 特殊能力分组 */
+.ability-group {
+    grid-column: 1 / -1;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin-top: 4px;
+    background: rgba(255,255,255,0.03);
+}
+
+.ability-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.ability-label {
+    color: #4ecdc4;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.btn-remove-ability {
+    background: rgba(255,107,107,0.2);
+    border: 1px solid rgba(255,107,107,0.4);
+    color: #ff6b6b;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s ease;
+}
+
+.btn-remove-ability:hover {
+    background: rgba(255,107,107,0.4);
+}
+
+.add-ability-field {
+    grid-column: 1 / -1;
+    margin-top: 6px;
+}
+
+/* 图标信息面板中的特殊能力区域 */
+.detail-abilities {
+    border-top: 1px solid rgba(255,255,255,0.15);
+    margin-top: 4px;
+    padding-top: 4px;
+}
+
+.detail-ability .ability-name {
+    color: #4ecdc4;
+    font-weight: bold;
+    min-width: 50px;
+}
+
+.detail-ability .detail-value {
+    font-size: 11px;
+    color: #ddd;
 }
 
 .config-actions {
