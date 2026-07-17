@@ -29,20 +29,11 @@ let uiSize = 1;
 let battleInfoDragging = false;
 // 战斗信息面板拖动时的偏移量
 let battleInfoOffset = { x: 0, y: 0 };
-// 胜利音效是否已经播放
-let victorySoundPlayed = false;
 
 // 是否启用自动添加随机图标
 let autoAddRandomEnabled = false;
 // 是否启用自动部署功能
 let autoDeployEnabled = false;
-// 自动部署计时器
-let autoDeployTimer = null;
-// 最后被击败的玩家
-let lastPlayerDefeated = null;
-
-// 阵型位置数组
-let formationPositions = [];
 
 // 游戏是否暂停
 let gamePaused = false;
@@ -57,6 +48,18 @@ let squadBattleMode = false;
 let squadLeaders = {
     player1: null,  // 玩家1的小队队长
     player2: null   // 玩家2的小队队长
+};
+
+// 战斗流程状态：将紧密相关的临时状态集中管理，减少全局命名空间污染
+const BattleState = {
+    victorySoundPlayed: false,    // 胜利音效是否已经播放
+    autoDeployTimer: null,        // 自动部署计时器
+    lastPlayerDefeated: null,     // 最后被击败的玩家
+    formationPositions: [],       // 阵型位置数组
+    battleInfoQueue: [],          // 战斗信息队列
+    battleInfoUpdateCounter: 0,   // 战斗信息更新计数器
+    activeEffectsCount: 0,        // 当前激活特效数
+    statsUpdatePending: false     // 战斗统计更新是否挂起
 };
 
 // 战斗图标详情面板相关变量
@@ -87,11 +90,8 @@ let cacheDirty = true;
 // 战斗信息面板最多显示的条目数
 const MAX_BATTLE_INFO_ITEMS = 100;
 const BATTLE_INFO_UPDATE_INTERVAL = 3;
-let battleInfoQueue = [];
-let battleInfoUpdateCounter = 0;
 
 const MAX_ACTIVE_EFFECTS = 15;
-let activeEffectsCount = 0;
 
 // 音频上下文，用于播放游戏音效
 const audioContext = new (window.AudioContext || window.webkitAudioContext());
@@ -129,7 +129,9 @@ const GAME_CONFIG = {
         healerMinDistance: 60,          // 治疗者最小距离（像素，乘以iconSize）
         buffAttackRange: 60,            // 增益武器攻击距离（像素，乘以iconSize）
         retreatDistance: 150,           // 撤退距离（像素，乘以iconSize）
-        effectOffset: 40                // 特效位置偏移（像素，乘以iconSize）
+        effectOffset: 40,               // 特效位置偏移（像素，乘以iconSize）
+        separationRadius: 70,           // 避障检测半径（像素，乘以iconSize）：范围内友军互相推开
+        separationStrength: 0.4         // 避障推力强度（0-1，越大越强）
     },
     // 时间相关配置
     timing: {
@@ -217,6 +219,7 @@ const GAME_CONFIG = {
         },
         ai: {
             types: ['aggressive', 'balanced', 'defensive'],
+            targetLockDuration: 800,             // 目标切换冷却（毫秒），防止AI每帧切换目标
             aggressive: {
                 targetPriority: 'lowestHealth',  // 目标优先级：最低血量
                 approachBias: 1.2,               // 接近倾向系数（越大越主动接近）
@@ -318,12 +321,12 @@ const WEAPON_BEHAVIORS = {
                     } else {
                         const enemy = findTargetByAI(iconData);
                         if (enemy) {
-                            const distance = getDistanceBetween(iconData, enemy);
+                            const distSq = getDistanceSqBetween(iconData, enemy);
                             const effectiveRange = getEffectiveRange(iconData);
                             const meleeOffset = (iconData.weapon.type === 'melee' ? GAME_CONFIG.movement.meleeApproachOffset * iconSize : 0);
                             const approachOffset = meleeOffset * aiConfig.approachBias;
-                            
-                            if (distance < effectiveRange) {
+
+                            if (distSq < effectiveRange * effectiveRange) {
                                 attack(iconData, enemy);
                             } else {
                                 iconData.targetX = enemy.x + (iconData.player === 2 ? approachOffset : -approachOffset);
@@ -1443,8 +1446,8 @@ function applyDamageEffects(attacker, target, damage, effectType = 'normal', isC
             }
         }
         
-        target.stats.health -= damage;
-        
+        target.stats.health = Math.max(0, target.stats.health - damage);
+
         target.element.classList.add('hit');
         
         if (isCrit) {
@@ -1457,20 +1460,10 @@ function applyDamageEffects(attacker, target, damage, effectType = 'normal', isC
             showWeaponEffect(attacker, target, effectType);
         }
         
-        const lifeSteal = attacker.stats.lifeSteal || 0;
-        if (lifeSteal > 0 && attacker.stats.health < attacker.stats.maxHealth) {
-            const healAmount = Math.floor(damage * lifeSteal);
-            if (healAmount > 0) {
-                attacker.stats.health = Math.min(attacker.stats.maxHealth, attacker.stats.health + healAmount);
-                updateHealthBar(attacker);
-                showHealText(attacker, healAmount);
-            }
-        }
-        
         setTimeout(() => {
             target.element.classList.remove('hit');
         }, GAME_CONFIG.timing.shortDelay);
-        
+
         updateHealthBar(target);
     }
 }
@@ -1482,6 +1475,7 @@ function handleTargetDeath(attacker, target) {
         playSound('death');
         target.isDead = true;
         target.hasBeenKilled = true;
+        markCacheDirty();
         
         // 确定倒地方向：根据攻击者位置
         target.element.classList.add('dead');
@@ -1734,7 +1728,7 @@ function showWeaponEffect(attacker, defender, effectType) {
 
 // 武器特效函数库
 function createBaseEffect(attacker, defender, battleArea, className, options = {}) {
-    if (activeEffectsCount >= MAX_ACTIVE_EFFECTS) {
+    if (BattleState.activeEffectsCount >= MAX_ACTIVE_EFFECTS) {
         return null;
     }
     
@@ -1753,12 +1747,12 @@ function createBaseEffect(attacker, defender, battleArea, className, options = {
     if (options.backgroundColor) effect.style.backgroundColor = options.backgroundColor;
     
     battleArea.appendChild(effect);
-    activeEffectsCount++;
+    BattleState.activeEffectsCount++;
     
     const removeDelay = options.removeDelay || GAME_CONFIG.timing.shortDelay;
     setTimeout(() => {
         effect.remove();
-        activeEffectsCount--;
+        BattleState.activeEffectsCount--;
     }, removeDelay);
     
     return effect;
@@ -1925,78 +1919,95 @@ function createDefaultEffect(attacker, defender, battleArea) {
     createBaseEffect(attacker, defender, battleArea, 'default-effect');
 }
 
+// 战斗信息模板配置表
+// - wrapper: 外层 span 的 CSS class（可选）
+// - template: HTML 模板函数 (ctx) => string
+// - aoeAttack: AOE 类共享字段，值为攻击名称
+// ctx = { attacker, defender, value, attackerName, weaponName, attackerLevel, defenderName, defenderLevel }
+const BATTLE_INFO_TEMPLATES = {
+    '开始冲锋': {
+        template: ctx => `<span class="player">玩家${ctx.attacker.player}</span>：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span><span class="weapon">${ctx.weaponName}</span>开始冲锋<span class="target">${ctx.defenderName}(Lv${ctx.defenderLevel})</span>`
+    },
+    '自爆伤害': {
+        template: ctx => `<span class="player">玩家${ctx.attacker.player}</span>：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span><span class="weapon">${ctx.weaponName}</span>自爆伤害<span class="target">${ctx.defenderName}(Lv${ctx.defenderLevel})</span>，伤害值 <span class="damage">${ctx.value}</span>`
+    },
+    '自爆死亡': {
+        template: ctx => `<span class="player">玩家${ctx.attacker.player}</span>：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span><span class="weapon">${ctx.weaponName}</span>自爆死亡`
+    },
+    'kill': {
+        template: ctx => `<span class="player">玩家${ctx.attacker.player}</span>：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span><span class="weapon">${ctx.weaponName}</span>击杀<span class="target">${ctx.defenderName}(Lv${ctx.defenderLevel})</span>`
+    },
+    'heal': {
+        wrapper: 'heal-message',
+        template: ctx => `玩家${ctx.attacker.player}：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span><span class="weapon">${ctx.weaponName}</span>治疗<span class="target">${ctx.defenderName}(Lv${ctx.defenderLevel})</span>，恢复 ${ctx.value} 点生命`
+    },
+    'lightning': { wrapper: 'special-message', aoeAttack: '闪电攻击' },
+    'fire':      { wrapper: 'special-message', aoeAttack: '火焰攻击' },
+    'ice':       { wrapper: 'special-message', aoeAttack: '冰冻攻击' },
+    'explosion': { wrapper: 'special-message', aoeAttack: '爆炸攻击' },
+    'burn': {
+        wrapper: 'special-message',
+        template: ctx => {
+            const burnDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor(ctx.value * GAME_CONFIG.combat.burn.damageFactor));
+            const burnInterval = ctx.attacker.weapon.burnInterval || GAME_CONFIG.combat.burn.defaultInterval;
+            return `玩家${ctx.attacker.player}：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span>用<span class="weapon">${ctx.weaponName}</span>对<span class="target">${ctx.defenderName}(Lv${ctx.defenderLevel})</span>施加了燃烧效果，每${Math.round(burnInterval)}毫秒造成${burnDamage}点伤害`;
+        }
+    },
+    'freeze': {
+        wrapper: 'special-message',
+        template: ctx => `玩家${ctx.attacker.player}：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span>用<span class="weapon">${ctx.weaponName}</span>冰冻了<span class="target">${ctx.defenderName}(Lv${ctx.defenderLevel})</span>，持续${Math.round(ctx.value)}毫秒`
+    },
+    'buff': {
+        wrapper: 'special-message',
+        template: ctx => `玩家${ctx.attacker.player}：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span><span class="weapon">💉</span>给<span class="target">${ctx.defenderName}(Lv${ctx.defenderLevel})</span>使用了兴奋剂`
+    },
+    'join': {
+        wrapper: 'special-message',
+        // join 类型: defender 是旧武器对象，value 是新武器对象
+        template: ctx => `玩家${ctx.attacker.player}：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span>从<span class="weapon">${ctx.defender.emoji}</span>切换为<span class="weapon">${ctx.value.emoji}</span>加入战斗！`
+    }
+};
+
 function generateBattleInfoHTML(attacker, defender, value, actionType) {
     const attackerName = attacker.name || '未知图标';
     const weaponName = attacker.weapon.emoji || attacker.weapon.name;
     const attackerLevel = attacker.level || 1;
-    
-    if (actionType === '开始冲锋') {
-        const defenderName = defender?.name || '未知图标';
-        const defenderLevel = defender?.level || 1;
-        return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>开始冲锋<span class="target">${defenderName}(Lv${defenderLevel})</span>`;
-    } else if (actionType === '自爆伤害') {
-        const defenderName = defender?.name || '未知图标';
-        const defenderLevel = defender?.level || 1;
-        return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>自爆伤害<span class="target">${defenderName}(Lv${defenderLevel})</span>，伤害值 <span class="damage">${value}</span>`;
-    } else if (actionType === '自爆死亡') {
-        return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>自爆死亡`;
-    } else if (actionType.includes('血量全满')) {
+    const defenderName = defender?.name || '未知图标';
+    const defenderLevel = defender?.level || 1;
+
+    const ctx = { attacker, defender, value, attackerName, weaponName, attackerLevel, defenderName, defenderLevel };
+
+    // 血量全满：actionType 包含该关键字
+    if (typeof actionType === 'string' && actionType.includes('血量全满')) {
         return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}</span><span class="weapon">${weaponName}</span>${actionType}`;
-    } else if (actionType === 'kill') {
-        const defenderName = defender?.name || '未知图标';
-        const defenderLevel = defender?.level || 1;
-        return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>击杀<span class="target">${defenderName}(Lv${defenderLevel})</span>`;
-    } else if (actionType === 'heal') {
-        const defenderName = defender?.name || '未知图标';
-        const defenderLevel = defender?.level || 1;
-        return `<span class="heal-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>治疗<span class="target">${defenderName}(Lv${defenderLevel})</span>，恢复 ${value} 点生命</span>`;
-    } else if (actionType === 'lightning' || actionType === 'fire' || actionType === 'ice' || actionType === 'explosion') {
-        const aoeRadius = attacker.weapon.aoeRadius || GAME_CONFIG.combat.weaponDefaults.aoeRadius;
-        const weaponEmoji = attacker.weapon.emoji || '💣';
-        const attackName = {
-            'lightning': '闪电攻击',
-            'fire': '火焰攻击',
-            'ice': '冰冻攻击',
-            'explosion': '爆炸攻击'
-        }[actionType];
-        return `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>使用<span class="weapon">${weaponEmoji}</span>释放了${attackName}，范围${aoeRadius}</span>`;
-    } else if (actionType === 'burn') {
-        const burnDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor(value * GAME_CONFIG.combat.burn.damageFactor));
-        const burnInterval = attacker.weapon.burnInterval || GAME_CONFIG.combat.burn.defaultInterval;
-        const defenderName = defender?.name || '未知图标';
-        const defenderLevel = defender?.level || 1;
-        return `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>用<span class="weapon">${weaponName}</span>对<span class="target">${defenderName}(Lv${defenderLevel})</span>施加了燃烧效果，每${Math.round(burnInterval)}毫秒造成${burnDamage}点伤害</span>`;
-    } else if (actionType === 'freeze') {
-        const actualDuration = value;
-        const defenderName = defender?.name || '未知图标';
-        const defenderLevel = defender?.level || 1;
-        return `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>用<span class="weapon">${weaponName}</span>冰冻了<span class="target">${defenderName}(Lv${defenderLevel})</span>，持续${Math.round(actualDuration)}毫秒</span>`;
-    } else if (actionType === 'buff') {
-        const defenderName = defender?.name || '未知图标';
-        const defenderLevel = defender?.level || 1;
-        return `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">💉</span>给<span class="target">${defenderName}(Lv${defenderLevel})</span>使用了兴奋剂</span>`;
-    } else if (actionType === 'join') {
-        const oldWeapon = defender;
-        const newWeapon = value;
-        return `<span class="special-message">玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>从<span class="weapon">${oldWeapon.emoji}</span>切换为<span class="weapon">${newWeapon.emoji}</span>加入战斗！</span>`;
-    } else {
-        const defenderName = defender?.name || '未知图标';
-        const defenderLevel = defender?.level || 1;
-        
-        if (value === 0) {
-            return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，被闪避`;
-        } else {
-            return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，伤害值 <span class="damage">${value}</span>`;
-        }
     }
+
+    const tpl = BATTLE_INFO_TEMPLATES[actionType];
+    if (tpl) {
+        // AOE 攻击类（lightning/fire/ice/explosion）共享模板
+        if (tpl.aoeAttack) {
+            const aoeRadius = attacker.weapon.aoeRadius || GAME_CONFIG.combat.weaponDefaults.aoeRadius;
+            const weaponEmoji = attacker.weapon.emoji || '💣';
+            const inner = `玩家${attacker.player}：<span class="attacker">${attackerName}(Lv${attackerLevel})</span>使用<span class="weapon">${weaponEmoji}</span>释放了${tpl.aoeAttack}，范围${aoeRadius}`;
+            return `<span class="${tpl.wrapper}">${inner}</span>`;
+        }
+        const inner = tpl.template(ctx);
+        return tpl.wrapper ? `<span class="${tpl.wrapper}">${inner}</span>` : inner;
+    }
+
+    // 默认：普通攻击（value===0 表示被闪避）
+    if (value === 0) {
+        return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，被闪避`;
+    }
+    return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}(Lv${attackerLevel})</span><span class="weapon">${weaponName}</span>攻击<span class="target">${defenderName}(Lv${defenderLevel})</span>，伤害值 <span class="damage">${value}</span>`;
 }
 
 function addBattleInfo(attacker, defender, value, actionType = 'attack') {
-    battleInfoQueue.push({ attacker, defender, value, actionType });
+    BattleState.battleInfoQueue.push({ attacker, defender, value, actionType });
 }
 
 function flushBattleInfoQueue() {
-    if (battleInfoQueue.length === 0) return;
+    if (BattleState.battleInfoQueue.length === 0) return;
     
     if (!battleInfoElement) {
         battleInfoElement = document.getElementById('battleInfo');
@@ -2005,7 +2016,7 @@ function flushBattleInfoQueue() {
     
     const fragment = document.createDocumentFragment();
     
-    for (const item of battleInfoQueue) {
+    for (const item of BattleState.battleInfoQueue) {
         const infoItem = document.createElement('div');
         infoItem.className = 'battle-info-item';
         infoItem.dataset.player = item.attacker.player;
@@ -2048,7 +2059,7 @@ function flushBattleInfoQueue() {
         battleInfo.removeChild(battleInfo.firstChild);
     }
     
-    battleInfoQueue = [];
+    BattleState.battleInfoQueue = [];
 }
 
 // 计算伤害值（简化版，仅返回伤害值）
@@ -2260,10 +2271,8 @@ function attack(attacker, defender) {
 
             // 处理特殊效果（在死亡判定前触发，确保多个能力都能生效）
             if (damage > 0) {
-                // 吸血（攻击者回血，不受目标存活状态影响）
-                if (attacker.weapon.lifestealRatio) {
-                    applyLifesteal(attacker, damage);
-                }
+                // 吸血（统一处理武器和属性两个来源）
+                applyLifesteal(attacker, damage);
                 // 以下状态效果仅对存活目标生效
                 if (target.stats.health > 0) {
                     if (attacker.weapon.burnDuration !== undefined) {
@@ -2536,10 +2545,13 @@ function applyPoisonEffect(target, attacker, damage) {
 }
 
 function applyLifesteal(attacker, damage) {
-    if (attacker.isDead) return;
-    const healAmount = Math.floor(damage * attacker.weapon.lifestealRatio);
+    if (attacker.isDead || damage <= 0) return;
+    const weaponRatio = attacker.weapon.lifestealRatio || 0;
+    const statRatio = attacker.stats.lifeSteal || 0;
+    const totalRatio = weaponRatio + statRatio;
+    if (totalRatio <= 0) return;
+    const healAmount = Math.floor(damage * totalRatio);
     if (healAmount <= 0) return;
-    
     attacker.stats.health = Math.min(attacker.stats.maxHealth, attacker.stats.health + healAmount);
     showHealText(attacker, healAmount);
     updateHealthBar(attacker);
@@ -2577,14 +2589,15 @@ function applyKnockback(attacker, target, distance) {
     target.knockbackTargetX = target.x + normalizedX * effectiveDistance;
     target.knockbackTargetY = target.y + normalizedY * effectiveDistance;
     target.isKnockedBack = true;
-    
-    const battleArea = document.getElementById('battleArea');
-    const areaRect = battleArea.getBoundingClientRect();
-    const maxX = areaRect.width - 80;
-    const maxY = areaRect.height - 80;
-    
-    target.knockbackTargetX = Math.max(0, Math.min(maxX, target.knockbackTargetX));
-    target.knockbackTargetY = Math.max(0, Math.min(maxY, target.knockbackTargetY));
+
+    // 复用 clampIconPosition 的边界逻辑，确保与战场边界一致
+    if (battleAreaRect) {
+        const margin = GAME_CONFIG.movement.boundaryMargin * iconSize;
+        const maxX = battleAreaRect.width - margin;
+        const maxY = battleAreaRect.height - margin;
+        target.knockbackTargetX = Math.max(margin, Math.min(maxX, target.knockbackTargetX));
+        target.knockbackTargetY = Math.max(margin, Math.min(maxY, target.knockbackTargetY));
+    }
     
     target.element.classList.add('knocked-back');
 
@@ -2881,7 +2894,7 @@ function clampIconPosition(iconData) {
 }
 
 function clampAllIconsToBounds() {
-    [...battleIcons.player1, ...battleIcons.player2].forEach(iconData => {
+    forEachBattleIcon(iconData => {
         if (!iconData.isDead) {
             clampIconPosition(iconData);
         }
@@ -2889,7 +2902,7 @@ function clampAllIconsToBounds() {
 }
 
 function updateAllIconsPositions() {
-    [...battleIcons.player1, ...battleIcons.player2].forEach(iconData => {
+    forEachBattleIcon(iconData => {
         if (!iconData.isDead) {
             iconData.element.style.left = `${iconData.x}px`;
             iconData.element.style.top = `${iconData.y}px`;
@@ -2953,32 +2966,68 @@ function getBackToWallBonus(iconData) {
     };
 }
 
+// 计算避障分离向量：附近友军越近，推力越大
+// 返回 {x, y} 单位向量，或 null 表示无附近友军
+function computeSeparation(iconData) {
+    const radius = GAME_CONFIG.movement.separationRadius * iconSize;
+    const radiusSq = radius * radius;
+    const allies = getAliveAllies(iconData.player);
+    let sumX = 0, sumY = 0, count = 0;
+
+    for (let i = 0; i < allies.length; i++) {
+        const other = allies[i];
+        if (other === iconData) continue;
+        const dx = iconData.x - other.x;
+        const dy = iconData.y - other.y;
+        const distSq = dx * dx + dy * dy;
+        if (distSq > radiusSq || distSq === 0) continue;
+        // 距离越近权重越大
+        const weight = 1 - Math.sqrt(distSq) / radius;
+        sumX += (dx / Math.sqrt(distSq)) * weight;
+        sumY += (dy / Math.sqrt(distSq)) * weight;
+        count++;
+    }
+
+    if (count === 0) return null;
+    const len = Math.sqrt(sumX * sumX + sumY * sumY);
+    if (len === 0) return null;
+    return { x: sumX / len, y: sumY / len };
+}
+
 function moveTowardsTarget(iconData) {
     if (iconData.isDead || iconData.isFrozen) return;
-    
+
     const dx = iconData.targetX - iconData.x;
     const dy = iconData.targetY - iconData.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    
+
     if (distance > GAME_CONFIG.movement.arrivalThreshold * iconSize) {
         let speed = iconData.stats.speed * gameSpeed;
-        
+
         if (squadBattleMode) {
             const members = getSquadMembers(iconData.player);
             const minSpeed = Math.min(...members.map(m => m.stats.speed));
-            
+
             if (iconData.stats.speed > minSpeed) {
                 const speedRatio = minSpeed / iconData.stats.speed;
                 speed = speed * speedRatio;
             }
         }
-        
-        const moveX = (dx / distance) * speed;
-        const moveY = (dy / distance) * speed;
-        
+
+        let moveX = (dx / distance) * speed;
+        let moveY = (dy / distance) * speed;
+
+        // AI 避障：附近友军产生分离推力，避免重叠
+        const sep = computeSeparation(iconData);
+        if (sep) {
+            const strength = GAME_CONFIG.movement.separationStrength;
+            moveX += sep.x * speed * strength;
+            moveY += sep.y * speed * strength;
+        }
+
         iconData.x += moveX;
         iconData.y += moveY;
-        
+
         clampIconPosition(iconData);
         
         iconData.element.classList.add('moving');
@@ -3026,16 +3075,15 @@ function moveTowardsTarget(iconData) {
     }
 }
 
-let statsUpdatePending = false;
 function updateBattleStats() {
-    if (statsUpdatePending) return;
-    statsUpdatePending = true;
+    if (BattleState.statsUpdatePending) return;
+    BattleState.statsUpdatePending = true;
     
     requestAnimationFrame(() => {
-        statsUpdatePending = false;
+        BattleState.statsUpdatePending = false;
         
-        const player1Alive = battleIcons.player1.filter(icon => !icon.isDead);
-        const player2Alive = battleIcons.player2.filter(icon => !icon.isDead);
+        const player1Alive = getAliveAllies(1);
+        const player2Alive = getAliveAllies(2);
         
         let p1Health = 0, p1Attack = 0, p1Defense = 0;
         for (const icon of player1Alive) {
@@ -3107,18 +3155,40 @@ function initBattleInfoDrag() {
 
 function removeBattleIcon(iconData) {
     if (!iconData || !iconData.element) return;
-    
+
     const playerIcons = battleIcons[`player${iconData.player}`];
     const index = playerIcons.indexOf(iconData);
-    
+
     if (index > -1) {
         playerIcons.splice(index, 1);
         iconData.element.remove();
     }
-    
+
     if (iconData.listItem) {
         iconData.listItem.remove();
     }
+
+    // 清理对其他对象的引用，避免阻止GC
+    iconData.burnAttacker = null;
+    iconData.poisonAttacker = null;
+    iconData.target = null;
+    iconData.squadLeader = null;
+    iconData.lockedTarget = null;
+    iconData.healthBarFill = null;
+    iconData.statsDisplay = null;
+    iconData.element = null;
+    iconData.listItem = null;
+}
+
+// 清空所有战斗图标（用于重置战场）
+function clearAllBattleIcons() {
+    for (let p = 1; p <= 2; p++) {
+        const icons = battleIcons[`player${p}`];
+        while (icons.length > 0) {
+            removeBattleIcon(icons[0]);
+        }
+    }
+    markCacheDirty();
 }
 
 function getDistance(x1, y1, x2, y2) {
@@ -3137,6 +3207,16 @@ function refreshAliveCache() {
     cachedAliveIcons.player1 = battleIcons.player1.filter(icon => !icon.isDead);
     cachedAliveIcons.player2 = battleIcons.player2.filter(icon => !icon.isDead);
     cacheDirty = false;
+}
+
+// 遍历所有战斗图标（避免创建临时合并数组）
+function forEachBattleIcon(callback) {
+    for (let p = 1; p <= 2; p++) {
+        const icons = battleIcons[`player${p}`];
+        for (let i = 0; i < icons.length; i++) {
+            callback(icons[i]);
+        }
+    }
 }
 
 function markCacheDirty() {
@@ -3223,15 +3303,29 @@ function findNearestEnemy(iconData) {
 
 function findTargetByAI(iconData) {
     const enemies = getAliveEnemies(iconData.player);
-    
+
     if (enemies.length === 0) return null;
-    
+
     const aiConfig = getAIConfig(iconData.aiType);
-    
+
+    // 目标切换冷却：若锁定目标仍有效则保持，避免每帧重新选择导致抖动
+    const lockDuration = aiConfig.targetLockDuration || GAME_CONFIG.combat.ai.targetLockDuration;
+    const now = performance.now();
+    if (iconData.lockedTarget && !iconData.lockedTarget.isDead && now < iconData.targetLockUntil) {
+        // 距离检查：锁定目标跑得过远时放弃锁定，避免追逐远方目标导致脱离战场
+        const lockMaxDist = getEffectiveRange(iconData) * 3;
+        const lockDistSq = getDistanceSqBetween(iconData, iconData.lockedTarget);
+        if (lockDistSq <= lockMaxDist * lockMaxDist) {
+            return iconData.lockedTarget;
+        }
+        // 锁定目标过远，继续向下重新选择
+    }
+
+    let newTarget;
     if (aiConfig.targetPriority === 'lowestHealth') {
         let target = enemies[0];
         let lowestHealthPercent = target.stats.health / target.stats.maxHealth;
-        
+
         for (let i = 1; i < enemies.length; i++) {
             const healthPercent = enemies[i].stats.health / enemies[i].stats.maxHealth;
             if (healthPercent < lowestHealthPercent) {
@@ -3239,11 +3333,11 @@ function findTargetByAI(iconData) {
                 target = enemies[i];
             }
         }
-        return target;
+        newTarget = target;
     } else {
         let target = enemies[0];
         let minDistSq = getDistanceSqBetween(iconData, target);
-        
+
         for (let i = 1; i < enemies.length; i++) {
             const distSq = getDistanceSqBetween(iconData, enemies[i]);
             if (distSq < minDistSq) {
@@ -3251,8 +3345,13 @@ function findTargetByAI(iconData) {
                 target = enemies[i];
             }
         }
-        return target;
+        newTarget = target;
     }
+
+    // 锁定新目标，防止下一帧立刻切换
+    iconData.lockedTarget = newTarget;
+    iconData.targetLockUntil = now + lockDuration;
+    return newTarget;
 }
 
 function shouldRetreatByAI(iconData, enemies) {
@@ -3336,6 +3435,47 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 }
 
+// 处理胜利判定和胜方编队
+function handleVictory(player1Alive, player2Alive) {
+    const isVictory = (player1Alive === 0 && player2Alive > 0) || (player2Alive === 0 && player1Alive > 0);
+    if (!isVictory) {
+        BattleState.victorySoundPlayed = false;
+        cancelAutoDeployTimer();
+        return false;
+    }
+
+    const winner = player1Alive > 0 ? 1 : 2;
+
+    if (!BattleState.victorySoundPlayed) {
+        playSound('victory');
+        BattleState.victorySoundPlayed = true;
+
+        const defeatedPlayer = player1Alive === 0 ? 1 : 2;
+        startAutoDeployTimer(defeatedPlayer);
+
+        BattleState.formationPositions = calculateFormationPositions(winner);
+
+        const winnerIcons = battleIcons[`player${winner}`].filter(icon => !icon.isDead && icon.weapon.type !== 'heal');
+        winnerIcons.forEach((iconData, index) => {
+            if (index < BattleState.formationPositions.length) {
+                iconData.isOnCooldown = false;
+                iconData.currentCharges = iconData.weapon.maxCharges;
+                iconData.targetX = BattleState.formationPositions[index].x;
+                iconData.targetY = BattleState.formationPositions[index].y;
+            }
+        });
+
+        battleIcons[`player${winner}`].forEach((iconData, index) => {
+            if (!iconData.isDead && iconData.weapon.type === 'heal') {
+                iconData.isOnCooldown = false;
+                iconData.currentCharges = iconData.weapon.maxCharges;
+            }
+        });
+    }
+
+    return true;
+}
+
 function updateGame(deltaTime) {
     refreshAliveCache();
     const player1Alive = cachedAliveIcons.player1.length;
@@ -3353,7 +3493,7 @@ function updateGame(deltaTime) {
         lastBattleAreaCheckTime = currentTime;
     }
     
-    [...battleIcons.player1, ...battleIcons.player2].forEach(iconData => {
+    forEachBattleIcon(iconData => {
         if (iconData.isBuffed && currentTime >= iconData.buffEndTime) {
             if (iconData.originalStats) {
                 iconData.stats.attack = iconData.originalStats.attack;
@@ -3390,7 +3530,7 @@ function updateGame(deltaTime) {
             
             if (iconData.burnIntervalRemaining <= 0 && iconData.burnRemaining > 0) {
                 iconData.burnIntervalRemaining += iconData.burnInterval;
-                iconData.stats.health -= iconData.burnDamage;
+                iconData.stats.health = Math.max(0, iconData.stats.health - iconData.burnDamage);
                 showDamageText(iconData, iconData.burnDamage, 'fire');
                 updateHealthBar(iconData);
                 
@@ -3399,6 +3539,7 @@ function updateGame(deltaTime) {
                     playSound('death');
                     iconData.isDead = true;
                     iconData.hasBeenKilled = true;
+                    markCacheDirty();
                     iconData.element.classList.add('dead');
                     if (iconData.burnAttacker && iconData.burnAttacker.x < iconData.x) {
                         iconData.element.classList.add('fall-right');
@@ -3445,7 +3586,7 @@ function updateGame(deltaTime) {
             if (iconData.poisonIntervalRemaining <= 0 && iconData.poisonRemaining > 0) {
                 iconData.poisonIntervalRemaining += iconData.poisonInterval;
                 const totalPoisonDamage = iconData.poisonDamage * iconData.poisonStacks;
-                iconData.stats.health -= totalPoisonDamage;
+                iconData.stats.health = Math.max(0, iconData.stats.health - totalPoisonDamage);
                 showDamageText(iconData, totalPoisonDamage, 'poison');
                 updateHealthBar(iconData);
                 
@@ -3454,6 +3595,7 @@ function updateGame(deltaTime) {
                     playSound('death');
                     iconData.isDead = true;
                     iconData.hasBeenKilled = true;
+                    markCacheDirty();
                     iconData.element.classList.add('dead');
                     if (iconData.poisonAttacker && iconData.poisonAttacker.x < iconData.x) {
                         iconData.element.classList.add('fall-right');
@@ -3507,42 +3649,7 @@ function updateGame(deltaTime) {
     territoryHealForPlayer(1, currentTime);
     territoryHealForPlayer(2, currentTime);
     
-    let isVictory = (player1Alive === 0 && player2Alive > 0) || (player2Alive === 0 && player1Alive > 0);
-    let winner = 0;
-    
-    if (isVictory) {
-        winner = player1Alive > 0 ? 1 : 2;
-        
-        if (!victorySoundPlayed) {
-            playSound('victory');
-            victorySoundPlayed = true;
-            
-            const defeatedPlayer = player1Alive === 0 ? 1 : 2;
-            startAutoDeployTimer(defeatedPlayer);
-            
-            formationPositions = calculateFormationPositions(winner);
-            
-            const winnerIcons = battleIcons[`player${winner}`].filter(icon => !icon.isDead && icon.weapon.type !== 'heal');
-            winnerIcons.forEach((iconData, index) => {
-                if (index < formationPositions.length) {
-                    iconData.isOnCooldown = false;
-                    iconData.currentCharges = iconData.weapon.maxCharges;
-                    iconData.targetX = formationPositions[index].x;
-                    iconData.targetY = formationPositions[index].y;
-                }
-            });
-            
-            battleIcons[`player${winner}`].forEach((iconData, index) => {
-                if (!iconData.isDead && iconData.weapon.type === 'heal') {
-                    iconData.isOnCooldown = false;
-                    iconData.currentCharges = iconData.weapon.maxCharges;
-                }
-            });
-        }
-    } else {
-        victorySoundPlayed = false;
-        cancelAutoDeployTimer();
-    }
+    const isVictory = handleVictory(player1Alive, player2Alive);
     
     if (squadBattleMode) {
         updateSquadLeaders();
@@ -3552,17 +3659,20 @@ function updateGame(deltaTime) {
         });
     }
     
-    [...battleIcons.player1, ...battleIcons.player2].forEach(iconData => {
-        updateIconBehavior(iconData, isVictory);
-    });
+    for (let p = 1; p <= 2; p++) {
+        const allies = getAliveAllies(p);
+        for (let i = 0; i < allies.length; i++) {
+            updateIconBehavior(allies[i], isVictory);
+        }
+    }
     
     clampAllIconsToBounds();
     updateAllIconsPositions();
     
-    battleInfoUpdateCounter++;
-    if (battleInfoUpdateCounter >= BATTLE_INFO_UPDATE_INTERVAL) {
+    BattleState.battleInfoUpdateCounter++;
+    if (BattleState.battleInfoUpdateCounter >= BATTLE_INFO_UPDATE_INTERVAL) {
         flushBattleInfoQueue();
-        battleInfoUpdateCounter = 0;
+        BattleState.battleInfoUpdateCounter = 0;
     }
 }
 
@@ -3807,6 +3917,14 @@ function setupBattleZoneDrop() {
 }
 
 function deployAllIcons(player) {
+    // 清理该方残留的死亡图标（可能还在等待延迟移除）
+    const existingIcons = [...battleIcons[`player${player}`]];
+    existingIcons.forEach(iconData => {
+        if (iconData.isDead || iconData.hasBeenKilled) {
+            removeBattleIcon(iconData);
+        }
+    });
+
     const readyContent = document.getElementById(`player${player}ReadyContent`);
     const iconItems = readyContent.querySelectorAll('.icon-item');
     const battleArea = document.getElementById('battleArea');
@@ -4533,7 +4651,7 @@ function updateSquadLeaders() {
 }
 
 function convertNonBattleToBattle(player) {
-    const aliveIcons = battleIcons[`player${player}`].filter(icon => !icon.isDead);
+    const aliveIcons = getAliveAllies(player);
     const battleIconsList = aliveIcons.filter(icon => isBattleIcon(icon));
     
     if (battleIconsList.length === 0 && aliveIcons.length > 0) {
@@ -4684,28 +4802,44 @@ function findSquadFocusTarget(iconData, enemies) {
     const squadMembers = [...getSquadMembers(iconData.player), iconData];
     const player = iconData.player;
     const enemyPlayer = player === 1 ? 2 : 1;
-    
+
+    // 目标切换冷却：与 findTargetByAI 一致，避免每帧重新评分
+    const lockDuration = GAME_CONFIG.combat.ai.targetLockDuration;
+    const now = performance.now();
+    if (iconData.lockedTarget && !iconData.lockedTarget.isDead && now < iconData.targetLockUntil) {
+        // 确认锁定目标仍在候选范围内
+        const dist = getDistanceBetween(iconData, iconData.lockedTarget);
+        const effRange = getEffectiveRange(iconData);
+        if (dist <= effRange * 2.5) {
+            return iconData.lockedTarget;
+        }
+    }
+
     let bestTarget = null;
     let bestScore = -Infinity;
-    
+
     enemies.forEach(enemy => {
         if (enemy.isDead) return;
-        
+
         const distance = getDistanceBetween(iconData, enemy);
-        
+
         const effectiveRange = getEffectiveRange(iconData);
         if (distance > effectiveRange * 2.5) return;
-        
+
         const priority = getSquadTargetPriority(enemy, squadMembers);
         const distancePenalty = distance / (effectiveRange * 2);
         const score = priority - distancePenalty * 20;
-        
+
         if (score > bestScore) {
             bestScore = score;
             bestTarget = enemy;
         }
     });
-    
+
+    if (bestTarget) {
+        iconData.lockedTarget = bestTarget;
+        iconData.targetLockUntil = now + lockDuration;
+    }
     return bestTarget;
 }
 
@@ -4755,22 +4889,22 @@ function findRetreatPosition(iconData, enemies) {
     let awayX = 0;
     let awayY = 0;
     let count = 0;
-    
+
     for (const enemy of enemies) {
         if (enemy.isDead) continue;
         if (enemy.weapon.type !== 'melee') continue;
-        
+
         const dx = iconData.x - enemy.x;
         const dy = iconData.y - enemy.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        
+
         if (distance > 0) {
             awayX += dx / distance;
             awayY += dy / distance;
             count++;
         }
     }
-    
+
     if (count === 0) {
         const battleZone = document.getElementById(`player${iconData.player}BattleZone`);
         const zoneRect = battleZone.getBoundingClientRect();
@@ -4780,17 +4914,52 @@ function findRetreatPosition(iconData, enemies) {
         const centerY = zoneRect.top - areaRect.top + zoneRect.height / 2;
         return { x: centerX, y: centerY };
     }
-    
+
     const magnitude = Math.sqrt(awayX * awayX + awayY * awayY);
     if (magnitude > 0) {
         awayX /= magnitude;
         awayY /= magnitude;
     }
-    
+
     const retreatDistance = GAME_CONFIG.movement.retreatDistance * iconSize;
     return {
         x: iconData.x + awayX * retreatDistance,
         y: iconData.y + awayY * retreatDistance
+    };
+}
+
+// 小队撤退位置：退向队长身后（相对威胁方向），避免成员独立逃跑分裂小队
+function findSquadRetreatPosition(iconData, leader, enemies) {
+    // 计算近战威胁中心
+    let threatX = 0, threatY = 0, threatCount = 0;
+    for (const enemy of enemies) {
+        if (enemy.isDead || enemy.weapon.type !== 'melee') continue;
+        threatX += enemy.x;
+        threatY += enemy.y;
+        threatCount++;
+    }
+
+    if (threatCount === 0) {
+        return { x: leader.x, y: leader.y };
+    }
+    threatX /= threatCount;
+    threatY /= threatCount;
+
+    // 安全方向：从威胁中心指向队长
+    const dx = leader.x - threatX;
+    const dy = leader.y - threatY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < 1) {
+        // 队长就在威胁位置，退向己方阵地中心
+        return findRetreatPosition(iconData, enemies);
+    }
+
+    // 目标：队长身后一段距离（继续远离威胁，同时贴近小队）
+    const retreatDist = GAME_CONFIG.movement.retreatDistance * iconSize * 0.5;
+    return {
+        x: leader.x + (dx / dist) * retreatDist,
+        y: leader.y + (dy / dist) * retreatDist
     };
 }
 
@@ -4802,6 +4971,18 @@ function checkAllMembersInRange(leader, members, range) {
         }
     }
     return true;
+}
+
+// 计算小队几何中心（含队长），用于成员掉队时队长收拢队形
+function getSquadCenter(leader, members) {
+    let sumX = leader.x, sumY = leader.y, count = 1;
+    for (const m of members) {
+        if (m.isDead) continue;
+        sumX += m.x;
+        sumY += m.y;
+        count++;
+    }
+    return { x: sumX / count, y: sumY / count };
 }
 
 function handleSquadLeaderBehavior(iconData) {
@@ -4839,6 +5020,12 @@ function handleSquadLeaderBehavior(iconData) {
                     iconData.targetX = iconData.x + dx * ratio;
                     iconData.targetY = iconData.y + dy * ratio;
                     moveTowardsTarget(iconData);
+                } else {
+                    // 有成员掉队，队长移向小队中心收拢队形，避免停滞和分裂
+                    const center = getSquadCenter(iconData, members);
+                    iconData.targetX = center.x;
+                    iconData.targetY = center.y;
+                    moveTowardsTarget(iconData);
                 }
             }
         } else {
@@ -4848,7 +5035,7 @@ function handleSquadLeaderBehavior(iconData) {
                 return distA - distB;
             });
             const target = enemies[0];
-            
+
             if (checkAllMembersInRange(iconData, members, monitorRange)) {
                 const idealDist = getIdealAttackDistance(iconData, target);
                 const dx = target.x - iconData.x;
@@ -4858,15 +5045,27 @@ function handleSquadLeaderBehavior(iconData) {
                 iconData.targetX = iconData.x + dx * ratio;
                 iconData.targetY = iconData.y + dy * ratio;
                 moveTowardsTarget(iconData);
+            } else {
+                // 有成员掉队，队长移向小队中心收拢队形
+                const center = getSquadCenter(iconData, members);
+                iconData.targetX = center.x;
+                iconData.targetY = center.y;
+                moveTowardsTarget(iconData);
             }
         }
     } else {
         const territoryCenterX = battleZone.offsetLeft + battleZone.offsetWidth / 2;
         const territoryCenterY = battleZone.offsetTop + battleZone.offsetHeight / 2;
-        
+
         if (checkAllMembersInRange(iconData, members, monitorRange)) {
             iconData.targetX = territoryCenterX;
             iconData.targetY = territoryCenterY;
+            moveTowardsTarget(iconData);
+        } else {
+            // 有成员掉队，队长移向小队中心收拢队形
+            const center = getSquadCenter(iconData, members);
+            iconData.targetX = center.x;
+            iconData.targetY = center.y;
             moveTowardsTarget(iconData);
         }
     }
@@ -4922,7 +5121,8 @@ function handleSquadMemberBehavior(iconData) {
     
     if (nearestEnemyDistance < battleEngageRange && enemies.length > 0) {
         if (shouldRetreat(iconData, enemies)) {
-            const retreatPos = findRetreatPosition(iconData, enemies);
+            // 小队模式撤退：退向队长身后，保持小队编队不分裂
+            const retreatPos = findSquadRetreatPosition(iconData, leader, enemies);
             iconData.targetX = retreatPos.x;
             iconData.targetY = retreatPos.y;
             moveTowardsTarget(iconData);
@@ -5212,13 +5412,13 @@ function autoAddRandomIconsIfNeeded() {
 function startAutoDeployTimer(player) {
     if (!autoDeployEnabled) return;
     
-    if (autoDeployTimer) {
-        clearTimeout(autoDeployTimer);
+    if (BattleState.autoDeployTimer) {
+        clearTimeout(BattleState.autoDeployTimer);
     }
     
-    lastPlayerDefeated = player;
+    BattleState.lastPlayerDefeated = player;
     
-    autoDeployTimer = setTimeout(() => {
+    BattleState.autoDeployTimer = setTimeout(() => {
         const readyContent = document.getElementById(`player${player}ReadyContent`);
         const iconItems = readyContent.querySelectorAll('.icon-item');
         
@@ -5226,14 +5426,14 @@ function startAutoDeployTimer(player) {
             deployAllIcons(player);
         }
         
-        autoDeployTimer = null;
+        BattleState.autoDeployTimer = null;
     }, 10000 / gameSpeed);
 }
 
 function cancelAutoDeployTimer() {
-    if (autoDeployTimer) {
-        clearTimeout(autoDeployTimer);
-        autoDeployTimer = null;
+    if (BattleState.autoDeployTimer) {
+        clearTimeout(BattleState.autoDeployTimer);
+        BattleState.autoDeployTimer = null;
     }
 }
 
@@ -5371,16 +5571,24 @@ function showIconDetailPanel(iconData, player) {
     if (currentDetailPanel) {
         closeIconDetailPanel();
     }
-    
+
     // 创建详情面板
     const detailPanel = document.createElement('div');
     detailPanel.className = `icon-detail-panel player${player}`;
-    
+
     // 获取图标列表容器
     const iconsList = document.getElementById(`player${player}IconsList`);
-    
-    // 设置面板位置
-    iconsList.appendChild(detailPanel);
+
+    // 竖屏模式检测：原始图标列表被隐藏（stats-info display:none）时，
+    // 改为附加到 body 并居中显示，避免面板被隐藏元素容纳导致不可见
+    const portraitPanel = document.querySelector('.icons-stats-panel.show');
+    if (portraitPanel) {
+        document.body.appendChild(detailPanel);
+        detailPanel.classList.add('portrait-detail');
+    } else {
+        // 横屏模式：附加到图标列表旁
+        iconsList.appendChild(detailPanel);
+    }
     
     // 填充面板内容
     detailPanel.innerHTML = `
@@ -5514,9 +5722,12 @@ function updateIconDetailPanel(iconData) {
         ? abilities.map(key => {
             const def = SPECIAL_ABILITIES[key];
             const params = Object.keys(def.fields).map(f => {
-                const v = iconData.weapon[f];
-                const display = def.fields[f].type === 'checkbox' ? (v ? '是' : '否') : v;
-                return `${def.fields[f].label}:${display}`;
+                const fieldDef = def.fields[f];
+                let v = iconData.weapon[f];
+                // 字段未配置时使用定义中的默认值，避免显示 undefined
+                if (v === undefined) v = fieldDef.default;
+                const display = fieldDef.type === 'checkbox' ? (v ? '是' : '否') : v;
+                return `${fieldDef.label}:${display}`;
             }).join(' ');
             return `<div class="detail-item detail-ability"><span class="detail-label ability-name">${def.label}</span><span class="detail-value">${params}</span></div>`;
         }).join('')
@@ -6332,12 +6543,30 @@ function showIconsStatsPanel() {
     
     panel.appendChild(player1Column);
     panel.appendChild(player2Column);
-    
+
     document.body.appendChild(panel);
     panel.classList.add('show');
-    
+
     activePortraitPanel = 'iconsStats';
-    
+
+    // 事件委托：竖屏面板里复制的图标项没有原始监听器，
+    // 通过委托在面板层捕获点击，匹配 iconData 后显示详情
+    panel.addEventListener('click', (e) => {
+        const item = e.target.closest('.battle-icon-item');
+        if (!item || !item.id) return;
+        // 按列确定 player：第1列=player1，第2列=player2
+        const column = item.closest('.icons-stats-column');
+        if (!column) return;
+        const isPlayer1 = column === player1Column;
+        const player = isPlayer1 ? 1 : 2;
+        // 在原始 battleIcons 中按 listItem.id 匹配 iconData
+        const icons = battleIcons[`player${player}`];
+        const target = icons.find(icon => icon.listItem && icon.listItem.id === item.id);
+        if (target) {
+            showIconDetailPanel(target, player);
+        }
+    });
+
     updateIconsStatsPanel();
 }
 

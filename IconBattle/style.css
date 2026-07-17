@@ -2054,6 +2054,19 @@ body {
     top: 0;
 }
 
+/* 竖屏模式：详情面板居中显示在屏幕中央 */
+.icon-detail-panel.portrait-detail {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, -50%);
+    z-index: 3000;
+    max-width: 92vw;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
 .icon-detail-left {
     width: 80px;
     height: 80px;
