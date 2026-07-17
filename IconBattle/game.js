@@ -246,6 +246,10 @@ const GAME_CONFIG = {
     ]
 };
 
+function getEffectiveRange(iconData) {
+    return iconData.weapon.range * iconSize;
+}
+
 const WEAPON_BEHAVIORS = {
     heal: {
         update: function(iconData, context) {
@@ -289,7 +293,7 @@ const WEAPON_BEHAVIORS = {
                         const enemy = findTargetByAI(iconData);
                         if (enemy) {
                             const distance = getDistanceBetween(iconData, enemy);
-                            const effectiveRange = iconData.weapon.range * iconSize;
+                            const effectiveRange = getEffectiveRange(iconData);
                             const meleeOffset = (iconData.weapon.type === 'melee' ? GAME_CONFIG.movement.meleeApproachOffset * iconSize : 0);
                             const approachOffset = meleeOffset * aiConfig.approachBias;
                             
@@ -2970,12 +2974,6 @@ function updateBattleStats() {
 function initBattleInfoDrag() {
     const battleInfoWrapper = document.querySelector('.battle-info-wrapper');
     
-    // 检查是否为横屏模式，如果是则不启用拖动
-    const isLandscape = window.matchMedia('(orientation: landscape)').matches;
-    if (isLandscape) {
-        return;
-    }
-    
     battleInfoWrapper.addEventListener('mousedown', (e) => {
         if (e.target.classList.contains('filter-tab')) return;
         
@@ -2983,7 +2981,11 @@ function initBattleInfoDrag() {
         const rect = battleInfoWrapper.getBoundingClientRect();
         battleInfoOffset.x = e.clientX - rect.left;
         battleInfoOffset.y = e.clientY - rect.top;
-        battleInfoWrapper.style.transform = 'none';
+        battleInfoWrapper.style.left = `${rect.left}px`;
+        battleInfoWrapper.style.top = `${rect.top}px`;
+        battleInfoWrapper.style.right = 'auto';
+        battleInfoWrapper.style.bottom = 'auto';
+        battleInfoWrapper.style.transform = `translate(0, 0) scale(${uiSize})`;
     });
     
     document.addEventListener('mousemove', (e) => {
@@ -3142,7 +3144,7 @@ function shouldRetreatByAI(iconData, enemies) {
         return false;
     }
     
-    const effectiveRange = iconData.weapon.range * iconSize;
+    const effectiveRange = getEffectiveRange(iconData);
     const nearbyEnemies = enemies.filter(e => getDistanceBetween(iconData, e) < effectiveRange * 1.5);
     
     return nearbyEnemies.length > 0;
@@ -3311,10 +3313,8 @@ function handleHealerBehavior(iconData) {
         });
         
         const target = injuredAllies[0];
-        const dx = target.x - iconData.x;
-        const dy = target.y - iconData.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const effectiveRange = iconData.weapon.range * iconSize;
+        const distance = getDistanceBetween(iconData, target);
+        const effectiveRange = getEffectiveRange(iconData);
         
         if (distance <= effectiveRange) {
             if (!iconData.isAttacking && !iconData.isOnCooldown) {
@@ -3339,9 +3339,7 @@ function handleHealerBehavior(iconData) {
             });
             
             const target = combatAllies[0];
-            const dx = target.x - iconData.x;
-            const dy = target.y - iconData.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distance = getDistanceBetween(iconData, target);
             const followDistance = 80 * iconSize;
             
             if (distance > followDistance) {
@@ -3349,6 +3347,8 @@ function handleHealerBehavior(iconData) {
                 iconData.targetY = target.y;
                 moveTowardsTarget(iconData);
             } else if (distance < followDistance * 0.4) {
+                const dx = target.x - iconData.x;
+                const dy = target.y - iconData.y;
                 const angle = Math.atan2(dy, dx);
                 const offsetX = Math.cos(angle) * (followDistance * 0.6);
                 const offsetY = Math.sin(angle) * (followDistance * 0.6);
@@ -3358,9 +3358,7 @@ function handleHealerBehavior(iconData) {
             }
         } else {
             const target = allies[0];
-            const dx = target.x - iconData.x;
-            const dy = target.y - iconData.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distance = getDistanceBetween(iconData, target);
             const followDistance = 80 * iconSize;
             
             if (distance > followDistance) {
@@ -3368,6 +3366,8 @@ function handleHealerBehavior(iconData) {
                 iconData.targetY = target.y;
                 moveTowardsTarget(iconData);
             } else if (distance < followDistance * 0.4) {
+                const dx = target.x - iconData.x;
+                const dy = target.y - iconData.y;
                 const angle = Math.atan2(dy, dx);
                 const offsetX = Math.cos(angle) * (followDistance * 0.6);
                 const offsetY = Math.sin(angle) * (followDistance * 0.6);
@@ -3387,9 +3387,7 @@ function handleHealerBehavior(iconData) {
         });
         
         const target = enemies[0];
-        const dx = target.x - iconData.x;
-        const dy = target.y - iconData.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distance = getDistanceBetween(iconData, target);
         const attackRange = GAME_CONFIG.movement.buffAttackRange * iconSize;
         
         if (distance > attackRange) {
@@ -3426,10 +3424,8 @@ function handleBuffBehavior(iconData) {
         });
         
         const target = combatAllies[0];
-        const dx = target.x - iconData.x;
-        const dy = target.y - iconData.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const effectiveRange = iconData.weapon.range * iconSize;
+        const distance = getDistanceBetween(iconData, target);
+        const effectiveRange = getEffectiveRange(iconData);
         
         if (distance <= effectiveRange) {
             if (!iconData.isAttacking && !iconData.isOnCooldown) {
@@ -3445,6 +3441,8 @@ function handleBuffBehavior(iconData) {
             iconData.targetY = target.y;
             moveTowardsTarget(iconData);
         } else if (distance < minDistance) {
+            const dx = target.x - iconData.x;
+            const dy = target.y - iconData.y;
             const angle = Math.atan2(dy, dx);
             const offsetX = Math.cos(angle) * minDistance;
             const offsetY = Math.sin(angle) * minDistance;
@@ -3463,10 +3461,8 @@ function handleBuffBehavior(iconData) {
         });
         
         const target = enemies[0];
-        const dx = target.x - iconData.x;
-        const dy = target.y - iconData.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const effectiveRange = iconData.weapon.range * iconSize;
+        const distance = getDistanceBetween(iconData, target);
+        const effectiveRange = getEffectiveRange(iconData);
         
         if (distance < effectiveRange) {
             if (!iconData.isAttacking && !iconData.isOnCooldown) {
@@ -3587,7 +3583,12 @@ function deployAllIcons(player) {
     }
 }
 
+let gameInitialized = false;
+
 function init() {
+    if (gameInitialized) return;
+    gameInitialized = true;
+    
     battleAreaElement = document.getElementById('battleArea');
     player1BattleZoneElement = document.getElementById('player1BattleZone');
     player2BattleZoneElement = document.getElementById('player2BattleZone');
@@ -3618,6 +3619,8 @@ function init() {
     initFilterTabs();
     setupTouchOptimizations();
     setupPortraitTabs();
+
+    loadOptionsConfig();
     
     addRandomIcons(1, 7);
     addRandomIcons(2, 7);
@@ -3646,8 +3649,6 @@ function init() {
             closeConfigModal();
         }
     });
-
-    loadOptionsConfig();
     
     const savedOptions = localStorage.getItem('iconBattle_options');
     if (!savedOptions) {
@@ -4412,11 +4413,9 @@ function findSquadFocusTarget(iconData, enemies) {
     enemies.forEach(enemy => {
         if (enemy.isDead) return;
         
-        const dx = enemy.x - iconData.x;
-        const dy = enemy.y - iconData.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distance = getDistanceBetween(iconData, enemy);
         
-        const effectiveRange = iconData.weapon.range * iconSize;
+        const effectiveRange = getEffectiveRange(iconData);
         if (distance > effectiveRange * 2.5) return;
         
         const priority = getSquadTargetPriority(enemy, squadMembers);
@@ -4458,15 +4457,13 @@ function shouldRetreat(iconData, enemies) {
     const healthPercent = iconData.stats.health / iconData.stats.maxHealth;
     if (healthPercent > 0.6) return false;
     
-    const effectiveRange = iconData.weapon.range * iconSize;
+    const effectiveRange = getEffectiveRange(iconData);
     
     for (const enemy of enemies) {
         if (enemy.isDead) continue;
         if (enemy.weapon.type !== 'melee') continue;
         
-        const dx = enemy.x - iconData.x;
-        const dy = enemy.y - iconData.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distance = getDistanceBetween(iconData, enemy);
         
         if (distance < effectiveRange * 0.4) {
             return true;
@@ -4544,13 +4541,13 @@ function handleSquadLeaderBehavior(iconData) {
     const rect = battleArea.getBoundingClientRect();
     
     if (enemies.length > 0) {
-        const effectiveRange = iconData.weapon.range * iconSize;
+        const effectiveRange = getEffectiveRange(iconData);
         const focusTarget = findSquadFocusTarget(iconData, enemies);
         
         if (focusTarget) {
             const dx = focusTarget.x - iconData.x;
             const dy = focusTarget.y - iconData.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distance = getDistanceBetween(iconData, focusTarget);
             const idealDistance = getIdealAttackDistance(iconData, focusTarget);
             
             if (distance <= effectiveRange) {
@@ -4608,8 +4605,8 @@ function handleSquadMemberBehavior(iconData) {
         if (enemy) {
             const dx = enemy.x - iconData.x;
             const dy = enemy.y - iconData.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const effectiveRange = iconData.weapon.range * iconSize;
+            const distance = getDistanceBetween(iconData, enemy);
+            const effectiveRange = getEffectiveRange(iconData);
             
             if (distance < effectiveRange) {
                 attack(iconData, enemy);
@@ -4628,7 +4625,7 @@ function handleSquadMemberBehavior(iconData) {
     const enemies = battleIcons[`player${enemyPlayer}`].filter(e => !e.isDead);
     
     const weaponType = iconData.weapon.type;
-    const effectiveRange = iconData.weapon.range * iconSize;
+    const effectiveRange = getEffectiveRange(iconData);
     const members = getSquadMembers(iconData.player);
     const monitorRange = getMonitorRange(members.length);
     
@@ -4663,7 +4660,7 @@ function handleSquadMemberBehavior(iconData) {
         if (focusTarget) {
             const dx = focusTarget.x - iconData.x;
             const dy = focusTarget.y - iconData.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distance = getDistanceBetween(iconData, focusTarget);
             const idealDistance = getIdealAttackDistance(iconData, focusTarget);
             
             if (distance <= effectiveRange) {
@@ -4725,9 +4722,7 @@ function handleSupportBehavior(iconData, leader, enemies, members, monitorRange)
     let lowestHealthPercent = 1;
     
     allAllies.forEach(ally => {
-        const dx = ally.x - iconData.x;
-        const dy = ally.y - iconData.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distance = getDistanceBetween(iconData, ally);
         
         if (distance < healRange * 1.5) {
             const healthPercent = ally.stats.health / ally.stats.maxHealth;
@@ -4760,9 +4755,7 @@ function handleSupportBehavior(iconData, leader, enemies, members, monitorRange)
         let bestBuffScore = -Infinity;
         
         allAllies.forEach(ally => {
-            const dx = ally.x - iconData.x;
-            const dy = ally.y - iconData.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distance = getDistanceBetween(iconData, ally);
             
             if (distance < healRange * 1.5) {
                 const hasBuff = ally.buffActive;
@@ -4777,9 +4770,7 @@ function handleSupportBehavior(iconData, leader, enemies, members, monitorRange)
         });
         
         if (bestBuffTarget && !bestBuffTarget.buffActive) {
-            const dx = bestBuffTarget.x - iconData.x;
-            const dy = bestBuffTarget.y - iconData.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distance = getDistanceBetween(iconData, bestBuffTarget);
             
             if (distance < healRange) {
                 attack(iconData, bestBuffTarget);
@@ -5472,7 +5463,7 @@ function handleRocketCharge(iconData) {
         const distance = Math.sqrt(dx * dx + dy * dy);
         
         // 检查是否达到自爆范围
-        const effectiveRange = iconData.weapon.range * iconSize;
+        const effectiveRange = getEffectiveRange(iconData);
         if (distance <= effectiveRange) {
             // 执行自爆
             executeRocketExplosion(iconData);
@@ -6455,6 +6446,7 @@ function resetConfig() {
     
     localStorage.removeItem('iconBattle_weaponsConfig');
     localStorage.removeItem('iconBattle_combatConfig');
+    localStorage.removeItem('iconBattle_options');
     
     initWeaponSelect();
     renderCombatConfig();
@@ -6467,6 +6459,73 @@ function resetConfig() {
             }
         });
     });
+    
+    const squadCheckbox = document.getElementById('squadBattleMode');
+    if (squadCheckbox) {
+        squadCheckbox.checked = true;
+        toggleSquadBattleMode();
+    }
+    
+    const autoAddCheckbox = document.getElementById('autoAddRandom');
+    if (autoAddCheckbox) {
+        autoAddCheckbox.checked = true;
+        toggleAutoAddRandom();
+    }
+    
+    const autoDeployCheckbox = document.getElementById('autoDeploy');
+    if (autoDeployCheckbox) {
+        autoDeployCheckbox.checked = true;
+        toggleAutoDeploy();
+    }
+    
+    const hideBattleInfoCheckbox = document.getElementById('hideBattleInfo');
+    if (hideBattleInfoCheckbox) {
+        hideBattleInfoCheckbox.checked = false;
+        toggleHideBattleInfo();
+    }
+    
+    const hideStatsCheckbox = document.getElementById('hideStats');
+    if (hideStatsCheckbox) {
+        hideStatsCheckbox.checked = false;
+        toggleHideStats();
+    }
+    
+    const hideReadyAreaCheckbox = document.getElementById('hideReadyArea');
+    if (hideReadyAreaCheckbox) {
+        hideReadyAreaCheckbox.checked = false;
+        toggleHideReadyArea();
+    }
+    
+    const pauseCheckbox = document.getElementById('pauseGame');
+    if (pauseCheckbox) {
+        pauseCheckbox.checked = false;
+        togglePauseGame();
+    }
+    
+    const fullscreenCheckbox = document.getElementById('fullscreenMode');
+    if (fullscreenCheckbox) {
+        fullscreenCheckbox.checked = false;
+        toggleFullscreen();
+    }
+    
+    const iconSizeSlider = document.getElementById('iconSizeSlider');
+    if (iconSizeSlider) {
+        iconSizeSlider.value = 0.8;
+        updateIconSize(0.8);
+    }
+    
+    const uiSizeSlider = document.getElementById('uiSizeSlider');
+    if (uiSizeSlider) {
+        uiSizeSlider.value = 1;
+        updateUISize(1);
+    }
+    
+    gameSpeed = 1;
+    const gameSpeedElement = document.getElementById('gameSpeed');
+    if (gameSpeedElement) {
+        gameSpeedElement.textContent = '1x倍速';
+        gameSpeedElement.classList.remove('fast');
+    }
     
     showConfigToast('已重置为默认配置');
 }

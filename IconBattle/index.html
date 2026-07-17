@@ -8,6 +8,9 @@
 </head>
 <body>
     <div class="game-container">
+         <div class="options-container" id="optionsContainer">
+                <button class="btn-options hide-option" onclick="openConfigModal()">⚙️</button>
+            </div>
         <div class="battle-info-wrapper" id="battleInfoWrapper">
             <div class="battle-info-filters-left">
                 <button class="filter-tab active" data-filter="player" data-value="all">全部</button>
@@ -49,9 +52,7 @@
                 </div>
             </div>
             
-            <div class="options-container" id="optionsContainer">
-                <button class="btn-options hide-option" onclick="openConfigModal()">选项</button>
-            </div>
+           
         </div>
 
         <div class="ready-area" id="readyarea">
