@@ -88,6 +88,8 @@ let battleInfoUpdateCounter = 0;
 const MAX_ACTIVE_EFFECTS = 15;
 let activeEffectsCount = 0;
 
+let iconsToUpdate = [];
+
 // 音频上下文，用于播放游戏音效
 const audioContext = new (window.AudioContext || window.webkitAudioContext());
 
@@ -1116,6 +1118,7 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
         element: battleIcon,
         healthBarFill: healthBarFill,
         statsDisplay: statsDisplay,
+        weaponWrapper: weaponWrapper,
         stats: stats,
         player: player,
         x: x,
@@ -1148,7 +1151,9 @@ function createBattleIcon(iconUrl, player, x, y, name = '', assignedWeapon = nul
         kills: 0,
         isCharging: false,
         chargeTarget: null,
-        chargeStartTime: 0
+        chargeStartTime: 0,
+        isMoving: false,
+        facing: player === 1 ? 'right' : 'left'
     };
     
     if (level > 1) {
@@ -2902,13 +2907,9 @@ function moveTowardsTarget(iconData) {
     if (distance > GAME_CONFIG.movement.arrivalThreshold * iconSize) {
         let speed = iconData.stats.speed * gameSpeed;
         
-        if (squadBattleMode) {
-            const members = getSquadMembers(iconData.player);
-            const minSpeed = Math.min(...members.map(m => m.stats.speed));
-            
-            if (iconData.stats.speed > minSpeed) {
-                const speedRatio = minSpeed / iconData.stats.speed;
-                speed = speed * speedRatio;
+        if (squadBattleMode && iconData.squadMinSpeed !== undefined) {
+            if (iconData.stats.speed > iconData.squadMinSpeed) {
+                speed = speed * (iconData.squadMinSpeed / iconData.stats.speed);
             }
         }
         
@@ -2918,45 +2919,82 @@ function moveTowardsTarget(iconData) {
         iconData.x += moveX;
         iconData.y += moveY;
         
-        clampIconPosition(iconData);
+        if (battleAreaRect) {
+            const margin = GAME_CONFIG.movement.boundaryMargin * iconSize;
+            iconData.x = Math.max(margin, Math.min(battleAreaRect.width - margin, iconData.x));
+            iconData.y = Math.max(margin, Math.min(battleAreaRect.height - margin, iconData.y));
+        }
         
-        iconData.element.classList.add('moving');
-        
-        const weaponWrapper = iconData.element.querySelector('.weapon-wrapper');
-        const defaultDirection = weaponWrapper.dataset.defaultDirection;
+        iconData.isMoving = true;
         
         if (moveX > 0) {
+            iconData.facing = 'right';
+        } else if (moveX < 0) {
+            iconData.facing = 'left';
+        }
+        
+        if (!iconsToUpdate.includes(iconData)) {
+            iconsToUpdate.push(iconData);
+        }
+    } else {
+        iconData.isMoving = false;
+        
+        if (!iconsToUpdate.includes(iconData)) {
+            iconsToUpdate.push(iconData);
+        }
+    }
+}
+
+function batchUpdateIconsDOM() {
+    for (const iconData of iconsToUpdate) {
+        if (!iconData.element) continue;
+        
+        iconData.element.style.transform = `translate(${iconData.x}px, ${iconData.y}px) scale(${iconSize})`;
+        
+        if (iconData.isMoving) {
+            iconData.element.classList.add('moving');
+        } else {
+            iconData.element.classList.remove('moving');
+        }
+        
+        if (iconData.facing === 'right') {
             iconData.element.classList.remove('facing-left');
             iconData.element.classList.add('facing-right');
             
-            weaponWrapper.style.right = '-30px';
-            weaponWrapper.style.left = 'auto';
-            
-            if (defaultDirection === 'top') {
-                weaponWrapper.style.transform = 'rotate(90deg)';
-            } else if (defaultDirection === 'right') {
-                weaponWrapper.style.transform = 'scaleX(1)';
-            } else if (defaultDirection === 'left') {
-                weaponWrapper.style.transform = 'scaleX(-1)';
+            if (iconData.weaponWrapper) {
+                iconData.weaponWrapper.style.right = '-30px';
+                iconData.weaponWrapper.style.left = 'auto';
+                
+                const defaultDirection = iconData.weaponWrapper.dataset.defaultDirection;
+                if (defaultDirection === 'top') {
+                    iconData.weaponWrapper.style.transform = 'rotate(90deg)';
+                } else if (defaultDirection === 'right') {
+                    iconData.weaponWrapper.style.transform = 'scaleX(1)';
+                } else if (defaultDirection === 'left') {
+                    iconData.weaponWrapper.style.transform = 'scaleX(-1)';
+                }
             }
-        } else if (moveX < 0) {
+        } else if (iconData.facing === 'left') {
             iconData.element.classList.remove('facing-right');
             iconData.element.classList.add('facing-left');
             
-            weaponWrapper.style.left = '-30px';
-            weaponWrapper.style.right = 'auto';
-            
-            if (defaultDirection === 'top') {
-                weaponWrapper.style.transform = 'rotate(-90deg)';
-            } else if (defaultDirection === 'right') {
-                weaponWrapper.style.transform = 'scaleX(-1)';
-            } else if (defaultDirection === 'left') {
-                weaponWrapper.style.transform = 'scaleX(1)';
+            if (iconData.weaponWrapper) {
+                iconData.weaponWrapper.style.left = '-30px';
+                iconData.weaponWrapper.style.right = 'auto';
+                
+                const defaultDirection = iconData.weaponWrapper.dataset.defaultDirection;
+                if (defaultDirection === 'top') {
+                    iconData.weaponWrapper.style.transform = 'rotate(-90deg)';
+                } else if (defaultDirection === 'right') {
+                    iconData.weaponWrapper.style.transform = 'scaleX(-1)';
+                } else if (defaultDirection === 'left') {
+                    iconData.weaponWrapper.style.transform = 'scaleX(1)';
+                }
             }
         }
-    } else {
-        iconData.element.classList.remove('moving');
     }
+    
+    iconsToUpdate = [];
 }
 
 function updateBattleStats() {
@@ -3316,11 +3354,13 @@ function updateGame(deltaTime) {
         });
     }
     
+    updateSquadMinSpeedCache();
+    
     [...battleIcons.player1, ...battleIcons.player2].forEach(iconData => {
         updateIconBehavior(iconData, isVictory);
     });
     
-    clampAllIconsToBounds();
+    batchUpdateIconsDOM();
     
     battleInfoUpdateCounter++;
     if (battleInfoUpdateCounter >= BATTLE_INFO_UPDATE_INTERVAL) {
@@ -4262,6 +4302,21 @@ function clearSquadLeaders() {
             leader.element.classList.remove('squad-leader');
             squadLeaders[`player${player}`] = null;
         }
+    });
+}
+
+function updateSquadMinSpeedCache() {
+    if (!squadBattleMode) return;
+    
+    [1, 2].forEach(player => {
+        const members = battleIcons[`player${player}`].filter(icon => !icon.isDead);
+        if (members.length === 0) return;
+        
+        const minSpeed = Math.min(...members.map(m => m.stats.speed));
+        
+        members.forEach(icon => {
+            icon.squadMinSpeed = minSpeed;
+        });
     });
 }
 
