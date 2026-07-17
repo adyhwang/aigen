@@ -5590,7 +5590,7 @@ function showIconDetailPanel(iconData, player) {
             </div>
             <div class="detail-item">
                 <span class="detail-label">吸血:</span>
-                <span class="detail-value lifesteal" id="detail-lifesteal">${((iconData.stats.lifeSteal || 0) * 100).toFixed(1)}%</span>
+                <span class="detail-value lifesteal" id="detail-lifesteal">${(((iconData.stats.lifeSteal || 0) + (iconData.weapon.lifestealRatio || 0)) * 100).toFixed(1)}%</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">武器:</span>
@@ -5669,7 +5669,7 @@ function updateIconDetailPanel(iconData) {
     currentDetailPanel.querySelector('#detail-kills').textContent = iconData.kills;
     currentDetailPanel.querySelector('#detail-critrate').textContent = `${(iconData.stats.critRate * 100).toFixed(1)}%`;
     currentDetailPanel.querySelector('#detail-critdamage').textContent = `${iconData.stats.critDamage.toFixed(1)}x`;
-    currentDetailPanel.querySelector('#detail-lifesteal').textContent = `${((iconData.stats.lifeSteal || 0) * 100).toFixed(1)}%`;
+    currentDetailPanel.querySelector('#detail-lifesteal').textContent = `${(((iconData.stats.lifeSteal || 0) + (iconData.weapon.lifestealRatio || 0)) * 100).toFixed(1)}%`;
 
     // 动态生成状态信息
     const statusEl = currentDetailPanel.querySelector('#detail-status');
