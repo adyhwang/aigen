@@ -27,6 +27,10 @@ let uiSize = 1;
 // UI元素当前透明度
 let uiOpacity = 1;
 
+// 战斗信息面板是否正在拖动
+let battleInfoDragging = false;
+// 战斗信息面板拖动时的偏移量
+let battleInfoOffset = { x: 0, y: 0 };
 
 // 是否启用自动添加随机图标
 let autoAddRandomEnabled = false;
@@ -3024,6 +3028,89 @@ function updateBattleStats() {
     });
 }
 
+function initBattleInfoDrag() {
+    const battleInfoWrapper = document.querySelector('.battle-info-wrapper');
+    
+    battleInfoWrapper.addEventListener('mousedown', (e) => {
+        if (e.target.classList.contains('filter-tab')) return;
+        
+        battleInfoDragging = true;
+        const rect = battleInfoWrapper.getBoundingClientRect();
+        battleInfoOffset.x = e.clientX - rect.left;
+        battleInfoOffset.y = e.clientY - rect.top;
+        battleInfoWrapper.style.left = `${rect.left}px`;
+        battleInfoWrapper.style.top = `${rect.top}px`;
+        battleInfoWrapper.style.right = 'auto';
+        battleInfoWrapper.style.bottom = 'auto';
+        battleInfoWrapper.style.transform = `translate(0, 0) scale(${uiSize})`;
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!battleInfoDragging) return;
+        
+        const battleArea = document.getElementById('battleArea');
+        const battleAreaRect = battleArea.getBoundingClientRect();
+        
+        let newX = e.clientX - battleAreaRect.left - battleInfoOffset.x;
+        let newY = e.clientY - battleAreaRect.top - battleInfoOffset.y;
+        
+        const maxX = battleAreaRect.width - battleInfoWrapper.offsetWidth;
+        const maxY = battleAreaRect.height - battleInfoWrapper.offsetHeight;
+        
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+        
+        battleInfoWrapper.style.left = `${newX}px`;
+        battleInfoWrapper.style.top = `${newY}px`;
+    });
+    
+    document.addEventListener('mouseup', () => {
+        battleInfoDragging = false;
+    });
+
+    // 触摸事件支持
+    battleInfoWrapper.addEventListener('touchstart', (e) => {
+        if (e.target.classList.contains('filter-tab')) return;
+
+        battleInfoDragging = true;
+        const touch = e.touches[0];
+        const rect = battleInfoWrapper.getBoundingClientRect();
+        battleInfoOffset.x = touch.clientX - rect.left;
+        battleInfoOffset.y = touch.clientY - rect.top;
+        battleInfoWrapper.style.left = `${rect.left}px`;
+        battleInfoWrapper.style.top = `${rect.top}px`;
+        battleInfoWrapper.style.right = 'auto';
+        battleInfoWrapper.style.bottom = 'auto';
+        battleInfoWrapper.style.transform = `translate(0, 0) scale(${uiSize})`;
+        e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!battleInfoDragging) return;
+
+        const touch = e.touches[0];
+        const battleArea = document.getElementById('battleArea');
+        const battleAreaRect = battleArea.getBoundingClientRect();
+
+        let newX = touch.clientX - battleAreaRect.left - battleInfoOffset.x;
+        let newY = touch.clientY - battleAreaRect.top - battleInfoOffset.y;
+
+        const maxX = battleAreaRect.width - battleInfoWrapper.offsetWidth;
+        const maxY = battleAreaRect.height - battleInfoWrapper.offsetHeight;
+
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+
+        battleInfoWrapper.style.left = `${newX}px`;
+        battleInfoWrapper.style.top = `${newY}px`;
+        e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => {
+        battleInfoDragging = false;
+    });
+}
+
 function removeBattleIcon(iconData) {
     if (!iconData || !iconData.element) return;
 
@@ -3865,7 +3952,8 @@ function init() {
     
     setupBattleZoneDrop();
     requestAnimationFrame(gameLoop);
-
+    initBattleInfoDrag();
+    
     // 初始化滑块控件的最小值和最大值
     const [minSize, maxSize] = iconSizes;
     
@@ -3914,10 +4002,7 @@ function init() {
         }
         const configModal = document.getElementById('configModal');
         if (event.target === configModal) {
-            const content = configModal.querySelector('.config-modal-content');
-            if (!isPanelLocked(content)) {
-                closeConfigModal();
-            }
+            closeConfigModal();
         }
     });
     
@@ -5766,161 +5851,6 @@ function stopDetailPanelDrag() {
     detailPanelDragging = false;
 }
 
-// ===== 通用面板锁定/拖拽系统 =====
-// 适用于：战斗信息、图标状态、待命区、选项面板
-// 行为：未锁定时点击外部可关闭；锁定后可拖拽且点击外部不关闭
-const panelLockStates = new WeakMap();
-
-function makePanelLockable(panel) {
-    if (!panel) return;
-    // 确保面板有定位上下文，让🔒按钮的 absolute 定位生效
-    if (getComputedStyle(panel).position === 'static') {
-        panel.style.position = 'relative';
-    }
-    // 移除已有的🔒按钮（避免重复）
-    const existingBtn = panel.querySelector('.panel-lock-btn');
-    if (existingBtn) existingBtn.remove();
-
-    const state = {
-        locked: false,
-        dragging: false,
-        offset: { x: 0, y: 0 },
-        handlers: {}
-    };
-    state.handlers.start = (e) => startPanelDrag(e, panel);
-    state.handlers.move = (e) => onPanelDrag(e, panel);
-    state.handlers.end = () => stopPanelDrag(panel);
-    panelLockStates.set(panel, state);
-
-    const lockBtn = document.createElement('button');
-    lockBtn.className = 'panel-lock-btn';
-    lockBtn.textContent = '🔓';
-    lockBtn.title = '锁定面板（锁定后可拖动，点击外部不关闭）';
-    lockBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        togglePanelLock(panel);
-    });
-    lockBtn.addEventListener('touchstart', (e) => {
-        e.stopPropagation();
-    }, { passive: true });
-    panel.appendChild(lockBtn);
-}
-
-function isPanelLocked(panel) {
-    if (!panel) return false;
-    const state = panelLockStates.get(panel);
-    return state ? state.locked : false;
-}
-
-function togglePanelLock(panel) {
-    const state = panelLockStates.get(panel);
-    if (!state) return;
-    state.locked = !state.locked;
-    const btn = panel.querySelector('.panel-lock-btn');
-    if (state.locked) {
-        if (btn) btn.textContent = '🔒';
-        panel.classList.add('draggable');
-        panel.addEventListener('mousedown', state.handlers.start);
-        panel.addEventListener('touchstart', state.handlers.start, { passive: false });
-        document.addEventListener('mousemove', state.handlers.move);
-        document.addEventListener('touchmove', state.handlers.move, { passive: false });
-        document.addEventListener('mouseup', state.handlers.end);
-        document.addEventListener('touchend', state.handlers.end);
-    } else {
-        if (btn) btn.textContent = '🔓';
-        panel.classList.remove('draggable');
-        panel.removeEventListener('mousedown', state.handlers.start);
-        panel.removeEventListener('touchstart', state.handlers.start);
-        document.removeEventListener('mousemove', state.handlers.move);
-        document.removeEventListener('touchmove', state.handlers.move);
-        document.removeEventListener('mouseup', state.handlers.end);
-        document.removeEventListener('touchend', state.handlers.end);
-    }
-}
-
-function startPanelDrag(e, panel) {
-    const state = panelLockStates.get(panel);
-    if (!state || !state.locked) return;
-    if (e.target.closest('.panel-lock-btn')) return;
-    // 不在交互元素上启动拖拽，确保按钮/输入框/标签页等可正常点击
-    if (e.target.closest('button, input, select, textarea, a, .filter-tab, .config-tab, .portrait-tab, .battle-icon-item')) return;
-
-    state.dragging = true;
-    const point = e.touches ? e.touches[0] : e;
-    const rect = panel.getBoundingClientRect();
-    state.offset.x = point.clientX - rect.left;
-    state.offset.y = point.clientY - rect.top;
-
-    // 切换为固定定位以便自由拖动
-    panel.style.position = 'fixed';
-    panel.style.left = rect.left + 'px';
-    panel.style.top = rect.top + 'px';
-    panel.style.right = 'auto';
-    panel.style.bottom = 'auto';
-    panel.style.transform = 'none';
-
-    if (e.cancelable) e.preventDefault();
-}
-
-function onPanelDrag(e, panel) {
-    const state = panelLockStates.get(panel);
-    if (!state || !state.dragging) return;
-    const point = e.touches ? e.touches[0] : e;
-    let x = point.clientX - state.offset.x;
-    let y = point.clientY - state.offset.y;
-    // 边界限制
-    const maxX = window.innerWidth - panel.offsetWidth;
-    const maxY = window.innerHeight - panel.offsetHeight;
-    x = Math.max(0, Math.min(x, maxX));
-    y = Math.max(0, Math.min(y, maxY));
-    panel.style.left = x + 'px';
-    panel.style.top = y + 'px';
-    if (e.cancelable) e.preventDefault();
-}
-
-function stopPanelDrag(panel) {
-    const state = panelLockStates.get(panel);
-    if (!state) return;
-    state.dragging = false;
-}
-
-function resetPanelLock(panel) {
-    if (!panel) return;
-    const state = panelLockStates.get(panel);
-    if (!state) return;
-    if (state.locked) {
-        state.locked = false;
-        panel.classList.remove('draggable');
-        panel.removeEventListener('mousedown', state.handlers.start);
-        panel.removeEventListener('touchstart', state.handlers.start);
-        document.removeEventListener('mousemove', state.handlers.move);
-        document.removeEventListener('touchmove', state.handlers.move);
-        document.removeEventListener('mouseup', state.handlers.end);
-        document.removeEventListener('touchend', state.handlers.end);
-    }
-    state.dragging = false;
-    // 清除拖动产生的 inline style，让 CSS 类重新生效
-    panel.style.position = '';
-    panel.style.left = '';
-    panel.style.top = '';
-    panel.style.right = '';
-    panel.style.bottom = '';
-    panel.style.transform = '';
-    const btn = panel.querySelector('.panel-lock-btn');
-    if (btn) btn.textContent = '🔓';
-}
-
-// 获取当前竖屏活动面板的可锁定元素
-function getActivePanelElement() {
-    switch (activePortraitPanel) {
-        case 'battleInfo': return document.getElementById('battleInfoWrapper');
-        case 'iconsStats': return document.querySelector('.icons-stats-panel');
-        case 'readyarea': return document.getElementById('readyarea');
-        case 'options': return document.querySelector('#configModal .config-modal-content');
-        default: return null;
-    }
-}
-
 // 武器类型转换为中文
 function weaponTypeToChinese(type) {
     const typeMap = {
@@ -6526,19 +6456,30 @@ function setupPortraitTabs() {
     
     document.addEventListener('click', (e) => {
         if (activePortraitPanel && !e.target.closest('.portrait-tabs')) {
-            // 锁定状态下点击外部不关闭
-            if (isPanelLocked(getActivePanelElement())) return;
-            if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.config-modal')) {
+            if (activePortraitPanel === 'readyarea') {
+                if (!e.target.closest('.ready-close-btn')) {
+                    return;
+                }
                 hideAllPanels();
+            } else {
+                if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.config-modal')) {
+                    hideAllPanels();
+                }
             }
         }
     });
 
     document.addEventListener('touchstart', (e) => {
         if (activePortraitPanel && !e.target.closest('.portrait-tabs')) {
-            if (isPanelLocked(getActivePanelElement())) return;
-            if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.config-modal')) {
+            if (activePortraitPanel === 'readyarea') {
+                if (!e.target.closest('.ready-close-btn')) {
+                    return;
+                }
                 hideAllPanels();
+            } else {
+                if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.config-modal')) {
+                    hideAllPanels();
+                }
             }
         }
     }, { passive: false });
@@ -6573,19 +6514,18 @@ function hideAllPanels() {
     const portraitTabs = document.getElementById('portraitTabs');
     
     if (battleInfoWrapper) {
-        resetPanelLock(battleInfoWrapper);
         battleInfoWrapper.classList.remove('show');
     }
     
     if (readyArea) {
-        resetPanelLock(readyArea);
         readyArea.classList.remove('show');
+        const closeBtn = readyArea.querySelector('.ready-close-btn');
+        if (closeBtn) {
+            closeBtn.remove();
+        }
     }
     
-    const iconsStatsPanel = document.querySelector('.icons-stats-panel');
-    if (iconsStatsPanel) resetPanelLock(iconsStatsPanel);
     removeIconsStatsPanel();
-    
     removeOptionsPanel();
     
     if (portraitTabs) {
@@ -6599,10 +6539,8 @@ function hideAllPanels() {
 function showBattleInfoPanel() {
     const battleInfoWrapper = document.getElementById('battleInfoWrapper');
     if (battleInfoWrapper) {
-        resetPanelLock(battleInfoWrapper);
         battleInfoWrapper.classList.remove('hidden');
         battleInfoWrapper.classList.add('show');
-        makePanelLockable(battleInfoWrapper);
         activePortraitPanel = 'battleInfo';
     }
 }
@@ -6647,7 +6585,6 @@ function showIconsStatsPanel() {
 
     document.body.appendChild(panel);
     panel.classList.add('show');
-    makePanelLockable(panel);
 
     activePortraitPanel = 'iconsStats';
 
@@ -6703,22 +6640,19 @@ function removeIconsStatsPanel() {
 function showReadyAreaPanel() {
     const readyArea = document.getElementById('readyarea');
     if (readyArea) {
-        resetPanelLock(readyArea);
         readyArea.classList.add('show');
-        makePanelLockable(readyArea);
         activePortraitPanel = 'readyarea';
-
-        // 点击待命区内的操作按钮后自动锁定面板（防止打开子面板/弹窗时本面板被关闭）
-        if (!readyArea.dataset.autoLockBound) {
-            readyArea.addEventListener('click', (e) => {
-                if (e.target.closest('.add-buttons button')) {
-                    if (!isPanelLocked(readyArea)) {
-                        togglePanelLock(readyArea);
-                    }
-                }
-            });
-            readyArea.dataset.autoLockBound = 'true';
-        }
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'ready-close-btn';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            readyArea.classList.remove('show');
+            activePortraitPanel = null;
+        };
+        
+        readyArea.appendChild(closeBtn);
     }
 }
 
@@ -6919,19 +6853,12 @@ function openConfigModal() {
         switchConfigTab('basic');
         initWeaponSelect();
         renderCombatConfig();
-        const content = modal.querySelector('.config-modal-content');
-        if (content) {
-            resetPanelLock(content);
-            makePanelLockable(content);
-        }
     }
 }
 
 function closeConfigModal() {
     const modal = document.getElementById('configModal');
     if (modal) {
-        const content = modal.querySelector('.config-modal-content');
-        if (content) resetPanelLock(content);
         modal.classList.remove('active');
     }
 }
