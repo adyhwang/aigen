@@ -259,7 +259,7 @@ const GAME_CONFIG = {
         { emoji: '🔱', name: '三叉戟', attack: 11, type: 'melee', range: 95, attackSpeed: 600, maxCharges: 999, cooldownTime: 0, defaultDirection: 'top', effectType: 'pierce' },
         { emoji: '⛏️', name: '镐子', attack: 10, type: 'melee', range: 85, attackSpeed: 600, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', effectType: 'dig' },
         { emoji: '🧱', name: '砖头', attack: 12, type: 'melee', range: 85, attackSpeed: 650, maxCharges: 999, cooldownTime: 0, defaultDirection: 'right', effectType: 'smash' },
-        { emoji: '🦴', name: '骨棒', attack: 11, type: 'melee', range: 95, attackSpeed: 550, maxCharges: 999, cooldownTime: 0, defaultDirection: 'top', effectType: 'stab' },
+        { emoji: '🦴', name: '骨棒', attack: 11, type: 'melee', range: 95, attackSpeed: 550, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', effectType: 'stab' },
         { emoji: '🔪', name: '菜刀', attack: 11, type: 'melee', range: 80, attackSpeed: 550, maxCharges: 999, cooldownTime: 0, defaultDirection: 'right', effectType: 'slash' },
         { emoji: '🏏', name: '板球拍', attack: 12, type: 'melee', range: 100, attackSpeed: 650, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', effectType: 'smash' },
         { emoji: '🏹', name: '弓箭', attack: 10, type: 'ranged', range: 250, attackSpeed: 600, maxCharges: 3, cooldownTime: 1500, defaultDirection: 'right', effectType: 'arrow' },
@@ -270,11 +270,11 @@ const GAME_CONFIG = {
         { emoji: '🔥', name: '火', attack: 12, type: 'ranged', range: 180, attackSpeed: 600, maxCharges: 2, cooldownTime: 4000, defaultDirection: 'top', burnDuration: 5000, burnInterval: 500, effectType: 'fire' },
         { emoji: '🧊', name: '冰冻', attack: 10, type: 'aoe', range: 220, attackSpeed: 700, maxCharges: 1, cooldownTime: 2500, defaultDirection: 'right', aoeRadius: 120, freezeDuration: 1500, effectType: 'ice' },
         { emoji: '🍼', name: '奶瓶', attack: 1, heal: 20, type: 'heal', range: 220, attackSpeed: 1200, maxCharges: 4, cooldownTime: 2000, defaultDirection: 'top', effectType: 'heal' },
-        { emoji: '💊', name: '药丸', attack: 1, heal: 28, type: 'heal', range: 200, attackSpeed: 1000, maxCharges: 3, cooldownTime: 3000, defaultDirection: 'top', effectType: 'heal' },
-        { emoji: '💉', name: '兴奋剂', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 1, cooldownTime: 3000, defaultDirection: 'top', buffDuration: 3500, buffMultiplier: 2.5, effectType: 'buff' },
+        { emoji: '💊', name: '药丸', attack: 1, heal: 28, type: 'heal', range: 200, attackSpeed: 1000, maxCharges: 3, cooldownTime: 3000, defaultDirection: 'right', effectType: 'heal' },
+        { emoji: '💉', name: '兴奋剂', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 1, cooldownTime: 3000, defaultDirection: 'right', buffDuration: 3500, buffMultiplier: 2.5, effectType: 'buff' },
         { emoji: '🚀', name: '自爆火箭', attack: 180, type: 'melee', range: 20, attackSpeed: 500, maxCharges: 1, cooldownTime: 0, defaultDirection: 'right', aoeRadius: 150, chargeSpeed: 300, deathExplosionMultiplier: 0.50, isSelfDestruct: true, effectType: 'explosion' },
         { emoji: '🦠', name: '毒药', attack: 6, type: 'ranged', range: 200, attackSpeed: 700, maxCharges: 3, cooldownTime: 2500, defaultDirection: 'top', poisonDuration: 4000, poisonInterval: 1000, maxPoisonStacks: 3, effectType: 'poison' },
-        { emoji: '🛡️', name: '护盾', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 2, cooldownTime: 3500, defaultDirection: 'top', shieldAmount: 50, shieldDuration: 3000, effectType: 'shield' },
+        { emoji: '🛡️', name: '护盾', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 2, cooldownTime: 3500, defaultDirection: 'right', shieldAmount: 50, shieldDuration: 3000, effectType: 'shield' },
         { emoji: '🦇', name: '吸血鬼', attack: 10, type: 'melee', range: 80, attackSpeed: 600, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', lifestealRatio: 0.3, effectType: 'slash' }
     ]
 };
