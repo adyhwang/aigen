@@ -1929,6 +1929,42 @@ body {
     background: rgba(0, 0, 0, 0.85);
 }
 
+/* 通用面板锁定按钮（战斗信息/图标状态/待命区/选项面板） */
+.panel-lock-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+    transition: background 0.2s ease;
+}
+
+.panel-lock-btn:hover {
+    background: rgba(0, 0, 0, 0.85);
+}
+
+/* 面板锁定后的可拖拽状态 */
+.battle-info-wrapper.draggable,
+.icons-stats-panel.draggable,
+#readyarea.draggable,
+.config-modal-content.draggable {
+    cursor: move;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
 .icon-detail-panel.player1 {
     left: calc(100% + 5px);
     top: 0;
@@ -2275,28 +2311,6 @@ body {
 
     .ready-area.show {
         display: flex;
-    }
-
-    .ready-close-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: rgba(255, 100, 100, 0.8);
-        border: none;
-        color: #fff;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 18px;
-        line-height: 1;
-        transition: all 0.3s ease;
-        z-index: 10;
-    }
-
-    .ready-close-btn:hover {
-        background: rgba(255, 50, 50, 1);
-        transform: scale(1.1);
     }
 
     .ready-zone {
