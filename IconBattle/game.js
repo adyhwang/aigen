@@ -275,7 +275,7 @@ const GAME_CONFIG = {
         { emoji: '🚀', name: '自爆火箭', attack: 180, type: 'melee', range: 20, attackSpeed: 500, maxCharges: 1, cooldownTime: 0, defaultDirection: 'right', aoeRadius: 150, chargeSpeed: 300, deathExplosionMultiplier: 0.50, isSelfDestruct: true, effectType: 'explosion' },
         { emoji: '🦠', name: '毒药', attack: 6, type: 'ranged', range: 200, attackSpeed: 700, maxCharges: 3, cooldownTime: 2500, defaultDirection: 'top', poisonDuration: 4000, poisonInterval: 1000, maxPoisonStacks: 3, effectType: 'poison' },
         { emoji: '🛡️', name: '护盾', attack: 1, type: 'buff', range: 150, attackSpeed: 800, maxCharges: 2, cooldownTime: 3500, defaultDirection: 'top', shieldAmount: 50, shieldDuration: 3000, effectType: 'shield' },
-        { emoji: '🦇', name: '吸血鬼', attack: 10, type: 'melee', range: 80, attackSpeed: 600, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', lifestealRatio: 0.6, effectType: 'slash' }
+        { emoji: '🦇', name: '吸血鬼', attack: 10, type: 'melee', range: 80, attackSpeed: 600, maxCharges: 999, cooldownTime: 0, defaultDirection: 'left', lifestealRatio: 0.3, effectType: 'slash' }
     ]
 };
 
@@ -6730,7 +6730,7 @@ const SPECIAL_ABILITIES = {
         label: '吸血',
         desc: '将伤害转化为自身生命值',
         fields: {
-            lifestealRatio: { label: '吸血比例', type: 'number', desc: '伤害转血量比例', min: 0, step: 0.05, default: 0.6 }
+            lifestealRatio: { label: '吸血比例', type: 'number', desc: '伤害转血量比例', min: 0, step: 0.05, default: 0.3 }
         }
     },
     knockback: {
