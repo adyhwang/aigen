@@ -16,7 +16,7 @@ let battleStats = {
 };
 
 // 战斗图标大小范围
-const iconSizes = [0.2, 1.4];
+const iconSizes = [0.2, 1.8];
 // 战斗图标默认大小
 let iconSize = 0.8;
 
@@ -26,6 +26,11 @@ const uiSizes = [0.5, 2];
 let uiSize = 1;
 // UI元素当前透明度
 let uiOpacity = 1;
+
+// 待命区图标大小范围（像素）
+const readyIconSizes = [20, 120];
+// 待命区图标当前大小（像素）
+let readyIconSize = 70;
 
 // 战斗信息面板是否正在拖动
 let battleInfoDragging = false;
@@ -92,7 +97,7 @@ let cachedAliveIcons = { player1: [], player2: [] };
 let cacheDirty = true;
 
 // 战斗信息面板最多显示的条目数
-const MAX_BATTLE_INFO_ITEMS = 200;
+const MAX_BATTLE_INFO_ITEMS = 150;
 const BATTLE_INFO_UPDATE_INTERVAL = 3;
 
 const MAX_ACTIVE_EFFECTS = 15;
@@ -113,14 +118,6 @@ const GAME_CONFIG = {
         attackDuration: 500,       // 攻击动画持续时间（毫秒）
         effectDuration: 300,       // 特效持续时间（毫秒）
         tooltipDuration: 2000      // 提示框显示时间（毫秒）
-    },
-    // 随机属性范围配置
-    randomStats: {
-        health: { min: 150, max: 250 },   // 生命值范围
-        attack: { min: 10, max: 30 },      // 攻击力范围
-        defense: { min: 5, max: 15 },      // 防御力范围
-        armor: { min: 1, max: 4 },         // 护甲值范围
-        speed: { min: 1, max: 4 }          // 速度值范围
     },
     // 移动系统配置
     movement: {
@@ -207,6 +204,13 @@ const GAME_CONFIG = {
             defenseMultiplier: 1.3,     // 防御力加成倍率
             critRateBonus: 0.15,        // 暴击率额外加成
             critDamageMultiplier: 1.2   // 暴击伤害加成倍率
+        },
+        randomStats: {
+            health: { min: 150, max: 200 },   // 生命值范围
+            attack: { min: 10, max: 20 },      // 攻击力范围
+            defense: { min: 5, max: 15 },      // 防御力范围
+            armor: { min: 1, max: 4 },         // 护甲值范围
+            speed: { min: 1, max: 3 }          // 速度值范围
         },
         squad: {
             meleeIdealRangeVsMelee: 0.7,  // 近战对近战的理想射程比例
@@ -527,12 +531,12 @@ function playSound(type) {
 
 function generateRandomStats() {
     return {
-        health: Math.floor(Math.random() * (GAME_CONFIG.randomStats.health.max - GAME_CONFIG.randomStats.health.min)) + GAME_CONFIG.randomStats.health.min,
+        health: Math.floor(Math.random() * (GAME_CONFIG.combat.randomStats.health.max - GAME_CONFIG.combat.randomStats.health.min)) + GAME_CONFIG.combat.randomStats.health.min,
         maxHealth: 0,
-        attack: Math.floor(Math.random() * (GAME_CONFIG.randomStats.attack.max - GAME_CONFIG.randomStats.attack.min)) + GAME_CONFIG.randomStats.attack.min,
-        defense: Math.floor(Math.random() * (GAME_CONFIG.randomStats.defense.max - GAME_CONFIG.randomStats.defense.min)) + GAME_CONFIG.randomStats.defense.min,
-        armor: Math.floor(Math.random() * (GAME_CONFIG.randomStats.armor.max - GAME_CONFIG.randomStats.armor.min)) + GAME_CONFIG.randomStats.armor.min,
-        speed: Math.floor(Math.random() * (GAME_CONFIG.randomStats.speed.max - GAME_CONFIG.randomStats.speed.min)) + GAME_CONFIG.randomStats.speed.min,
+        attack: Math.floor(Math.random() * (GAME_CONFIG.combat.randomStats.attack.max - GAME_CONFIG.combat.randomStats.attack.min)) + GAME_CONFIG.combat.randomStats.attack.min,
+        defense: Math.floor(Math.random() * (GAME_CONFIG.combat.randomStats.defense.max - GAME_CONFIG.combat.randomStats.defense.min)) + GAME_CONFIG.combat.randomStats.defense.min,
+        armor: Math.floor(Math.random() * (GAME_CONFIG.combat.randomStats.armor.max - GAME_CONFIG.combat.randomStats.armor.min)) + GAME_CONFIG.combat.randomStats.armor.min,
+        speed: Math.floor(Math.random() * (GAME_CONFIG.combat.randomStats.speed.max - GAME_CONFIG.combat.randomStats.speed.min)) + GAME_CONFIG.combat.randomStats.speed.min,
         critRate: GAME_CONFIG.combat.damage.baseCritRate + Math.random() * 0.1,
         critDamage: GAME_CONFIG.combat.damage.baseCritDamage + Math.random() * 0.5,
         lifeSteal: 0
@@ -630,13 +634,9 @@ function addIconToReadyZone(player, imageUrl, name = '') {
     iconItem.dataset.iconId = iconIdCounter++;
     iconItem.dataset.name = name;
     iconItem.dataset.level = 1;
-    
-    const readyBaseSize = 70;
-    const readyIconSize = readyBaseSize * uiSize;
-    iconItem.style.width = `${readyIconSize}px`;
-    iconItem.style.height = `${readyIconSize}px`;
+
     iconItem.style.setProperty('--icon-size', uiSize);
-    
+
     const randomWeaponIndex = Math.floor(Math.random() * GAME_CONFIG.weapons.length);
     iconItem.dataset.assignedWeaponIndex = randomWeaponIndex;
     
@@ -3961,6 +3961,11 @@ function init() {
     if (iconSizeSlider) {
         iconSizeSlider.min = minSize;
         iconSizeSlider.max = maxSize;
+        iconSizeSlider.value = iconSize;
+    }
+    const iconSizeValue = document.getElementById('iconSizeValue');
+    if (iconSizeValue) {
+        iconSizeValue.textContent = iconSize.toFixed(1);
     }
 
     // 初始化UI大小滑块的最小值、最大值并应用当前值
@@ -3969,9 +3974,41 @@ function init() {
     if (uiSizeSlider) {
         uiSizeSlider.min = uiMinSize;
         uiSizeSlider.max = uiMaxSize;
+        uiSizeSlider.value = uiSize;
+    }
+    const uiSizeValue = document.getElementById('uiSizeValue');
+    if (uiSizeValue) {
+        uiSizeValue.textContent = uiSize.toFixed(1);
     }
     document.documentElement.style.setProperty('--ui-scale', uiSize);
     document.documentElement.style.setProperty('--ui-opacity', uiOpacity);
+
+    // 初始化UI透明度滑块
+    const uiOpacitySlider = document.getElementById('uiOpacitySlider');
+    if (uiOpacitySlider) {
+        uiOpacitySlider.value = uiOpacity;
+    }
+    const uiOpacityValue = document.getElementById('uiOpacityValue');
+    if (uiOpacityValue) {
+        uiOpacityValue.textContent = uiOpacity.toFixed(1);
+    }
+
+    // 初始化待命区图标大小滑块
+    const [readyMinSize, readyMaxSize] = readyIconSizes;
+    const readyIconSizeSlider = document.getElementById('readyIconSizeSlider');
+    if (readyIconSizeSlider) {
+        readyIconSizeSlider.min = readyMinSize;
+        readyIconSizeSlider.max = readyMaxSize;
+        readyIconSizeSlider.value = readyIconSize;
+    }
+    const readyArea = document.getElementById('readyarea');
+    if (readyArea) {
+        readyArea.style.setProperty('--ready-icon-size', `${readyIconSize}px`);
+    }
+    const readyIconSizeValue = document.getElementById('readyIconSizeValue');
+    if (readyIconSizeValue) {
+        readyIconSizeValue.textContent = readyIconSize;
+    }
 
     initFilterTabs();
     setupTouchOptimizations();
@@ -5309,7 +5346,12 @@ function updateIconSize(value) {
 
     const iconSizeSlider = document.getElementById('iconSizeSlider');
     if (iconSizeSlider) {
-        iconSizeSlider.value = value;
+        iconSizeSlider.value = iconSize;
+    }
+
+    const iconSizeValue = document.getElementById('iconSizeValue');
+    if (iconSizeValue) {
+        iconSizeValue.textContent = iconSize.toFixed(1);
     }
 
     saveOptionsConfig();
@@ -5317,19 +5359,15 @@ function updateIconSize(value) {
 
 // 重新计算玩家待命区行高（受 uiSize 影响）
 function updateReadyAreaLayout() {
-    const readyBaseSize = 70;
-    const readyIconSize = readyBaseSize * uiSize;
     const rowHeight = readyIconSize + 30 * uiSize;
     const allReadyContents = document.querySelectorAll('.ready-content');
     allReadyContents.forEach(content => {
         content.style.height = `${rowHeight}px`;
     });
 
-    // 更新待命区图标尺寸
+    // 同步图标尺寸 CSS 变量（由滑块控制）
     const allReadyIcons = document.querySelectorAll('.icon-item');
     allReadyIcons.forEach(icon => {
-        icon.style.width = `${readyIconSize}px`;
-        icon.style.height = `${readyIconSize}px`;
         icon.style.setProperty('--icon-size', uiSize);
     });
 }
@@ -5349,6 +5387,11 @@ function updateUISize(value) {
         uiSizeSlider.value = uiSize;
     }
 
+    const uiSizeValue = document.getElementById('uiSizeValue');
+    if (uiSizeValue) {
+        uiSizeValue.textContent = uiSize.toFixed(1);
+    }
+
     saveOptionsConfig();
 }
 
@@ -5361,6 +5404,34 @@ function updateUIOpacity(value) {
     const uiOpacitySlider = document.getElementById('uiOpacitySlider');
     if (uiOpacitySlider) {
         uiOpacitySlider.value = uiOpacity;
+    }
+
+    const uiOpacityValue = document.getElementById('uiOpacityValue');
+    if (uiOpacityValue) {
+        uiOpacityValue.textContent = uiOpacity.toFixed(1);
+    }
+
+    saveOptionsConfig();
+}
+
+function updateReadyIconSize(value) {
+    const [minSize, maxSize] = readyIconSizes;
+    readyIconSize = Math.min(maxSize, Math.max(minSize, parseFloat(value)));
+
+    // 通过CSS变量驱动待命区图标大小
+    const readyArea = document.getElementById('readyarea');
+    if (readyArea) {
+        readyArea.style.setProperty('--ready-icon-size', `${readyIconSize}px`);
+    }
+
+    const slider = document.getElementById('readyIconSizeSlider');
+    if (slider) {
+        slider.value = readyIconSize;
+    }
+
+    const valueLabel = document.getElementById('readyIconSizeValue');
+    if (valueLabel) {
+        valueLabel.textContent = readyIconSize;
     }
 
     saveOptionsConfig();
@@ -6457,10 +6528,17 @@ function setupPortraitTabs() {
     document.addEventListener('click', (e) => {
         if (activePortraitPanel && !e.target.closest('.portrait-tabs')) {
             if (activePortraitPanel === 'readyarea') {
-                if (!e.target.closest('.ready-close-btn')) {
+                // 搜索面板打开时，不关闭待命区
+                const searchModal = document.getElementById('searchModal');
+                if (searchModal && searchModal.classList.contains('active')) {
                     return;
                 }
-                hideAllPanels();
+                // 点击待命区内部、搜索面板内部、文件输入框 不关闭
+                if (!e.target.closest('.ready-area') &&
+                    !e.target.closest('#searchModal') &&
+                    !e.target.closest('#fileInput')) {
+                    hideAllPanels();
+                }
             } else {
                 if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.config-modal')) {
                     hideAllPanels();
@@ -6472,10 +6550,17 @@ function setupPortraitTabs() {
     document.addEventListener('touchstart', (e) => {
         if (activePortraitPanel && !e.target.closest('.portrait-tabs')) {
             if (activePortraitPanel === 'readyarea') {
-                if (!e.target.closest('.ready-close-btn')) {
+                // 搜索面板打开时，不关闭待命区
+                const searchModal = document.getElementById('searchModal');
+                if (searchModal && searchModal.classList.contains('active')) {
                     return;
                 }
-                hideAllPanels();
+                // 点击待命区内部、搜索面板内部、文件输入框 不关闭
+                if (!e.target.closest('.ready-area') &&
+                    !e.target.closest('#searchModal') &&
+                    !e.target.closest('#fileInput')) {
+                    hideAllPanels();
+                }
             } else {
                 if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.config-modal')) {
                     hideAllPanels();
@@ -6512,27 +6597,23 @@ function hideAllPanels() {
     const battleInfoWrapper = document.getElementById('battleInfoWrapper');
     const readyArea = document.getElementById('readyarea');
     const portraitTabs = document.getElementById('portraitTabs');
-    
+
     if (battleInfoWrapper) {
         battleInfoWrapper.classList.remove('show');
     }
-    
+
     if (readyArea) {
         readyArea.classList.remove('show');
-        const closeBtn = readyArea.querySelector('.ready-close-btn');
-        if (closeBtn) {
-            closeBtn.remove();
-        }
     }
-    
+
     removeIconsStatsPanel();
     removeOptionsPanel();
-    
+
     if (portraitTabs) {
         const tabs = portraitTabs.querySelectorAll('.portrait-tab');
         tabs.forEach(tab => tab.classList.remove('active'));
     }
-    
+
     activePortraitPanel = null;
 }
 
@@ -6642,17 +6723,6 @@ function showReadyAreaPanel() {
     if (readyArea) {
         readyArea.classList.add('show');
         activePortraitPanel = 'readyarea';
-        
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'ready-close-btn';
-        closeBtn.innerHTML = '&times;';
-        closeBtn.onclick = (e) => {
-            e.stopPropagation();
-            readyArea.classList.remove('show');
-            activePortraitPanel = null;
-        };
-        
-        readyArea.appendChild(closeBtn);
     }
 }
 
@@ -7432,7 +7502,8 @@ function saveOptionsConfig() {
             gameSpeed: gameSpeed,
             iconSize: iconSize,
             uiSize: uiSize,
-            uiOpacity: uiOpacity
+            uiOpacity: uiOpacity,
+            readyIconSize: readyIconSize
         };
         localStorage.setItem('iconBattle_options', JSON.stringify(options));
     } catch (e) {
@@ -7490,6 +7561,11 @@ function loadOptionsConfig() {
             if (options.uiOpacity !== undefined) {
                 uiOpacity = options.uiOpacity;
                 updateUIOpacity(uiOpacity);
+            }
+
+            if (options.readyIconSize !== undefined) {
+                readyIconSize = options.readyIconSize;
+                updateReadyIconSize(readyIconSize);
             }
         }
     } catch (e) {

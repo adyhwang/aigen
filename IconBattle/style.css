@@ -475,6 +475,54 @@ body {
     backdrop-filter: blur(10px);
     border-top: 3px solid rgba(255,255,255,0.3);
     opacity: var(--ui-opacity, 1);
+    position: relative;
+    --ready-icon-size: 70px;
+}
+
+.ready-icon-size-slider {
+    position: absolute;
+    bottom: 100%;
+    right: 10px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 8px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 4px 10px;
+    border-radius: 6px;
+    backdrop-filter: blur(5px);
+    z-index: 100;
+    max-width: calc(100vw - 20px);
+    opacity: var(--ui-opacity, 1);
+}
+
+.ready-icon-size-label {
+    color: #fff;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.slider-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ready-icon-size-slider input[type="range"] {
+    width: 70px;
+    cursor: pointer;
+}
+
+.ready-icon-size-value {
+    color: #ffd700;
+    font-size: 11px;
+    font-weight: bold;
+    min-width: 24px;
+    text-align: right;
 }
 
 .ready-zone {
@@ -577,8 +625,8 @@ body {
 }
 
 .icon-item {
-    width: 70px;
-    height: 70px;
+    width: var(--ready-icon-size, 70px);
+    height: var(--ready-icon-size, 70px);
     border-radius: 10px;
     cursor: grab;
     transition: all 0.3s ease;
@@ -2277,26 +2325,18 @@ body {
         display: flex;
     }
 
-    .ready-close-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: rgba(255, 100, 100, 0.8);
-        border: none;
-        color: #fff;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 18px;
-        line-height: 1;
-        transition: all 0.3s ease;
+    .ready-icon-size-slider {
+        position: static;
+        top: auto;
+        right: auto;
+        left: auto;
+        margin: 0 0 10px 0;
         z-index: 10;
+        max-width: 100%;
     }
 
-    .ready-close-btn:hover {
-        background: rgba(255, 50, 50, 1);
-        transform: scale(1.1);
+    .ready-icon-size-slider input[type="range"] {
+        width: 50px;
     }
 
     .ready-zone {
@@ -2336,8 +2376,6 @@ body {
     }
 
     .icon-item {
-        width: 60px;
-        height: 60px;
         font-size: 10px;
     }
 
