@@ -92,7 +92,7 @@ let cachedAliveIcons = { player1: [], player2: [] };
 let cacheDirty = true;
 
 // 战斗信息面板最多显示的条目数
-const MAX_BATTLE_INFO_ITEMS = 100;
+const MAX_BATTLE_INFO_ITEMS = 200;
 const BATTLE_INFO_UPDATE_INTERVAL = 3;
 
 const MAX_ACTIVE_EFFECTS = 15;
@@ -1979,6 +1979,28 @@ const BATTLE_INFO_TEMPLATES = {
     'knockback': {
         wrapper: 'special-message',
         template: ctx => `玩家${ctx.attacker.player}：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span>用<span class="weapon">${ctx.weaponName}</span>击退了<span class="target">${ctx.defenderName}(Lv${ctx.defenderLevel})</span>`
+    },
+    'poison': {
+        wrapper: 'special-message',
+        template: ctx => {
+            const cfg = GAME_CONFIG.combat.poison;
+            const poisonInterval = ctx.attacker.weapon.poisonInterval || cfg.defaultInterval;
+            const poisonDamageFactor = ctx.attacker.weapon.poisonDamageFactor || cfg.damageFactor;
+            const poisonDamage = Math.max(GAME_CONFIG.combat.damage.minDamage, Math.floor(ctx.value * poisonDamageFactor));
+            return `玩家${ctx.attacker.player}：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span>用<span class="weapon">${ctx.weaponName}</span>对<span class="target">${ctx.defenderName}(Lv${ctx.defenderLevel})</span>施加了中毒效果，每${Math.round(poisonInterval)}毫秒造成${poisonDamage}点伤害`;
+        }
+    },
+    'burnkill': {
+        wrapper: 'special-message',
+        template: ctx => `<span class="player">玩家${ctx.attacker.player}</span>：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span>的燃烧效果烧死了<span class="target">${ctx.defenderName}(Lv${ctx.defenderLevel})</span>`
+    },
+    'poisonkill': {
+        wrapper: 'special-message',
+        template: ctx => `<span class="player">玩家${ctx.attacker.player}</span>：<span class="attacker">${ctx.attackerName}(Lv${ctx.attackerLevel})</span>的中毒效果毒死了<span class="target">${ctx.defenderName}(Lv${ctx.defenderLevel})</span>`
+    },
+    'fullheal': {
+        wrapper: 'heal-message',
+        template: ctx => `<span class="player">玩家${ctx.attacker.player}</span>：<span class="attacker">${ctx.attackerName}</span>使用了<span class="weapon">${ctx.weaponName}</span>${ctx.attacker.player}P血量全满`
     }
 };
 
@@ -1990,11 +2012,6 @@ function generateBattleInfoHTML(attacker, defender, value, actionType, isCrit = 
     const defenderLevel = defender?.level || 1;
 
     const ctx = { attacker, defender, value, attackerName, weaponName, attackerLevel, defenderName, defenderLevel };
-
-    // 血量全满：actionType 包含该关键字
-    if (typeof actionType === 'string' && actionType.includes('血量全满')) {
-        return `<span class="player">玩家${attacker.player}</span>：<span class="attacker">${attackerName}</span><span class="weapon">${weaponName}</span>${actionType}`;
-    }
 
     const tpl = BATTLE_INFO_TEMPLATES[actionType];
     if (tpl) {
@@ -2023,62 +2040,61 @@ function addBattleInfo(attacker, defender, value, actionType = 'attack', isCrit 
 
 function flushBattleInfoQueue() {
     if (BattleState.battleInfoQueue.length === 0) return;
-    
+
     if (!battleInfoElement) {
         battleInfoElement = document.getElementById('battleInfo');
     }
     const battleInfo = battleInfoElement;
-    
+
     const fragment = document.createDocumentFragment();
-    
+
     for (const item of BattleState.battleInfoQueue) {
         const infoItem = document.createElement('div');
         infoItem.className = `battle-info-item player-${item.attacker.player}`;
         infoItem.dataset.player = item.attacker.player;
         infoItem.dataset.action = item.actionType;
         infoItem.innerHTML = generateBattleInfoHTML(item.attacker, item.defender, item.value, item.actionType, item.isCrit);
-        
-        const itemPlayer = String(infoItem.dataset.player);
-        const itemAction = infoItem.dataset.action;
-        
-        let showItem = true;
-        
-        if (currentPlayerFilter !== 'all' && itemPlayer !== currentPlayerFilter) {
-            showItem = false;
-        }
-        
-        if (currentActionFilter !== 'all') {
-            if (currentActionFilter === 'special') {
-                const excludedActions = ['attack', 'heal', 'kill', 'lifesteal'];
-                if (excludedActions.includes(itemAction)) {
-                    showItem = false;
-                }
-            } else if (currentActionFilter === 'heal') {
-                if (itemAction !== 'heal' && itemAction !== 'lifesteal') {
-                    showItem = false;
-                }
-            } else {
-                if (itemAction !== currentActionFilter) {
-                    showItem = false;
-                }
-            }
-        }
-        
-        if (!showItem) {
+
+        if (!shouldShowBattleItem(String(infoItem.dataset.player), infoItem.dataset.action)) {
             infoItem.classList.add('hidden');
         }
-        
+
         fragment.appendChild(infoItem);
     }
-    
+
     battleInfo.appendChild(fragment);
     battleInfo.scrollTop = battleInfo.scrollHeight;
-    
+
     while (battleInfo.children.length > MAX_BATTLE_INFO_ITEMS) {
         battleInfo.removeChild(battleInfo.firstChild);
     }
-    
+
     BattleState.battleInfoQueue = [];
+}
+
+// 判断战斗信息项是否应该在当前过滤器下显示（flushBattleInfoQueue 与 applyFilters 共用）
+function shouldShowBattleItem(itemPlayer, itemAction) {
+    if (currentPlayerFilter !== 'all' && itemPlayer !== currentPlayerFilter) {
+        return false;
+    }
+    if (currentActionFilter === 'all') {
+        return true;
+    }
+    if (currentActionFilter === 'special') {
+        // 其他tab：排除攻击、治疗、吸血、击杀类（含燃烧/中毒击杀）
+        const excludedActions = ['attack', 'heal', 'kill', 'lifesteal', 'burnkill', 'poisonkill', 'fullheal'];
+        return !excludedActions.includes(itemAction);
+    }
+    if (currentActionFilter === 'heal') {
+        // 治疗tab：治疗 + 吸血 + 血量全满
+        return itemAction === 'heal' || itemAction === 'lifesteal' || itemAction === 'fullheal';
+    }
+    if (currentActionFilter === 'kill') {
+        // 击杀tab：普通击杀 + 燃烧击杀 + 中毒击杀
+        return itemAction === 'kill' || itemAction === 'burnkill' || itemAction === 'poisonkill';
+    }
+    // 普通事件精确匹配
+    return itemAction === currentActionFilter;
 }
 
 // 计算伤害值（简化版，仅返回伤害值）
@@ -4442,7 +4458,7 @@ function healAllPlayer(player) {
         updateHealthBar(iconData);
     });
     
-    addBattleInfo({ player: player, name: '开发者', weapon: { emoji: '💊', name: '药丸' } }, null, 0, `${player}P血量全满`);
+    addBattleInfo({ player: player, name: '开发者', weapon: { emoji: '💊', name: '药丸' } }, null, 0, 'fullheal');
 }
 
 function toggleAutoAddRandom() {
@@ -5486,33 +5502,10 @@ function calculateFormationPositions(player) {
 function applyFilters() {
     const battleInfoItems = document.querySelectorAll('.battle-info-item');
     battleInfoItems.forEach(item => {
-        // 获取数据属性值，并确保player值为字符串类型
         const itemPlayer = String(item.dataset.player);
         const itemAction = item.dataset.action;
-        
-        let showItem = true;
-        
-        // 确保player过滤使用相同的数据类型比较
-        if (currentPlayerFilter !== 'all' && itemPlayer !== currentPlayerFilter) {
-            showItem = false;
-        }
-        
-        if (currentActionFilter !== 'all') {
-            if (currentActionFilter === 'special') {
-                // 其他tab应该显示除了攻击、治疗和击杀以外的所有事件
-                const excludedActions = ['attack', 'heal', 'kill'];
-                if (excludedActions.includes(itemAction)) {
-                    showItem = false;
-                }
-            } else {
-                // 普通事件过滤，确保精确匹配
-                if (itemAction !== currentActionFilter) {
-                    showItem = false;
-                }
-            }
-        }
-        
-        if (showItem) {
+
+        if (shouldShowBattleItem(itemPlayer, itemAction)) {
             item.classList.remove('hidden');
         } else {
             item.classList.add('hidden');
@@ -6183,7 +6176,7 @@ function triggerDeathExplosion(iconData) {
     
     showExplosionEffect(iconData.x, iconData.y, aoeRadius * 0.7);
     
-    addBattleInfo(iconData, null, 0, '死亡自爆');
+    addBattleInfo(iconData, null, 0, '自爆死亡');
 }
 
 // 执行自爆效果和AOE伤害

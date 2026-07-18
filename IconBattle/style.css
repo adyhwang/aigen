@@ -2560,7 +2560,7 @@ body {
 
     .config-modal {
         top: auto;
-        bottom: 0;
+        bottom: 60px;
         left: 50%;
         transform: translate(-50%, 0);
         align-items: flex-end;
@@ -2568,9 +2568,9 @@ body {
 
     .config-modal .modal-content {
         max-width: 95%;
+        max-height: 70vh;
         padding: 12px;
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
+        overflow-y: auto;
     }
 
     .config-field label {
