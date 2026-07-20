@@ -77,6 +77,11 @@
                     <input type="range" id="uiOpacitySlider" min="0.1" max="1" step="0.1" value="1" oninput="updateUIOpacity(this.value)">
                     <span class="ready-icon-size-value" id="uiOpacityValue">1</span>
                 </div>
+                <div class="slider-group">
+                    <span class="ready-icon-size-label">游戏速度</span>
+                    <input type="range" id="gameSpeedSlider" min="0.5" max="5" step="0.5" value="1" oninput="updateGameSpeed(this.value)">
+                    <span class="ready-icon-size-value" id="gameSpeedValue">1x</span>
+                </div>
             </div>
             <div class="ready-zone player1-ready" id="player1Ready">
                 <div class="ready-header">
@@ -156,34 +161,51 @@
                     <button class="config-tab" data-tab="combat" onclick="switchConfigTab('combat')">战斗配置</button>
                 </div>
                 <div class="config-content" id="basicConfig">
+                    <div class="config-section-title">自动添加图标到待命区</div>
                     <div class="config-row">
-                        <label class="option-item">
-                            <input type="checkbox" id="squadBattleMode" onchange="toggleSquadBattleMode()">
-                            <span>小队模式</span>
-                        </label>
                         <label class="option-item">
                             <input type="checkbox" id="autoAddRandom" onchange="toggleAutoAddRandom()">
-                            <span>自动添加图标</span>
+                            <span>启用</span>
                         </label>
+                        <div class="option-select-group">
+                            <span class="option-select-label">最少保持</span>
+                            <input type="number" id="autoAddCount" min="1" max="100" step="1" value="7" onchange="onAutoAddCountChange(this.value)" disabled>
+                            <span class="option-select-label">个</span>
+                        </div>
+                    </div>
+
+                    <div class="config-section-title">待命区图标自动参战</div>
+                    <div class="config-row">
                         <label class="option-item">
                             <input type="checkbox" id="autoDeploy" onchange="toggleAutoDeploy()">
-                            <span>自动参战</span>
+                            <span>启用</span>
                         </label>
+                        <div class="option-select-group">
+                            <select id="autoDeployMode" onchange="onAutoDeployModeChange(this.value)" disabled>
+                                <option value="all">全部添加</option>
+                                <option value="moreThanEnemy">比敌方多</option>
+                            </select>
+                            <input type="number" id="autoDeployCount" min="1" max="20" step="1" value="3" onchange="onAutoDeployCountChange(this.value)" disabled>
+                        </div>
                     </div>
+
+                    <div class="config-section-title">显示面板</div>
                     <div class="config-row">
-                        <label class="option-item hide-option">
-                            <input type="checkbox" id="hideBattleInfo" onchange="toggleHideBattleInfo()">
-                            <span>隐藏战斗信息</span>
+                        <label class="option-item">
+                            <input type="checkbox" id="showBattleInfo" onchange="toggleShowBattleInfo()" checked>
+                            <span>战斗信息</span>
                         </label>
-                        <label class="option-item hide-option">
-                            <input type="checkbox" id="hideStats" onchange="toggleHideStats()">
-                            <span>隐藏玩家状态</span>
+                        <label class="option-item">
+                            <input type="checkbox" id="showStats" onchange="toggleShowStats()" checked>
+                            <span>玩家状态</span>
                         </label>
-                        <label class="option-item hide-option">
-                            <input type="checkbox" id="hideReadyArea" onchange="toggleHideReadyArea()">
-                            <span>隐藏玩家待命区</span>
+                        <label class="option-item">
+                            <input type="checkbox" id="showReadyArea" onchange="toggleShowReadyArea()" checked>
+                            <span>玩家待命区</span>
                         </label>
                     </div>
+
+                    <div class="config-section-title">游戏中</div>
                     <div class="config-row">
                         <label class="option-item">
                             <input type="checkbox" id="pauseGame" onchange="togglePauseGame()">
@@ -192,9 +214,6 @@
                         <label class="option-item">
                             <input type="checkbox" id="fullscreenMode" onchange="toggleFullscreen()">
                             <span>全屏</span>
-                        </label>
-                        <label class="option-item" onclick="toggleGameSpeed()">
-                            <span id="gameSpeed">1x倍速</span>
                         </label>
                     </div>
                 </div>

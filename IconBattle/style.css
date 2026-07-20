@@ -2811,15 +2811,15 @@ body {
 .config-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 4px;
     align-items: center;
 }
 
 .config-row .option-item {
-    flex: 1 1 140px;
-    min-width: 140px;
-    padding: 4px 8px;
-    gap: 4px;
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: 3px 6px;
+    gap: 3px;
 }
 
 .config-row .option-item input[type="checkbox"] {
@@ -2839,6 +2839,72 @@ body {
     min-width: 0;
 }
 
+.option-select-group {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    /* flex: 1 1 160px;
+    min-width: 160px; */
+}
+
+.option-select-label {
+    color: #fff;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.option-select-group select {
+    flex: 1;
+    min-width: 0;
+    padding: 3px 4px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.option-select-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.option-select-group select:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.option-select-group input[type="number"] {
+    width: 44px;
+    padding: 3px 4px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 12px;
+    text-align: center;
+}
+
+.option-select-group input[type="number"]:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.option-select-group input[type="number"]:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+#basicConfig .config-section-title {
+    grid-column: auto;
+    margin-top: 8px;
+}
+
+#basicConfig .config-section-title:first-child {
+    margin-top: 0;
+}
+
 .weapon-selector {
     display: flex;
     align-items: center;
@@ -2853,7 +2919,7 @@ body {
 }
 
 .weapon-selector select {
-    flex: 1;
+    /* flex: 1; */
     padding: 6px 12px;
     background: rgba(0,0,0,0.5);
     border: 2px solid #ddd;

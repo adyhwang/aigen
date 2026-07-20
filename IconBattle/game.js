@@ -39,18 +39,25 @@ let battleInfoOffset = { x: 0, y: 0 };
 
 // 是否启用自动添加随机图标
 let autoAddRandomEnabled = false;
+// 自动添加：待命区图标最少保持数量
+let autoAddCount = 7;
 // 是否启用自动部署功能
 let autoDeployEnabled = false;
+// 自动参战模式：all=全部添加, moreThanEnemy=比敌方多
+let autoDeployMode = 'all';
+// 比敌方多的数量
+let autoDeployCount = 3;
 
 // 游戏是否暂停
 let gamePaused = false;
 // 游戏速度倍数
 let gameSpeed = 1;
-// 可用的游戏速度选项
-const gameSpeeds = [1, 1.5, 2, 3, 4, 5];
 
-// 是否启用小队战斗模式
-let squadBattleMode = false;
+// 显示面板（与原 hide 逻辑相反，默认全部显示）
+let showBattleInfo = true;
+let showStats = true;
+let showReadyArea = true;
+
 // 小队队长信息
 let squadLeaders = {
     player1: null,  // 玩家1的小队队长
@@ -213,6 +220,7 @@ const GAME_CONFIG = {
             speed: { min: 1, max: 3 }          // 速度值范围
         },
         squad: {
+            enabled: true,                // 是否启用小队模式
             meleeIdealRangeVsMelee: 0.7,  // 近战对近战的理想射程比例
             meleeIdealRangeVsRanged: 0.7, // 近战对远程的理想射程比例
             rangedIdealRangeVsMelee: 0.85,// 远程对近战的理想射程比例
@@ -305,9 +313,9 @@ const WEAPON_BEHAVIORS = {
     },
     combat: {
         update: function(iconData, context) {
-            const { isVictory, squadBattleMode } = context;
+            const { isVictory } = context;
             
-            if (squadBattleMode) {
+            if (GAME_CONFIG.combat.squad.enabled) {
                 if (squadLeaders[`player${iconData.player}`] === iconData) {
                     handleSquadLeaderBehavior(iconData);
                 } else {
@@ -2920,7 +2928,7 @@ function moveTowardsTarget(iconData) {
     if (distance > GAME_CONFIG.movement.arrivalThreshold * iconSize) {
         let speed = iconData.stats.speed * gameSpeed;
 
-        if (squadBattleMode) {
+        if (GAME_CONFIG.combat.squad.enabled) {
             const members = getSquadMembers(iconData.player);
             const minSpeed = Math.min(...members.map(m => m.stats.speed));
 
@@ -3358,7 +3366,7 @@ function updateIconBehavior(iconData, isVictory) {
     if (iconData.isDead) return;
     
     const behavior = getWeaponBehavior(iconData);
-    behavior.update(iconData, { isVictory, squadBattleMode });
+    behavior.update(iconData, { isVictory });
 }
 
 // 游戏主循环函数，负责驱动游戏的所有更新逻辑
@@ -3609,7 +3617,7 @@ function updateGame(deltaTime) {
     
     const isVictory = handleVictory(player1Alive, player2Alive);
     
-    if (squadBattleMode) {
+    if (GAME_CONFIG.combat.squad.enabled) {
         updateSquadLeaders();
     } else {
         [1, 2].forEach(player => {
@@ -3874,7 +3882,7 @@ function setupBattleZoneDrop() {
     });
 }
 
-function deployAllIcons(player) {
+function deployAllIcons(player, maxCount = null) {
     // 清理该方残留的死亡图标（可能还在等待延迟移除）
     const existingIcons = [...battleIcons[`player${player}`]];
     existingIcons.forEach(iconData => {
@@ -3884,7 +3892,10 @@ function deployAllIcons(player) {
     });
 
     const readyContent = document.getElementById(`player${player}ReadyContent`);
-    const iconItems = readyContent.querySelectorAll('.icon-item');
+    let iconItems = Array.from(readyContent.querySelectorAll('.icon-item'));
+    if (maxCount !== null) {
+        iconItems = iconItems.slice(0, Math.max(0, maxCount));
+    }
     const battleArea = document.getElementById('battleArea');
     
     const battleZone = document.getElementById(`player${player}BattleZone`);
@@ -4045,12 +4056,6 @@ function init() {
     
     const savedOptions = localStorage.getItem('iconBattle_options');
     if (!savedOptions) {
-        const squadCheckbox = document.getElementById('squadBattleMode');
-        if (squadCheckbox) {
-            squadCheckbox.checked = true;
-            toggleSquadBattleMode();
-        }
-
         const autoAddCheckbox = document.getElementById('autoAddRandom');
         if (autoAddCheckbox) {
             autoAddCheckbox.checked = true;
@@ -4500,67 +4505,94 @@ function healAllPlayer(player) {
 
 function toggleAutoAddRandom() {
     autoAddRandomEnabled = document.getElementById('autoAddRandom').checked;
+    const autoAddCountInput = document.getElementById('autoAddCount');
+    if (autoAddCountInput) autoAddCountInput.disabled = !autoAddRandomEnabled;
+    saveOptionsConfig();
+}
+
+function onAutoAddCountChange(value) {
+    autoAddCount = Math.min(100, Math.max(1, Math.floor(parseInt(value) || 1)));
+    const input = document.getElementById('autoAddCount');
+    if (input) input.value = autoAddCount;
     saveOptionsConfig();
 }
 
 function toggleAutoDeploy() {
     autoDeployEnabled = document.getElementById('autoDeploy').checked;
+    updateAutoDeployControlsDisabled();
     saveOptionsConfig();
 }
 
-function toggleHideReadyArea() {
-    const hideReadyArea = document.getElementById('hideReadyArea').checked;
+function updateAutoDeployControlsDisabled() {
+    const autoDeployModeSelect = document.getElementById('autoDeployMode');
+    const autoDeployCountInput = document.getElementById('autoDeployCount');
+    if (autoDeployModeSelect) autoDeployModeSelect.disabled = !autoDeployEnabled;
+    if (autoDeployCountInput) {
+        const isMoreThanEnemy = autoDeployModeSelect ? autoDeployModeSelect.value === 'moreThanEnemy' : false;
+        autoDeployCountInput.disabled = !autoDeployEnabled || !isMoreThanEnemy;
+    }
+}
+
+function onAutoDeployModeChange(value) {
+    autoDeployMode = value;
+    updateAutoDeployControlsDisabled();
+    saveOptionsConfig();
+}
+
+function onAutoDeployCountChange(value) {
+    autoDeployCount = Math.min(20, Math.max(1, Math.floor(parseInt(value) || 1)));
+    const input = document.getElementById('autoDeployCount');
+    if (input) input.value = autoDeployCount;
+    saveOptionsConfig();
+}
+
+function toggleShowReadyArea() {
+    const showReadyArea = document.getElementById('showReadyArea').checked;
     const readyArea = document.getElementById('readyarea');
-    
-    if (hideReadyArea) {
-        readyArea.classList.add('hidden');
-    } else {
+
+    if (showReadyArea) {
         readyArea.classList.remove('hidden');
-    }
-}
-
-function toggleHideBattleInfo() {
-    const isLandscape = window.matchMedia('(orientation: landscape)').matches;
-    if (!isLandscape) return;
-    
-    const hideBattleInfo = document.getElementById('hideBattleInfo').checked;
-    const battleInfoWrapper = document.getElementById('battleInfoWrapper');
-    
-    if (hideBattleInfo) {
-        battleInfoWrapper.classList.add('hidden');
     } else {
-        battleInfoWrapper.classList.remove('hidden');
+        readyArea.classList.add('hidden');
     }
+    saveOptionsConfig();
 }
 
-function toggleHideStats() {
-    const hideStats = document.getElementById('hideStats').checked;
+function toggleShowBattleInfo() {
+    const isLandscape = window.matchMedia('(orientation: landscape)').matches;
+    if (!isLandscape) {
+        saveOptionsConfig();
+        return;
+    }
+
+    const showBattleInfo = document.getElementById('showBattleInfo').checked;
+    const battleInfoWrapper = document.getElementById('battleInfoWrapper');
+
+    if (showBattleInfo) {
+        battleInfoWrapper.classList.remove('hidden');
+    } else {
+        battleInfoWrapper.classList.add('hidden');
+    }
+    saveOptionsConfig();
+}
+
+function toggleShowStats() {
+    const showStats = document.getElementById('showStats').checked;
     const player1Stats = document.getElementById('player1Stats');
     const player2Stats = document.getElementById('player2Stats');
-    
-    if (hideStats) {
-        player1Stats.classList.add('hidden');
-        player2Stats.classList.add('hidden');
-    } else {
+
+    if (showStats) {
         player1Stats.classList.remove('hidden');
         player2Stats.classList.remove('hidden');
+    } else {
+        player1Stats.classList.add('hidden');
+        player2Stats.classList.add('hidden');
     }
+    saveOptionsConfig();
 }
 
 function togglePauseGame() {
     gamePaused = document.getElementById('pauseGame').checked;
-}
-
-function toggleSquadBattleMode() {
-    squadBattleMode = document.getElementById('squadBattleMode').checked;
-    
-    if (squadBattleMode) {
-        selectSquadLeaders();
-    } else {
-        clearSquadLeaders();
-    }
-    
-    saveOptionsConfig();
 }
 
 function isBattleIcon(iconData) {
@@ -5313,24 +5345,12 @@ function handleFullscreenChange() {
     fullscreenCheckbox.checked = !!isFullscreen;
 }
 
-function toggleGameSpeed() {
-    const currentIndex = gameSpeeds.indexOf(gameSpeed);
-    const nextIndex = (currentIndex + 1) % gameSpeeds.length;
-    gameSpeed = gameSpeeds[nextIndex];
-    
-    const gameSpeedElement = document.getElementById('gameSpeed');
-    if(gameSpeed!=1)
-        {gameSpeedElement.textContent = `⏩︎${gameSpeed}x倍速`;}
-    else{
-        gameSpeedElement.textContent = `${gameSpeed}x倍速`;
-    }
-    
-    if (gameSpeed === 1) {
-        gameSpeedElement.classList.remove('fast');
-    } else {
-        gameSpeedElement.classList.add('fast');
-    }
-    
+function updateGameSpeed(value) {
+    gameSpeed = Math.min(5, Math.max(0.5, parseFloat(value)));
+    const slider = document.getElementById('gameSpeedSlider');
+    if (slider) slider.value = gameSpeed;
+    const valueDisplay = document.getElementById('gameSpeedValue');
+    if (valueDisplay) valueDisplay.textContent = `${gameSpeed}x`;
     saveOptionsConfig();
 }
 
@@ -5437,41 +5457,48 @@ function updateReadyIconSize(value) {
     saveOptionsConfig();
 }
 
-function checkReadyZoneEmpty(player) {
-    const readyContent = document.getElementById(`player${player}ReadyContent`);
-    const iconItems = readyContent.querySelectorAll('.icon-item');
-    return iconItems.length === 0;
-}
-
 function autoAddRandomIconsIfNeeded() {
     if (!autoAddRandomEnabled) return;
-    
+
     [1, 2].forEach(player => {
-        if (checkReadyZoneEmpty(player)) {
-            addRandomIcons(player, 7);
+        const readyContent = document.getElementById(`player${player}ReadyContent`);
+        const currentCount = readyContent ? readyContent.querySelectorAll('.icon-item').length : 0;
+        if (currentCount < autoAddCount) {
+            addRandomIcons(player, autoAddCount - currentCount);
         }
     });
 }
 
 function startAutoDeployTimer(player) {
     if (!autoDeployEnabled) return;
-    
+
     if (BattleState.autoDeployTimer) {
         clearTimeout(BattleState.autoDeployTimer);
     }
-    
+
     BattleState.lastPlayerDefeated = player;
-    
+
     BattleState.autoDeployTimer = setTimeout(() => {
         const readyContent = document.getElementById(`player${player}ReadyContent`);
         const iconItems = readyContent.querySelectorAll('.icon-item');
-        
+
         if (iconItems.length > 0) {
-            deployAllIcons(player);
+            if (autoDeployMode === 'moreThanEnemy') {
+                const enemyPlayer = player === 1 ? 2 : 1;
+                const enemyBattleCount = battleIcons[`player${enemyPlayer}`].filter(icon => !icon.isDead).length;
+                const toDeploy = Math.min(iconItems.length, Math.max(1, enemyBattleCount + autoDeployCount));
+                deployIconsPartial(player, toDeploy);
+            } else {
+                deployAllIcons(player);
+            }
         }
-        
+
         BattleState.autoDeployTimer = null;
     }, 10000 / gameSpeed);
+}
+
+function deployIconsPartial(player, count) {
+    deployAllIcons(player, count);
 }
 
 function cancelAutoDeployTimer() {
@@ -5996,7 +6023,7 @@ function handleRocketCharge(iconData) {
     if (!iconData.isCharging) {
         let target;
         
-        if (squadBattleMode) {
+        if (GAME_CONFIG.combat.squad.enabled) {
             // 小队模式：检查是否是队员
             const leader = squadLeaders[`player${iconData.player}`];
             
@@ -6893,6 +6920,7 @@ function getCombatFieldMeta() {
         'backToWall.defenseMultiplier': { label: '防御加成', type: 'number', desc: '倍率', min: 1, step: 0.05, section: '背水一战' },
         'backToWall.critRateBonus': { label: '暴击率加成', type: 'number', desc: '', min: 0, step: 0.01, section: '背水一战' },
         'backToWall.critDamageMultiplier': { label: '暴击伤害加成', type: 'number', desc: '倍率', min: 1, step: 0.05, section: '背水一战' },
+        'squad.enabled': { label: '启用小队模式', type: 'checkbox', desc: '', section: '小队战斗' },
         'squad.meleeIdealRangeVsMelee': { label: '近战vs近战', type: 'number', desc: '理想射程比例', min: 0, step: 0.05, section: '小队战斗' },
         'squad.meleeIdealRangeVsRanged': { label: '近战vs远程', type: 'number', desc: '理想射程比例', min: 0, step: 0.05, section: '小队战斗' },
         'squad.rangedIdealRangeVsMelee': { label: '远程vs近战', type: 'number', desc: '理想射程比例', min: 0, step: 0.05, section: '小队战斗' },
@@ -6912,7 +6940,35 @@ function getCombatFieldMeta() {
         'randomStats.armor.min': { label: '护甲下限', type: 'number', desc: '', min: 0, step: 1, section: '随机属性' },
         'randomStats.armor.max': { label: '护甲上限', type: 'number', desc: '', min: 0, step: 1, section: '随机属性' },
         'randomStats.speed.min': { label: '速度下限', type: 'number', desc: '', min: 1, step: 1, section: '随机属性' },
-        'randomStats.speed.max': { label: '速度上限', type: 'number', desc: '', min: 1, step: 1, section: '随机属性' }
+        'randomStats.speed.max': { label: '速度上限', type: 'number', desc: '', min: 1, step: 1, section: '随机属性' },
+        'ai.targetLockDuration': { label: '目标切换冷却', type: 'number', desc: '毫秒', min: 0, step: 50, section: 'AI基础' },
+        'ai.aggressive.targetPriority': { label: '目标优先级', type: 'select', desc: '', options: ['lowestHealth', 'nearest', 'highestAttack'], section: 'AI激进型' },
+        'ai.aggressive.approachBias': { label: '接近倾向系数', type: 'number', desc: '', min: 0, step: 0.1, section: 'AI激进型' },
+        'ai.aggressive.retreatThreshold': { label: '后撤血量阈值', type: 'number', desc: '', min: 0, step: 0.05, section: 'AI激进型' },
+        'ai.aggressive.attackAggression': { label: '攻击激进程度', type: 'number', desc: '', min: 0, step: 0.1, section: 'AI激进型' },
+        'ai.balanced.targetPriority': { label: '目标优先级', type: 'select', desc: '', options: ['lowestHealth', 'nearest', 'highestAttack'], section: 'AI平衡型' },
+        'ai.balanced.approachBias': { label: '接近倾向系数', type: 'number', desc: '', min: 0, step: 0.1, section: 'AI平衡型' },
+        'ai.balanced.retreatThreshold': { label: '后撤血量阈值', type: 'number', desc: '', min: 0, step: 0.05, section: 'AI平衡型' },
+        'ai.balanced.attackAggression': { label: '攻击激进程度', type: 'number', desc: '', min: 0, step: 0.1, section: 'AI平衡型' },
+        'ai.defensive.targetPriority': { label: '目标优先级', type: 'select', desc: '', options: ['lowestHealth', 'nearest', 'highestAttack'], section: 'AI防御型' },
+        'ai.defensive.approachBias': { label: '接近倾向系数', type: 'number', desc: '', min: 0, step: 0.1, section: 'AI防御型' },
+        'ai.defensive.retreatThreshold': { label: '后撤血量阈值', type: 'number', desc: '', min: 0, step: 0.05, section: 'AI防御型' },
+        'ai.defensive.attackAggression': { label: '攻击激进程度', type: 'number', desc: '', min: 0, step: 0.1, section: 'AI防御型' },
+        'ai.weaponTypeBias.melee.aggressive': { label: '近战-激进', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.melee.balanced': { label: '近战-平衡', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.melee.defensive': { label: '近战-防御', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.ranged.aggressive': { label: '远程-激进', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.ranged.balanced': { label: '远程-平衡', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.ranged.defensive': { label: '远程-防御', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.aoe.aggressive': { label: '范围-激进', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.aoe.balanced': { label: '范围-平衡', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.aoe.defensive': { label: '范围-防御', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.heal.aggressive': { label: '治疗-激进', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.heal.balanced': { label: '治疗-平衡', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.heal.defensive': { label: '治疗-防御', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.buff.aggressive': { label: '增益-激进', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.buff.balanced': { label: '增益-平衡', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' },
+        'ai.weaponTypeBias.buff.defensive': { label: '增益-防御', type: 'number', desc: '倾向权重', min: 0, step: 0.05, section: 'AI武器倾向' }
     };
 }
 
@@ -6982,7 +7038,7 @@ function selectWeaponConfig(index) {
             meta.options.forEach(opt => {
                 const option = document.createElement('option');
                 option.value = opt;
-                option.textContent = opt;
+                option.textContent = field === 'type' ? weaponTypeToChinese(opt) : opt;
                 if (value === opt) option.selected = true;
                 input.appendChild(option);
             });
@@ -7165,29 +7221,41 @@ function renderCombatConfig() {
             form.appendChild(sectionTitle);
         }
         
-        const value = getNestedValue(GAME_CONFIG.combat, path);
-        
+        const value = meta.variable ? window[meta.variable] : getNestedValue(GAME_CONFIG.combat, path);
+
         const fieldDiv = document.createElement('div');
         fieldDiv.className = 'config-field';
-        
+
         const label = document.createElement('label');
         label.innerHTML = `${meta.label}${meta.desc ? `<span class="field-desc">(${meta.desc})</span>` : ''}`;
         label.title = `${meta.label}${meta.desc ? ` (${meta.desc})` : ''}`;
         fieldDiv.appendChild(label);
-        
-        const input = document.createElement('input');
-        input.type = meta.type;
-        if (meta.type === 'checkbox') {
-            input.checked = !!value;
+
+        let input;
+        if (meta.type === 'select') {
+            input = document.createElement('select');
+            meta.options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt;
+                option.textContent = opt;
+                if (value === opt) option.selected = true;
+                input.appendChild(option);
+            });
         } else {
-            input.value = value;
+            input = document.createElement('input');
+            input.type = meta.type;
+            if (meta.type === 'checkbox') {
+                input.checked = !!value;
+            } else {
+                input.value = value;
+            }
+            if (meta.min !== undefined) input.min = meta.min;
+            if (meta.max !== undefined) input.max = meta.max;
+            if (meta.step !== undefined) input.step = meta.step;
         }
-        if (meta.min !== undefined) input.min = meta.min;
-        if (meta.max !== undefined) input.max = meta.max;
-        if (meta.step !== undefined) input.step = meta.step;
 
         input.dataset.path = path;
-        input.addEventListener('change', (e) => onCombatFieldChange(e, path, meta.type));
+        input.addEventListener('change', (e) => onCombatFieldChange(e, path, meta.type, meta));
         fieldDiv.appendChild(input);
         form.appendChild(fieldDiv);
     });
@@ -7204,9 +7272,27 @@ function setNestedValue(obj, path, value) {
     target[lastKey] = value;
 }
 
-function onCombatFieldChange(e, path, fieldType) {
-    const value = fieldType === 'checkbox' ? e.target.checked : (parseFloat(e.target.value) || 0);
-    setNestedValue(GAME_CONFIG.combat, path, value);
+function onCombatFieldChange(e, path, fieldType, meta) {
+    let value;
+    if (fieldType === 'checkbox') {
+        value = e.target.checked;
+    } else if (fieldType === 'select') {
+        value = e.target.value;
+    } else {
+        value = parseFloat(e.target.value) || 0;
+    }
+    if (meta && meta.variable) {
+        window[meta.variable] = value;
+    } else {
+        setNestedValue(GAME_CONFIG.combat, path, value);
+    }
+    if (path === 'squad.enabled') {
+        if (value) {
+            selectSquadLeaders();
+        } else {
+            clearSquadLeaders();
+        }
+    }
 }
 
 function saveConfig() {
@@ -7331,87 +7417,96 @@ function resetConfig() {
         });
     });
     
-    const squadCheckbox = document.getElementById('squadBattleMode');
-    if (squadCheckbox) {
-        squadCheckbox.checked = true;
-        toggleSquadBattleMode();
-    }
-    
+    GAME_CONFIG.combat.squad.enabled = true;
+    selectSquadLeaders();
+    renderCombatConfig();
+
     const autoAddCheckbox = document.getElementById('autoAddRandom');
     if (autoAddCheckbox) {
         autoAddCheckbox.checked = true;
         toggleAutoAddRandom();
     }
-    
+
+    autoAddCount = 7;
+    const autoAddCountInput = document.getElementById('autoAddCount');
+    if (autoAddCountInput) autoAddCountInput.value = autoAddCount;
+
     const autoDeployCheckbox = document.getElementById('autoDeploy');
     if (autoDeployCheckbox) {
         autoDeployCheckbox.checked = true;
         toggleAutoDeploy();
     }
-    
-    const hideBattleInfoCheckbox = document.getElementById('hideBattleInfo');
-    if (hideBattleInfoCheckbox) {
-        hideBattleInfoCheckbox.checked = false;
-        toggleHideBattleInfo();
+
+    autoDeployMode = 'all';
+    autoDeployCount = 3;
+    const autoDeployModeSelect = document.getElementById('autoDeployMode');
+    if (autoDeployModeSelect) autoDeployModeSelect.value = autoDeployMode;
+    const autoDeployCountInput = document.getElementById('autoDeployCount');
+    if (autoDeployCountInput) autoDeployCountInput.value = autoDeployCount;
+    updateAutoDeployControlsDisabled();
+
+    showBattleInfo = true;
+    const showBattleInfoCheckbox = document.getElementById('showBattleInfo');
+    if (showBattleInfoCheckbox) {
+        showBattleInfoCheckbox.checked = true;
+        toggleShowBattleInfo();
     }
-    
-    const hideStatsCheckbox = document.getElementById('hideStats');
-    if (hideStatsCheckbox) {
-        hideStatsCheckbox.checked = false;
-        toggleHideStats();
+
+    showStats = true;
+    const showStatsCheckbox = document.getElementById('showStats');
+    if (showStatsCheckbox) {
+        showStatsCheckbox.checked = true;
+        toggleShowStats();
     }
-    
-    const hideReadyAreaCheckbox = document.getElementById('hideReadyArea');
-    if (hideReadyAreaCheckbox) {
-        hideReadyAreaCheckbox.checked = false;
-        toggleHideReadyArea();
+
+    showReadyArea = true;
+    const showReadyAreaCheckbox = document.getElementById('showReadyArea');
+    if (showReadyAreaCheckbox) {
+        showReadyAreaCheckbox.checked = true;
+        toggleShowReadyArea();
     }
-    
+
     const pauseCheckbox = document.getElementById('pauseGame');
     if (pauseCheckbox) {
         pauseCheckbox.checked = false;
         togglePauseGame();
     }
-    
+
     const fullscreenCheckbox = document.getElementById('fullscreenMode');
     if (fullscreenCheckbox) {
         fullscreenCheckbox.checked = false;
         toggleFullscreen();
     }
-    
+
     const iconSizeSlider = document.getElementById('iconSizeSlider');
     if (iconSizeSlider) {
         iconSizeSlider.value = 0.8;
         updateIconSize(0.8);
     }
-    
+
     const uiSizeSlider = document.getElementById('uiSizeSlider');
     if (uiSizeSlider) {
         uiSizeSlider.value = 1;
         updateUISize(1);
     }
-    
+
     gameSpeed = 1;
-    const gameSpeedElement = document.getElementById('gameSpeed');
-    if (gameSpeedElement) {
-        gameSpeedElement.textContent = '1x倍速';
-        gameSpeedElement.classList.remove('fast');
-    }
-    
+    updateGameSpeed(1);
+
     showConfigToast('已重置为默认配置');
 }
 
 function addNewWeapon() {
     const weaponCount = GAME_CONFIG.weapons.length;
     const newWeapon = {
-        emoji: '🔮',
+        emoji: '🥊',
         name: `新武器${weaponCount + 1}`,
-        attack: 6,
+        attack: 5,
         type: 'melee',
-        range: 55,
+        range: 45,
         attackSpeed: 600,
-        maxCharges: 999,
-        cooldownTime: 0,
+        maxCharges: 12,
+        cooldownTime: 1000,
         defaultDirection: 'top',
         effectType: 'slash',
         ignoreDefense: 'true'
@@ -7488,6 +7583,11 @@ function loadSavedConfig() {
             const parsedCombat = JSON.parse(savedCombat);
             GAME_CONFIG.combat = deepMerge(GAME_CONFIG.combat, parsedCombat);
         }
+        if (GAME_CONFIG.combat.squad.enabled) {
+            selectSquadLeaders();
+        } else {
+            clearSquadLeaders();
+        }
     } catch (e) {
         console.warn('加载保存的配置失败:', e);
     }
@@ -7496,9 +7596,14 @@ function loadSavedConfig() {
 function saveOptionsConfig() {
     try {
         const options = {
-            squadBattleMode: squadBattleMode,
             autoAddRandomEnabled: autoAddRandomEnabled,
+            autoAddCount: autoAddCount,
             autoDeployEnabled: autoDeployEnabled,
+            autoDeployMode: autoDeployMode,
+            autoDeployCount: autoDeployCount,
+            showBattleInfo: showBattleInfo,
+            showStats: showStats,
+            showReadyArea: showReadyArea,
             gameSpeed: gameSpeed,
             iconSize: iconSize,
             uiSize: uiSize,
@@ -7516,38 +7621,73 @@ function loadOptionsConfig() {
         const savedOptions = localStorage.getItem('iconBattle_options');
         if (savedOptions) {
             const options = JSON.parse(savedOptions);
-            
-            if (options.squadBattleMode !== undefined) {
-                squadBattleMode = options.squadBattleMode;
-                const squadCheckbox = document.getElementById('squadBattleMode');
-                if (squadCheckbox) squadCheckbox.checked = options.squadBattleMode;
-            }
-            
+
             if (options.autoAddRandomEnabled !== undefined) {
                 autoAddRandomEnabled = options.autoAddRandomEnabled;
                 const autoAddCheckbox = document.getElementById('autoAddRandom');
                 if (autoAddCheckbox) autoAddCheckbox.checked = options.autoAddRandomEnabled;
             }
-            
+
+            if (options.autoAddCount !== undefined) {
+                autoAddCount = options.autoAddCount;
+                const autoAddCountInput = document.getElementById('autoAddCount');
+                if (autoAddCountInput) autoAddCountInput.value = options.autoAddCount;
+            }
+            const autoAddCountInput = document.getElementById('autoAddCount');
+            if (autoAddCountInput) autoAddCountInput.disabled = !autoAddRandomEnabled;
+
             if (options.autoDeployEnabled !== undefined) {
                 autoDeployEnabled = options.autoDeployEnabled;
                 const autoDeployCheckbox = document.getElementById('autoDeploy');
                 if (autoDeployCheckbox) autoDeployCheckbox.checked = options.autoDeployEnabled;
             }
-            
+
+            if (options.autoDeployMode !== undefined) {
+                autoDeployMode = options.autoDeployMode;
+                const autoDeployModeSelect = document.getElementById('autoDeployMode');
+                if (autoDeployModeSelect) autoDeployModeSelect.value = options.autoDeployMode;
+            }
+
+            if (options.autoDeployCount !== undefined) {
+                autoDeployCount = options.autoDeployCount;
+                const autoDeployCountInput = document.getElementById('autoDeployCount');
+                if (autoDeployCountInput) autoDeployCountInput.value = options.autoDeployCount;
+            }
+            updateAutoDeployControlsDisabled();
+
+            // 显示面板：新字段 showBattleInfo/showStats/showReadyArea，兼容旧字段 hideBattleInfo/hideStats/hideReadyArea
+            const savedShowBattleInfo = options.showBattleInfo !== undefined ? options.showBattleInfo : (options.hideBattleInfo !== undefined ? !options.hideBattleInfo : true);
+            showBattleInfo = savedShowBattleInfo;
+            const showBattleInfoCheckbox = document.getElementById('showBattleInfo');
+            if (showBattleInfoCheckbox) {
+                showBattleInfoCheckbox.checked = savedShowBattleInfo;
+                toggleShowBattleInfo();
+            }
+
+            const savedShowStats = options.showStats !== undefined ? options.showStats : (options.hideStats !== undefined ? !options.hideStats : true);
+            showStats = savedShowStats;
+            const showStatsCheckbox = document.getElementById('showStats');
+            if (showStatsCheckbox) {
+                showStatsCheckbox.checked = savedShowStats;
+                toggleShowStats();
+            }
+
+            const savedShowReadyArea = options.showReadyArea !== undefined ? options.showReadyArea : (options.hideReadyArea !== undefined ? !options.hideReadyArea : true);
+            showReadyArea = savedShowReadyArea;
+            const showReadyAreaCheckbox = document.getElementById('showReadyArea');
+            if (showReadyAreaCheckbox) {
+                showReadyAreaCheckbox.checked = savedShowReadyArea;
+                toggleShowReadyArea();
+            }
+
             if (options.gameSpeed !== undefined) {
                 gameSpeed = options.gameSpeed;
-                const gameSpeedElement = document.getElementById('gameSpeed');
-                if (gameSpeedElement) {
-                    gameSpeedElement.textContent = gameSpeed !== 1 ? `⏩︎${gameSpeed}x倍速` : `${gameSpeed}x倍速`;
-                    if (gameSpeed === 1) {
-                        gameSpeedElement.classList.remove('fast');
-                    } else {
-                        gameSpeedElement.classList.add('fast');
-                    }
-                }
+                const gameSpeedSlider = document.getElementById('gameSpeedSlider');
+                if (gameSpeedSlider) gameSpeedSlider.value = gameSpeed;
+                const gameSpeedValue = document.getElementById('gameSpeedValue');
+                if (gameSpeedValue) gameSpeedValue.textContent = `${gameSpeed}x`;
             }
-            
+
             if (options.iconSize !== undefined) {
                 iconSize = options.iconSize;
                 updateIconSize(iconSize);
