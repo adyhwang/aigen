@@ -263,7 +263,6 @@ body {
     overflow-y: auto;
     backdrop-filter: blur(10px);
     border: 2px solid rgba(255,255,255,0.3);
-    cursor: move;
     user-select: none;
 }
 
@@ -477,6 +476,7 @@ body {
     opacity: var(--ui-opacity, 1);
     position: relative;
     --ready-icon-size: 70px;
+    z-index: 2500;
 }
 
 .ready-icon-size-slider {
@@ -493,7 +493,6 @@ body {
     padding: 4px 10px;
     border-radius: 6px;
     backdrop-filter: blur(5px);
-    z-index: 100;
     max-width: calc(100vw - 20px);
     opacity: var(--ui-opacity, 1);
 }
@@ -2331,7 +2330,7 @@ body {
         right: auto;
         left: auto;
         margin: 0 0 10px 0;
-        z-index: 10;
+        z-index: 2500;
         max-width: 100%;
     }
 

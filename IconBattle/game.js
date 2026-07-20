@@ -32,11 +32,6 @@ const readyIconSizes = [20, 120];
 // 待命区图标当前大小（像素）
 let readyIconSize = 70;
 
-// 战斗信息面板是否正在拖动
-let battleInfoDragging = false;
-// 战斗信息面板拖动时的偏移量
-let battleInfoOffset = { x: 0, y: 0 };
-
 // 是否启用自动添加随机图标
 let autoAddRandomEnabled = false;
 // 自动添加：待命区图标最少保持数量
@@ -3036,89 +3031,6 @@ function updateBattleStats() {
     });
 }
 
-function initBattleInfoDrag() {
-    const battleInfoWrapper = document.querySelector('.battle-info-wrapper');
-    
-    battleInfoWrapper.addEventListener('mousedown', (e) => {
-        if (e.target.classList.contains('filter-tab')) return;
-        
-        battleInfoDragging = true;
-        const rect = battleInfoWrapper.getBoundingClientRect();
-        battleInfoOffset.x = e.clientX - rect.left;
-        battleInfoOffset.y = e.clientY - rect.top;
-        battleInfoWrapper.style.left = `${rect.left}px`;
-        battleInfoWrapper.style.top = `${rect.top}px`;
-        battleInfoWrapper.style.right = 'auto';
-        battleInfoWrapper.style.bottom = 'auto';
-        battleInfoWrapper.style.transform = `translate(0, 0) scale(${uiSize})`;
-    });
-    
-    document.addEventListener('mousemove', (e) => {
-        if (!battleInfoDragging) return;
-        
-        const battleArea = document.getElementById('battleArea');
-        const battleAreaRect = battleArea.getBoundingClientRect();
-        
-        let newX = e.clientX - battleAreaRect.left - battleInfoOffset.x;
-        let newY = e.clientY - battleAreaRect.top - battleInfoOffset.y;
-        
-        const maxX = battleAreaRect.width - battleInfoWrapper.offsetWidth;
-        const maxY = battleAreaRect.height - battleInfoWrapper.offsetHeight;
-        
-        newX = Math.max(0, Math.min(newX, maxX));
-        newY = Math.max(0, Math.min(newY, maxY));
-        
-        battleInfoWrapper.style.left = `${newX}px`;
-        battleInfoWrapper.style.top = `${newY}px`;
-    });
-    
-    document.addEventListener('mouseup', () => {
-        battleInfoDragging = false;
-    });
-
-    // 触摸事件支持
-    battleInfoWrapper.addEventListener('touchstart', (e) => {
-        if (e.target.classList.contains('filter-tab')) return;
-
-        battleInfoDragging = true;
-        const touch = e.touches[0];
-        const rect = battleInfoWrapper.getBoundingClientRect();
-        battleInfoOffset.x = touch.clientX - rect.left;
-        battleInfoOffset.y = touch.clientY - rect.top;
-        battleInfoWrapper.style.left = `${rect.left}px`;
-        battleInfoWrapper.style.top = `${rect.top}px`;
-        battleInfoWrapper.style.right = 'auto';
-        battleInfoWrapper.style.bottom = 'auto';
-        battleInfoWrapper.style.transform = `translate(0, 0) scale(${uiSize})`;
-        e.preventDefault();
-    }, { passive: false });
-
-    document.addEventListener('touchmove', (e) => {
-        if (!battleInfoDragging) return;
-
-        const touch = e.touches[0];
-        const battleArea = document.getElementById('battleArea');
-        const battleAreaRect = battleArea.getBoundingClientRect();
-
-        let newX = touch.clientX - battleAreaRect.left - battleInfoOffset.x;
-        let newY = touch.clientY - battleAreaRect.top - battleInfoOffset.y;
-
-        const maxX = battleAreaRect.width - battleInfoWrapper.offsetWidth;
-        const maxY = battleAreaRect.height - battleInfoWrapper.offsetHeight;
-
-        newX = Math.max(0, Math.min(newX, maxX));
-        newY = Math.max(0, Math.min(newY, maxY));
-
-        battleInfoWrapper.style.left = `${newX}px`;
-        battleInfoWrapper.style.top = `${newY}px`;
-        e.preventDefault();
-    }, { passive: false });
-
-    document.addEventListener('touchend', () => {
-        battleInfoDragging = false;
-    });
-}
-
 function removeBattleIcon(iconData) {
     if (!iconData || !iconData.element) return;
 
@@ -3963,7 +3875,6 @@ function init() {
     
     setupBattleZoneDrop();
     requestAnimationFrame(gameLoop);
-    initBattleInfoDrag();
     
     // 初始化滑块控件的最小值和最大值
     const [minSize, maxSize] = iconSizes;
