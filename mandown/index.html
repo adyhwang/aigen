@@ -203,7 +203,7 @@
 </head>
 
 <body class="min-h-screen flex flex-col items-center justify-center p-4 text-white overflow-hidden">
-    <div class="relative w-full max-w-md h-full flex flex-col">
+    <div id="gameContainer" class="relative w-full max-w-md h-full flex flex-col">
         <!-- 顶部标题和控制区 -->
         <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
             <h1
@@ -374,19 +374,19 @@
                                 <span class="text-xs text-gray-300">濒死救命</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🔺</div>
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🌙</div>
                                 <span class="text-xs text-gray-300">重力减小</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🔻</div>
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🌑</div>
                                 <span class="text-xs text-gray-300">重力变大</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🐌</div>
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🐢</div>
                                 <span class="text-xs text-gray-300">平台减速</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🚀</div>
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🐇</div>
                                 <span class="text-xs text-gray-300">平台加速</span>
                             </div>
                             <div class="flex items-center gap-2">
@@ -543,11 +543,6 @@
             </div>
         </div>
 
-        <!-- 操作说明 -->
-        <!-- <div class="mt-4 text-center text-gray-400 text-sm instructions">
-            <p class="mb-1">电脑: 方向键左右移动 | 手机: 点击左右按钮</p>
-            <p>按回车键或点击暂停按钮可暂停/继续游戏</p>
-        </div> -->
     </div>
 
     <script>
@@ -706,10 +701,10 @@
                     'invincible': { color: '#F59E0B', icon: '🧘' },
                     'goldenLeg': { color: '#F59E0B', icon: '🦶' },
                     'goldenHead': { color: '#F59E0B', icon: '😬' },
-                    'reducedGravity': { color: '#9C27B0', icon: '🔺' },
-                    'increasedGravity': { color: '#DC2626', icon: '🔻' },
-                    'platformSlow': { color: '#607D8B', icon: '🐌' },
-                    'platformSpeedUp': { color: '#EF4444', icon: '🚀' },
+                    'reducedGravity': { color: '#9C27B0', icon: '🌙' },
+                    'increasedGravity': { color: '#DC2626', icon: '🌑' },
+                    'platformSlow': { color: '#607D8B', icon: '🐢' },
+                    'platformSpeedUp': { color: '#EF4444', icon: '🐇' },
                     'reverseControls': { color: '#8B5CF6', icon: '💫' },
                     'narrowVision': { color: '#6B7280', icon: '👁️' },
                     'randomPowerUp': { color: '#FFD700', icon: '❓' },
@@ -5379,10 +5374,10 @@
                         'goldenLeg': { bg: '#F59E0B', html: '🦶' },
                         'goldenHead': { bg: '#F59E0B', html: '😬' },
                         'allNormal': { bg: '#EC4899', html: '🟦' },
-                        'reducedGravity': { bg: '#9C27B0', html: '🔺' },
-                        'increasedGravity': { bg: '#DC2626', html: '🔻' },
-                        'platformSlow': { bg: '#607D8B', html: '🐌' },
-                        'platformSpeedUp': { bg: '#EF4444', html: '🚀' },
+                        'reducedGravity': { bg: '#9C27B0', html: '🌙' },
+                        'increasedGravity': { bg: '#DC2626', html: '🌑' },
+                        'platformSlow': { bg: '#607D8B', html: '🐢' },
+                        'platformSpeedUp': { bg: '#EF4444', html: '🐇' },
                         'reverseControls': { bg: '#8B5CF6', html: '💫' },
                         'narrowVision': { bg: '#6B7280', html: '👁️' },
                         'randomPowerUp': { bg: '#FFD700', html: '❓' },
