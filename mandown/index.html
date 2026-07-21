@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>就下100层 - 优化版</title>
+    <title>就下100层 - 优化版0722</title>
     <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <!-- <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet"> -->
     <!-- <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"> -->
@@ -199,25 +199,59 @@
         .scrollbar-hide::-webkit-scrollbar {
             display: none;
         }
+
+        /* 强制竖屏模式：横屏全屏时通过CSS旋转模拟竖屏 */
+        .force-portrait {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            width: 100vh !important;
+            height: 100vw !important;
+            max-width: none !important;
+            min-height: auto !important;
+            transform-origin: center center !important;
+            z-index: 9999 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .force-portrait-90 {
+            transform: translate(-50%, -50%) rotate(90deg) !important;
+        }
+
+        .force-portrait-270 {
+            transform: translate(-50%, -50%) rotate(-90deg) !important;
+        }
+
+        .force-portrait .game-container {
+            height: 100% !important;
+            min-height: auto !important;
+            max-height: none !important;
+            flex: 1 1 auto !important;
+        }
+
+        body.force-portrait-active {
+            padding: 0 !important;
+        }
     </style>
 </head>
 
 <body class="min-h-screen flex flex-col items-center justify-center p-4 text-white overflow-hidden">
     <div id="gameContainer" class="relative w-full max-w-md h-full flex flex-col">
         <!-- 顶部标题和控制区 -->
-        <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
+        <div class="flex flex-nowrap justify-between items-center mb-3 gap-2">
             <h1
-                class="text-[clamp(1.2rem,5vw,1.8rem)] font-['Press_Start_2P'] text-left text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 tracking-wider">
+                class="text-[clamp(0.85rem,3.5vw,1.4rem)] font-['Press_Start_2P'] text-left text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 tracking-wider whitespace-nowrap flex-shrink-0">
                 就下100层
             </h1>
-            <div class="flex items-center gap-2">
-                <div class="bg-dark/70 px-3 py-2 rounded-full flex items-center gap-2">
-                    <button id="bgmToggle" class="text-green-300 hover:text-white transition-colors">
+            <div class="flex items-center gap-1 flex-shrink-0">
+                <div class="bg-dark/70 px-2 py-2 rounded-full flex items-center gap-1">
+                    <button id="bgmToggle" class="text-green-300 hover:text-white transition-colors p-1">
                         <i class="fa fa-music"></i>
                     </button>
                     <div class="h-4 w-px bg-gray-600"></div>
-                    <i class="fa fa-volume-up text-gray-300"></i>
-                    <input type="range" id="volumeSlider" class="volume-slider w-24" min="0" max="100" value="70">
+                    <i class="fa fa-volume-up text-gray-300 text-sm"></i>
+                    <input type="range" id="volumeSlider" class="volume-slider w-14 sm:w-20" min="0" max="100" value="70">
                 </div>
                 <button id="fullscreenButton"
                     class="bg-dark/70 hover:bg-dark/90 text-white p-2 rounded-full transition-all transform hover:scale-110 active:scale-90">
@@ -439,7 +473,7 @@
                 <button id="restartFromPauseButton"
                     class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow mb-4">重新开始</button>
                 <button id="backToStartFromPauseButton"
-                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">返回开始</button>
+                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">返回首页</button>
             </div>
 
             <!-- 游戏结束菜单 -->
@@ -452,7 +486,7 @@
                     <button id="restartButton"
                         class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">再来一次</button>
                     <button id="backToStartButton"
-                        class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">返回开始</button>
+                        class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">返回首页</button>
                 </div>
                 <button id="showLeaderboardBtn"
                     class="text-warning hover:text-warning/80 underline text-sm transition-colors">查看排行榜</button>
@@ -1420,11 +1454,24 @@
                 this.autoSelectPlayer = null;
 
                 this.fullscreenButton = document.getElementById('fullscreenButton');
+                this.isForcePortrait = false;
+                this.forcePortraitRotation = 90; // 90 或 270
 
                 this.powerUpIndicator = document.getElementById('powerUpIndicator');
                 this.powerUpText = document.getElementById('powerUpText');
 
-                window.addEventListener('resize', () => this.resizeCanvas());
+                window.addEventListener('resize', () => {
+                    this.updateForcePortrait();
+                    this.resizeCanvas();
+                });
+
+                // 监听屏幕方向变化，及时调整强制竖屏方向
+                window.addEventListener('orientationchange', () => {
+                    setTimeout(() => {
+                        this.updateForcePortrait();
+                        this.resizeCanvas();
+                    }, 200);
+                });
 
                 this.lastTime = 0;
                 this.deltaTime = 0;
@@ -1577,6 +1624,15 @@
                 this.backToStartFromPauseButton.addEventListener('click', () => this.backToStart());
                 this.fullscreenButton.addEventListener('click', () => this.toggleFullscreen());
 
+                // 监听全屏状态变化，自动切换强制竖屏
+                const fullscreenEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
+                fullscreenEvents.forEach(eventName => {
+                    document.addEventListener(eventName, () => {
+                        this.updateForcePortrait();
+                        this.resizeCanvas();
+                    });
+                });
+
                 document.getElementById('showLeaderboardBtn').addEventListener('click', () => this.showLeaderboard());
                 document.getElementById('startScreenLeaderboardBtn').addEventListener('click', () => this.showLeaderboard());
                 document.getElementById('closeLeaderboardBtn').addEventListener('click', () => this.hideLeaderboard());
@@ -1716,6 +1772,32 @@
                 });
             }
 
+            // 坐标转换：横屏全屏强制竖屏时，将屏幕坐标转换为游戏坐标
+            transformInputCoordinates(clientX, clientY, rect) {
+                if (!this.isForcePortrait) {
+                    return {
+                        x: clientX - rect.left,
+                        y: clientY - rect.top
+                    };
+                }
+
+                if (this.forcePortraitRotation === 270) {
+                    // 容器逆时针旋转90度（rotate(-90deg)）
+                    // 屏幕 x -> 游戏 y，屏幕 y -> 游戏 x（反向）
+                    return {
+                        x: this.canvas.width - (clientY - rect.top) * (this.canvas.width / rect.height),
+                        y: (clientX - rect.left) * (this.canvas.height / rect.width)
+                    };
+                }
+
+                // 容器顺时针旋转90度（rotate(90deg)）
+                // 屏幕 x -> 游戏 y（反向），屏幕 y -> 游戏 x
+                return {
+                    x: (clientY - rect.top) * (this.canvas.width / rect.height),
+                    y: this.canvas.height - (clientX - rect.left) * (this.canvas.height / rect.width)
+                };
+            }
+
             // 处理触摸开始事件
             handleTouchStart(e) {
                 if (this.isPaused || this.gameOver) return;
@@ -1723,8 +1805,9 @@
                 e.preventDefault();
                 const touch = e.touches[0];
                 const rect = this.canvas.getBoundingClientRect();
-                const touchX = touch.clientX - rect.left;
-                const touchY = touch.clientY - rect.top;
+                const coords = this.transformInputCoordinates(touch.clientX, touch.clientY, rect);
+                const touchX = coords.x;
+                const touchY = coords.y;
                 this.touchActive = true;
 
                 // 判断点击的是左半边还是右半边
@@ -1764,8 +1847,9 @@
 
                 const touch = e.touches[0];
                 const rect = this.canvas.getBoundingClientRect();
-                const currentX = touch.clientX - rect.left;
-                const currentY = touch.clientY - rect.top;
+                const coords = this.transformInputCoordinates(touch.clientX, touch.clientY, rect);
+                const currentX = coords.x;
+                const currentY = coords.y;
                 const canvasCenter = this.canvas.width / 2;
 
                 // 判断是1P区域还是2P区域（上半部分控制1P，下半部分控制2P）
@@ -1832,8 +1916,9 @@
                 if (this.isPaused || this.gameOver) return;
 
                 const rect = this.canvas.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
+                const coords = this.transformInputCoordinates(e.clientX, e.clientY, rect);
+                const mouseX = coords.x;
+                const mouseY = coords.y;
                 const canvasCenter = this.canvas.width / 2;
                 const side = mouseX < canvasCenter ? 'left' : 'right';
 
@@ -1875,6 +1960,54 @@
                 }
             }
 
+            // 更新强制竖屏状态
+            updateForcePortrait() {
+                const isFullscreen = !!(document.fullscreenElement ||
+                    document.webkitFullscreenElement ||
+                    document.mozFullScreenElement ||
+                    document.msFullscreenElement);
+
+                const isLandscape = window.innerWidth > window.innerHeight;
+                const shouldForcePortrait = isFullscreen && isLandscape;
+
+                const gameContainer = document.getElementById('gameContainer');
+                if (!gameContainer) return;
+
+                this.isForcePortrait = shouldForcePortrait;
+
+                // 移除旧的旋转方向类
+                gameContainer.classList.remove('force-portrait-90', 'force-portrait-270');
+
+                if (shouldForcePortrait) {
+                    // 根据设备方向决定旋转角度
+                    // screen.orientation.type: landscape-primary = home键在右(顺时针90度), landscape-secondary = home键在左(逆时针90度)
+                    let rotation = 90;
+                    if (screen.orientation) {
+                        const type = screen.orientation.type || '';
+                        if (type.includes('landscape-primary') || type === 'landscape') {
+                            // 设备已顺时针旋转90度，需要逆时针旋转抵消
+                            rotation = 270;
+                        } else if (type.includes('landscape-secondary')) {
+                            // 设备已逆时针旋转90度，需要顺时针旋转抵消
+                            rotation = 90;
+                        } else {
+                            // 兜底：用 angle 判断
+                            const angle = screen.orientation.angle || 0;
+                            rotation = (angle === 90 || angle === -270) ? 270 : 90;
+                        }
+                    }
+                    this.forcePortraitRotation = rotation;
+
+                    gameContainer.classList.add('force-portrait');
+                    gameContainer.classList.add(`force-portrait-${this.forcePortraitRotation}`);
+                    document.body.classList.add('force-portrait-active');
+                } else {
+                    gameContainer.classList.remove('force-portrait');
+                    document.body.classList.remove('force-portrait-active');
+                    this.forcePortraitRotation = 90;
+                }
+            }
+
             // 全屏切换方法
             toggleFullscreen() {
                 const docEl = document.documentElement;
@@ -1906,6 +2039,12 @@
                 }
 
                 this.soundManager.playFullscreenSound();
+
+                // 部分浏览器全屏切换有延迟，延迟更新强制竖屏状态
+                setTimeout(() => {
+                    this.updateForcePortrait();
+                    this.resizeCanvas();
+                }, 100);
             }
 
             updateInstructionsDisplay() {
@@ -2292,6 +2431,7 @@
 
             endGame(player) {
                 player.deathEffectPlayed = true;
+                this.lastDeadPlayer = player;
 
                 const activePlayers = this.getActivePlayers();
                 const bothPlayersDead = activePlayers.every(player => player.deathEffectPlayed);
@@ -2383,17 +2523,51 @@
                 const nameInputModal = document.getElementById('nameInputModal');
                 const nameInputScore = document.getElementById('nameInputScore');
                 const playerNameInput = document.getElementById('playerNameInput');
+                const saveScoreBtn = document.getElementById('saveScoreBtn');
 
                 nameInputScore.textContent = `${this.score} 层`;
-                playerNameInput.value = '';
+
+                let defaultName = 'Player1';
+                if (this.playerMode === 'multiplayer' && this.lastDeadPlayer) {
+                    const playerKey = this.lastDeadPlayer === this.players.p1 ? 'p1' : 'p2';
+                    const savedName = this.getSavedPlayerName(playerKey);
+                    defaultName = savedName || (playerKey === 'p1' ? 'Player1' : 'Player2');
+                } else {
+                    const savedName = this.getSavedPlayerName('p1');
+                    defaultName = savedName || 'Player1';
+                }
+                playerNameInput.value = defaultName;
+
                 nameInputModal.classList.remove('hidden');
 
-                setTimeout(() => playerNameInput.focus(), 100);
+                setTimeout(() => saveScoreBtn.focus(), 100);
+            }
+
+            getSavedPlayerName(playerKey = 'p1') {
+                try {
+                    return localStorage.getItem(`mandown_player_name_${playerKey}`) || '';
+                } catch (e) {
+                    return '';
+                }
+            }
+
+            savePlayerName(name, playerKey = 'p1') {
+                try {
+                    localStorage.setItem(`mandown_player_name_${playerKey}`, name);
+                } catch (e) {
+                    console.error('保存玩家名失败:', e);
+                }
             }
 
             savePlayerScore() {
                 const playerNameInput = document.getElementById('playerNameInput');
                 const name = playerNameInput.value.trim() || '匿名玩家';
+
+                const playerKey = (this.playerMode === 'multiplayer' && this.lastDeadPlayer)
+                    ? (this.lastDeadPlayer === this.players.p1 ? 'p1' : 'p2')
+                    : 'p1';
+                this.savePlayerName(name, playerKey);
+                this.lastSavedPlayerName = name;
 
                 const leaderboard = this.getLeaderboard();
                 leaderboard.push({
@@ -2447,9 +2621,9 @@
                 } else {
                     leaderboardList.innerHTML = leaderboard.map((entry, index) => {
                         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-                        const isCurrentScore = entry.score === this.score && this.gameOver && activeMode === this.gameMode;
+                        const isCurrentPlayer = this.lastSavedPlayerName && entry.name === this.lastSavedPlayerName && this.gameOver && activeMode === this.gameMode;
                         return `
-                            <div class="flex items-center justify-between px-3 py-2 rounded-lg ${isCurrentScore ? 'bg-primary/20 border border-primary/50' : 'bg-gray-700/50'}">
+                            <div class="flex items-center justify-between px-3 py-2 rounded-lg ${isCurrentPlayer ? 'bg-primary/20 border border-primary/50' : 'bg-gray-700/50'}">
                                 <div class="flex items-center gap-3">
                                     <span class="text-lg w-8 text-center">${medal}</span>
                                     <span class="text-white font-medium truncate max-w-24">${entry.name}</span>
