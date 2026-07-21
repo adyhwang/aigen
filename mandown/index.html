@@ -5,9 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>就下100层 - 优化版</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <!-- <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet"> -->
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"> -->
+    <script src="assets/js/tailwindcss.js"></script>
+    <link href="assets/css/font-awesome.min.css" rel="stylesheet">
+    <link href="assets/css/press-start-2p.css" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
@@ -187,6 +190,15 @@
         .dev-tool-btn:active {
             transform: scale(0.95);
         }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
     </style>
 </head>
 
@@ -235,20 +247,20 @@
             </div>
 
             <!-- 开始菜单 -->
-            <div id="startMenu" class="absolute inset-0 bg-dark/90 flex flex-col items-center justify-center p-6 z-10">
-                <div class="text-center mb-2">
+            <div id="startMenu" class="absolute inset-0 bg-dark/90 flex flex-col items-center p-6 z-10 overflow-hidden">
+                <div class="text-center mb-2 mt-2 flex-shrink-0">
                     <h2 class="text-2xl font-['Press_Start_2P'] mb-4 text-primary">准备好了吗？</h2>
                     <p class="text-gray-300 mb-2">左右移动，躲避危险；下得越深，得分越高</p>
                 </div>
 
                 <!-- 下拉菜单容器 -->
-                <div class="flex flex-wrap justify-center gap-4 mb-6">
+                <div class="flex flex-wrap justify-center gap-4 mb-4 flex-shrink-0">
                     <!-- 模式选择下拉菜单 -->
                     <div class="relative inline-block">
                         <button id="modeButton"
                             class="bg-dark/70 hover:bg-dark/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all">
                             <i class="fa fa-gamepad"></i>
-                            <span id="currentModeText">经典模式</span>
+                            <span id="currentModeText">新模式</span>
                             <i class="fa fa-chevron-down text-xs"></i>
                         </button>
                         <div id="modeDropdown"
@@ -287,166 +299,133 @@
 
                 <!-- 开始按钮 -->
                 <button id="startButton"
-                    class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">
+                    class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow flex-shrink-0">
                     开始游戏
                 </button>
 
-                <!-- 游戏说明 -->
-                <div id="classicModeInstructions" class="mt-8 grid grid-cols-2 gap-1 w-full">
-                    <div class="flex items-center gap-1">
-                        <div class="w-5 h-2 bg-blue-500 rounded-sm"></div>
-                        <span class="text-sm text-gray-300">普通平台</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-5 h-2 bg-green-500 rounded-sm"></div>
-                        <span class="text-sm text-gray-300">翻转平台</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-5 h-2 bg-gray-200 rounded-sm relative overflow-hidden">
-                            <div class="absolute top-0 left-0 w-3 h-full bg-gray-300/70 transform -skew-x-12"></div>
-                        </div>
-                        <span class="text-sm text-gray-300">传送带</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-5 h-2 relative">
-                            <div class="w-full h-1/3 bg-green-500"></div>
-                            <div class="w-full h-1/3 bg-white"></div>
-                            <div class="w-full h-1/3 bg-green-500"></div>
-                        </div>
-                        <span class="text-sm text-gray-300">跳板</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-5 h-2 bg-red-600 rounded-sm relative">
-                            <div class="absolute top-0 left-1/4 w-1 h-1 bg-red-700 transform rotate-45"></div>
-                            <div class="absolute top-0 left-3/4 w-1 h-1 bg-red-700 transform -rotate-45"></div>
-                        </div>
-                        <span class="text-sm text-gray-300">钉板</span>
-                    </div>
-                </div>
+                <!-- 排行榜按钮 -->
+                <button id="startScreenLeaderboardBtn"
+                    class="mt-3 text-warning hover:text-warning/80 underline text-sm transition-colors flex-shrink-0">
+                    🏆 查看排行榜
+                </button>
 
-                <!-- 道具说明 -->
-                <div class="flex text-left items-center gap-2">
-                    <h2 class="text-sm font-['Press_Start_2P'] mt-4 text-primary">新模式道具：</h2>
-                </div>
-                <div class="mt-2 grid grid-cols-2 gap-2 w-full">
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🐜
+                <!-- 游戏说明滚动区域 -->
+                <div id="instructionsScroll" class="w-full flex-1 mt-4 overflow-y-auto scrollbar-hide min-h-0">
+                    <!-- 公共平台介绍（经典模式和新模式共用） -->
+                    <div class="w-full">
+                        <h3 class="text-sm font-['Press_Start_2P'] text-primary mb-2">平台介绍</h3>
+                        <div class="grid grid-cols-2 gap-2 w-full mb-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-3 bg-blue-500 rounded-sm flex-shrink-0"></div>
+                                <span class="text-xs text-gray-300">普通平台 - 安全落脚</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-3 bg-green-500 rounded-sm flex-shrink-0"></div>
+                                <span class="text-xs text-gray-300">翻转平台 - 踩过就翻</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-3 bg-gray-200 rounded-sm relative overflow-hidden flex-shrink-0">
+                                    <div class="absolute top-0 left-0 w-3 h-full bg-gray-300/70 transform -skew-x-12"></div>
+                                </div>
+                                <span class="text-xs text-gray-300">传送带 - 自动移动</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-3 relative flex-shrink-0">
+                                    <div class="w-full h-1/3 bg-green-500"></div>
+                                    <div class="w-full h-1/3 bg-white"></div>
+                                    <div class="w-full h-1/3 bg-green-500"></div>
+                                </div>
+                                <span class="text-xs text-gray-300">跳板 - 弹得更高</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-3 bg-red-600 rounded-sm relative flex-shrink-0">
+                                </div>
+                                <span class="text-xs text-gray-300">钉板平台 - 扣血</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-3 bg-amber-700 rounded-sm flex-shrink-0"></div>
+                                <span class="text-xs text-gray-300">泥巴平台 - 减速</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-3 bg-yellow-400 rounded-sm flex-shrink-0"></div>
+                                <span class="text-xs text-gray-300">带电平台 - 电你一下</span>
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">变小</span>
                     </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">💗
+
+                    <!-- 新模式专属：道具介绍 -->
+                    <div id="newModeExtra" class="w-full hidden">
+                        <h3 class="text-sm font-['Press_Start_2P'] text-primary mb-2 mt-4">道具介绍</h3>
+                        <div class="grid grid-cols-2 gap-2 w-full">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🐜</div>
+                                <span class="text-xs text-gray-300">变小 - 缩小体型</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🐘</div>
+                                <span class="text-xs text-gray-300">变大 - 增大体型</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">💗</div>
+                                <span class="text-xs text-gray-300">生命全满</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🛸</div>
+                                <span class="text-xs text-gray-300">濒死救命</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🔺</div>
+                                <span class="text-xs text-gray-300">重力减小</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🔻</div>
+                                <span class="text-xs text-gray-300">重力变大</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🐌</div>
+                                <span class="text-xs text-gray-300">平台减速</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🚀</div>
+                                <span class="text-xs text-gray-300">平台加速</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🟦</div>
+                                <span class="text-xs text-gray-300">变普通平台</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🧘</div>
+                                <span class="text-xs text-gray-300">金身 - 无敌</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">🦶</div>
+                                <span class="text-xs text-gray-300">金腿 - 免疫钉板</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">😬</div>
+                                <span class="text-xs text-gray-300">金头 - 免疫岩浆</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">💫</div>
+                                <span class="text-xs text-gray-300">反向控制</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-blue-400 flex-shrink-0 flex items-center justify-center text-base">👁️</div>
+                                <span class="text-xs text-gray-300">缩小视野</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-red-500 flex-shrink-0 flex items-center justify-center text-base">🦸</div>
+                                <span class="text-xs text-gray-300">超人 - 向下飞行</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-yellow-400 flex-shrink-0 flex items-center justify-center text-base">❓</div>
+                                <span class="text-xs text-gray-300">随机道具</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-gray-600 flex-shrink-0 flex items-center justify-center text-base">👻</div>
+                                <span class="text-xs text-gray-300">幽灵 - 追击玩家</span>
                             </div>
                         </div>
-                        <span class="text-sm text-gray-300">生命全满</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🐘
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">变大</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🛸
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">濒死救命</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🔺
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">重力减小</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🔻
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">重力变大</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🐌
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">平台减速</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🚀
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">平台加速</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🟦
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">变普通平台</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🧘
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">金身</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🦶
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">金腿</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">😬
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">金头</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">💫
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">反向控制</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-blue-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">👁️
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">缩小视野</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-red-500 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">🦸
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">超人</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-yellow-400 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">❓
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">随机道具</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <div class="w-7 h-7 rounded-full bg-gray-600 relative">
-                            <div class="absolute inset-1 flex items-center justify-center text-[15px] text-white">👻
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-300">幽灵道具</span>
                     </div>
                 </div>
             </div>
@@ -469,17 +448,68 @@
                 <h2 class="text-2xl font-['Press_Start_2P'] mb-2 text-danger">游戏结束</h2>
                 <p class="text-xl mb-1">你的成绩</p>
                 <p id="finalScore" class="text-3xl font-['Press_Start_2P'] mb-6 text-primary">0 层</p>
-                <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex flex-col sm:flex-row gap-4 mb-4">
                     <button id="restartButton"
                         class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">再来一次</button>
                     <button id="backToStartButton"
                         class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">返回开始</button>
                 </div>
+                <button id="showLeaderboardBtn"
+                    class="text-warning hover:text-warning/80 underline text-sm transition-colors">查看排行榜</button>
+            </div>
+
+            <!-- 输入名字弹窗 -->
+            <div id="nameInputModal"
+                class="absolute inset-0 bg-dark/95 flex flex-col items-center justify-center p-6 z-20 hidden">
+                <h3 class="text-xl font-['Press_Start_2P'] mb-2 text-warning">🎉 新纪录！</h3>
+                <p class="text-lg mb-4">恭喜进入前 10 名！</p>
+                <p class="text-2xl font-['Press_Start_2P'] mb-6 text-primary" id="nameInputScore">0 层</p>
+                <input type="text" id="playerNameInput" maxlength="10" placeholder="输入你的名字"
+                    class="w-64 px-4 py-3 bg-gray-700 text-white rounded-lg text-center text-lg mb-6 border-2 border-gray-600 focus:border-primary outline-none transition-colors">
+                <div class="flex gap-4">
+                    <button id="saveScoreBtn"
+                        class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">保存</button>
+                    <button id="skipSaveBtn"
+                        class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">跳过</button>
+                </div>
+            </div>
+
+            <!-- 排行榜弹窗 -->
+            <div id="leaderboardModal"
+                class="absolute inset-0 bg-dark/95 flex flex-col items-center justify-center p-6 z-20 hidden">
+                <h3 class="text-2xl font-['Press_Start_2P'] mb-4 text-warning">🏆 排行榜</h3>
+                <div class="flex gap-2 mb-4">
+                    <button id="lbClassicBtn"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-primary text-white">经典模式</button>
+                    <button id="lbNewModeBtn"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-all bg-gray-700 text-gray-300">新模式</button>
+                </div>
+                <div class="w-full max-w-sm bg-gray-800/50 rounded-xl p-4 mb-6 max-h-72 overflow-y-auto scrollbar-hide">
+                    <div id="leaderboardList" class="space-y-2">
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <button id="closeLeaderboardBtn"
+                        class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">关闭</button>
+                    <button id="clearLeaderboardBtn"
+                        class="bg-danger hover:bg-danger/80 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 active:scale-95 game-shadow">清空</button>
+                </div>
             </div>
         </div>
 
         <!-- 移动设备控制按钮 -->
-
+        <div id="mobileControls" class="mt-4 flex md:hidden controls-section">
+            <div class="flex-1 flex items-center justify-center space-x-8">
+                <button id="mobileLeftBtn"
+                    class="bg-primary/80 text-white h-16 w-16 rounded-full flex items-center justify-center control-shadow active:control-active">
+                    <i class="fa fa-arrow-left text-2xl"></i>
+                </button>
+                <button id="mobileRightBtn"
+                    class="bg-primary/80 text-white h-16 w-16 rounded-full flex items-center justify-center control-shadow active:control-active">
+                    <i class="fa fa-arrow-right text-2xl"></i>
+                </button>
+            </div>
+        </div>
 
         <!-- 双人模式控制按钮 -->
         <div id="multiplayerControls" class="mt-4 flex md:hidden controls-section hidden">
@@ -524,6 +554,10 @@
         // ==================== 粒子类 ====================
         class Particle {
             constructor(x, y, options = {}) {
+                this.reset(x, y, options);
+            }
+
+            reset(x, y, options = {}) {
                 this.x = x;
                 this.y = y;
                 this.size = options.size || Math.random() * 3 + 1;
@@ -846,19 +880,36 @@
         class EffectManager {
             constructor() {
                 this.particles = [];
+                this.particlePool = [];
+                this.poolMaxSize = 200;
                 this.effects = [];
                 this.lavaBubbles = [];
                 this.lastBubbleTime = 0;
             }
 
-            // 添加粒子
-            addParticles(count, x, y, options = {}) {
-                for (let i = 0; i < count; i++) {
-                    this.particles.push(new Particle(x, y, options));
+            getParticle(x, y, options) {
+                let particle;
+                if (this.particlePool.length > 0) {
+                    particle = this.particlePool.pop();
+                    particle.reset(x, y, options);
+                } else {
+                    particle = new Particle(x, y, options);
+                }
+                return particle;
+            }
+
+            returnParticle(particle) {
+                if (this.particlePool.length < this.poolMaxSize) {
+                    this.particlePool.push(particle);
                 }
             }
 
-            // 添加熔岩气泡
+            addParticles(count, x, y, options = {}) {
+                for (let i = 0; i < count; i++) {
+                    this.particles.push(this.getParticle(x, y, options));
+                }
+            }
+
             addLavaBubble(canvasWidth) {
                 const now = Date.now();
                 if (now - this.lastBubbleTime > 200) {
@@ -872,7 +923,6 @@
                 }
             }
 
-            // 添加闪烁效果
             addFlashEffect(target, color, duration = 15) {
                 this.effects.push({
                     type: 'flash',
@@ -883,7 +933,6 @@
                 });
             }
 
-            // 添加缩放效果
             addScaleEffect(target, scale, duration = 15) {
                 this.effects.push({
                     type: 'scale',
@@ -895,7 +944,6 @@
                 });
             }
 
-            // 添加渐进式缩放效果
             addProgressiveScaleEffect(target, startScale, endScale, duration) {
                 this.effects.push({
                     type: 'progressive-scale',
@@ -908,9 +956,7 @@
                 });
             }
 
-            // 添加传送效果
             addTeleportEffect(x1, y1, x2, y2, color = '#06B6D4') {
-                // 起点效果
                 this.addParticles(15, x1, y1, {
                     speedX: (Math.random() - 0.5) * 6,
                     speedY: (Math.random() - 0.5) * 6,
@@ -921,7 +967,6 @@
                     explosive: true
                 });
 
-                // 终点效果
                 setTimeout(() => {
                     this.addParticles(15, x2, y2, {
                         speedX: (Math.random() - 0.5) * 6,
@@ -934,7 +979,6 @@
                     });
                 }, 200);
 
-                // 传送轨迹
                 for (let i = 0; i < 10; i++) {
                     const progress = i / 10;
                     const x = x1 + (x2 - x1) * progress;
@@ -953,12 +997,19 @@
                 }
             }
 
-            // 更新所有特效
             update(canvasWidth) {
-                this.particles = this.particles.filter(particle => particle.update());
-                this.lavaBubbles = this.lavaBubbles.filter(bubble => bubble.update());
+                const aliveParticles = [];
+                for (let i = 0; i < this.particles.length; i++) {
+                    const particle = this.particles[i];
+                    if (particle.update()) {
+                        aliveParticles.push(particle);
+                    } else {
+                        this.returnParticle(particle);
+                    }
+                }
+                this.particles = aliveParticles;
 
-                // 添加新的熔岩气泡
+                this.lavaBubbles = this.lavaBubbles.filter(bubble => bubble.update());
                 this.addLavaBubble(canvasWidth);
 
                 this.effects = this.effects.filter(effect => {
@@ -976,13 +1027,13 @@
                 });
             }
 
-            // 绘制所有特效
             draw(ctx) {
-                this.particles.forEach(particle => particle.draw(ctx));
+                for (let i = 0; i < this.particles.length; i++) {
+                    this.particles[i].draw(ctx);
+                }
                 this.lavaBubbles.forEach(bubble => bubble.draw(ctx));
             }
 
-            // 获取目标的闪烁颜色
             getFlashColor(targetId) {
                 const effect = this.effects.find(effect =>
                     effect.type === 'flash' && effect.target === targetId && effect.remaining > 0
@@ -990,7 +1041,6 @@
                 return effect ? effect.color : null;
             }
 
-            // 获取目标的缩放比例
             getScale(targetId) {
                 const progressiveEffect = this.effects.find(effect =>
                     effect.type === 'progressive-scale' && effect.target === targetId && effect.remaining > 0
@@ -1248,7 +1298,7 @@
 
                 try {
                     if (!this.backgroundMusic) {
-                        this.backgroundMusic = new Audio('bgm.mp3');
+                        this.backgroundMusic = new Audio('assets/bgm.mp3');
                         this.backgroundMusic.loop = true;
                         this.backgroundMusic.volume = this.mainVolume * 0.5;
                     }
@@ -1284,231 +1334,145 @@
             }
         }
 
+        // ==================== 游戏配置 ====================
+        const CONFIG = {
+            GAME: {
+                DEATH_DELAY: 60,
+                GROW_DURATION: 30,
+                BASE_SPEED: 2,
+                SPEED_INCREASE_INTERVAL: 20,
+                PLATFORM_SPAWN_RATE: 50,
+                PLATFORM_DISTANCE_THRESHOLD: 100,
+                MAX_DELTA_TIME: 1000 / 30,
+                TARGET_FPS: 60
+            },
+            PLAYER: {
+                WIDTH: 30,
+                HEIGHT: 40,
+                SPEED: 5,
+                JUMP_FORCE: -15,
+                GRAVITY: 0.7,
+                MAX_HEALTH: 10,
+                BOUNCE_FORCE: -10,
+                ARM_SWING_SPEED: 0.015,
+                SHADOW_SIZE: 20,
+                SHADOW_OPACITY: 0.3
+            },
+            POWERUP_DURATION: {
+                INVINCIBLE: 20 * 60,
+                SIZE_CHANGE: 20 * 60,
+                ALL_NORMAL: 20 * 60,
+                REDUCED_GRAVITY: 15 * 60,
+                INCREASED_GRAVITY: 15 * 60,
+                PLATFORM_SLOW: 15 * 60,
+                PLATFORM_SPEED_UP: 15 * 60,
+                REVERSE_CONTROLS: 15 * 60,
+                NARROW_VISION: 15 * 60,
+                SUPERMAN: 10 * 60
+            },
+            PLATFORM: {
+                MIN_WIDTH: 90,
+                WIDTH_VARIATION: 30,
+                HEIGHT: 14,
+                FLIP_DISAPPEAR_TIME: 120,
+                FLIP_BLINK_END: 42,
+                MOVE_SPEED_MIN: 1,
+                MOVE_SPEED_MAX: 2.5,
+                MOVE_RANGE_MIN: 80,
+                MOVE_RANGE_MAX: 180
+            },
+            POWERUP: {
+                RADIUS: 16,
+                INTERVAL_SCORE: 3,
+                DEBUFF_LIFE_DURATION: 10000,
+                DEBUFF_ATTRACTION_START: 500,
+                ATTRACTION_SPEED: 3
+            },
+            COLORS: {
+                P1: '#FF2732',
+                P2: '#33931C',
+                PLATFORM_NORMAL: '#3B82F6',
+                PLATFORM_FLIP: '#10B981',
+                PLATFORM_FLIP_FLIPPED: '#6B7280',
+                PLATFORM_CONVEYOR: '#F3F4F6',
+                PLATFORM_SPIKE: '#EF4444',
+                PLATFORM_SPRING: '#10B981',
+                PLATFORM_MUD: '#8B4513',
+                PLATFORM_ELECTRIC: '#FBBF24'
+            }
+        };
+
         // ==================== 游戏主类 ====================
         class Game {
             constructor() {
                 this.effectManager = new EffectManager();
-                this.soundManager = new SoundManager(this); // 传入游戏实例
+                this.soundManager = new SoundManager(this);
                 this.canvas = document.getElementById('gameCanvas');
                 this.ctx = this.canvas.getContext('2d');
 
-                // 游戏模式
-                this.gameMode = 'classic';
+                this.gameMode = 'new';
+                this.playerMode = 'single';
 
-                // 玩家模式
-                this.playerMode = 'single'; // 默认双人模式
-
-                // 模式选择元素
                 this.modeButton = document.getElementById('modeButton');
                 this.modeDropdown = document.getElementById('modeDropdown');
                 this.currentModeText = document.getElementById('currentModeText');
                 this.modeOptions = document.querySelectorAll('.mode-option');
 
-                // 开发者模式相关属性
                 this.devModeClickCount = 0;
-                this.isDeveloperMode = false;
+                this.developerMode = false;
                 this.lastModeClickTime = 0;
 
-                // 自动选择玩家设置（仅当前会话有效）
                 this.autoSelectPlayer = null;
 
-                // 全屏按钮元素
                 this.fullscreenButton = document.getElementById('fullscreenButton');
 
-                // 道具相关元素
                 this.powerUpIndicator = document.getElementById('powerUpIndicator');
                 this.powerUpText = document.getElementById('powerUpText');
 
-                // 画布设置
                 window.addEventListener('resize', () => this.resizeCanvas());
 
-                // 时间控制
                 this.lastTime = 0;
                 this.deltaTime = 0;
-                this.maxDeltaTime = 1000 / 30;
-                // 帧率计算
+                this.maxDeltaTime = CONFIG.GAME.MAX_DELTA_TIME;
                 this.frameCount = 0;
                 this.lastFpsUpdate = 0;
                 this.currentFps = 0;
-                // 开发者模式
-                this.developerMode = false;
 
-                // 游戏状态
                 this.isRunning = false;
                 this.isPaused = false;
                 this.gameOver = false;
 
-                // 背景音乐开关状态（默认开启）
                 this.isBgmEnabled = true;
-                this.deathDelay = 60;
-                this.growDuration = 30;
+                this.deathDelay = CONFIG.GAME.DEATH_DELAY;
+                this.growDuration = CONFIG.GAME.GROW_DURATION;
                 this.score = 0;
                 this.platformsRemoved = 0;
-                this.speed = 2;
-                this.baseSpeed = 2;
-                this.speedIncreaseInterval = 50;
-                this.platformSpawnRate = 50;
+                this.speed = CONFIG.GAME.BASE_SPEED;
+                this.baseSpeed = CONFIG.GAME.BASE_SPEED;
+                this.speedIncreaseInterval = CONFIG.GAME.SPEED_INCREASE_INTERVAL;
+                this.platformSpawnRate = CONFIG.GAME.PLATFORM_SPAWN_RATE;
                 this.spawnCounter = 0;
                 this.lastPlatformY = 0;
-                this.platformDistanceThreshold = 100;
+                this.platformDistanceThreshold = CONFIG.GAME.PLATFORM_DISTANCE_THRESHOLD;
 
-                // 背景偏移量
                 this.backgroundOffset = 0;
 
-                // 道具相关设置
                 this.lastPowerUpScore = 0;
                 this.powerUpInterval = 12;
 
-
-                // 全局效果道具状态变量
-                this.isAllNormal = false;
-                this.allNormalTimer = 0;
-                this.isReducedGravity = false;
-                this.reducedGravityTimer = 0;
-                this.isIncreasedGravity = false;
-                this.increasedGravityTimer = 0;
-                this.isPlatformSlow = false;
-                this.platformSlowTimer = 0;
-                this.isPlatformSpeedUp = false;
-                this.platformSpeedUpTimer = 0;
-                this.isNarrowVision = false;
-                this.narrowVisionTimer = 0;
-
-
-
-                // 双人模式玩家对象
-                this.players = {
-                    p1: {
-                        x: this.canvas.width / 2 - 50,
-                        y: 10,
-                        width: 30,
-                        height: 40,
-                        originalWidth: 30,
-                        originalHeight: 40,
-                        velocityX: 0,
-                        velocityY: 0,
-                        speed: 5,
-                        jumpForce: -15,
-                        gravity: 0.7,
-                        originalGravity: 0.7,
-                        onGround: false,
-                        direction: 1,
-                        health: 10,
-                        maxHealth: 10,
-                        isBouncing: false,
-                        bounceForce: -10,
-                        bounceCounter: 0,
-                        standingPlatform: null,
-                        previousPlatform: null,
-                        healedPlatforms: new Set(),
-                        damagedPlatforms: new Set(),
-                        flashTimer: 0,
-                        isDead: false,
-                        deathEffectPlayed: false,
-                        deathTimer: 0,
-
-                        armAngleLeft: 0,
-                        armAngleRight: 0,
-                        armSwingSpeed: 0.015,
-                        armPhaseLeft: 0,
-                        armPhaseRight: Math.PI,
-                        isInvincible: false,
-                        invincibleTimer: 0,
-                        isSmall: false,
-                        isBig: false,
-                        sizeTimer: 0,
-                        isTeleporting: false,
-                        goldenLegUses: 0,
-                        goldenHeadUses: 0,
-                        hasGoldenLeg: false,
-                        hasGoldenHead: false,
-                        lifeSaverAvailable: this.gameMode === 'new',
-                        isControlReversed: false,
-                        reverseControlsTimer: 0,
-
-                        collisionDisabledTimer: 0,
-                        isElectrocuted: false,
-                        electrocuteTimer: 0,
-                        walkCycle: 0,
-                        isJumping: false,
-                        isFalling: false,
-                        landing: false,
-                        expression: 'normal',
-                        bodySquash: 1,
-                        bodyStretch: 1,
-                        shadowSize: 20,
-                        shadowOpacity: 0.3,
-                        legAngleLeft: 0,
-                        legAngleRight: 0,
-                        alpha: 1,
-                        bodyColor: '#FF2732'
-                    },
-                    p2: {
-                        x: this.canvas.width / 2 + 50,
-                        y: 10,
-                        width: 30,
-                        height: 40,
-                        originalWidth: 30,
-                        originalHeight: 40,
-                        velocityX: 0,
-                        velocityY: 0,
-                        speed: 5,
-                        jumpForce: -15,
-                        gravity: 0.7,
-                        originalGravity: 0.7,
-                        onGround: false,
-                        direction: 1,
-                        health: 10,
-                        maxHealth: 10,
-                        isBouncing: false,
-                        bounceForce: -10,
-                        bounceCounter: 0,
-                        standingPlatform: null,
-                        previousPlatform: null,
-                        healedPlatforms: new Set(),
-                        damagedPlatforms: new Set(),
-                        flashTimer: 0,
-                        isDead: false,
-                        deathEffectPlayed: false,
-                        deathTimer: 0,
-                        armAngleLeft: 0,
-                        armAngleRight: 0,
-                        armSwingSpeed: 0.015,
-                        armPhaseLeft: 0,
-                        armPhaseRight: Math.PI,
-                        isInvincible: false,
-                        invincibleTimer: 0,
-                        isSmall: false,
-                        isBig: false,
-                        sizeTimer: 0,
-                        isTeleporting: false,
-                        goldenLegUses: 0,
-                        goldenHeadUses: 0,
-                        hasGoldenLeg: false,
-                        hasGoldenHead: false,
-                        lifeSaverAvailable: this.gameMode === 'new',
-                        isControlReversed: false,
-                        reverseControlsTimer: 0,
-                        isIncreasedGravity: false,
-                        increasedGravityTimer: 0,
-                        isNarrowVision: false,
-                        narrowVisionTimer: 0,
-                        collisionDisabledTimer: 0,
-                        walkCycle: 0,
-                        isJumping: false,
-                        isFalling: false,
-                        landing: false,
-                        expression: 'normal',
-                        bodySquash: 1,
-                        bodyStretch: 1,
-                        shadowSize: 20,
-                        shadowOpacity: 0.3,
-                        legAngleLeft: 0,
-                        legAngleRight: 0,
-                        alpha: 1,
-                        bodyColor: '#33931C'
-                    }
+                this.globalEffects = {
+                    allNormal: { active: false, timer: 0 },
+                    reducedGravity: { active: false, timer: 0 },
+                    increasedGravity: { active: false, timer: 0 },
+                    platformSlow: { active: false, timer: 0 },
+                    platformSpeedUp: { active: false, timer: 0 },
+                    narrowVision: { active: false, timer: 0 }
                 };
+
+                this.gameTimers = [];
+
+                this.players = {};
+                this.resetPlayers();
 
                 // 游戏元素
                 this.platforms = [];
@@ -1564,6 +1528,12 @@
 
                 // 在玩家对象初始化后调整画布
                 this.resizeCanvas();
+
+                // 初始化说明区域显示
+                this.updateInstructionsDisplay();
+
+                // 初始化排行榜默认数据
+                this.initDefaultLeaderboard();
             }
 
             // 更新背景音乐开关图标
@@ -1612,6 +1582,18 @@
                 this.backToStartFromPauseButton.addEventListener('click', () => this.backToStart());
                 this.fullscreenButton.addEventListener('click', () => this.toggleFullscreen());
 
+                document.getElementById('showLeaderboardBtn').addEventListener('click', () => this.showLeaderboard());
+                document.getElementById('startScreenLeaderboardBtn').addEventListener('click', () => this.showLeaderboard());
+                document.getElementById('closeLeaderboardBtn').addEventListener('click', () => this.hideLeaderboard());
+                document.getElementById('saveScoreBtn').addEventListener('click', () => this.savePlayerScore());
+                document.getElementById('skipSaveBtn').addEventListener('click', () => this.skipSaveScore());
+                document.getElementById('clearLeaderboardBtn').addEventListener('click', () => this.clearLeaderboard());
+                document.getElementById('lbClassicBtn').addEventListener('click', () => this.showLeaderboard('classic'));
+                document.getElementById('lbNewModeBtn').addEventListener('click', () => this.showLeaderboard('new'));
+                document.getElementById('playerNameInput').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') this.savePlayerScore();
+                });
+
                 // 模式选择事件
                 this.modeButton.addEventListener('click', () => {
                     this.modeDropdown.classList.toggle('hidden');
@@ -1627,8 +1609,7 @@
                             const now = Date.now();
                             if (now - this.lastModeClickTime < 2000) {
                                 this.devModeClickCount++;
-                                if (this.devModeClickCount >= 7 && !this.isDeveloperMode) {
-                                    this.isDeveloperMode = true;
+                                if (this.devModeClickCount >= 7 && !this.developerMode) {
                                     this.developerMode = true;
                                     this.showTempMessage("开发者模式已激活!", 2000);
                                     this.createDeveloperToolbar();
@@ -1645,8 +1626,8 @@
                             this.currentModeText.textContent = e.target.textContent;
                             this.modeDropdown.classList.add('hidden');
                             this.soundManager.playModeChangeSound();
+                            this.updateInstructionsDisplay();
 
-                            // 如果游戏正在运行，重启游戏
                             if (this.isRunning) {
                                 this.startGame();
                             }
@@ -1692,12 +1673,12 @@
                         keyObj[key] = false;
                     });
                 };
-                setupControl('leftBtn', 'left');
-                setupControl('rightBtn', 'right');
                 setupControl('p1LeftBtn', 'left', 'p1');
                 setupControl('p1RightBtn', 'right', 'p1');
                 setupControl('p2LeftBtn', 'left', 'p2');
                 setupControl('p2RightBtn', 'right', 'p2');
+                setupControl('mobileLeftBtn', 'left', 'p1');
+                setupControl('mobileRightBtn', 'right', 'p1');
                 // 添加触屏控制事件
                 this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e));
                 this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e));
@@ -1763,17 +1744,20 @@
                 if (this.playerMode === 'single') {
                     this.touchSide = side;
                     this.keys[side === 'left' ? 'left' : 'right'] = true;
-                    this.players.p1.direction = side === 'left' ? -1 : 1;
+                    const direction = side === 'left' ? -1 : 1;
+                    this.players.p1.direction = this.players.p1.isControlReversed ? -direction : direction;
                 } else {
                     // 双人模式下处理两个玩家的触摸
                     if (playerArea === 'p1') {
                         this.touchSide = side;
                         this.keys[side === 'left' ? 'left' : 'right'] = true;
-                        this.players.p1.direction = side === 'left' ? -1 : 1;
+                        const direction = side === 'left' ? -1 : 1;
+                        this.players.p1.direction = this.players.p1.isControlReversed ? -direction : direction;
                     } else if (playerArea === 'p2') {
                         this.p2TouchSide = side;
                         this.p2Keys[side === 'left' ? 'left' : 'right'] = true;
-                        this.players.p2.direction = side === 'left' ? -1 : 1;
+                        const direction = side === 'left' ? -1 : 1;
+                        this.players.p2.direction = this.players.p2.isControlReversed ? -direction : direction;
                     }
                 }
             }
@@ -1800,7 +1784,8 @@
                         this.keys[this.touchSide === 'left' ? 'left' : 'right'] = false;
                         this.touchSide = newSide;
                         this.keys[newSide === 'left' ? 'left' : 'right'] = true;
-                        this.players.p1.direction = newSide === 'left' ? -1 : 1;
+                        const direction = newSide === 'left' ? -1 : 1;
+                        this.players.p1.direction = this.players.p1.isControlReversed ? -direction : direction;
                     }
                 } else {
                     // 双人模式下处理两个玩家的触摸移动
@@ -1810,7 +1795,8 @@
                             this.keys[this.touchSide === 'left' ? 'left' : 'right'] = false;
                             this.touchSide = newSide;
                             this.keys[newSide === 'left' ? 'left' : 'right'] = true;
-                            this.players.p1.direction = newSide === 'left' ? -1 : 1;
+                            const direction = newSide === 'left' ? -1 : 1;
+                            this.players.p1.direction = this.players.p1.isControlReversed ? -direction : direction;
                         }
                     } else if (playerArea === 'p2' && this.p2TouchSide) {
                         const newSide = currentX < canvasCenter ? 'left' : 'right';
@@ -1818,7 +1804,8 @@
                             this.p2Keys[this.p2TouchSide === 'left' ? 'left' : 'right'] = false;
                             this.p2TouchSide = newSide;
                             this.p2Keys[newSide === 'left' ? 'left' : 'right'] = true;
-                            this.players.p2.direction = newSide === 'left' ? -1 : 1;
+                            const direction = newSide === 'left' ? -1 : 1;
+                            this.players.p2.direction = this.players.p2.isControlReversed ? -direction : direction;
                         }
                     }
                 }
@@ -1862,15 +1849,18 @@
                 // 单人模式下只处理p1玩家的鼠标点击
                 if (this.playerMode === 'single') {
                     this.keys[side === 'left' ? 'left' : 'right'] = true;
-                    this.players.p1.direction = side === 'left' ? -1 : 1;
+                    const direction = side === 'left' ? -1 : 1;
+                    this.players.p1.direction = this.players.p1.isControlReversed ? -direction : direction;
                 } else {
                     // 双人模式下处理两个玩家的鼠标点击
                     if (playerArea === 'p1') {
                         this.keys[side === 'left' ? 'left' : 'right'] = true;
-                        this.players.p1.direction = side === 'left' ? -1 : 1;
+                        const direction = side === 'left' ? -1 : 1;
+                        this.players.p1.direction = this.players.p1.isControlReversed ? -direction : direction;
                     } else if (playerArea === 'p2') {
                         this.p2Keys[side === 'left' ? 'left' : 'right'] = true;
-                        this.players.p2.direction = side === 'left' ? -1 : 1;
+                        const direction = side === 'left' ? -1 : 1;
+                        this.players.p2.direction = this.players.p2.isControlReversed ? -direction : direction;
                     }
                 }
             }
@@ -1920,11 +1910,20 @@
                     this.fullscreenButton.innerHTML = '<i class="fa fa-expand"></i>';
                 }
 
-                // 播放全屏切换音效
                 this.soundManager.playFullscreenSound();
             }
 
-            // 返回开始菜单
+            updateInstructionsDisplay() {
+                const newModeExtraEl = document.getElementById('newModeExtra');
+                if (newModeExtraEl) {
+                    if (this.gameMode === 'new') {
+                        newModeExtraEl.classList.remove('hidden');
+                    } else {
+                        newModeExtraEl.classList.add('hidden');
+                    }
+                }
+            }
+
             backToStart() {
                 this.isRunning = false;
                 this.gameOver = false;
@@ -1932,8 +1931,9 @@
                 this.startMenu.classList.remove('hidden');
                 this.pauseButton.classList.add('hidden');
                 this.pauseMenu.classList.add('hidden');
+                document.getElementById('leaderboardModal').classList.add('hidden');
+                document.getElementById('nameInputModal').classList.add('hidden');
 
-                // 重置按钮显示状态
                 document.getElementById('multiplayerControls').classList.add('hidden');
 
                 this.init();
@@ -1965,22 +1965,22 @@
                 return {
                     x: x,
                     y: y,
-                    width: 30,
-                    height: 40,
-                    originalWidth: 30,
-                    originalHeight: 40,
+                    width: CONFIG.PLAYER.WIDTH,
+                    height: CONFIG.PLAYER.HEIGHT,
+                    originalWidth: CONFIG.PLAYER.WIDTH,
+                    originalHeight: CONFIG.PLAYER.HEIGHT,
                     velocityX: 0,
                     velocityY: 0,
-                    speed: 5,
-                    jumpForce: -15,
-                    gravity: 0.7,
-                    originalGravity: 0.7,
+                    speed: CONFIG.PLAYER.SPEED,
+                    jumpForce: CONFIG.PLAYER.JUMP_FORCE,
+                    gravity: CONFIG.PLAYER.GRAVITY,
+                    originalGravity: CONFIG.PLAYER.GRAVITY,
                     onGround: false,
                     direction: 1,
-                    health: 10,
-                    maxHealth: 10,
+                    health: CONFIG.PLAYER.MAX_HEALTH,
+                    maxHealth: CONFIG.PLAYER.MAX_HEALTH,
                     isBouncing: false,
-                    bounceForce: -10,
+                    bounceForce: CONFIG.PLAYER.BOUNCE_FORCE,
                     bounceCounter: 0,
                     standingPlatform: null,
                     previousPlatform: null,
@@ -1992,7 +1992,7 @@
                     deathTimer: 0,
                     armAngleLeft: 0,
                     armAngleRight: 0,
-                    armSwingSpeed: 0.015,
+                    armSwingSpeed: CONFIG.PLAYER.ARM_SWING_SPEED,
                     armPhaseLeft: 0,
                     armPhaseRight: Math.PI,
                     isInvincible: false,
@@ -2010,6 +2010,8 @@
                     lifeSaverAvailable: lifeSaverAvailable,
                     isControlReversed: false,
                     reverseControlsTimer: 0,
+                    isReducedGravity: false,
+                    reducedGravityTimer: 0,
                     isIncreasedGravity: false,
                     increasedGravityTimer: 0,
                     isPlatformSpeedUp: false,
@@ -2017,6 +2019,9 @@
                     isNarrowVision: false,
                     narrowVisionTimer: 0,
                     collisionDisabledTimer: 0,
+                    isElectrocuted: false,
+                    electrocuteTimer: 0,
+                    electrocuteShake: 0,
                     walkCycle: 0,
                     isJumping: false,
                     isFalling: false,
@@ -2024,8 +2029,8 @@
                     expression: 'normal',
                     bodySquash: 1,
                     bodyStretch: 1,
-                    shadowSize: 20,
-                    shadowOpacity: 0.3,
+                    shadowSize: CONFIG.PLAYER.SHADOW_SIZE,
+                    shadowOpacity: CONFIG.PLAYER.SHADOW_OPACITY,
                     legAngleLeft: 0,
                     legAngleRight: 0,
                     alpha: 1,
@@ -2033,17 +2038,31 @@
                 };
             }
 
-            // 重置玩家对象
             resetPlayers() {
-                // 根据玩家模式初始化players对象
                 this.players = {
-                    p1: this.createPlayerTemplate(this.canvas.width / 2 - 50, 10, '#FF2732'),
-                    p2: this.createPlayerTemplate(this.canvas.width / 2 + 50, 10, '#33931C')
+                    p1: this.createPlayerTemplate(this.canvas.width / 2 - 50, 10, CONFIG.COLORS.P1),
+                    p2: this.createPlayerTemplate(this.canvas.width / 2 + 50, 10, CONFIG.COLORS.P2)
+                };
+            }
+
+            addGameTimer(delayFrames, callback) {
+                this.gameTimers.push({
+                    remaining: delayFrames,
+                    callback: callback
+                });
+            }
+
+            updateGameTimers() {
+                for (let i = this.gameTimers.length - 1; i >= 0; i--) {
+                    const timer = this.gameTimers[i];
+                    timer.remaining--;
+                    if (timer.remaining <= 0) {
+                        timer.callback();
+                        this.gameTimers.splice(i, 1);
+                    }
                 }
             }
 
-
-            // 初始化游戏
             init() {
                 this.effectManager = new EffectManager();
                 this.platforms = [];
@@ -2051,22 +2070,14 @@
                 this.ghosts = [];
                 this.createInitialPlatforms();
 
-                // 重置背景偏移
                 this.backgroundOffset = 0;
-
-                // 重置道具生成记录
                 this.lastPowerUpScore = 0;
-
-                // 重置幽灵数组
                 this.ghosts = [];
 
-                // 重置玩家对象
                 this.resetPlayers();
 
-                // 新模式开始时自动获得一个救命道具
                 if (this.gameMode === 'new') {
                     this.players.p1.lifeSaverAvailable = true;
-                    // 双人模式下才给p2玩家救命道具
                     if (this.playerMode === 'multiplayer') {
                         this.players.p2.lifeSaverAvailable = true;
                     }
@@ -2078,22 +2089,13 @@
                 this.isPaused = false;
                 this.lastTime = 0;
                 this.deltaTime = 0;
+                this.gameTimers = [];
 
-                // 重置全局效果道具状态
-                this.isAllNormal = false;
-                this.allNormalTimer = 0;
-                this.isReducedGravity = false;
-                this.reducedGravityTimer = 0;
-                this.isIncreasedGravity = false;
-                this.increasedGravityTimer = 0;
-                this.isPlatformSlow = false;
-                this.platformSlowTimer = 0;
-                this.isPlatformSpeedUp = false;
-                this.platformSpeedUpTimer = 0;
-                this.isNarrowVision = false;
-                this.narrowVisionTimer = 0;
+                for (const key in this.globalEffects) {
+                    this.globalEffects[key].active = false;
+                    this.globalEffects[key].timer = 0;
+                }
 
-                // 隐藏道具提示
                 this.powerUpIndicator.classList.add('hidden');
             }
 
@@ -2113,31 +2115,29 @@
 
             // 创建平台
             createPlatform() {
-                const width = Math.random() * 30 + 90;
+                const width = Math.random() * CONFIG.PLATFORM.WIDTH_VARIATION + CONFIG.PLATFORM.MIN_WIDTH;
                 const x = Math.random() * (this.canvas.width - width);
                 const y = this.canvas.height + 20;
 
-                // 根据游戏模式选择平台类型
                 const platformTypes = this.gameMode === 'classic' ?
                     this.classicPlatformTypes : this.newModePlatformTypes;
 
                 const type = platformTypes[Math.floor(Math.random() * platformTypes.length)];
 
-                // 移动平台的额外属性
                 let moveSpeed = 0;
                 let moveRange = 0;
                 let moveDirection = 1;
                 let movePosition = 0;
 
                 if (type.startsWith('moving-')) {
-                    moveSpeed = (Math.random() * 1.5) + 1;
-                    moveRange = Math.random() * 100 + 80;
+                    moveSpeed = Math.random() * (CONFIG.PLATFORM.MOVE_SPEED_MAX - CONFIG.PLATFORM.MOVE_SPEED_MIN) + CONFIG.PLATFORM.MOVE_SPEED_MIN;
+                    moveRange = Math.random() * (CONFIG.PLATFORM.MOVE_RANGE_MAX - CONFIG.PLATFORM.MOVE_RANGE_MIN) + CONFIG.PLATFORM.MOVE_RANGE_MIN;
                     moveDirection = Math.random() > 0.5 ? 1 : -1;
                 }
 
                 this.platforms.push({
                     id: Date.now() + Math.random(),
-                    x, y, width, height: 14,
+                    x, y, width, height: CONFIG.PLATFORM.HEIGHT,
                     type: type.replace('moving-', ''),
                     originalType: type,
                     flipped: false,
@@ -2151,7 +2151,12 @@
                     originalMoveSpeed: moveSpeed,
                     isMud: type.includes('mud'),
                     isElectric: type.includes('electric'),
-                    electricTimer: 0
+                    electricTimer: 0,
+                    mudDots: type.includes('mud') ? Array.from({ length: 4 }, () => ({
+                        x: Math.random(),
+                        y: Math.random(),
+                        size: Math.random() * 3 + 1
+                    })) : null
                 });
             }
 
@@ -2222,7 +2227,6 @@
                 this.powerUps.push(new PowerUp(x, y, type));
             }
 
-            // 游戏控制方法
             startGame() {
                 this.init();
                 this.isRunning = true;
@@ -2230,6 +2234,8 @@
                 this.startMenu.classList.add('hidden');
                 this.pauseMenu.classList.add('hidden');
                 this.gameOverMenu.classList.add('hidden');
+                document.getElementById('leaderboardModal').classList.add('hidden');
+                document.getElementById('nameInputModal').classList.add('hidden');
                 this.pauseButton.classList.remove('hidden');
                 this.soundManager.playStartGameSound();
                 // 根据背景音乐开关状态决定是否播放背景音乐
@@ -2237,11 +2243,13 @@
                     this.soundManager.playBackgroundMusic();
                 }
 
-                // 根据玩家模式决定是否显示双人控制按钮
+                // 根据玩家模式决定显示哪种控制按钮
                 if (this.playerMode === 'multiplayer') {
                     document.getElementById('multiplayerControls').classList.remove('hidden');
+                    document.getElementById('mobileControls').classList.add('hidden');
                 } else {
                     document.getElementById('multiplayerControls').classList.add('hidden');
+                    document.getElementById('mobileControls').classList.remove('hidden');
                 }
 
                 this.lastTime = performance.now();
@@ -2288,16 +2296,13 @@
             }
 
             endGame(player) {
-                // 标记当前玩家死亡
                 player.deathEffectPlayed = true;
 
-                // 检查是否两个玩家都死亡
                 const activePlayers = this.getActivePlayers();
                 const bothPlayersDead = activePlayers.every(player => player.deathEffectPlayed);
                 if (!bothPlayersDead) {
-                    return; // 还有一个玩家存活，不结束游戏
+                    return;
                 }
-
 
                 this.isRunning = false;
                 this.gameOver = true;
@@ -2305,6 +2310,178 @@
                 this.pauseButton.classList.add('hidden');
                 this.finalScore.textContent = `${this.score} 层`;
                 this.soundManager.stopBackgroundMusic();
+                document.getElementById('mobileControls').classList.add('hidden');
+                document.getElementById('multiplayerControls').classList.add('hidden');
+
+                if (this.score > 0 && this.isHighScore(this.score)) {
+                    this.showNameInput();
+                }
+            }
+
+            getLeaderboard(mode = this.gameMode) {
+                try {
+                    const allData = localStorage.getItem('mandown_leaderboard');
+                    const allLeaderboards = allData ? JSON.parse(allData) : {};
+                    return allLeaderboards[mode] || [];
+                } catch (e) {
+                    return [];
+                }
+            }
+
+            initDefaultLeaderboard() {
+                try {
+                    const allData = localStorage.getItem('mandown_leaderboard');
+                    const allLeaderboards = allData ? JSON.parse(allData) : {};
+
+                    const classicData = [
+                        { name: "leo", score: 52, date: "2026/7/21" },
+                        { name: "Mbappé", score: 22, date: "2026/7/21" },
+                        { name: "Messi", score: 21, date: "2026/7/21" },
+                        { name: "CR7", score: 11, date: "2026/7/21" }
+                    ];
+
+                    const newModeData = [
+                        { name: "leo", score: 58, date: "2026/7/21" },
+                        { name: "Mbappé", score: 22, date: "2026/7/21" },
+                        { name: "Messi", score: 21, date: "2026/7/21" },
+                        { name: "CR7", score: 11, date: "2026/7/21" }
+                    ];
+
+                    let needSave = false;
+
+                    if (!allLeaderboards.classic || allLeaderboards.classic.length === 0) {
+                        allLeaderboards.classic = classicData;
+                        needSave = true;
+                    }
+
+                    if (!allLeaderboards.new || allLeaderboards.new.length === 0) {
+                        allLeaderboards.new = newModeData;
+                        needSave = true;
+                    }
+
+                    if (needSave) {
+                        localStorage.setItem('mandown_leaderboard', JSON.stringify(allLeaderboards));
+                    }
+                } catch (e) {
+                    console.error('初始化排行榜失败:', e);
+                }
+            }
+
+            saveLeaderboard(leaderboard, mode = this.gameMode) {
+                try {
+                    const allData = localStorage.getItem('mandown_leaderboard');
+                    const allLeaderboards = allData ? JSON.parse(allData) : {};
+                    allLeaderboards[mode] = leaderboard;
+                    localStorage.setItem('mandown_leaderboard', JSON.stringify(allLeaderboards));
+                } catch (e) {
+                    console.error('保存排行榜失败:', e);
+                }
+            }
+
+            isHighScore(score, mode = this.gameMode) {
+                const leaderboard = this.getLeaderboard(mode);
+                if (leaderboard.length < 10) return true;
+                return score > leaderboard[leaderboard.length - 1].score;
+            }
+
+            showNameInput() {
+                const nameInputModal = document.getElementById('nameInputModal');
+                const nameInputScore = document.getElementById('nameInputScore');
+                const playerNameInput = document.getElementById('playerNameInput');
+
+                nameInputScore.textContent = `${this.score} 层`;
+                playerNameInput.value = '';
+                nameInputModal.classList.remove('hidden');
+
+                setTimeout(() => playerNameInput.focus(), 100);
+            }
+
+            savePlayerScore() {
+                const playerNameInput = document.getElementById('playerNameInput');
+                const name = playerNameInput.value.trim() || '匿名玩家';
+
+                const leaderboard = this.getLeaderboard();
+                leaderboard.push({
+                    name: name,
+                    score: this.score,
+                    date: new Date().toLocaleDateString('zh-CN')
+                });
+
+                leaderboard.sort((a, b) => b.score - a.score);
+                const top10 = leaderboard.slice(0, 10);
+                this.saveLeaderboard(top10);
+
+                document.getElementById('nameInputModal').classList.add('hidden');
+                this.showLeaderboard();
+            }
+
+            skipSaveScore() {
+                document.getElementById('nameInputModal').classList.add('hidden');
+            }
+
+            showLeaderboard(activeMode = this.gameMode) {
+                this.leaderboardViewMode = activeMode;
+                const leaderboardList = document.getElementById('leaderboardList');
+
+                const classicBtn = document.getElementById('lbClassicBtn');
+                const newModeBtn = document.getElementById('lbNewModeBtn');
+                if (classicBtn && newModeBtn) {
+                    if (activeMode === 'classic') {
+                        classicBtn.classList.add('bg-primary', 'text-white');
+                        classicBtn.classList.remove('bg-gray-700', 'text-gray-300');
+                        newModeBtn.classList.add('bg-gray-700', 'text-gray-300');
+                        newModeBtn.classList.remove('bg-primary', 'text-white');
+                    } else {
+                        newModeBtn.classList.add('bg-primary', 'text-white');
+                        newModeBtn.classList.remove('bg-gray-700', 'text-gray-300');
+                        classicBtn.classList.add('bg-gray-700', 'text-gray-300');
+                        classicBtn.classList.remove('bg-primary', 'text-white');
+                    }
+                }
+
+                const leaderboard = this.getLeaderboard(activeMode);
+
+                if (leaderboard.length === 0) {
+                    leaderboardList.innerHTML = `
+                        <div class="text-center text-gray-400 py-8">
+                            <p class="text-4xl mb-2">📝</p>
+                            <p>暂无记录</p>
+                            <p class="text-sm mt-2">开始游戏创造你的记录吧！</p>
+                        </div>
+                    `;
+                } else {
+                    leaderboardList.innerHTML = leaderboard.map((entry, index) => {
+                        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                        const isCurrentScore = entry.score === this.score && this.gameOver && activeMode === this.gameMode;
+                        return `
+                            <div class="flex items-center justify-between px-3 py-2 rounded-lg ${isCurrentScore ? 'bg-primary/20 border border-primary/50' : 'bg-gray-700/50'}">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-lg w-8 text-center">${medal}</span>
+                                    <span class="text-white font-medium truncate max-w-24">${entry.name}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-primary font-['Press_Start_2P'] text-sm">${entry.score}层</span>
+                                    <p class="text-xs text-gray-400">${entry.date}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                document.getElementById('leaderboardModal').classList.remove('hidden');
+            }
+
+            hideLeaderboard() {
+                document.getElementById('leaderboardModal').classList.add('hidden');
+            }
+
+            clearLeaderboard() {
+                const mode = this.leaderboardViewMode || this.gameMode;
+                const modeName = mode === 'classic' ? '经典模式' : '新模式';
+                if (confirm(`确定要清空${modeName}排行榜吗？此操作不可恢复。`)) {
+                    this.saveLeaderboard([], mode);
+                    this.showLeaderboard(mode);
+                }
             }
 
             // 输入处理
@@ -2324,13 +2501,13 @@
                         case 'A':
                         case 'ArrowLeft':
                             this.keys.left = true;
-                            this.players.p1.direction = -1;
+                            this.players.p1.direction = this.players.p1.isControlReversed ? 1 : -1;
                             break;
                         case 'd':
                         case 'D':
                         case 'ArrowRight':
                             this.keys.right = true;
-                            this.players.p1.direction = 1;
+                            this.players.p1.direction = this.players.p1.isControlReversed ? -1 : 1;
                             break;
                     }
                 } else if (this.playerMode == 'multiplayer') {
@@ -2338,20 +2515,20 @@
                         case 'a':
                         case 'A':
                             this.keys.left = true;
-                            this.players.p1.direction = -1;
+                            this.players.p1.direction = this.players.p1.isControlReversed ? 1 : -1;
                             break;
                         case 'd':
                         case 'D':
                             this.keys.right = true;
-                            this.players.p1.direction = 1;
+                            this.players.p1.direction = this.players.p1.isControlReversed ? -1 : 1;
                             break;
                         case 'ArrowLeft':
                             this.p2Keys.left = true;
-                            this.players.p2.direction = -1;
+                            this.players.p2.direction = this.players.p2.isControlReversed ? 1 : -1;
                             break;
                         case 'ArrowRight':
                             this.p2Keys.right = true;
-                            this.players.p2.direction = 1;
+                            this.players.p2.direction = this.players.p2.isControlReversed ? -1 : 1;
                             break;
                     }
                 }
@@ -2482,7 +2659,7 @@
                 this.effectManager.addTeleportEffect(startX, startY, endX + player.width / 2, endY + player.height / 2);
 
                 // 短暂延迟后执行传送
-                setTimeout(() => {
+                this.addGameTimer(12, () => {
                     // 传送玩家
                     player.x = endX;
                     player.y = endY;
@@ -2496,7 +2673,7 @@
 
                     // 显示提示
                     this.showPowerUpMessage("已传送至安全位置!");
-                }, 150);
+                });
             }
 
             // 在顶部使用救命道具（传送）
@@ -2660,9 +2837,9 @@
                 }
 
                 // 全局重力效果 - 持续应用
-                if (this.isReducedGravity) {
+                if (this.globalEffects.reducedGravity.active) {
                     currentGravity = player.originalGravity * 0.35;
-                } else if (this.isIncreasedGravity) {
+                } else if (this.globalEffects.increasedGravity.active) {
                     currentGravity = player.originalGravity * 1.5;
                 }
 
@@ -2791,11 +2968,11 @@
                     );
 
                     // 逐渐恢复身体形状
-                    setTimeout(() => {
+                    this.addGameTimer(12, () => {
                         player.bodyStretch = 1;
                         player.bodySquash = 1;
                         player.landing = false;
-                    }, 200);
+                    });
                 } else {
                     // 正常状态
                     player.bodyStretch = 1;
@@ -2815,7 +2992,7 @@
 
                 // 更新阴影
                 if (player.onGround) {
-                    player.shadowSize = 20 + Math.sin(Date.now() * 0.01) * 2;
+                    player.shadowSize = 20 + Math.sin(this.currentTime * 0.01) * 2;
                     player.shadowOpacity = 0.3;
                 } else {
                     // 离地越高，阴影越小越淡
@@ -2826,22 +3003,19 @@
 
             }
 
-            // 统一处理平台速度效果
             handlePlatformSpeedEffects(timeFactor) {
-                // 平台减速效果（全局）
-                if (this.isPlatformSlow) {
-                    this.platformSlowTimer -= timeFactor;
-                    if (this.platformSlowTimer <= 0) {
-                        this.isPlatformSlow = false;
+                if (this.globalEffects.platformSlow.active) {
+                    this.globalEffects.platformSlow.timer -= timeFactor;
+                    if (this.globalEffects.platformSlow.timer <= 0) {
+                        this.globalEffects.platformSlow.active = false;
                         this.restorePlatformSpeed();
                         this.showPowerUpMessage("平台速度恢复正常");
                     }
                 }
-                // 平台加速效果（全局）
-                if (this.isPlatformSpeedUp) {
-                    this.platformSpeedUpTimer -= timeFactor;
-                    if (this.platformSpeedUpTimer <= 0) {
-                        this.isPlatformSpeedUp = false;
+                if (this.globalEffects.platformSpeedUp.active) {
+                    this.globalEffects.platformSpeedUp.timer -= timeFactor;
+                    if (this.globalEffects.platformSpeedUp.timer <= 0) {
+                        this.globalEffects.platformSpeedUp.active = false;
                         this.restorePlatformSpeed();
                         this.showPowerUpMessage("平台速度恢复正常");
                     }
@@ -2881,19 +3055,19 @@
             // 统一处理重力效果
             handleGravityEffects(timeFactor) {
                 // 重力变小效果（全局）
-                if (this.isReducedGravity) {
-                    this.reducedGravityTimer -= timeFactor;
-                    if (this.reducedGravityTimer <= 0) {
-                        this.isReducedGravity = false;
+                if (this.globalEffects.reducedGravity.active) {
+                    this.globalEffects.reducedGravity.timer -= timeFactor;
+                    if (this.globalEffects.reducedGravity.timer <= 0) {
+                        this.globalEffects.reducedGravity.active = false;
                         this.restoreGravity();
                         this.showPowerUpMessage("重力恢复正常");
                     }
                 }
                 // 重力增强效果（全局）
-                if (this.isIncreasedGravity) {
-                    this.increasedGravityTimer -= timeFactor;
-                    if (this.increasedGravityTimer <= 0) {
-                        this.isIncreasedGravity = false;
+                if (this.globalEffects.increasedGravity.active) {
+                    this.globalEffects.increasedGravity.timer -= timeFactor;
+                    if (this.globalEffects.increasedGravity.timer <= 0) {
+                        this.globalEffects.increasedGravity.active = false;
                         this.restoreGravity();
                         this.showPowerUpMessage("重力恢复正常");
                     }
@@ -2965,10 +3139,10 @@
                 }
 
                 // 全普通平台效果（全局）
-                if (this.isAllNormal) {
-                    this.allNormalTimer -= timeFactor;
-                    if (this.allNormalTimer <= 0) {
-                        this.isAllNormal = false;
+                if (this.globalEffects.allNormal.active) {
+                    this.globalEffects.allNormal.timer -= timeFactor;
+                    if (this.globalEffects.allNormal.timer <= 0) {
+                        this.globalEffects.allNormal.active = false;
                         // 恢复平台原始类型
                         this.platforms.forEach(platform => {
                             if (platform.originalType && platform.originalType.startsWith('moving-')) {
@@ -3077,8 +3251,8 @@
                 // 站立时手臂轻微摆动
                 else {
                     const idleSwing = 0.1;
-                    player.armAngleLeft = Math.sin(Date.now() * 0.003) * idleSwing;
-                    player.armAngleRight = Math.sin(Date.now() * 0.003 + Math.PI) * idleSwing;
+                    player.armAngleLeft = Math.sin(this.currentTime * 0.003) * idleSwing;
+                    player.armAngleRight = Math.sin(this.currentTime * 0.003 + Math.PI) * idleSwing;
                 }
             }
 
@@ -3094,10 +3268,10 @@
                 // 更新背景偏移
                 // 应用平台加速减速效果到背景移动
                 let effectiveSpeed = this.speed;
-                if (this.isPlatformSlow) {
+                if (this.globalEffects.platformSlow.active) {
                     effectiveSpeed *= 0.5;
                 }
-                if (this.isPlatformSpeedUp) {
+                if (this.globalEffects.platformSpeedUp.active) {
                     effectiveSpeed *= 2;
                 }
 
@@ -3109,10 +3283,10 @@
 
                     // 应用平台加速减速效果到游戏速度
                     let effectiveSpeed = this.speed;
-                    if (this.isPlatformSlow) {
+                    if (this.globalEffects.platformSlow.active) {
                         effectiveSpeed *= 0.5;
                     }
-                    if (this.isPlatformSpeedUp) {
+                    if (this.globalEffects.platformSpeedUp.active) {
                         effectiveSpeed *= 2;
                     }
 
@@ -3156,7 +3330,7 @@
                     }
 
                     // 全普通平台效果处理 - 持续应用效果
-                    if (this.isAllNormal) {
+                    if (this.globalEffects.allNormal.active) {
                         platform.type = 'normal';
                     }
 
@@ -3188,19 +3362,16 @@
                         }
                     }
 
-                    // 移除超出屏幕的平台
                     if (platform.y + platform.height < 0 && !(platform.type === 'flip' && platform.flipped)) {
                         this.platforms.splice(i, 1);
                         this.platformsRemoved++;
                         if (this.platformsRemoved % 5 === 0) {
                             this.score++;
+                            if (this.score > 0 && this.score % this.speedIncreaseInterval === 0) {
+                                this.speed += 0.2;
+                            }
                         }
                         this.checkPowerUpSpawn();
-
-                        // 速度递增
-                        if (this.score % this.speedIncreaseInterval === 0) {
-                            this.speed += 0.2;
-                        }
                     }
                 }
 
@@ -3257,10 +3428,10 @@
 
                     // 随平台一起移动（应用平台加速减速效果）
                     let effectiveSpeed = this.speed;
-                    if (this.isPlatformSlow) {
+                    if (this.globalEffects.platformSlow.active) {
                         effectiveSpeed *= 0.5;
                     }
-                    if (this.isPlatformSpeedUp) {
+                    if (this.globalEffects.platformSpeedUp.active) {
                         effectiveSpeed *= 2;
                     }
 
@@ -3474,17 +3645,13 @@
                 return true;
             }
 
-            // 应用幽灵持续伤害
             applyGhostDamage(ghost) {
                 const activePlayers = this.getActivePlayers();
 
                 for (const player of activePlayers) {
-                    if (ghost.damagedPlayers.includes(player) && !player.isDead && !player.isInvincible) {
-                        // 玩家受到持续伤害
+                    const playerId = player === this.players.p1 ? 'p1' : 'p2';
+                    if (ghost.damagedPlayers.includes(playerId) && !player.isDead && !player.isInvincible) {
                         this.applyGhostDamageToPlayer(player);
-
-                        // 调试信息
-                        // console.log('幽灵持续伤害:', player.health, 'damagedPlayers count:', ghost.damagedPlayers.length);
                     }
                 }
             }
@@ -3563,37 +3730,32 @@
                 for (let i = this.ghosts.length - 1; i >= 0; i--) {
                     const ghost = this.ghosts[i];
 
-                    // 先检查之前碰撞的玩家是否还在碰撞范围内
-                    const playersToRemove = [];
-                    for (const player of ghost.damagedPlayers) {
-                        if (player.isDead ||
+                    const playerIdsToRemove = [];
+                    for (const playerId of ghost.damagedPlayers) {
+                        const player = this.players[playerId];
+                        if (!player || player.isDead ||
                             player.x >= ghost.x + ghost.width ||
                             player.x + player.width <= ghost.x ||
                             player.y >= ghost.y + ghost.height ||
                             player.y + player.height <= ghost.y) {
-                            playersToRemove.push(player);
+                            playerIdsToRemove.push(playerId);
                         }
                     }
 
-                    // 移除不再碰撞的玩家
-                    ghost.damagedPlayers = ghost.damagedPlayers.filter(player => !playersToRemove.includes(player));
+                    ghost.damagedPlayers = ghost.damagedPlayers.filter(id => !playerIdsToRemove.includes(id));
 
-                    // 检查新的碰撞
                     for (const player of activePlayers) {
-                        if (!player.isDead && !ghost.damagedPlayers.includes(player)) {
-                            // 检查碰撞
+                        const playerId = player === this.players.p1 ? 'p1' : 'p2';
+                        if (!player.isDead && !ghost.damagedPlayers.includes(playerId)) {
                             if (player.x < ghost.x + ghost.width &&
                                 player.x + player.width > ghost.x &&
                                 player.y < ghost.y + ghost.height &&
                                 player.y + player.height > ghost.y) {
 
-                                // 记录碰撞的玩家，开始持续伤害
-                                if (!ghost.damagedPlayers.includes(player)) {
-                                    ghost.damagedPlayers.push(player);
-                                    // console.log('玩家添加到damagedPlayers:', player, '当前数量:', ghost.damagedPlayers.length);
+                                if (!ghost.damagedPlayers.includes(playerId)) {
+                                    ghost.damagedPlayers.push(playerId);
                                 }
 
-                                // 立即造成一次伤害（如果玩家不是无敌状态）
                                 if (!player.isInvincible) {
                                     this.applyGhostDamageToPlayer(player);
                                 }
@@ -3660,8 +3822,8 @@
                     },
                     'allNormal': () => {
                         // 全局效果：应用到游戏而不是单个玩家
-                        this.isAllNormal = true;
-                        this.allNormalTimer = 20 * 60;
+                        this.globalEffects.allNormal.active = true;
+                        this.globalEffects.allNormal.timer = 20 * 60;
                         this.platforms.forEach(platform => {
                             platform.type = 'normal';
                         });
@@ -3683,13 +3845,13 @@
                     },
                     'reducedGravity': () => {
                         // 全局效果：应用到游戏而不是单个玩家
-                        if (this.isIncreasedGravity) {
+                        if (this.globalEffects.increasedGravity.active) {
                             this.restoreGravity();
-                            this.isIncreasedGravity = false;
+                            this.globalEffects.increasedGravity.active = false;
                         }
 
-                        this.isReducedGravity = true;
-                        this.reducedGravityTimer = 15 * 60;
+                        this.globalEffects.reducedGravity.active = true;
+                        this.globalEffects.reducedGravity.timer = 15 * 60;
                         // 更新所有活跃玩家的重力
                         this.setPlayerGravity(0.35);
                         this.showPowerUpMessage("重力减小 (15秒)");
@@ -3701,13 +3863,13 @@
                     },
                     'increasedGravity': () => {
                         // 全局效果：应用到游戏而不是单个玩家
-                        if (this.isReducedGravity) {
+                        if (this.globalEffects.reducedGravity.active) {
                             this.restoreGravity();
-                            this.isReducedGravity = false;
+                            this.globalEffects.reducedGravity.active = false;
                         }
 
-                        this.isIncreasedGravity = true;
-                        this.increasedGravityTimer = 15 * 60;
+                        this.globalEffects.increasedGravity.active = true;
+                        this.globalEffects.increasedGravity.timer = 15 * 60;
                         // 更新所有活跃玩家的重力
                         this.setPlayerGravity(1.5);
                         this.showPowerUpMessage("重力增强! 落得更快了!");
@@ -3718,13 +3880,13 @@
                     },
                     'platformSlow': () => {
                         // 全局效果：应用到游戏而不是单个玩家
-                        if (this.isPlatformSpeedUp) {
+                        if (this.globalEffects.platformSpeedUp.active) {
                             this.restorePlatformSpeed();
-                            this.isPlatformSpeedUp = false;
+                            this.globalEffects.platformSpeedUp.active = false;
                         }
 
-                        this.isPlatformSlow = true;
-                        this.platformSlowTimer = 15 * 60;
+                        this.globalEffects.platformSlow.active = true;
+                        this.globalEffects.platformSlow.timer = 15 * 60;
                         this.setPlatformSpeed(0.5);
                         this.showPowerUpMessage("平台速度减慢30% (15秒)");
                         this.createPlayerParticleEffect(15, {
@@ -3734,13 +3896,13 @@
                     },
                     'platformSpeedUp': () => {
                         // 全局效果：应用到游戏而不是单个玩家
-                        if (this.isPlatformSlow) {
+                        if (this.globalEffects.platformSlow.active) {
                             this.restorePlatformSpeed();
-                            this.isPlatformSlow = false;
+                            this.globalEffects.platformSlow.active = false;
                         }
 
-                        this.isPlatformSpeedUp = true;
-                        this.platformSpeedUpTimer = 15 * 60;
+                        this.globalEffects.platformSpeedUp.active = true;
+                        this.globalEffects.platformSpeedUp.timer = 15 * 60;
                         this.setPlatformSpeed(2);
                         this.showPowerUpMessage("平台加速! 注意躲避!");
                         this.createPlayerParticleEffect(20, {
@@ -3822,8 +3984,8 @@
                         player.isCollisionDisabled = true;
 
                         // 平台速度变快
-                        this.isPlatformSpeedUp = true;
-                        this.platformSpeedUpTimer = 10 * 60;
+                        this.globalEffects.platformSpeedUp.active = true;
+                        this.globalEffects.platformSpeedUp.timer = 10 * 60;
                         this.setPlatformSpeed(2);
 
                         // 穿透平台能力
@@ -3865,9 +4027,9 @@
                 this.powerUpIndicator.classList.remove('hidden');
 
                 // 3秒后隐藏
-                setTimeout(() => {
+                this.addGameTimer(180, () => {
                     this.powerUpIndicator.classList.add('hidden');
-                }, 3000);
+                });
             }
 
             // 在玩家位置创建粒子效果
@@ -3970,6 +4132,8 @@
             checkPlayerCollision(player) {
                 for (let i = 0; i < this.platforms.length; i++) {
                     const platform = this.platforms[i];
+
+                    if (Math.abs(platform.y - player.y) > player.height * 3) continue;
 
                     // 跳过已翻转且过期的平台
                     if (platform.type === 'flip' && platform.flipped && platform.flipTimer > 42) continue;
@@ -4106,14 +4270,14 @@
 
                             // 持续电光特效
                             for (let i = 0; i < 5; i++) {
-                                setTimeout(() => {
+                                this.addGameTimer(i * 12, () => {
                                     this.createParticleEffect(3,
                                         player.x + player.width / 2, player.y + player.height / 2, {
                                         color: '#FFD700',
                                         life: 20,
                                         size: 2
                                     });
-                                }, i * 200);
+                                });
                             }
 
                             player.flashTimer = 20;
@@ -4388,7 +4552,7 @@
                 this.ctx.save();
 
                 const hasFlash = !!this.effectManager.getFlashColor(player === this.players.p1 ? 'player' : 'player2');
-                const flashVisible = hasFlash ? (Math.floor(Date.now() / 50) % 2 === 0) : true;
+                const flashVisible = hasFlash ? (Math.floor(this.currentTime / 50) % 2 === 0) : true;
                 const hurtFlashVisible = player.flashTimer > 0 ?
                     (Math.floor(player.flashTimer / 3) % 2 === 0) : true;
 
@@ -4439,7 +4603,7 @@
                     this.ctx.fill();
 
                     // 半透明效果
-                    this.ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.01) * 0.3;
+                    this.ctx.globalAlpha = 0.5 + Math.sin(this.currentTime * 0.01) * 0.3;
                 }
 
                 // 金身状态特效
@@ -4516,7 +4680,7 @@
 
                     // 闪烁效果
                     const flashColor = this.effectManager.getFlashColor(platform.id);
-                    const flashVisible = !flashColor || (Math.floor(Date.now() / 50) % 2 === 0);
+                    const flashVisible = !flashColor || (Math.floor(this.currentTime / 50) % 2 === 0);
                     const scale = this.effectManager.getScale(platform.id);
 
                     // 应用缩放
@@ -4638,21 +4802,23 @@
                             break;
                         case 'electric':
                             // 带电平台特效：闪烁效果
-                            if (Math.floor(Date.now() / 200) % 2 === 0) {
+                            if (Math.floor(this.currentTime / 200) % 2 === 0) {
                                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
                                 this.ctx.fillRect(0, 0, platform.width, platform.height);
                             }
                             break;
                         case 'mud':
-                            // 泥巴平台特效：泥点图案
                             this.ctx.fillStyle = 'rgba(139, 69, 19, 0.5)';
-                            for (let i = 0; i < 4; i++) {
-                                const x = Math.random() * platform.width;
-                                const y = Math.random() * platform.height;
-                                const size = Math.random() * 3 + 1;
-                                this.ctx.beginPath();
-                                this.ctx.arc(x, y, size, 0, Math.PI * 2);
-                                this.ctx.fill();
+                            if (platform.mudDots) {
+                                for (let i = 0; i < platform.mudDots.length; i++) {
+                                    const dot = platform.mudDots[i];
+                                    const x = dot.x * platform.width;
+                                    const y = dot.y * platform.height;
+                                    const size = dot.size || (i % 3 + 1);
+                                    this.ctx.beginPath();
+                                    this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                                    this.ctx.fill();
+                                }
                             }
                             break;
 
@@ -4689,7 +4855,7 @@
                 const spacing = 20;
 
                 // 计算箭头偏移量实现循环位移动画
-                const offset = (Date.now() * 0.05 * direction) % spacing;
+                const offset = (this.currentTime * 0.05 * direction) % spacing;
 
                 // 检查是否有玩家站在传送带上且使用了变大道具
                 let isPlayerOnConveyor = false;
@@ -4880,24 +5046,24 @@
                 }
 
                 // 全普通平台计时器（全局）
-                if (this.isAllNormal) {
-                    const timeLeft = Math.ceil(this.allNormalTimer / 60);
+                if (this.globalEffects.allNormal.active) {
+                    const timeLeft = Math.ceil(this.globalEffects.allNormal.timer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 20, '#EC4899', '普通平台: ' + timeLeft + 's', align);
                     currentY += spacing;
                 }
 
                 // 重力减小计时器（全局）
-                if (this.isReducedGravity) {
-                    const timeLeft = Math.ceil(this.reducedGravityTimer / 60);
+                if (this.globalEffects.reducedGravity.active) {
+                    const timeLeft = Math.ceil(this.globalEffects.reducedGravity.timer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 15, '#9C27B0', '重力减小: ' + timeLeft + 's', align);
                     currentY += spacing;
                 }
 
                 // 平台减速计时器（全局）
-                if (this.isPlatformSlow) {
-                    const timeLeft = Math.ceil(this.platformSlowTimer / 60);
+                if (this.globalEffects.platformSlow.active) {
+                    const timeLeft = Math.ceil(this.globalEffects.platformSlow.timer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 15, '#607D8B', '平台减速: ' + timeLeft + 's', align);
                     currentY += spacing;
@@ -4912,16 +5078,16 @@
                 }
 
                 // 重力增强计时器（全局）
-                if (this.isIncreasedGravity) {
-                    const timeLeft = Math.ceil(this.increasedGravityTimer / 60);
+                if (this.globalEffects.increasedGravity.active) {
+                    const timeLeft = Math.ceil(this.globalEffects.increasedGravity.timer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 15, '#F97316', '重力增强: ' + timeLeft + 's', align);
                     currentY += spacing;
                 }
 
                 // 平台加速计时器（全局）
-                if (this.isPlatformSpeedUp) {
-                    const timeLeft = Math.ceil(this.platformSpeedUpTimer / 60);
+                if (this.globalEffects.platformSpeedUp.active) {
+                    const timeLeft = Math.ceil(this.globalEffects.platformSpeedUp.timer / 60);
                     this.drawTimerBar(x, currentY, timerWidth, timerHeight,
                         timeLeft, 15, '#EC4899', '平台加速: ' + timeLeft + 's', align);
                     currentY += spacing;
@@ -5035,11 +5201,9 @@
                 }
             }
 
-            // 绘制缩小视野的遮罩
             drawNarrowVisionMask() {
                 this.ctx.save();
 
-                // 为所有有缩小视野效果的玩家绘制遮罩
                 const players = this.getActivePlayers();
                 const narrowVisionPlayers = players.filter(player => player.isNarrowVision);
 
@@ -5048,13 +5212,20 @@
                     return;
                 }
 
-                // 创建一个离屏canvas来绘制组合遮罩
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = this.canvas.width;
-                tempCanvas.height = this.canvas.height;
-                const tempCtx = tempCanvas.getContext('2d');
+                if (!this.narrowVisionCanvas ||
+                    this.narrowVisionCanvas.width !== this.canvas.width ||
+                    this.narrowVisionCanvas.height !== this.canvas.height) {
+                    this.narrowVisionCanvas = document.createElement('canvas');
+                    this.narrowVisionCanvas.width = this.canvas.width;
+                    this.narrowVisionCanvas.height = this.canvas.height;
+                    this.narrowVisionCtx = this.narrowVisionCanvas.getContext('2d');
+                }
 
-                // 第一步：绘制所有玩家的清晰区域（使用destination-out模式清除模糊区域）
+                const tempCtx = this.narrowVisionCtx;
+                const tempCanvas = this.narrowVisionCanvas;
+
+                tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+                tempCtx.globalCompositeOperation = 'source-over';
                 tempCtx.fillStyle = 'rgba(0, 0, 0, 0.9)';
                 tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
@@ -5063,9 +5234,8 @@
                 for (const player of narrowVisionPlayers) {
                     const centerX = player.x + player.width / 2;
                     const centerY = player.y + player.height / 2;
-                    const clearRadius = 100; // 清晰区域半径
+                    const clearRadius = 100;
 
-                    // 创建径向渐变 - 玩家周围清晰
                     const gradient = tempCtx.createRadialGradient(
                         centerX, centerY, 0,
                         centerX, centerY, clearRadius
@@ -5077,7 +5247,6 @@
                     tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                 }
 
-                // 第二步：在主canvas上绘制组合遮罩
                 this.ctx.globalCompositeOperation = 'source-over';
                 this.ctx.drawImage(tempCanvas, 0, 0);
 
@@ -5108,9 +5277,10 @@
 
                 // 只有当累积时间超过目标帧时间时才更新游戏
                 while (this.accumulator >= targetFrameTime) {
+                    this.currentTime = timestamp;
                     this.deltaTime = targetFrameTime;
 
-                    // 执行顺序：先检测碰撞更新站立平台 → 再更新平台移动
+                    this.updateGameTimers();
                     this.updatePlayers();
                     this.updateGhosts();
                     this.checkCollisions();
