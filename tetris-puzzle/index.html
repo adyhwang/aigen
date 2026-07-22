@@ -814,7 +814,7 @@
 
         // 方块形状定义
         const classicShapes = {
-            l: [[[0, 0], [1, 0], [2, 0], [2, 1]], [[1, 0], [1, 1], [1, 2], [0, 2]], [[0, 0], [0, 1], [1, 1], [2, 1]], [[1, 0], [0, 0], [0, 1], [0, 2]]],
+            l: [[[0, 0], [1, 0], [2, 0], [2, 1]], [[1, 0], [0, 0], [0, 1], [0, 2]], [[0, 0], [0, 1], [1, 1], [2, 1]], [[1, 0], [1, 1], [1, 2], [0, 2]]],
             j: [[[0, 1], [1, 1], [2, 1], [2, 0]], [[0, 0], [1, 0], [1, 1], [1, 2]], [[0, 0], [0, 1], [1, 0], [2, 0]], [[1, 0], [1, 1], [1, 2], [2, 2]]],
             s: [[[0, 1], [0, 2], [1, 0], [1, 1]], [[0, 0], [1, 0], [1, 1], [2, 1]], [[0, 1], [0, 2], [1, 0], [1, 1]], [[0, 0], [1, 0], [1, 1], [2, 1]]],
             z: [[[0, 0], [0, 1], [1, 1], [1, 2]], [[1, 0], [2, 0], [0, 1], [1, 1]], [[0, 0], [0, 1], [1, 1], [1, 2]], [[1, 0], [2, 0], [0, 1], [1, 1]]],
@@ -1232,9 +1232,39 @@
             const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
             const rotationCount = shapes[piece.type].length;
             piece.rotation = (piece.rotation + 1) % rotationCount;
-            renderPiece(piece);
-            constrainPieceToContainer(piece);
-            // 播放旋转音效
+
+            if (gameState.isDragging && gameState.draggedPiece === piece) {
+                const gridSize = gameState.gridSize;
+                const shape = shapes[piece.type][piece.rotation];
+                const blocks = piece.element.querySelectorAll('.tetris-block');
+                blocks.forEach((block, i) => {
+                    if (shape[i]) {
+                        const [dr, dc] = shape[i];
+                        block.style.left = `${dc * gridSize}px`;
+                        block.style.top = `${dr * gridSize}px`;
+                        block.style.display = '';
+                    } else {
+                        block.style.display = 'none';
+                    }
+                });
+                if (shape.length > blocks.length) {
+                    for (let i = blocks.length; i < shape.length; i++) {
+                        const [dr, dc] = shape[i];
+                        const block = document.createElement('div');
+                        block.className = `tetris-block bg-${piece.color} absolute`;
+                        block.style.width = `${gridSize}px`;
+                        block.style.height = `${gridSize}px`;
+                        block.style.left = `${dc * gridSize}px`;
+                        block.style.top = `${dr * gridSize}px`;
+                        block.style.boxSizing = 'border-box';
+                        piece.element.appendChild(block);
+                    }
+                }
+            } else {
+                renderPiece(piece);
+                constrainPieceToContainer(piece);
+            }
+
             soundManager.playRotateSound();
         }
 
@@ -1248,6 +1278,14 @@
             gameState.dragOffset.y = e.clientY - rect.top;
 
             piece.element.classList.add('z-20', 'scale-110', 'shadow-tetris-hover');
+            piece.element.style.transition = 'none';
+
+            document.body.appendChild(piece.element);
+            piece.element.style.position = 'fixed';
+            piece.element.style.left = '0';
+            piece.element.style.top = '0';
+            piece.element.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
+            piece.element.style.willChange = 'transform';
 
             document.addEventListener('mousemove', dragMove);
             document.addEventListener('mouseup', stopDrag);
@@ -1265,8 +1303,9 @@
         }
 
         // 触摸停止拖动
-        function touchStopDrag() {
-            stopDrag();
+        function touchStopDrag(e) {
+            const touch = e && e.changedTouches && e.changedTouches[0];
+            stopDrag(touch);
             document.removeEventListener('touchmove', touchDragMove);
             document.removeEventListener('touchend', touchStopDrag);
             document.removeEventListener('touchcancel', touchStopDrag);
@@ -1277,59 +1316,15 @@
             if (!gameState.isDragging || !gameState.draggedPiece) return;
 
             const piece = gameState.draggedPiece;
-            const gridSize = gameState.gridSize;
 
-            const currentContainer = piece.container === 'pieces' ? elements.piecesGrid : elements.targetGrid;
-            const currentContainerRect = currentContainer.getBoundingClientRect();
+            const x = e.clientX - gameState.dragOffset.x;
+            const y = e.clientY - gameState.dragOffset.y;
 
-            let x = e.clientX - currentContainerRect.left - gameState.dragOffset.x;
-            let y = e.clientY - currentContainerRect.top - gameState.dragOffset.y;
-
-            let col = Math.round(x / gridSize);
-            let row = Math.round(y / gridSize);
-
-            const targetRect = elements.targetGrid.getBoundingClientRect();
-            const isOverTarget = e.clientX >= targetRect.left && e.clientX <= targetRect.right &&
-                e.clientY >= targetRect.top && e.clientY <= targetRect.bottom;
-
-            if (isOverTarget && piece.container !== 'target') {
-                piece.element.remove();
-                piece.container = 'target';
-                elements.targetGrid.appendChild(piece.element);
-
-                x = e.clientX - targetRect.left - gameState.dragOffset.x;
-                y = e.clientY - targetRect.top - gameState.dragOffset.y;
-                col = Math.round(x / gridSize);
-                row = Math.round(y / gridSize);
-            } else if (!isOverTarget && piece.container === 'target') {
-                piece.element.remove();
-                piece.container = 'pieces';
-                elements.piecesGrid.appendChild(piece.element);
-
-                const piecesRect = elements.piecesGrid.getBoundingClientRect();
-                x = e.clientX - piecesRect.left - gameState.dragOffset.x;
-                y = e.clientY - piecesRect.top - gameState.dragOffset.y;
-                col = Math.round(x / gridSize);
-                row = Math.round(y / gridSize);
-            }
-
-            const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
-            const shape = shapes[piece.type][piece.rotation];
-            const maxDc = Math.max(...shape.map(([_, dc]) => dc));
-            const maxDr = Math.max(...shape.map(([dr, _]) => dr));
-
-            const maxCol = COLS - maxDc - 1;
-            const maxRow = ROWS - maxDr - 1;
-
-            piece.col = Math.max(0, Math.min(col, maxCol));
-            piece.row = Math.max(0, Math.min(row, maxRow));
-
-            piece.element.style.left = `${piece.col * gridSize}px`;
-            piece.element.style.top = `${piece.row * gridSize}px`;
+            piece.element.style.transform = `translate(${x}px, ${y}px)`;
         }
 
         // 停止拖动
-        function stopDrag() {
+        function stopDrag(e) {
             if (!gameState.isDragging || !gameState.draggedPiece) return;
 
             const piece = gameState.draggedPiece;
@@ -1338,10 +1333,52 @@
             piece.element.classList.remove('z-20', 'scale-110', 'shadow-tetris-hover');
             if (gameState.hintActive) piece.element.classList.add('z-30');
 
+            const clientX = e ? e.clientX : (piece.element.offsetLeft + gameState.dragOffset.x);
+            const clientY = e ? e.clientY : (piece.element.offsetTop + gameState.dragOffset.y);
+
+            const targetRect = elements.targetGrid.getBoundingClientRect();
+            const piecesRect = elements.piecesGrid.getBoundingClientRect();
+
+            const isOverTarget = clientX >= targetRect.left && clientX <= targetRect.right &&
+                clientY >= targetRect.top && clientY <= targetRect.bottom;
+
+            const isOverPieces = clientX >= piecesRect.left && clientX <= piecesRect.right &&
+                clientY >= piecesRect.top && clientY <= piecesRect.bottom;
+
+            if (isOverTarget) {
+                piece.container = 'target';
+            } else if (isOverPieces) {
+                piece.container = 'pieces';
+            }
+
+            const container = piece.container === 'pieces' ? elements.piecesGrid : elements.targetGrid;
+            const containerRect = container.getBoundingClientRect();
+
+            const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
+            const shape = shapes[piece.type][piece.rotation];
+            const maxDc = Math.max(...shape.map(([_, dc]) => dc));
+            const maxDr = Math.max(...shape.map(([dr, _]) => dr));
+
+            let col = Math.round((clientX - gameState.dragOffset.x - containerRect.left) / gridSize);
+            let row = Math.round((clientY - gameState.dragOffset.y - containerRect.top) / gridSize);
+
+            const maxCol = COLS - maxDc - 1;
+            const maxRow = ROWS - maxDr - 1;
+
+            piece.col = Math.max(0, Math.min(col, maxCol));
+            piece.row = Math.max(0, Math.min(row, maxRow));
+
+            piece.element.style.transform = 'none';
+            piece.element.style.willChange = '';
+            piece.element.style.position = 'absolute';
+            container.appendChild(piece.element);
             piece.element.style.left = `${piece.col * gridSize}px`;
             piece.element.style.top = `${piece.row * gridSize}px`;
 
-            // 播放放置音效
+            requestAnimationFrame(() => {
+                piece.element.style.transition = '';
+            });
+
             soundManager.playPlaceSound();
 
             checkLevelCompletion();
