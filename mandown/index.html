@@ -213,6 +213,8 @@
             z-index: 9999 !important;
             padding: 0 !important;
             margin: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
         }
 
         .force-portrait-90 {
@@ -224,10 +226,59 @@
         }
 
         .force-portrait .game-container {
-            height: 100% !important;
-            min-height: auto !important;
+            height: auto !important;
+            min-height: 0 !important;
             max-height: none !important;
             flex: 1 1 auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            position: relative !important;
+        }
+
+        .force-portrait #gameCanvas {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            display: block !important;
+        }
+
+        .force-portrait .game-container > #startMenu,
+        .force-portrait .game-container > #gameOverMenu,
+        .force-portrait .game-container > #pauseMenu,
+        .force-portrait .game-container > #nameInputModal,
+        .force-portrait .game-container > #leaderboardModal {
+            position: absolute !important;
+            inset: 0 !important;
+        }
+
+        .force-portrait .controls-section {
+            flex-shrink: 0 !important;
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+            padding-bottom: env(safe-area-inset-bottom, 0) !important;
+        }
+
+        .force-portrait > div:first-child {
+            flex-shrink: 0 !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .force-portrait #mobileControls,
+        .force-portrait #multiplayerControls {
+            display: flex !important;
+        }
+
+        .force-portrait #mobileControls.hidden,
+        .force-portrait #multiplayerControls.hidden {
+            display: none !important;
+        }
+
+        .force-portrait #mobileControls button,
+        .force-portrait #multiplayerControls button {
+            height: 3.5rem !important;
+            width: 3.5rem !important;
         }
 
         body.force-portrait-active {
@@ -1332,7 +1383,6 @@
                         this.backgroundMusic.volume = this.mainVolume * 0.5;
                     }
                     this.backgroundMusic.play();
-                    // console.log('背景音乐开始播放');
                 } catch (error) {
                     console.warn('背景音乐播放失败:', error);
                 }
@@ -1344,7 +1394,6 @@
                     if (this.backgroundMusic) {
                         this.backgroundMusic.pause();
                         this.backgroundMusic.currentTime = 0;
-                        // console.log('背景音乐已停止');
                     }
                 } catch (error) {
                     console.warn('停止背景音乐失败:', error);
@@ -1428,6 +1477,27 @@
                 PLATFORM_SPRING: '#10B981',
                 PLATFORM_MUD: '#8B4513',
                 PLATFORM_ELECTRIC: '#FBBF24'
+            },
+            DEV_TOOLS: {
+                POWERUP_BUTTONS: {
+                    'lifeSaver': { bg: '#06B6D4', html: '🛸' },
+                    'fullHealth': { bg: '#10B981', html: '💗' },
+                    'smallPlayer': { bg: '#3B82F6', html: '🐜' },
+                    'bigPlayer': { bg: '#8B5CF6', html: '🐘' },
+                    'invincible': { bg: '#F59E0B', html: '🧘' },
+                    'goldenLeg': { bg: '#F59E0B', html: '🦶' },
+                    'goldenHead': { bg: '#F59E0B', html: '😬' },
+                    'allNormal': { bg: '#EC4899', html: '🟦' },
+                    'reducedGravity': { bg: '#9C27B0', html: '🌙' },
+                    'increasedGravity': { bg: '#DC2626', html: '🌑' },
+                    'platformSlow': { bg: '#607D8B', html: '🐢' },
+                    'platformSpeedUp': { bg: '#EF4444', html: '🐇' },
+                    'reverseControls': { bg: '#8B5CF6', html: '💫' },
+                    'narrowVision': { bg: '#6B7280', html: '👁️' },
+                    'randomPowerUp': { bg: '#FFD700', html: '❓' },
+                    'ghost': { bg: '#4B5563', html: '👻' },
+                    'superman': { bg: '#FF0000', html: '🦸' }
+                }
             }
         };
 
@@ -1550,12 +1620,37 @@
                 this.startMenu = document.getElementById('startMenu');
                 this.pauseMenu = document.getElementById('pauseMenu');
                 this.gameOverMenu = document.getElementById('gameOverMenu');
+                this.leaderboardModal = document.getElementById('leaderboardModal');
+                this.nameInputModal = document.getElementById('nameInputModal');
                 this.finalScore = document.getElementById('finalScore');
                 this.pauseButton = document.getElementById('pauseButton');
                 this.volumeSlider = document.getElementById('volumeSlider');
                 this.bgmToggle = document.getElementById('bgmToggle');
                 this.backToStartButton = document.getElementById('backToStartButton');
                 this.backToStartFromPauseButton = document.getElementById('backToStartFromPauseButton');
+                this.startButton = document.getElementById('startButton');
+                this.restartButton = document.getElementById('restartButton');
+                this.resumeButton = document.getElementById('resumeButton');
+                this.restartFromPauseButton = document.getElementById('restartFromPauseButton');
+                this.showLeaderboardBtn = document.getElementById('showLeaderboardBtn');
+                this.startScreenLeaderboardBtn = document.getElementById('startScreenLeaderboardBtn');
+                this.closeLeaderboardBtn = document.getElementById('closeLeaderboardBtn');
+                this.saveScoreBtn = document.getElementById('saveScoreBtn');
+                this.skipSaveBtn = document.getElementById('skipSaveBtn');
+                this.clearLeaderboardBtn = document.getElementById('clearLeaderboardBtn');
+                this.lbClassicBtn = document.getElementById('lbClassicBtn');
+                this.lbNewModeBtn = document.getElementById('lbNewModeBtn');
+                this.playerNameInput = document.getElementById('playerNameInput');
+                this.nameInputScore = document.getElementById('nameInputScore');
+                this.leaderboardList = document.getElementById('leaderboardList');
+                this.mobileControls = document.getElementById('mobileControls');
+                this.multiplayerControls = document.getElementById('multiplayerControls');
+                this.gameContainer = document.getElementById('gameContainer');
+                this.newModeExtraEl = document.getElementById('newModeExtra');
+                this.lavaTop = document.getElementById('lavaTop');
+
+                this.devModeMessageEl = null;
+                this.developerToolbarEl = null;
 
 
 
@@ -1615,10 +1710,10 @@
                         this.soundManager.stopBackgroundMusic();
                     }
                 });
-                document.getElementById('startButton').addEventListener('click', () => this.startGame());
-                document.getElementById('restartButton').addEventListener('click', () => this.startGame());
-                document.getElementById('resumeButton').addEventListener('click', () => this.resumeGame());
-                document.getElementById('restartFromPauseButton').addEventListener('click', () => this.startGame());
+                this.startButton.addEventListener('click', () => this.startGame());
+                this.restartButton.addEventListener('click', () => this.startGame());
+                this.resumeButton.addEventListener('click', () => this.resumeGame());
+                this.restartFromPauseButton.addEventListener('click', () => this.startGame());
                 this.pauseButton.addEventListener('click', () => this.togglePause());
                 this.backToStartButton.addEventListener('click', () => this.backToStart());
                 this.backToStartFromPauseButton.addEventListener('click', () => this.backToStart());
@@ -1633,15 +1728,15 @@
                     });
                 });
 
-                document.getElementById('showLeaderboardBtn').addEventListener('click', () => this.showLeaderboard());
-                document.getElementById('startScreenLeaderboardBtn').addEventListener('click', () => this.showLeaderboard());
-                document.getElementById('closeLeaderboardBtn').addEventListener('click', () => this.hideLeaderboard());
-                document.getElementById('saveScoreBtn').addEventListener('click', () => this.savePlayerScore());
-                document.getElementById('skipSaveBtn').addEventListener('click', () => this.skipSaveScore());
-                document.getElementById('clearLeaderboardBtn').addEventListener('click', () => this.clearLeaderboard());
-                document.getElementById('lbClassicBtn').addEventListener('click', () => this.showLeaderboard('classic'));
-                document.getElementById('lbNewModeBtn').addEventListener('click', () => this.showLeaderboard('new'));
-                document.getElementById('playerNameInput').addEventListener('keydown', (e) => {
+                this.showLeaderboardBtn.addEventListener('click', () => this.showLeaderboard());
+                this.startScreenLeaderboardBtn.addEventListener('click', () => this.showLeaderboard());
+                this.closeLeaderboardBtn.addEventListener('click', () => this.hideLeaderboard());
+                this.saveScoreBtn.addEventListener('click', () => this.savePlayerScore());
+                this.skipSaveBtn.addEventListener('click', () => this.skipSaveScore());
+                this.clearLeaderboardBtn.addEventListener('click', () => this.clearLeaderboard());
+                this.lbClassicBtn.addEventListener('click', () => this.showLeaderboard('classic'));
+                this.lbNewModeBtn.addEventListener('click', () => this.showLeaderboard('new'));
+                this.playerNameInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') this.savePlayerScore();
                 });
 
@@ -1970,13 +2065,12 @@
                 const isLandscape = window.innerWidth > window.innerHeight;
                 const shouldForcePortrait = isFullscreen && isLandscape;
 
-                const gameContainer = document.getElementById('gameContainer');
-                if (!gameContainer) return;
+                if (!this.gameContainer) return;
 
                 this.isForcePortrait = shouldForcePortrait;
 
                 // 移除旧的旋转方向类
-                gameContainer.classList.remove('force-portrait-90', 'force-portrait-270');
+                this.gameContainer.classList.remove('force-portrait-90', 'force-portrait-270');
 
                 if (shouldForcePortrait) {
                     // 根据设备方向决定旋转角度
@@ -1998,11 +2092,11 @@
                     }
                     this.forcePortraitRotation = rotation;
 
-                    gameContainer.classList.add('force-portrait');
-                    gameContainer.classList.add(`force-portrait-${this.forcePortraitRotation}`);
+                    this.gameContainer.classList.add('force-portrait');
+                    this.gameContainer.classList.add(`force-portrait-${this.forcePortraitRotation}`);
                     document.body.classList.add('force-portrait-active');
                 } else {
-                    gameContainer.classList.remove('force-portrait');
+                    this.gameContainer.classList.remove('force-portrait');
                     document.body.classList.remove('force-portrait-active');
                     this.forcePortraitRotation = 90;
                 }
@@ -2048,12 +2142,11 @@
             }
 
             updateInstructionsDisplay() {
-                const newModeExtraEl = document.getElementById('newModeExtra');
-                if (newModeExtraEl) {
+                if (this.newModeExtraEl) {
                     if (this.gameMode === 'new') {
-                        newModeExtraEl.classList.remove('hidden');
+                        this.newModeExtraEl.classList.remove('hidden');
                     } else {
-                        newModeExtraEl.classList.add('hidden');
+                        this.newModeExtraEl.classList.add('hidden');
                     }
                 }
             }
@@ -2065,10 +2158,10 @@
                 this.startMenu.classList.remove('hidden');
                 this.pauseButton.classList.add('hidden');
                 this.pauseMenu.classList.add('hidden');
-                document.getElementById('leaderboardModal').classList.add('hidden');
-                document.getElementById('nameInputModal').classList.add('hidden');
+                this.leaderboardModal.classList.add('hidden');
+                this.nameInputModal.classList.add('hidden');
 
-                document.getElementById('multiplayerControls').classList.add('hidden');
+                this.multiplayerControls.classList.add('hidden');
 
                 this.init();
             }
@@ -2368,22 +2461,20 @@
                 this.startMenu.classList.add('hidden');
                 this.pauseMenu.classList.add('hidden');
                 this.gameOverMenu.classList.add('hidden');
-                document.getElementById('leaderboardModal').classList.add('hidden');
-                document.getElementById('nameInputModal').classList.add('hidden');
+                this.leaderboardModal.classList.add('hidden');
+                this.nameInputModal.classList.add('hidden');
                 this.pauseButton.classList.remove('hidden');
                 this.soundManager.playStartGameSound();
-                // 根据背景音乐开关状态决定是否播放背景音乐
                 if (this.isBgmEnabled) {
                     this.soundManager.playBackgroundMusic();
                 }
 
-                // 根据玩家模式决定显示哪种控制按钮
                 if (this.playerMode === 'multiplayer') {
-                    document.getElementById('multiplayerControls').classList.remove('hidden');
-                    document.getElementById('mobileControls').classList.add('hidden');
+                    this.multiplayerControls.classList.remove('hidden');
+                    this.mobileControls.classList.add('hidden');
                 } else {
-                    document.getElementById('multiplayerControls').classList.add('hidden');
-                    document.getElementById('mobileControls').classList.remove('hidden');
+                    this.multiplayerControls.classList.add('hidden');
+                    this.mobileControls.classList.remove('hidden');
                 }
 
                 this.lastTime = performance.now();
@@ -2445,8 +2536,8 @@
                 this.pauseButton.classList.add('hidden');
                 this.finalScore.textContent = `${this.score} 层`;
                 this.soundManager.stopBackgroundMusic();
-                document.getElementById('mobileControls').classList.add('hidden');
-                document.getElementById('multiplayerControls').classList.add('hidden');
+                this.mobileControls.classList.add('hidden');
+                this.multiplayerControls.classList.add('hidden');
 
                 if (this.score > 0 && this.isHighScore(this.score)) {
                     this.showNameInput();
@@ -2520,12 +2611,7 @@
             }
 
             showNameInput() {
-                const nameInputModal = document.getElementById('nameInputModal');
-                const nameInputScore = document.getElementById('nameInputScore');
-                const playerNameInput = document.getElementById('playerNameInput');
-                const saveScoreBtn = document.getElementById('saveScoreBtn');
-
-                nameInputScore.textContent = `${this.score} 层`;
+                this.nameInputScore.textContent = `${this.score} 层`;
 
                 let defaultName = 'Player1';
                 if (this.playerMode === 'multiplayer' && this.lastDeadPlayer) {
@@ -2536,11 +2622,11 @@
                     const savedName = this.getSavedPlayerName('p1');
                     defaultName = savedName || 'Player1';
                 }
-                playerNameInput.value = defaultName;
+                this.playerNameInput.value = defaultName;
 
-                nameInputModal.classList.remove('hidden');
+                this.nameInputModal.classList.remove('hidden');
 
-                setTimeout(() => saveScoreBtn.focus(), 100);
+                setTimeout(() => this.saveScoreBtn.focus(), 100);
             }
 
             getSavedPlayerName(playerKey = 'p1') {
@@ -2560,8 +2646,7 @@
             }
 
             savePlayerScore() {
-                const playerNameInput = document.getElementById('playerNameInput');
-                const name = playerNameInput.value.trim() || '匿名玩家';
+                const name = this.playerNameInput.value.trim() || '匿名玩家';
 
                 const playerKey = (this.playerMode === 'multiplayer' && this.lastDeadPlayer)
                     ? (this.lastDeadPlayer === this.players.p1 ? 'p1' : 'p2')
@@ -2580,38 +2665,33 @@
                 const top10 = leaderboard.slice(0, 10);
                 this.saveLeaderboard(top10);
 
-                document.getElementById('nameInputModal').classList.add('hidden');
+                this.nameInputModal.classList.add('hidden');
                 this.showLeaderboard();
             }
 
             skipSaveScore() {
-                document.getElementById('nameInputModal').classList.add('hidden');
+                this.nameInputModal.classList.add('hidden');
             }
 
             showLeaderboard(activeMode = this.gameMode) {
                 this.leaderboardViewMode = activeMode;
-                const leaderboardList = document.getElementById('leaderboardList');
 
-                const classicBtn = document.getElementById('lbClassicBtn');
-                const newModeBtn = document.getElementById('lbNewModeBtn');
-                if (classicBtn && newModeBtn) {
-                    if (activeMode === 'classic') {
-                        classicBtn.classList.add('bg-primary', 'text-white');
-                        classicBtn.classList.remove('bg-gray-700', 'text-gray-300');
-                        newModeBtn.classList.add('bg-gray-700', 'text-gray-300');
-                        newModeBtn.classList.remove('bg-primary', 'text-white');
-                    } else {
-                        newModeBtn.classList.add('bg-primary', 'text-white');
-                        newModeBtn.classList.remove('bg-gray-700', 'text-gray-300');
-                        classicBtn.classList.add('bg-gray-700', 'text-gray-300');
-                        classicBtn.classList.remove('bg-primary', 'text-white');
-                    }
+                if (this.lbClassicBtn && this.lbNewModeBtn) {
+                    const isClassic = activeMode === 'classic';
+                    this.lbClassicBtn.classList.toggle('bg-primary', isClassic);
+                    this.lbClassicBtn.classList.toggle('text-white', isClassic);
+                    this.lbClassicBtn.classList.toggle('bg-gray-700', !isClassic);
+                    this.lbClassicBtn.classList.toggle('text-gray-300', !isClassic);
+                    this.lbNewModeBtn.classList.toggle('bg-primary', !isClassic);
+                    this.lbNewModeBtn.classList.toggle('text-white', !isClassic);
+                    this.lbNewModeBtn.classList.toggle('bg-gray-700', isClassic);
+                    this.lbNewModeBtn.classList.toggle('text-gray-300', isClassic);
                 }
 
                 const leaderboard = this.getLeaderboard(activeMode);
 
                 if (leaderboard.length === 0) {
-                    leaderboardList.innerHTML = `
+                    this.leaderboardList.innerHTML = `
                         <div class="text-center text-gray-400 py-8">
                             <p class="text-4xl mb-2">📝</p>
                             <p>暂无记录</p>
@@ -2619,7 +2699,7 @@
                         </div>
                     `;
                 } else {
-                    leaderboardList.innerHTML = leaderboard.map((entry, index) => {
+                    this.leaderboardList.innerHTML = leaderboard.map((entry, index) => {
                         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
                         const isCurrentPlayer = this.lastSavedPlayerName && entry.name === this.lastSavedPlayerName && this.gameOver && activeMode === this.gameMode;
                         return `
@@ -2637,11 +2717,11 @@
                     }).join('');
                 }
 
-                document.getElementById('leaderboardModal').classList.remove('hidden');
+                this.leaderboardModal.classList.remove('hidden');
             }
 
             hideLeaderboard() {
-                document.getElementById('leaderboardModal').classList.add('hidden');
+                this.leaderboardModal.classList.add('hidden');
             }
 
             clearLeaderboard() {
@@ -5466,44 +5546,37 @@
                 requestAnimationFrame((nextTimestamp) => this.gameLoop(nextTimestamp));
             }
 
-            // 显示临时消息
             showTempMessage(text, duration) {
-                let messageEl = document.getElementById('devModeMessage');
-                if (!messageEl) {
-                    messageEl = document.createElement('div');
-                    messageEl.id = 'devModeMessage';
-                    messageEl.style.position = 'fixed';
-                    messageEl.style.top = '50%';
-                    messageEl.style.left = '50%';
-                    messageEl.style.transform = 'translate(-50%, -50%)';
-                    messageEl.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-                    messageEl.style.color = 'white';
-                    messageEl.style.padding = '10px 20px';
-                    messageEl.style.borderRadius = '5px';
-                    messageEl.style.zIndex = '1000';
-                    messageEl.style.fontFamily = '"Press Start 2P", cursive';
-                    messageEl.style.fontSize = '14px';
-                    document.body.appendChild(messageEl);
+                if (!this.devModeMessageEl) {
+                    this.devModeMessageEl = document.createElement('div');
+                    this.devModeMessageEl.id = 'devModeMessage';
+                    this.devModeMessageEl.style.position = 'fixed';
+                    this.devModeMessageEl.style.top = '50%';
+                    this.devModeMessageEl.style.left = '50%';
+                    this.devModeMessageEl.style.transform = 'translate(-50%, -50%)';
+                    this.devModeMessageEl.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                    this.devModeMessageEl.style.color = 'white';
+                    this.devModeMessageEl.style.padding = '10px 20px';
+                    this.devModeMessageEl.style.borderRadius = '5px';
+                    this.devModeMessageEl.style.zIndex = '1000';
+                    this.devModeMessageEl.style.fontFamily = '"Press Start 2P", cursive';
+                    this.devModeMessageEl.style.fontSize = '14px';
+                    document.body.appendChild(this.devModeMessageEl);
                 }
 
-                // 显示消息
-                messageEl.textContent = text;
-                messageEl.style.display = 'block';
+                this.devModeMessageEl.textContent = text;
+                this.devModeMessageEl.style.display = 'block';
 
-                // 定时隐藏
                 setTimeout(() => {
-                    messageEl.style.display = 'none';
+                    this.devModeMessageEl.style.display = 'none';
                 }, duration);
             }
 
-            // 创建开发者工具栏
             createDeveloperToolbar() {
-                // 检查是否已存在工具栏
-                if (document.getElementById('developerToolbar')) {
+                if (this.developerToolbarEl) {
                     return;
                 }
 
-                // 创建工具栏容器
                 const toolbar = document.createElement('div');
                 toolbar.id = 'developerToolbar';
                 toolbar.style.position = 'fixed';
@@ -5520,13 +5593,13 @@
                 toolbar.style.zIndex = '1000';
                 toolbar.style.maxWidth = '90%';
 
-                // 添加道具按钮
+                const buttonConfigs = CONFIG.DEV_TOOLS.POWERUP_BUTTONS;
+
                 this.powerUpTypes.forEach(type => {
                     const button = document.createElement('button');
                     button.className = 'dev-tool-btn';
                     button.setAttribute('data-type', type);
 
-                    // 设置按钮样式
                     button.style.padding = '4px 6px';
                     button.style.border = 'none';
                     button.style.borderRadius = '5px';
@@ -5538,55 +5611,31 @@
                     button.style.justifyContent = 'center';
                     button.style.minWidth = '10px';
 
-                    // 设置按钮颜色和图标
-                    const buttonConfig = {
-                        'lifeSaver': { bg: '#06B6D4', html: '🛸' },
-                        'fullHealth': { bg: '#10B981', html: '💗' },
-                        'smallPlayer': { bg: '#3B82F6', html: '🐜' },
-                        'bigPlayer': { bg: '#8B5CF6', html: '🐘' },
-                        'invincible': { bg: '#F59E0B', html: '🧘' },
-                        'goldenLeg': { bg: '#F59E0B', html: '🦶' },
-                        'goldenHead': { bg: '#F59E0B', html: '😬' },
-                        'allNormal': { bg: '#EC4899', html: '🟦' },
-                        'reducedGravity': { bg: '#9C27B0', html: '🌙' },
-                        'increasedGravity': { bg: '#DC2626', html: '🌑' },
-                        'platformSlow': { bg: '#607D8B', html: '🐢' },
-                        'platformSpeedUp': { bg: '#EF4444', html: '🐇' },
-                        'reverseControls': { bg: '#8B5CF6', html: '💫' },
-                        'narrowVision': { bg: '#6B7280', html: '👁️' },
-                        'randomPowerUp': { bg: '#FFD700', html: '❓' },
-                        'ghost': { bg: '#4B5563', html: '👻' },
-                        'superman': { bg: '#FF0000', html: '🦸' }
-                    };
-
-                    const config = buttonConfig[type];
+                    const config = buttonConfigs[type];
                     if (config) {
                         button.style.backgroundColor = config.bg;
                         button.innerHTML = config.html;
                     }
 
-                    // 添加点击事件
                     button.addEventListener('click', () => {
-                        // 检查是否有自动选择设置
                         if (this.autoSelectPlayer) {
-                            // 根据自动选择设置直接应用效果
+                            const btnText = button.textContent;
                             switch (this.autoSelectPlayer) {
                                 case 'p1':
                                     this.applyPowerUpEffect(type, this.players.p1);
-                                    this.showTempMessage(`已使用: ${button.textContent} (P1)`, 1000);
+                                    this.showTempMessage(`已使用: ${btnText} (P1)`, 1000);
                                     break;
                                 case 'p2':
                                     this.applyPowerUpEffect(type, this.players.p2);
-                                    this.showTempMessage(`已使用: ${button.textContent} (P2)`, 1000);
+                                    this.showTempMessage(`已使用: ${btnText} (P2)`, 1000);
                                     break;
                                 case 'both':
                                     this.applyPowerUpEffect(type, this.players.p1);
                                     this.applyPowerUpEffect(type, this.players.p2);
-                                    this.showTempMessage(`已使用: ${button.textContent} (P1+P2)`, 1000);
+                                    this.showTempMessage(`已使用: ${btnText} (P1+P2)`, 1000);
                                     break;
                             }
                         } else {
-                            // 显示玩家选择对话框
                             this.showPlayerSelectionDialog(type, button.textContent);
                         }
                     });
@@ -5594,15 +5643,13 @@
                     toolbar.appendChild(button);
                 });
 
-                // 添加到页面
                 document.body.appendChild(toolbar);
+                this.developerToolbarEl = toolbar;
             }
 
-            // 显示/隐藏开发者工具栏
             toggleDeveloperToolbar(show) {
-                const toolbar = document.getElementById('developerToolbar');
-                if (toolbar) {
-                    toolbar.style.display = show ? 'flex' : 'none';
+                if (this.developerToolbarEl) {
+                    this.developerToolbarEl.style.display = show ? 'flex' : 'none';
                 }
             }
 
