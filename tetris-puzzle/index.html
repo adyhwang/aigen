@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>俄罗斯方块拼图 | 经典益智游戏</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="libs/tailwind/tailwindcss.js"></script>
+    <link href="libs/fontawesome/css/font-awesome.min.css" rel="stylesheet">
 
     <script>
         tailwind.config = {
@@ -14,26 +14,32 @@
                 extend: {
                     colors: {
                         tetris: {
-                            l: '#FF9500', j: '#003366', s: '#34C759', z: '#FF3B30', i: '#66CCFF', t: '#AF52DE', o: '#FFCC00'
+                            l: '#FF9500', j: '#0055A4', s: '#00D26A', z: '#FF3B30', i: '#00D4FF', t: '#BF5AF2', o: '#FFD60A'
                         },
                         newtetris: {
-                            y: '#FFCC00', g: '#34C759', b: '#0066CC', r: '#FF3B30'
+                            y: '#FFD60A', g: '#00D26A', b: '#0055A4', r: '#FF3B30'
                         },
                         game: {
-                            bg: '#121212', panel: '#1E1E1E', grid: '#2D2D2D', target: '#3A3A3A', text: '#FFFFFF', accent: '#BB86FC', hint: '#00FFFF'
+                            bg: '#0F0F1A', 
+                            panel: 'rgba(30, 30, 50, 0.75)', 
+                            grid: 'rgba(255, 255, 255, 0.06)', 
+                            target: 'rgba(255, 255, 255, 0.04)', 
+                            text: '#F2F2F7', 
+                            accent: '#00D4FF', 
+                            accent2: '#BF5AF2',
+                            hint: '#30D158'
                         }
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif']
                     },
                     boxShadow: {
-                        'tetris': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
-                        'tetris-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
-                        'highlight': '0 0 15px rgba(255, 255, 255, 0.5), 0 0 5px rgba(255, 255, 255, 0.8)',
-                        'pulse': '0 0 10px rgba(187, 134, 252, 0.7), 0 0 20px rgba(187, 134, 252, 0.5)',
-                        'hint': '0 0 15px rgba(255, 255, 255, 0.8), 0 0 5px rgba(255, 255, 255, 0.8)',
-                        'target-hint': '0 0 8px rgba(255, 255, 255, 0.8)',
-                        'block-relief': 'inset 2px 2px 3px rgba(255, 255, 255, 0.2), inset -2px -2px 3px rgba(0, 0, 0, 0.4), 1px 1px 2px rgba(0, 0, 0, 0.3)'
+                        'tetris': '0 8px 16px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2)',
+                        'tetris-hover': '0 12px 24px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3)',
+                        'glow': '0 0 20px rgba(0, 212, 255, 0.4), 0 0 40px rgba(0, 212, 255, 0.2)',
+                        'glow-purple': '0 0 20px rgba(191, 90, 242, 0.4), 0 0 40px rgba(191, 90, 242, 0.2)',
+                        'success-pulse': '0 0 30px rgba(48, 209, 88, 0.6)',
+                        'block-relief': 'inset 3px 3px 6px rgba(255, 255, 255, 0.35), inset -3px -3px 6px rgba(0, 0, 0, 0.45)'
                     }
                 }
             }
@@ -43,11 +49,12 @@
     <style type="text/tailwindcss">
         @layer utilities {
             .content-auto { content-visibility: auto; }
-            .grid-cell { @apply border border-game-grid/30; }
+            .grid-cell { @apply border border-game-grid; }
             .tetris-piece { @apply transition-all duration-150 cursor-move select-none; touch-action: none; }
-            .tetris-block { @apply shadow-md transition-all duration-150 shadow-block-relief border border-white/10; }
-            .btn-game { @apply bg-game-panel hover:bg-game-panel/80 text-game-text py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md flex items-center gap-2; }
-            .grid-container { @apply bg-game-panel rounded-xl shadow-lg overflow-hidden relative; }
+            .tetris-block { @apply shadow-block-relief transition-all duration-150; }
+            .btn-game { @apply bg-slate-700/80 hover:bg-slate-600 text-game-text py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg flex items-center gap-2 backdrop-blur-sm border border-white/10; }
+            .btn-primary { @apply bg-game-accent hover:bg-game-accent/80 text-gray-900 py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-glow flex items-center gap-2 font-semibold; }
+            .grid-container { @apply rounded-2xl shadow-2xl overflow-hidden relative backdrop-blur-md bg-game-panel border border-white/10; }
             .piece-container { @apply relative overflow-hidden; }
             .pulse-animation { animation: pulse 1.2s infinite; }
             .hint-pulse { animation: hintPulse 1.2s infinite; }
@@ -55,6 +62,8 @@
             .success-animation { animation: success 0.5s ease-in-out; }
             .tip-highlight { @apply text-game-accent font-semibold; }
             .sound-control { @apply flex items-center gap-2 ml-2; }
+            .glass-panel { @apply backdrop-blur-xl bg-game-panel border border-white/10 rounded-2xl; }
+            .glass-overlay { @apply backdrop-blur-lg bg-black/60; }
         }
     </style>
 
@@ -65,6 +74,23 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            background: linear-gradient(135deg, #0F0F1A 0%, #1A1A2E 50%, #16213E 100%);
+            background-attachment: fixed;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(191, 90, 242, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(48, 209, 88, 0.04) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         .game-wrapper {
@@ -74,22 +100,24 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 10px;
+            padding: 12px;
             box-sizing: border-box;
             overflow: hidden;
+            position: relative;
+            z-index: 1;
         }
 
         .game-header {
             width: 100%;
             z-index: 50;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .game-main-area {
             display: flex;
             width: 100%;
             flex: 1;
-            gap: 10px;
+            gap: 12px;
             min-height: 0;
             justify-content: center;
             align-items: center;
@@ -109,22 +137,18 @@
         }
 
         .pieces-container {
-            width: 30vw;
             min-width: 0;
-            max-width: 350px;
         }
 
         .center-container {
             min-width: 0;
             display: flex;
             flex-direction: column;
-            max-width: 60vw;
         }
 
         .portrait .pieces-container,
         .portrait .center-container {
             width: 100%;
-            max-width: 95vw;
             max-height: 45vh;
         }
 
@@ -135,13 +159,22 @@
         .grid-container {
             max-width: 100%;
             max-height: 100%;
+            background: rgba(30, 30, 50, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .hint-block {
             position: absolute;
             z-index: 10;
-            border: 2px solid white;
+            border: 2px solid rgba(0, 212, 255, 0.8);
             box-sizing: border-box;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+            animation: hintGlow 1s ease-in-out infinite;
+        }
+
+        @keyframes hintGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(0, 212, 255, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(0, 212, 255, 0.7); }
         }
 
         .fullscreen-active {
@@ -153,13 +186,18 @@
         }
 
         .fullscreen-btn {
-            @apply bg-game-accent/30 hover:bg-game-accent/50;
+            background: rgba(0, 212, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .fullscreen-btn:hover {
+            background: rgba(0, 212, 255, 0.4);
         }
 
         .target-block.hint {
-            opacity: 0.9;
-            border: 2px solid rgba(255, 255, 255, 0.7);
-            box-shadow: inset 2px 2px 3px rgba(255, 255, 255, 0.2), inset -2px -2px 3px rgba(0, 0, 0, 0.4);
+            opacity: 0.85;
+            border: 2px solid rgba(0, 212, 255, 0.8);
+            box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.15), inset -2px -2px 4px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 212, 255, 0.3);
         }
 
         #target-grid {
@@ -191,84 +229,93 @@
             z-index: 100;
         }
 
-        @keyframes pulse {
+        .tetris-block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.25), transparent);
+            border-radius: inherit;
+            pointer-events: none;
+        }
 
-            0%,
-            100% {
+        @keyframes pulse {
+            0%, 100% {
                 opacity: 1;
                 transform: scale(1);
-                box-shadow: 0 0 10px rgba(187, 134, 252, 0.5);
+                box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
             }
-
             50% {
-                opacity: 0.8;
-                transform: scale(1.05);
-                box-shadow: 0 0 20px rgba(187, 134, 252, 0.8);
+                opacity: 0.85;
+                transform: scale(1.03);
+                box-shadow: 0 0 25px rgba(0, 212, 255, 0.7);
             }
         }
 
         @keyframes hintPulse {
-
-            0%,
-            100% {
+            0%, 100% {
                 opacity: 0.7;
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+                box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
             }
-
             50% {
                 opacity: 1;
-                box-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
+                box-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
             }
         }
 
         @keyframes targetHintPulse {
-
-            0%,
-            100% {
+            0%, 100% {
                 opacity: 0.8;
-                box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+                box-shadow: 0 0 12px rgba(0, 212, 255, 0.6);
             }
-
             50% {
                 opacity: 1;
-                box-shadow: 0 0 15px rgba(255, 255, 255, 0.9);
+                box-shadow: 0 0 20px rgba(0, 212, 255, 0.9);
             }
         }
 
         @keyframes success {
-
-            0%,
-            100% {
+            0%, 100% {
                 transform: scale(1);
             }
-
             50% {
-                transform: scale(1.1);
+                transform: scale(1.08);
             }
         }
 
         .custom-select {
-            background-color: #1E1E1E;
-            color: #FFFFFF;
-            border: 1px solid rgba(187, 134, 252, 0.5);
-            border-radius: 4px;
+            background-color: rgba(30, 30, 50, 0.8);
+            color: #F2F2F7;
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            border-radius: 8px;
+            padding: 6px 12px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .custom-select:hover {
+            border-color: rgba(0, 212, 255, 0.6);
         }
 
         .custom-select option {
-            background-color: #1E1E1E;
-            color: #FFFFFF;
+            background-color: #1A1A2E;
+            color: #F2F2F7;
         }
 
         .custom-select:focus {
             outline: none;
-            border-color: #BB86FC;
-            box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.2);
+            border-color: #00D4FF;
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
         }
 
         #tutorial-message {
             position: fixed;
             inset: 0;
-            background-color: rgba(18, 18, 18, 0.95);
+            background-color: rgba(15, 15, 26, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -278,6 +325,7 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.5s ease-in-out;
+            z-index: 150;
         }
 
         #tutorial-message.show {
@@ -287,47 +335,64 @@
 
         .tutorial-content {
             max-width: 600px;
-            background-color: #1E1E1E;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 0 30px rgba(187, 134, 252, 0.3);
+            width: 100%;
+            background: linear-gradient(145deg, rgba(30, 30, 50, 0.9), rgba(25, 25, 45, 0.95));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                0 0 60px rgba(0, 212, 255, 0.15);
         }
 
         .tutorial-title {
             text-align: center;
-            color: #BB86FC;
-            margin-bottom: 20px;
+            color: #00D4FF;
+            margin-bottom: 24px;
             font-size: 1.5rem;
+            font-weight: 700;
         }
 
         .tutorial-steps {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin-bottom: 25px;
+            gap: 16px;
+            margin-bottom: 28px;
         }
 
         .tutorial-step {
             display: flex;
-            gap: 15px;
+            gap: 16px;
             align-items: flex-start;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .tutorial-step:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(0, 212, 255, 0.2);
         }
 
         .step-number {
-            background-color: #BB86FC;
-            color: #121212;
-            width: 28px;
-            height: 28px;
+            background: #00D4FF;
+            color: #0F0F1A;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
         }
 
         .step-content {
             flex: 1;
+            line-height: 1.6;
         }
 
         .tutorial-buttons {
@@ -337,54 +402,132 @@
 
         .volume-slider {
             -webkit-appearance: none;
-            width: 80px;
-            height: 4px;
-            border-radius: 2px;
-            background: #2D2D2D;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
             outline: none;
+            transition: background 0.3s ease;
         }
 
         .volume-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 12px;
-            height: 12px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            background: #BB86FC;
+            background: #00D4FF;
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+            transition: transform 0.2s ease;
+        }
+
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        #settings-message {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(15, 15, 26, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 200;
+        }
+
+        #settings-message.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .settings-content {
+            max-width: 400px;
+            width: 100%;
+            background: linear-gradient(145deg, rgba(30, 30, 50, 0.9), rgba(25, 25, 45, 0.95));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                0 0 60px rgba(191, 90, 242, 0.15);
+        }
+
+        .settings-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .settings-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .settings-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: rgba(242, 242, 247, 0.8);
+            font-weight: 500;
+        }
+
+        .settings-value {
+            font-size: 1rem;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .settings-title {
+            text-align: center;
+            color: #00D4FF;
+            margin-bottom: 24px;
+            font-size: 1.3rem;
+            font-weight: 700;
         }
 
         @media (max-width: 768px) {
             .game-main-area {
-                gap: min(1vw, 8px);
-            }
-
-            .pieces-container {
-                width: 35vw;
-            }
-
-            .header-content {
-                flex-wrap: wrap;
+                gap: min(1.5vw, 10px);
             }
 
             .btn-game {
-                padding: 1px 6px;
+                padding: 5px 10px;
                 font-size: 12px;
             }
 
-            .volume-slider {
-                width: 60px;
+            .tutorial-content,
+            .settings-content {
+                padding: 24px;
+                margin: 16px;
             }
         }
     </style>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="libs/fonts/inter.css" rel="stylesheet">
 </head>
 
 <body class="bg-game-bg text-game-text font-sans">
     <div id="tutorial-message">
         <div class="tutorial-content">
-            <h2 class="tutorial-title">游戏操作指南</h2>
+            <h2 class="tutorial-title">🎮 游戏操作指南</h2>
             <div class="tutorial-steps">
                 <div class="tutorial-step">
                     <div class="step-number">1</div>
@@ -418,98 +561,134 @@
                 </div>
             </div>
             <div class="tutorial-buttons">
-                <button id="tutorial-close-btn" class="btn-game bg-game-accent hover:bg-game-accent/80">
+                <button id="tutorial-close-btn" class="btn-primary">
                     <i class="fa fa-check"></i><span>开始游戏</span>
                 </button>
             </div>
         </div>
     </div>
 
+    <div id="settings-message">
+        <div class="settings-content">
+            <h2 class="settings-title"><i class="fa fa-cog"></i> 游戏设置</h2>
+            <div class="settings-section">
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <i class="fa fa-cube text-game-accent"></i>
+                        <span>游戏模式</span>
+                    </div>
+                    <select id="game-mode" class="custom-select px-3 py-2 bg-game-panel text-game-text w-full">
+                        <option value="classic">经典方块</option>
+                        <option value="new">新方块</option>
+                    </select>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <i class="fa fa-signal text-game-accent"></i>
+                        <span>难度</span>
+                    </div>
+                    <select id="difficulty" class="custom-select px-3 py-2 bg-game-panel text-game-text w-full">
+                        <option value="easy">简单</option>
+                        <option value="medium">一般</option>
+                        <option value="hard">困难</option>
+                    </select>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <i class="fa fa-map-signs text-game-accent"></i>
+                        <span>关卡</span>
+                    </div>
+                    <div class="settings-value">
+                        <span id="level-display" class="font-bold text-game-accent">1</span> / <span id="total-levels" class="font-medium">30</span>
+                    </div>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <i class="fa fa-cubes text-game-accent"></i>
+                        <span>方块数量</span>
+                    </div>
+                    <div class="settings-value">
+                        <span id="pieces-count" class="font-bold text-game-accent">2</span> 个
+                    </div>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-label">
+                        <i class="fa fa-volume-up text-game-accent" id="volume-icon"></i>
+                        <span>音量</span>
+                    </div>
+                    <input type="range" min="0" max="100" value="30" class="volume-slider w-full" id="volume-slider">
+                </div>
+                <div class="settings-item">
+                    <button id="show-tutorial-btn" class="btn-game w-full justify-center">
+                        <i class="fa fa-question-circle"></i>
+                        <span>操作指南</span>
+                    </button>
+                </div>
+            </div>
+            <div class="tutorial-buttons">
+                <button id="settings-close-btn" class="btn-primary">
+                    <i class="fa fa-check"></i><span>完成</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="game-wrapper">
-        <div class="w-full max-w-7xl mx-auto flex flex-col items-center h-full">
-            <div class="game-header w-full mb-3">
-                <div class="header-content flex flex-row items-center justify-center gap-2 px-2 flex-wrap">
-                    <div class="flex items-center gap-2">
-                        <div class="tetris-block bg-tetris-l"></div>
-                        <div class="tetris-block bg-tetris-j"></div>
-                        <div class="tetris-block bg-tetris-s"></div>
-                        <h1 class="text-[clamp(1rem,5vw,1.8rem)] font-bold tracking-tight">俄罗斯方块拼图</h1>
+        <div class="w-full flex flex-col items-center h-full">
+            <div class="game-header w-full">
+                <div class="header-content flex flex-row items-center justify-between gap-2 px-2 flex-nowrap overflow-hidden">
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <h1 class="text-[clamp(0.8rem,3vw,1.5rem)] font-bold tracking-tight whitespace-nowrap text-game-accent">方块拼图</h1>
                     </div>
 
-                    <div class="header-controls bg-game-panel px-3 py-1.5 rounded-lg shadow-md flex items-center gap-4">
-                        <div class="flex items-center gap-1.5">
-                            <i class="fa fa-cube text-game-accent text-sm"></i>
-                            <select id="game-mode" class="custom-select px-2 py-1 text-sm bg-game-panel text-game-text">
-                                <option value="classic">经典方块</option>
-                                <option value="new">新方块</option>
-                            </select>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <i class="fa fa-signal text-game-accent text-sm"></i>
-                            <select id="difficulty"
-                                class="custom-select px-2 py-1 text-sm bg-game-panel text-game-text">
-                                <option value="easy">简单</option>
-                                <option value="medium">一般</option>
-                                <option value="hard">困难</option>
-                            </select>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <i class="fa fa-map-signs text-game-accent text-sm"></i>
-                            <span class="text-sm">关卡: <span id="level-display" class="font-bold">1</span>/<span
-                                    id="total-levels" class="font-medium">30</span></span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <i class="fa fa-cubes text-game-accent text-sm"></i>
-                            <span class="text-sm">方块: <span id="pieces-count" class="font-bold">2</span>个</span>
-                        </div>
-                        <div class="sound-control">
-                            <i class="fa fa-volume-up text-game-accent text-sm" id="volume-icon"></i>
-                            <input type="range" min="0" max="100" value="30" class="volume-slider" id="volume-slider">
-                        </div>
-                    </div>
-
-                    <div class="header-buttons flex flex-wrap justify-center gap-2">
-                        <button id="reset-btn" class="btn-game text-sm md:text-base">
-                            <i class="fa fa-refresh"></i><span>重置</span>
-                        </button>
+                    <div class="header-buttons flex items-center gap-1 md:gap-2 flex-shrink-0">
                         <button id="hint-btn"
-                            class="btn-game bg-game-accent/20 hover:bg-game-accent/30 text-sm md:text-base">
-                            <i class="fa fa-lightbulb-o"></i><span>提示</span>
+                            class="btn-game p-1.5 md:p-2" title="提示">
+                            <i class="fa fa-lightbulb-o"></i>
                         </button>
-                        <button id="fullscreen-btn" class="btn-game fullscreen-btn text-sm md:text-base">
-                            <i class="fa fa-expand"></i><span>全屏</span>
+                        <button id="reset-btn" class="btn-game p-1.5 md:p-2" title="重置">
+                            <i class="fa fa-refresh"></i>
                         </button>
                         <button id="next-btn"
-                            class="btn-game bg-game-accent hover:bg-game-accent/80 text-sm md:text-base">
-                            <i class="fa fa-arrow-right"></i><span>下一关</span>
+                            class="btn-game p-1.5 md:p-2" title="下一关">
+                            <i class="fa fa-arrow-right"></i>
+                        </button>
+                        <button id="fullscreen-btn" class="btn-game fullscreen-btn p-1.5 md:p-2" title="全屏">
+                            <i class="fa fa-expand"></i>
+                        </button>
+                        <button id="rotate-btn" class="btn-game p-1.5 md:p-2" title="切换到横屏">
+                            <i class="fa fa-mobile"></i>
+                        </button>
+                        <button id="settings-btn" class="btn-game p-1.5 md:p-2" title="设置">
+                            <i class="fa fa-cog"></i>
                         </button>
                     </div>
                 </div>
             </div>
 
             <main class="game-main-area flex-1 w-full" id="game-main-area">
-                <div class="center-container" id="center-wrapper">
+                <div class="center-container" id="pieces-wrapper">
                     <div class="pieces-container grid-container" id="pieces-container">
                         <div
-                            class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">
-                            可用方块</div>
+                            class="p-2 bg-slate-800/80 text-center text-xs md:text-sm font-medium border-b border-white/10 text-game-text/90">
+                            <i class="fa fa-th-large text-game-accent mr-1"></i>可用方块</div>
                         <div id="pieces-grid" class="p-0 grid grid-cols-16 gap-0 piece-container"></div>
                     </div>
                 </div>
 
-                <div class="center-container" id="center-wrapper">
+                <div class="center-container" id="target-wrapper">
                     <div class="grid-container h-full" id="target-container">
                         <div
-                            class="p-1.5 bg-game-panel/80 text-center text-xs md:text-sm font-medium border-b border-game-grid">
-                            目标图形</div>
+                            class="p-2 bg-slate-800/80 text-center text-xs md:text-sm font-medium border-b border-white/10 text-game-text/90">
+                            <i class="fa fa-square-o text-game-accent mr-1"></i>目标图形</div>
                         <div id="target-grid"
                             class="p-0 grid grid-cols-16 gap-0 relative piece-container h-[calc(100%-32px)]"></div>
                         <div id="success-message"
-                            class="absolute inset-0 bg-game-bg/80 flex flex-col items-center justify-center gap-4 rounded-xl opacity-0 pointer-events-none transition-opacity duration-500 z-100">
-                            <div class="text-4xl font-bold text-game-accent success-animation">通关!</div>
+                            class="absolute inset-0 bg-game-bg/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4 rounded-xl opacity-0 pointer-events-none transition-opacity duration-500 z-100">
+                            <div class="text-4xl font-bold success-animation text-game-hint">🎉 通关!</div>
                             <p class="text-lg">太棒了，准备好挑战下一关了吗？</p>
                             <button id="success-next-btn"
-                                class="btn-game bg-game-accent hover:bg-game-accent/80 text-sm md:text-base">
+                                class="btn-primary text-sm md:text-base">
                                 <i class="fa fa-arrow-right"></i><span>下一关</span>
                             </button>
                         </div>
@@ -763,8 +942,9 @@
             isDragging: false,
             draggedPiece: null,
             dragOffset: { x: 0, y: 0 },
-            gridSize: calculateGridSize(),
+            gridSize: 10,
             isPortrait: window.innerHeight > window.innerWidth,
+            forcedOrientation: null,
             hintActive: false,
             hintTimer: null,
             hintedPieces: [],
@@ -875,7 +1055,8 @@
             piecesGrid: document.getElementById('pieces-grid'),
             targetGrid: document.getElementById('target-grid'),
             targetContainer: document.getElementById('target-container'),
-            centerWrapper: document.getElementById('center-wrapper'),
+            piecesWrapper: document.getElementById('pieces-wrapper'),
+            targetWrapper: document.getElementById('target-wrapper'),
             gameMainArea: document.getElementById('game-main-area'),
             gameModeSelect: document.getElementById('game-mode'),
             difficultySelect: document.getElementById('difficulty'),
@@ -889,15 +1070,23 @@
             successNextBtn: document.getElementById('success-next-btn'),
             fullscreenBtn: document.getElementById('fullscreen-btn'),
             fullscreenIcon: document.querySelector('#fullscreen-btn i'),
-            fullscreenText: document.querySelector('#fullscreen-btn span'),
             tutorialMessage: document.getElementById('tutorial-message'),
             tutorialCloseBtn: document.getElementById('tutorial-close-btn'),
             volumeSlider: document.getElementById('volume-slider'),
-            volumeIcon: document.getElementById('volume-icon')
+            volumeIcon: document.getElementById('volume-icon'),
+            settingsBtn: document.getElementById('settings-btn'),
+            settingsMessage: document.getElementById('settings-message'),
+            settingsCloseBtn: document.getElementById('settings-close-btn'),
+            rotateBtn: document.getElementById('rotate-btn'),
+            rotateIcon: document.querySelector('#rotate-btn i'),
+            showTutorialBtn: document.getElementById('show-tutorial-btn')
         };
 
         // 初始化游戏
         function initGame() {
+            gameState.gridSize = calculateGridSize();
+            gameState.isPortrait = window.innerHeight > window.innerWidth;
+
             // 添加点击事件以激活音频上下文（处理浏览器自动播放限制）
             document.addEventListener('click', () => {
                 soundManager.ensureAudioContext();
@@ -925,39 +1114,52 @@
         function calculateGridSize() {
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
-            const isPortrait = windowHeight > windowWidth;
+            const forcedOrientation = gameState.forcedOrientation;
+            const effectiveIsPortrait = forcedOrientation
+                ? forcedOrientation === 'portrait'
+                : windowHeight > windowWidth;
             const header = document.querySelector('.game-header');
-            const headerHeight = header ? header.offsetHeight : 120;
-            const availableHeight = windowHeight - headerHeight - 20;
+            const headerHeight = header ? header.offsetHeight : 50;
+            const padding = 20;
+            const gap = 10;
+            const availableHeight = windowHeight - headerHeight - padding;
+            const availableWidth = windowWidth - padding;
 
             let widthBasedSize, heightBasedSize;
 
-            if (!isPortrait) {
-                const totalColumns = COLS + COLS;
-                const gaps = 40;
-                widthBasedSize = (windowWidth - gaps) / totalColumns;
+            if (!effectiveIsPortrait) {
+                const totalColumns = COLS * 2;
+                widthBasedSize = (availableWidth - gap) / totalColumns;
                 heightBasedSize = availableHeight / ROWS;
             } else {
-                const totalRows = ROWS + ROWS + 2;
-                heightBasedSize = availableHeight / totalRows;
-                const maxWidth = windowWidth * 0.9;
-                widthBasedSize = maxWidth / COLS;
+                const totalRows = ROWS * 2;
+                const titleBarEstimate = 64;
+                heightBasedSize = (availableHeight - gap - titleBarEstimate) / totalRows;
+                widthBasedSize = availableWidth / COLS;
             }
 
             let gridSize = Math.floor(Math.min(widthBasedSize, heightBasedSize));
-            return Math.max(Math.min(gridSize, 30), 8);
+            return Math.max(gridSize, 8);
         }
 
         // 检查教程状态
         function checkTutorialStatus() {
-            gameState.hasSeenTutorial = false;
-            setTimeout(() => elements.tutorialMessage.classList.add('show'), 500);
+            const hasSeenTutorial = localStorage.getItem('tetrisTutorialSeen');
+            if (!hasSeenTutorial) {
+                setTimeout(() => elements.tutorialMessage.classList.add('show'), 500);
+            }
+        }
+
+        // 显示教程
+        function showTutorial() {
+            elements.tutorialMessage.classList.add('show');
         }
 
         // 关闭教程
         function closeTutorial() {
             elements.tutorialMessage.classList.remove('show');
             gameState.hasSeenTutorial = true;
+            localStorage.setItem('tetrisTutorialSeen', 'true');
             // 播放开始音效
             soundManager.playNextLevelSound();
         }
@@ -984,8 +1186,10 @@
             elements.targetContainer.style.maxWidth = `${gridWidth}px`;
             elements.targetContainer.style.height = `${targetHeight}px`;
 
-            elements.centerWrapper.style.width = `${gridWidth}px`;
-            elements.centerWrapper.style.maxWidth = `${gridWidth}px`;
+            elements.piecesWrapper.style.width = `${gridWidth}px`;
+            elements.piecesWrapper.style.maxWidth = `${gridWidth}px`;
+            elements.targetWrapper.style.width = `${gridWidth}px`;
+            elements.targetWrapper.style.maxWidth = `${gridWidth}px`;
 
             if (isPortrait) {
                 elements.gameMainArea.classList.add('portrait');
@@ -1012,11 +1216,11 @@
 
             if (gameState.isFullscreen) {
                 elements.fullscreenIcon.className = 'fa fa-compress';
-                elements.fullscreenText.textContent = '退出全屏';
+                elements.fullscreenBtn.title = '退出全屏';
                 document.body.classList.add('fullscreen-active');
             } else {
                 elements.fullscreenIcon.className = 'fa fa-expand';
-                elements.fullscreenText.textContent = '全屏';
+                elements.fullscreenBtn.title = '全屏';
                 document.body.classList.remove('fullscreen-active');
             }
 
@@ -1038,12 +1242,43 @@
             }
         }
 
+        // 显示设置面板
+        function showSettings() {
+            elements.settingsMessage.classList.add('show');
+        }
+
+        // 关闭设置面板
+        function closeSettings() {
+            elements.settingsMessage.classList.remove('show');
+        }
+
+        // 切换屏幕方向
+        function toggleOrientation() {
+            soundManager.playPlaceSound();
+            const currentOrientation = gameState.forcedOrientation
+                || (window.innerHeight > window.innerWidth ? 'portrait' : 'landscape');
+
+            if (currentOrientation === 'portrait') {
+                gameState.forcedOrientation = 'landscape';
+                elements.rotateIcon.className = 'fa fa-desktop';
+                elements.rotateBtn.title = '切换到竖屏';
+            } else {
+                gameState.forcedOrientation = 'portrait';
+                elements.rotateIcon.className = 'fa fa-mobile';
+                elements.rotateBtn.title = '切换到横屏';
+            }
+
+            handleResize();
+        }
+
         // 处理窗口大小变化
         function handleResize() {
             const oldSize = gameState.gridSize;
             const oldOrientation = gameState.isPortrait;
 
-            gameState.isPortrait = window.innerHeight > window.innerWidth;
+            gameState.isPortrait = gameState.forcedOrientation
+                ? gameState.forcedOrientation === 'portrait'
+                : window.innerHeight > window.innerWidth;
             gameState.gridSize = calculateGridSize();
 
             if (Math.abs(gameState.gridSize - oldSize) > 0 || gameState.isPortrait !== oldOrientation) {
@@ -1191,12 +1426,6 @@
         function addPieceEvents(piece) {
             const el = piece.element;
 
-            // 双击旋转
-            el.addEventListener('dblclick', (e) => {
-                e.stopPropagation();
-                rotatePiece(piece);
-            });
-
             // 触摸事件
             el.addEventListener('touchstart', (e) => {
                 e.preventDefault();
@@ -1220,10 +1449,27 @@
                 gameState.lastTouchTime = now;
             }, { passive: false });
 
-            // 鼠标事件
+            // 鼠标事件 - 基于时间的双击检测
             el.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
-                startDrag(piece, e);
+
+                const now = Date.now();
+                const timeSinceLastClick = now - gameState.lastTouchTime;
+
+                if (timeSinceLastClick < 300 && timeSinceLastClick > 0) {
+                    e.preventDefault();
+                    rotatePiece(piece);
+                    gameState.touchCount = 0;
+                    if (gameState.touchTimeout) clearTimeout(gameState.touchTimeout);
+                } else {
+                    startDrag(piece, e);
+                    gameState.touchCount++;
+
+                    if (gameState.touchTimeout) clearTimeout(gameState.touchTimeout);
+                    gameState.touchTimeout = setTimeout(() => gameState.touchCount = 0, 300);
+                }
+
+                gameState.lastTouchTime = now;
             });
         }
 
@@ -1917,9 +2163,27 @@
             elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
             elements.nextBtn.addEventListener('click', nextLevel);
             elements.successNextBtn.addEventListener('click', nextLevel);
+            elements.settingsBtn.addEventListener('click', showSettings);
+            elements.settingsCloseBtn.addEventListener('click', closeSettings);
+            elements.settingsMessage.addEventListener('click', (e) => {
+                if (e.target === elements.settingsMessage) {
+                    closeSettings();
+                }
+            });
+            elements.showTutorialBtn.addEventListener('click', () => {
+                closeSettings();
+                showTutorial();
+            });
+            elements.rotateBtn.addEventListener('click', toggleOrientation);
 
             elements.targetGrid.addEventListener('click', () => {
                 if (gameState.isDragging) stopDrag();
+            });
+
+            elements.tutorialMessage.addEventListener('click', (e) => {
+                if (e.target === elements.tutorialMessage) {
+                    closeTutorial();
+                }
             });
 
             document.addEventListener('dragstart', (e) => e.preventDefault());
