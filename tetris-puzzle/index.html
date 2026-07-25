@@ -336,6 +336,8 @@
         .tutorial-content {
             max-width: 600px;
             width: 100%;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
             background: linear-gradient(145deg, rgba(30, 30, 50, 0.9), rgba(25, 25, 45, 0.95));
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
@@ -452,6 +454,8 @@
         .settings-content {
             max-width: 400px;
             width: 100%;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
             background: linear-gradient(145deg, rgba(30, 30, 50, 0.9), rgba(25, 25, 45, 0.95));
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
@@ -517,7 +521,29 @@
             .settings-content {
                 padding: 24px;
                 margin: 16px;
+                max-height: calc(100vh - 32px);
             }
+        }
+
+        .tutorial-content::-webkit-scrollbar,
+        .settings-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .tutorial-content::-webkit-scrollbar-track,
+        .settings-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .tutorial-content::-webkit-scrollbar-thumb,
+        .settings-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
+        }
+
+        .tutorial-content::-webkit-scrollbar-thumb:hover,
+        .settings-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
         }
     </style>
 
