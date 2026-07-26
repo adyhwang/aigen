@@ -9,8 +9,47 @@
 <body>
     <div class="game-container">
          <div class="options-container" id="optionsContainer">
-                <button class="btn-options hide-option" onclick="openConfigModal()">⚙️</button>
+            <button class="btn-options" onclick="toggleQuickSettings()">⚙️</button>
+        </div>
+        <div class="quick-settings-bar" id="quickSettingsBar">
+            <div class="qs-row">
+                <button class="qs-toggle-btn" data-toggle="battleInfo" onclick="qsToggle('battleInfo')">📋</button>
+                <button class="qs-toggle-btn" data-toggle="stats" onclick="qsToggle('stats')">📊</button>
+                <button class="qs-toggle-btn" data-toggle="readyarea" onclick="qsToggle('readyarea')">📦</button>
+                <button class="qs-toggle-btn" data-toggle="pause" onclick="qsToggle('pause')">⏸️</button>
+                <button class="qs-toggle-btn" data-toggle="fullscreen" onclick="qsToggle('fullscreen')">⛶</button>
             </div>
+            <div class="qs-row qs-sliders">
+                <div class="slider-group">
+                    <span class="qs-slider-label">待命图标</span>
+                    <input type="range" id="readyIconSizeSlider" min="40" max="120" step="5" value="70" oninput="updateReadyIconSize(this.value)">
+                    <span class="qs-slider-value" id="readyIconSizeValue">70</span>
+                </div>
+                <div class="slider-group">
+                    <span class="qs-slider-label">战斗图标</span>
+                    <input type="range" id="iconSizeSlider" min="0.2" max="1.8" step="0.1" value="0.8" oninput="updateIconSize(this.value)">
+                    <span class="qs-slider-value" id="iconSizeValue">0.8</span>
+                </div>
+                <div class="slider-group">
+                    <span class="qs-slider-label">界面面板</span>
+                    <input type="range" id="uiSizeSlider" min="0.5" max="2" step="0.1" value="1" oninput="updateUISize(this.value)">
+                    <span class="qs-slider-value" id="uiSizeValue">1</span>
+                </div>
+                <div class="slider-group">
+                    <span class="qs-slider-label">界面透明</span>
+                    <input type="range" id="uiOpacitySlider" min="0.1" max="1" step="0.1" value="1" oninput="updateUIOpacity(this.value)">
+                    <span class="qs-slider-value" id="uiOpacityValue">1</span>
+                </div>
+                <div class="slider-group">
+                    <span class="qs-slider-label">游戏速度</span>
+                    <input type="range" id="gameSpeedSlider" min="0.5" max="5" step="0.5" value="1" oninput="updateGameSpeed(this.value)">
+                    <span class="qs-slider-value" id="gameSpeedValue">1x</span>
+                </div>
+            </div>
+            <div class="qs-row">
+                <button class="qs-more-btn" onclick="openConfigModal()">更多…</button>
+            </div>
+        </div>
         <div class="battle-info-wrapper" id="battleInfoWrapper">
             <div class="battle-info-filters-left">
                 <button class="filter-tab active" data-filter="player" data-value="all">全部</button>
@@ -26,9 +65,6 @@
                 <button class="filter-tab" data-filter="action" data-value="special">其他</button>
             </div>
         </div>
-        <header class="game-header">
-            <h1>图标大战</h1>
-        </header>
 
         <div class="battle-area" id="battleArea">
             <div class="battle-zone player1-zone" id="player1BattleZone">
@@ -56,33 +92,6 @@
         </div>
 
         <div class="ready-area" id="readyarea">
-            <div class="ready-icon-size-slider">
-                <div class="slider-group">
-                    <span class="ready-icon-size-label">待命图标</span>
-                    <input type="range" id="readyIconSizeSlider" min="40" max="120" step="5" value="70" oninput="updateReadyIconSize(this.value)">
-                    <span class="ready-icon-size-value" id="readyIconSizeValue">70</span>
-                </div>
-                <div class="slider-group">
-                    <span class="ready-icon-size-label">战斗图标</span>
-                    <input type="range" id="iconSizeSlider" min="0.2" max="1.8" step="0.1" value="0.8" oninput="updateIconSize(this.value)">
-                    <span class="ready-icon-size-value" id="iconSizeValue">0.8</span>
-                </div>
-                <div class="slider-group">
-                    <span class="ready-icon-size-label">界面面板</span>
-                    <input type="range" id="uiSizeSlider" min="0.5" max="2" step="0.1" value="1" oninput="updateUISize(this.value)">
-                    <span class="ready-icon-size-value" id="uiSizeValue">1</span>
-                </div>
-                <div class="slider-group">
-                    <span class="ready-icon-size-label">界面透明</span>
-                    <input type="range" id="uiOpacitySlider" min="0.1" max="1" step="0.1" value="1" oninput="updateUIOpacity(this.value)">
-                    <span class="ready-icon-size-value" id="uiOpacityValue">1</span>
-                </div>
-                <div class="slider-group">
-                    <span class="ready-icon-size-label">游戏速度</span>
-                    <input type="range" id="gameSpeedSlider" min="0.5" max="5" step="0.5" value="1" oninput="updateGameSpeed(this.value)">
-                    <span class="ready-icon-size-value" id="gameSpeedValue">1x</span>
-                </div>
-            </div>
             <div class="ready-zone player1-ready" id="player1Ready">
                 <div class="ready-header">
                     <h2>玩家1待命区</h2>
@@ -120,7 +129,6 @@
             <button class="portrait-tab" data-panel="battleInfo">战斗信息</button>
             <button class="portrait-tab" data-panel="iconsStats">图标状态</button>
             <button class="portrait-tab" data-panel="readyarea">待命区</button>
-            <button class="portrait-tab" data-panel="options">选项</button>
         </div>
     </div>
 
@@ -189,20 +197,22 @@
                         </div>
                     </div>
 
-                    <div class="config-section-title">显示面板</div>
-                    <div class="config-row">
-                        <label class="option-item">
-                            <input type="checkbox" id="showBattleInfo" onchange="toggleShowBattleInfo()" checked>
-                            <span>战斗信息</span>
-                        </label>
-                        <label class="option-item">
-                            <input type="checkbox" id="showStats" onchange="toggleShowStats()" checked>
-                            <span>玩家状态</span>
-                        </label>
-                        <label class="option-item">
-                            <input type="checkbox" id="showReadyArea" onchange="toggleShowReadyArea()" checked>
-                            <span>玩家待命区</span>
-                        </label>
+                    <div class="display-panel-section">
+                        <div class="config-section-title">显示面板</div>
+                        <div class="config-row">
+                            <label class="option-item">
+                                <input type="checkbox" id="showBattleInfo" onchange="toggleShowBattleInfo()" checked>
+                                <span>战斗信息</span>
+                            </label>
+                            <label class="option-item">
+                                <input type="checkbox" id="showStats" onchange="toggleShowStats()" checked>
+                                <span>玩家状态</span>
+                            </label>
+                            <label class="option-item">
+                                <input type="checkbox" id="showReadyArea" onchange="toggleShowReadyArea()" checked>
+                                <span>玩家待命区</span>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="config-section-title">游戏中</div>

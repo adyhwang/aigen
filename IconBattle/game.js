@@ -366,170 +366,156 @@ function getWeaponBehavior(iconData) {
 
 // 播放游戏音效
 // @param {string} type - 音效类型，如'attack'、'hit'、'kill'等
+const SOUND_CONFIG = {
+    attack: {
+        oscType: 'square',
+        duration: 0.1,
+        gainStart: 0.1, gainEnd: 0.01,
+        freq: [ { t: 0, v: 200 }, { t: 0.1, v: 100, ramp: 'exp' } ]
+    },
+    hit: {
+        oscType: 'sawtooth',
+        duration: 0.15,
+        gainStart: 0.15, gainEnd: 0.01,
+        freq: [ { t: 0, v: 150 }, { t: 0.15, v: 50, ramp: 'exp' } ]
+    },
+    kill: {
+        oscType: 'sine',
+        duration: 0.3,
+        gainStart: 0.2, gainEnd: 0.01,
+        freq: [
+            { t: 0, v: 300 },
+            { t: 0.1, v: 600, ramp: 'exp' },
+            { t: 0.3, v: 200, ramp: 'exp' }
+        ]
+    },
+    death: {
+        oscType: 'triangle',
+        duration: 0.5,
+        gainStart: 0.2, gainEnd: 0.01,
+        freq: [ { t: 0, v: 400 }, { t: 0.5, v: 50, ramp: 'exp' } ]
+    },
+    dodge: {
+        oscType: 'sine',
+        duration: 0.1,
+        gainStart: 0.1, gainEnd: 0.01,
+        freq: [ { t: 0, v: 800 }, { t: 0.1, v: 1200, ramp: 'exp' } ]
+    },
+    cooldown: {
+        oscType: 'square',
+        duration: 0.2,
+        gainStart: 0.08, gainEnd: 0.01,
+        freq: [ { t: 0, v: 400 }, { t: 0.2, v: 200, ramp: 'exp' } ]
+    },
+    explosion: {
+        oscType: 'sawtooth',
+        duration: 0.3,
+        gainStart: 0.3, gainEnd: 0.01,
+        freq: [ { t: 0, v: 100 }, { t: 0.3, v: 30, ramp: 'exp' } ]
+    },
+    lightning: {
+        oscType: 'sawtooth',
+        duration: 0.35,
+        gainStart: 0.25, gainEnd: 0.01,
+        freq: [
+            { t: 0, v: 2000 },
+            { t: 0.15, v: 100, ramp: 'exp' },
+            { t: 0.2, v: 1500 },
+            { t: 0.35, v: 50, ramp: 'exp' }
+        ]
+    },
+    fire: {
+        oscType: 'sawtooth',
+        duration: 0.5,
+        gainStart: 0.2, gainEnd: 0.01,
+        freq: [
+            { t: 0, v: 80 },
+            { t: 0.1, v: 120 },
+            { t: 0.2, v: 90 },
+            { t: 0.3, v: 110 },
+            { t: 0.5, v: 60, ramp: 'exp' }
+        ]
+    },
+    heal: {
+        oscType: 'sine',
+        duration: 0.4,
+        gainStart: 0.15, gainEnd: 0.01,
+        freq: [
+            { t: 0, v: 523.25 },
+            { t: 0.2, v: 659.25, ramp: 'exp' },
+            { t: 0.4, v: 783.99, ramp: 'exp' }
+        ]
+    },
+    ice: {
+        oscType: 'sine',
+        duration: 0.5,
+        gainStart: 0.15, gainEnd: 0.01,
+        freq: [
+            { t: 0, v: 800 },
+            { t: 0.2, v: 400, ramp: 'exp' },
+            { t: 0.4, v: 200, ramp: 'exp' }
+        ]
+    },
+    buff: {
+        oscType: 'square',
+        duration: 0.3,
+        gainStart: 0.12, gainEnd: 0.01,
+        freq: [
+            { t: 0, v: 300 },
+            { t: 0.1, v: 600, ramp: 'exp' },
+            { t: 0.2, v: 900, ramp: 'exp' }
+        ]
+    }
+};
+
 function playSound(type) {
-    // 如果音频上下文被暂停，恢复它
     if (audioContext.state === 'suspended') {
         audioContext.resume();
     }
-    
-    // 创建振荡器和增益节点
-    const oscillator = audioContext.createOscillator();  // 振荡器，用于生成音频
-    const gainNode = audioContext.createGain();        // 增益节点，用于控制音量
-    
-    // 连接音频节点
+
+    if (type === 'victory') {
+        const victoryOsc = audioContext.createOscillator();
+        const victoryGain = audioContext.createGain();
+        victoryOsc.connect(victoryGain);
+        victoryGain.connect(audioContext.destination);
+        victoryOsc.type = 'sine';
+        const t0 = audioContext.currentTime;
+        victoryOsc.frequency.setValueAtTime(523.25, t0);
+        victoryOsc.frequency.setValueAtTime(659.25, t0 + 0.15);
+        victoryOsc.frequency.setValueAtTime(783.99, t0 + 0.3);
+        victoryOsc.frequency.setValueAtTime(1046.50, t0 + 0.45);
+        victoryGain.gain.setValueAtTime(0.15, t0);
+        victoryGain.gain.exponentialRampToValueAtTime(0.01, t0 + 0.6);
+        victoryOsc.start();
+        victoryOsc.stop(t0 + 0.6);
+        return;
+    }
+
+    const cfg = SOUND_CONFIG[type];
+    if (!cfg) return;
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    
-    // 根据音效类型设置不同的音频参数
-    switch(type) {
-        case 'attack':
-            oscillator.type = 'square';
-            oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.1);
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.1);
-            break;
-            
-        case 'hit':
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.15);
-            gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.15);
-            break;
-            
-        case 'kill':
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.1);
-            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.3);
-            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.3);
-            break;
-            
-        case 'death':
-            oscillator.type = 'triangle';
-            oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.5);
-            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.5);
-            break;
-            
-        case 'dodge':
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.1);
-            break;
-            
-        case 'cooldown':
-            oscillator.type = 'square';
-            oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.2);
-            gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.2);
-            break;
-            
-        case 'explosion':
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(100, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(30, audioContext.currentTime + 0.3);
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.3);
-            break;
-            
-        case 'lightning':
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(2000, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.15);
-            oscillator.frequency.setValueAtTime(1500, audioContext.currentTime + 0.2);
-            oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.35);
-            gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.35);
-            break;
-            
-        case 'fire':
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(80, audioContext.currentTime);
-            oscillator.frequency.setValueAtTime(120, audioContext.currentTime + 0.1);
-            oscillator.frequency.setValueAtTime(90, audioContext.currentTime + 0.2);
-            oscillator.frequency.setValueAtTime(110, audioContext.currentTime + 0.3);
-            oscillator.frequency.exponentialRampToValueAtTime(60, audioContext.currentTime + 0.5);
-            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.5);
-            break;
-            
-        case 'victory':
-            const victoryOsc = audioContext.createOscillator();
-            const victoryGain = audioContext.createGain();
-            victoryOsc.connect(victoryGain);
-            victoryGain.connect(audioContext.destination);
-            
-            victoryOsc.type = 'sine';
-            victoryOsc.frequency.setValueAtTime(523.25, audioContext.currentTime);
-            victoryOsc.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.15);
-            victoryOsc.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.3);
-            victoryOsc.frequency.setValueAtTime(1046.50, audioContext.currentTime + 0.45);
-            
-            victoryGain.gain.setValueAtTime(0.15, audioContext.currentTime);
-            victoryGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
-            
-            victoryOsc.start();
-            victoryOsc.stop(audioContext.currentTime + 0.6);
-            break;
-            
-        case 'heal':
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(659.25, audioContext.currentTime + 0.2);
-            oscillator.frequency.exponentialRampToValueAtTime(783.99, audioContext.currentTime + 0.4);
-            gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.4);
-            break;
-            
-        case 'ice':
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.2);
-            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.4);
-            gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.5);
-            break;
-            
-        case 'buff':
-            oscillator.type = 'square';
-            oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.1);
-            oscillator.frequency.exponentialRampToValueAtTime(900, audioContext.currentTime + 0.2);
-            gainNode.gain.setValueAtTime(0.12, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.3);
-            break;
-    }
+
+    const t0 = audioContext.currentTime;
+    oscillator.type = cfg.oscType;
+
+    cfg.freq.forEach((step, i) => {
+        const time = t0 + step.t;
+        if (i === 0 || !step.ramp) {
+            oscillator.frequency.setValueAtTime(step.v, time);
+        } else if (step.ramp === 'exp') {
+            oscillator.frequency.exponentialRampToValueAtTime(step.v, time);
+        }
+    });
+
+    gainNode.gain.setValueAtTime(cfg.gainStart, t0);
+    gainNode.gain.exponentialRampToValueAtTime(cfg.gainEnd, t0 + cfg.duration);
+
+    oscillator.start();
+    oscillator.stop(t0 + cfg.duration);
 }
 
 function generateRandomStats() {
@@ -1681,57 +1667,27 @@ function addHealBattleInfo(attacker, target, healAmount) {
 
 function showWeaponEffect(attacker, defender, effectType) {
     if (!effectType) return;
-    
     const battleArea = document.getElementById('battleArea');
-    
-    // 根据效果类型选择特效实现
-    switch(effectType) {
-        case 'slash':
-            createSlashEffect(attacker, defender, battleArea);
-            break;
-        case 'stab':
-            createStabEffect(attacker, defender, battleArea);
-            break;
-        case 'chop':
-            createChopEffect(attacker, defender, battleArea);
-            break;
-        case 'smash':
-            createSmashEffect(attacker, defender, battleArea);
-            break;
-        case 'pierce':
-            createPierceEffect(attacker, defender, battleArea);
-            break;
-        case 'dig':
-            createDigEffect(attacker, defender, battleArea);
-            break;
-        case 'arrow':
-            createArrowEffect(attacker, defender, battleArea);
-            break;
-        case 'bullet':
-            createBulletEffect(attacker, defender, battleArea);
-            break;
-        case 'lightning':
-            createLightningSingleEffect(attacker, defender, battleArea);
-            break;
-        case 'fire':
-            createFireSingleEffect(attacker, defender, battleArea);
-            break;
-        case 'heal':
-            createHealEffect(attacker, defender, battleArea);
-            break;
-        case 'buff':
-            createBuffEffect(attacker, defender, battleArea);
-            break;
-        case 'poison':
-            createPoisonEffect(attacker, defender, battleArea);
-            break;
-        case 'shield':
-            createShieldEffect(attacker, defender, battleArea);
-            break;
-        default:
-            createDefaultEffect(attacker, defender, battleArea);
-    }
+    const factory = EFFECT_FACTORIES[effectType] || createDefaultEffect;
+    factory(attacker, defender, battleArea);
 }
+
+const EFFECT_FACTORIES = {
+    slash: createSlashEffect,
+    stab: (a, d, area) => createBaseEffect(a, d, area, 'stab-effect'),
+    chop: (a, d, area) => createBaseEffect(a, d, area, 'chop-effect'),
+    smash: createSmashEffect,
+    pierce: (a, d, area) => createBaseEffect(a, d, area, 'pierce-effect'),
+    dig: (a, d, area) => createBaseEffect(a, d, area, 'dig-effect'),
+    arrow: (a, d, area) => createBaseEffect(a, d, area, 'arrow-effect'),
+    bullet: (a, d, area) => createBaseEffect(a, d, area, 'bullet-effect'),
+    lightning: createLightningSingleEffect,
+    fire: createFireSingleEffect,
+    heal: createHealEffect,
+    buff: createBuffEffect,
+    poison: createPoisonEffect,
+    shield: createShieldEffect
+};
 
 // 武器特效函数库
 function createBaseEffect(attacker, defender, battleArea, className, options = {}) {
@@ -1782,14 +1738,6 @@ function createSlashEffect(attacker, defender, battleArea) {
     effect.appendChild(slash2);
 }
 
-function createStabEffect(attacker, defender, battleArea) {
-    createBaseEffect(attacker, defender, battleArea, 'stab-effect');
-}
-
-function createChopEffect(attacker, defender, battleArea) {
-    createBaseEffect(attacker, defender, battleArea, 'chop-effect');
-}
-
 function createSmashEffect(attacker, defender, battleArea) {
     createBaseEffect(attacker, defender, battleArea, 'smash-effect', { removeDelay: GAME_CONFIG.timing.mediumDelay });
     
@@ -1799,22 +1747,6 @@ function createSmashEffect(attacker, defender, battleArea) {
     setTimeout(() => {
         defender.element.style.animation = '';
     }, 500);
-}
-
-function createPierceEffect(attacker, defender, battleArea) {
-    createBaseEffect(attacker, defender, battleArea, 'pierce-effect');
-}
-
-function createDigEffect(attacker, defender, battleArea) {
-    createBaseEffect(attacker, defender, battleArea, 'dig-effect');
-}
-
-function createArrowEffect(attacker, defender, battleArea) {
-    createBaseEffect(attacker, defender, battleArea, 'arrow-effect');
-}
-
-function createBulletEffect(attacker, defender, battleArea) {
-    createBaseEffect(attacker, defender, battleArea, 'bullet-effect');
 }
 
 function createLightningSingleEffect(attacker, defender, battleArea) {
@@ -3935,8 +3867,8 @@ function init() {
     initFilterTabs();
     setupTouchOptimizations();
     setupPortraitTabs();
-
     loadOptionsConfig();
+    syncAllQuickSettingsBtns();
     
     addRandomIcons(1, 7);
     addRandomIcons(2, 7);
@@ -3962,6 +3894,14 @@ function init() {
         const configModal = document.getElementById('configModal');
         if (event.target === configModal) {
             closeConfigModal();
+        }
+        const quickSettingsBar = document.getElementById('quickSettingsBar');
+        const optionsContainer = document.getElementById('optionsContainer');
+        if (quickSettingsBar && quickSettingsBar.classList.contains('show')) {
+            if (!event.target.closest('.quick-settings-bar') && 
+                !event.target.closest('.options-container')) {
+                quickSettingsBar.classList.remove('show');
+            }
         }
     });
     
@@ -4457,53 +4397,43 @@ function onAutoDeployCountChange(value) {
     saveOptionsConfig();
 }
 
-function toggleShowReadyArea() {
-    const showReadyArea = document.getElementById('showReadyArea').checked;
-    const readyArea = document.getElementById('readyarea');
+function toggleElementVisibility(elementIds, show) {
+    elementIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.toggle('hidden', !show);
+        }
+    });
+}
 
-    if (showReadyArea) {
-        readyArea.classList.remove('hidden');
-    } else {
-        readyArea.classList.add('hidden');
-    }
+function toggleShowReadyArea() {
+    const show = document.getElementById('showReadyArea').checked;
+    toggleElementVisibility(['readyarea'], show);
+    updateQuickSettingsBtnState('readyarea', show);
     saveOptionsConfig();
 }
 
 function toggleShowBattleInfo() {
-    const isLandscape = window.matchMedia('(orientation: landscape)').matches;
-    if (!isLandscape) {
+    const show = document.getElementById('showBattleInfo').checked;
+    updateQuickSettingsBtnState('battleInfo', show);
+    if (window.matchMedia('(orientation: portrait)').matches) {
         saveOptionsConfig();
         return;
     }
-
-    const showBattleInfo = document.getElementById('showBattleInfo').checked;
-    const battleInfoWrapper = document.getElementById('battleInfoWrapper');
-
-    if (showBattleInfo) {
-        battleInfoWrapper.classList.remove('hidden');
-    } else {
-        battleInfoWrapper.classList.add('hidden');
-    }
+    toggleElementVisibility(['battleInfoWrapper'], show);
     saveOptionsConfig();
 }
 
 function toggleShowStats() {
-    const showStats = document.getElementById('showStats').checked;
-    const player1Stats = document.getElementById('player1Stats');
-    const player2Stats = document.getElementById('player2Stats');
-
-    if (showStats) {
-        player1Stats.classList.remove('hidden');
-        player2Stats.classList.remove('hidden');
-    } else {
-        player1Stats.classList.add('hidden');
-        player2Stats.classList.add('hidden');
-    }
+    const show = document.getElementById('showStats').checked;
+    toggleElementVisibility(['player1Stats', 'player2Stats'], show);
+    updateQuickSettingsBtnState('stats', show);
     saveOptionsConfig();
 }
 
 function togglePauseGame() {
     gamePaused = document.getElementById('pauseGame').checked;
+    updateQuickSettingsBtnState('pause', gamePaused);
 }
 
 function isBattleIcon(iconData) {
@@ -4511,7 +4441,7 @@ function isBattleIcon(iconData) {
 }
 
 function canBeSquadLeader(iconData) {
-    return (iconData.weapon.type === 'melee' || iconData.weapon.type === 'ranged' || iconData.weapon.type === 'aoe') && !iconData.weapon.isSelfDestruct;
+    return isBattleIcon(iconData) && !iconData.weapon.isSelfDestruct;
 }
 
 function selectSquadLeaders() {
@@ -5236,6 +5166,9 @@ function toggleFullscreen() {
             document.documentElement.msRequestFullscreen();
         }
     } else {
+        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+        if (!isFullscreen) return;
+        
         if (document.exitFullscreen) {
             document.exitFullscreen();
         } else if (document.webkitExitFullscreen) {
@@ -5254,41 +5187,120 @@ function handleFullscreenChange() {
     const fullscreenCheckbox = document.getElementById('fullscreenMode');
     const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
     fullscreenCheckbox.checked = !!isFullscreen;
+    updateQuickSettingsBtnState('fullscreen', !!isFullscreen);
 }
 
-function updateGameSpeed(value) {
-    gameSpeed = Math.min(5, Math.max(0.5, parseFloat(value)));
-    const slider = document.getElementById('gameSpeedSlider');
-    if (slider) slider.value = gameSpeed;
-    const valueDisplay = document.getElementById('gameSpeedValue');
-    if (valueDisplay) valueDisplay.textContent = `${gameSpeed}x`;
-    saveOptionsConfig();
+function toggleQuickSettings() {
+    const bar = document.getElementById('quickSettingsBar');
+    if (!bar) return;
+    bar.classList.toggle('show');
 }
 
-function updateIconSize(value) {
-    const [minSize, maxSize] = iconSizes;
-    iconSize = Math.min(maxSize, Math.max(minSize, parseFloat(value)));
-
-    const allIcons = document.querySelectorAll('.battle-icon');
-    allIcons.forEach(icon => {
-        icon.style.transform = `scale(${iconSize})`;
-        icon.style.setProperty('--icon-size', iconSize);
+function updateQuickSettingsBtnState(key, active) {
+    const btns = document.querySelectorAll(`.quick-settings-bar .qs-toggle-btn[data-toggle="${key}"]`);
+    btns.forEach(btn => {
+        btn.classList.toggle('active', active);
     });
+}
 
-    const iconSizeSlider = document.getElementById('iconSizeSlider');
-    if (iconSizeSlider) {
-        iconSizeSlider.value = iconSize;
+function syncAllQuickSettingsBtns() {
+    const battleInfoCheckbox = document.getElementById('showBattleInfo');
+    const statsCheckbox = document.getElementById('showStats');
+    const readyAreaCheckbox = document.getElementById('showReadyArea');
+    const pauseCheckbox = document.getElementById('pauseGame');
+    const fullscreenCheckbox = document.getElementById('fullscreenMode');
+
+    if (battleInfoCheckbox) updateQuickSettingsBtnState('battleInfo', battleInfoCheckbox.checked);
+    if (statsCheckbox) updateQuickSettingsBtnState('stats', statsCheckbox.checked);
+    if (readyAreaCheckbox) updateQuickSettingsBtnState('readyarea', readyAreaCheckbox.checked);
+    if (pauseCheckbox) updateQuickSettingsBtnState('pause', pauseCheckbox.checked);
+    if (fullscreenCheckbox) updateQuickSettingsBtnState('fullscreen', fullscreenCheckbox.checked);
+}
+
+function qsToggle(key) {
+    const config = {
+        battleInfo: { id: 'showBattleInfo', toggle: toggleShowBattleInfo },
+        stats: { id: 'showStats', toggle: toggleShowStats },
+        readyarea: { id: 'showReadyArea', toggle: toggleShowReadyArea },
+        pause: { id: 'pauseGame', toggle: togglePauseGame },
+        fullscreen: { id: 'fullscreenMode', toggle: toggleFullscreen }
+    };
+    const { id, toggle } = config[key];
+    const checkbox = document.getElementById(id);
+    if (!checkbox) return;
+    checkbox.checked = !checkbox.checked;
+    toggle?.();
+    updateQuickSettingsBtnState(key, checkbox.checked);
+}
+
+const SLIDER_CONFIG = {
+    gameSpeed: {
+        min: 0.5, max: 5,
+        sliderId: 'gameSpeedSlider', valueId: 'gameSpeedValue',
+        getVar: () => gameSpeed, setVar: v => { gameSpeed = v; },
+        format: v => `${v}x`
+    },
+    iconSize: {
+        min: () => iconSizes[0], max: () => iconSizes[1],
+        sliderId: 'iconSizeSlider', valueId: 'iconSizeValue',
+        getVar: () => iconSize, setVar: v => { iconSize = v; },
+        format: v => v.toFixed(1),
+        apply: v => {
+            const allIcons = document.querySelectorAll('.battle-icon');
+            allIcons.forEach(icon => {
+                icon.style.transform = `scale(${v})`;
+                icon.style.setProperty('--icon-size', v);
+            });
+        }
+    },
+    uiSize: {
+        min: () => uiSizes[0], max: () => uiSizes[1],
+        sliderId: 'uiSizeSlider', valueId: 'uiSizeValue',
+        getVar: () => uiSize, setVar: v => { uiSize = v; },
+        format: v => v.toFixed(1),
+        apply: v => {
+            document.documentElement.style.setProperty('--ui-scale', v);
+            updateReadyAreaLayout();
+        }
+    },
+    uiOpacity: {
+        min: 0.1, max: 1,
+        sliderId: 'uiOpacitySlider', valueId: 'uiOpacityValue',
+        getVar: () => uiOpacity, setVar: v => { uiOpacity = v; },
+        format: v => v.toFixed(1),
+        apply: v => {
+            document.documentElement.style.setProperty('--ui-opacity', v);
+        }
+    },
+    readyIconSize: {
+        min: () => readyIconSizes[0], max: () => readyIconSizes[1],
+        sliderId: 'readyIconSizeSlider', valueId: 'readyIconSizeValue',
+        getVar: () => readyIconSize, setVar: v => { readyIconSize = v; },
+        format: v => v,
+        apply: v => {
+            const readyArea = document.getElementById('readyarea');
+            if (readyArea) {
+                readyArea.style.setProperty('--ready-icon-size', `${v}px`);
+            }
+        }
     }
+};
 
-    const iconSizeValue = document.getElementById('iconSizeValue');
-    if (iconSizeValue) {
-        iconSizeValue.textContent = iconSize.toFixed(1);
-    }
-
+function updateSliderValue(key, value) {
+    const cfg = SLIDER_CONFIG[key];
+    if (!cfg) return;
+    const minVal = typeof cfg.min === 'function' ? cfg.min() : cfg.min;
+    const maxVal = typeof cfg.max === 'function' ? cfg.max() : cfg.max;
+    const val = Math.min(maxVal, Math.max(minVal, parseFloat(value)));
+    cfg.setVar(val);
+    if (cfg.apply) cfg.apply(val);
+    const slider = document.getElementById(cfg.sliderId);
+    if (slider) slider.value = val;
+    const valueDisplay = document.getElementById(cfg.valueId);
+    if (valueDisplay) valueDisplay.textContent = cfg.format(val);
     saveOptionsConfig();
 }
 
-// 重新计算玩家待命区行高（受 uiSize 影响）
 function updateReadyAreaLayout() {
     const rowHeight = readyIconSize + 30 * uiSize;
     const allReadyContents = document.querySelectorAll('.ready-content');
@@ -5296,77 +5308,17 @@ function updateReadyAreaLayout() {
         content.style.height = `${rowHeight}px`;
     });
 
-    // 同步图标尺寸 CSS 变量（由滑块控制）
     const allReadyIcons = document.querySelectorAll('.icon-item');
     allReadyIcons.forEach(icon => {
         icon.style.setProperty('--icon-size', uiSize);
     });
 }
 
-function updateUISize(value) {
-    const [minSize, maxSize] = uiSizes;
-    uiSize = Math.min(maxSize, Math.max(minSize, parseFloat(value)));
-
-    // 通过CSS变量驱动战斗信息、玩家信息的缩放
-    document.documentElement.style.setProperty('--ui-scale', uiSize);
-
-    // 玩家待命区高度需要实际改变以影响布局流，通过JS重新计算行高
-    updateReadyAreaLayout();
-
-    const uiSizeSlider = document.getElementById('uiSizeSlider');
-    if (uiSizeSlider) {
-        uiSizeSlider.value = uiSize;
-    }
-
-    const uiSizeValue = document.getElementById('uiSizeValue');
-    if (uiSizeValue) {
-        uiSizeValue.textContent = uiSize.toFixed(1);
-    }
-
-    saveOptionsConfig();
-}
-
-function updateUIOpacity(value) {
-    uiOpacity = Math.min(1, Math.max(0.1, parseFloat(value)));
-
-    // 通过CSS变量驱动战斗信息、玩家信息、选项按钮的透明度
-    document.documentElement.style.setProperty('--ui-opacity', uiOpacity);
-
-    const uiOpacitySlider = document.getElementById('uiOpacitySlider');
-    if (uiOpacitySlider) {
-        uiOpacitySlider.value = uiOpacity;
-    }
-
-    const uiOpacityValue = document.getElementById('uiOpacityValue');
-    if (uiOpacityValue) {
-        uiOpacityValue.textContent = uiOpacity.toFixed(1);
-    }
-
-    saveOptionsConfig();
-}
-
-function updateReadyIconSize(value) {
-    const [minSize, maxSize] = readyIconSizes;
-    readyIconSize = Math.min(maxSize, Math.max(minSize, parseFloat(value)));
-
-    // 通过CSS变量驱动待命区图标大小
-    const readyArea = document.getElementById('readyarea');
-    if (readyArea) {
-        readyArea.style.setProperty('--ready-icon-size', `${readyIconSize}px`);
-    }
-
-    const slider = document.getElementById('readyIconSizeSlider');
-    if (slider) {
-        slider.value = readyIconSize;
-    }
-
-    const valueLabel = document.getElementById('readyIconSizeValue');
-    if (valueLabel) {
-        valueLabel.textContent = readyIconSize;
-    }
-
-    saveOptionsConfig();
-}
+function updateGameSpeed(value) { updateSliderValue('gameSpeed', value); }
+function updateIconSize(value) { updateSliderValue('iconSize', value); }
+function updateUISize(value) { updateSliderValue('uiSize', value); }
+function updateUIOpacity(value) { updateSliderValue('uiOpacity', value); }
+function updateReadyIconSize(value) { updateSliderValue('readyIconSize', value); }
 
 function autoAddRandomIconsIfNeeded() {
     if (!autoAddRandomEnabled) return;
@@ -6471,14 +6423,16 @@ function setupPortraitTabs() {
                 if (searchModal && searchModal.classList.contains('active')) {
                     return;
                 }
-                // 点击待命区内部、搜索面板内部、文件输入框 不关闭
+                // 点击待命区内部、搜索面板内部、文件输入框、快速设置栏 不关闭
                 if (!e.target.closest('.ready-area') &&
                     !e.target.closest('#searchModal') &&
-                    !e.target.closest('#fileInput')) {
+                    !e.target.closest('#fileInput') &&
+                    !e.target.closest('.quick-settings-bar') &&
+                    !e.target.closest('.options-container')) {
                     hideAllPanels();
                 }
             } else {
-                if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.config-modal')) {
+                if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.config-modal') && !e.target.closest('.quick-settings-bar') && !e.target.closest('.options-container')) {
                     hideAllPanels();
                 }
             }
@@ -6493,14 +6447,16 @@ function setupPortraitTabs() {
                 if (searchModal && searchModal.classList.contains('active')) {
                     return;
                 }
-                // 点击待命区内部、搜索面板内部、文件输入框 不关闭
+                // 点击待命区内部、搜索面板内部、文件输入框、快速设置栏 不关闭
                 if (!e.target.closest('.ready-area') &&
                     !e.target.closest('#searchModal') &&
-                    !e.target.closest('#fileInput')) {
+                    !e.target.closest('#fileInput') &&
+                    !e.target.closest('.quick-settings-bar') &&
+                    !e.target.closest('.options-container')) {
                     hideAllPanels();
                 }
             } else {
-                if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.config-modal')) {
+                if (!e.target.closest('.battle-info-wrapper') && !e.target.closest('.icons-stats-panel') && !e.target.closest('.ready-area') && !e.target.closest('.config-modal') && !e.target.closest('.quick-settings-bar') && !e.target.closest('.options-container')) {
                     hideAllPanels();
                 }
             }
@@ -7306,6 +7262,24 @@ function importConfig() {
     document.body.removeChild(input);
 }
 
+const RESET_CHECKBOX_CONFIG = [
+    { id: 'autoAddRandom', checked: true, toggle: toggleAutoAddRandom },
+    { id: 'autoDeploy', checked: true, toggle: toggleAutoDeploy },
+    { id: 'showBattleInfo', checked: true, toggle: toggleShowBattleInfo },
+    { id: 'showStats', checked: true, toggle: toggleShowStats },
+    { id: 'showReadyArea', checked: true, toggle: toggleShowReadyArea },
+    { id: 'pauseGame', checked: false, toggle: togglePauseGame },
+    { id: 'fullscreenMode', checked: false, toggle: toggleFullscreen }
+];
+
+const RESET_SLIDER_CONFIG = [
+    { key: 'iconSize', value: 0.8 },
+    { key: 'uiSize', value: 1 },
+    { key: 'uiOpacity', value: 1 },
+    { key: 'readyIconSize', value: 70 },
+    { key: 'gameSpeed', value: 1 }
+];
+
 function resetConfig() {
     if (!confirm('确定要重置所有配置为默认值吗？')) return;
     
@@ -7332,21 +7306,9 @@ function resetConfig() {
     selectSquadLeaders();
     renderCombatConfig();
 
-    const autoAddCheckbox = document.getElementById('autoAddRandom');
-    if (autoAddCheckbox) {
-        autoAddCheckbox.checked = true;
-        toggleAutoAddRandom();
-    }
-
     autoAddCount = 7;
     const autoAddCountInput = document.getElementById('autoAddCount');
     if (autoAddCountInput) autoAddCountInput.value = autoAddCount;
-
-    const autoDeployCheckbox = document.getElementById('autoDeploy');
-    if (autoDeployCheckbox) {
-        autoDeployCheckbox.checked = true;
-        toggleAutoDeploy();
-    }
 
     autoDeployMode = 'all';
     autoDeployCount = 3;
@@ -7356,54 +7318,20 @@ function resetConfig() {
     if (autoDeployCountInput) autoDeployCountInput.value = autoDeployCount;
     updateAutoDeployControlsDisabled();
 
-    showBattleInfo = true;
-    const showBattleInfoCheckbox = document.getElementById('showBattleInfo');
-    if (showBattleInfoCheckbox) {
-        showBattleInfoCheckbox.checked = true;
-        toggleShowBattleInfo();
-    }
+    RESET_CHECKBOX_CONFIG.forEach(cfg => {
+        const checkbox = document.getElementById(cfg.id);
+        if (checkbox) {
+            checkbox.checked = cfg.checked;
+            cfg.toggle?.();
+        }
+    });
 
-    showStats = true;
-    const showStatsCheckbox = document.getElementById('showStats');
-    if (showStatsCheckbox) {
-        showStatsCheckbox.checked = true;
-        toggleShowStats();
-    }
+    RESET_SLIDER_CONFIG.forEach(cfg => {
+        updateSliderValue(cfg.key, cfg.value);
+    });
 
-    showReadyArea = true;
-    const showReadyAreaCheckbox = document.getElementById('showReadyArea');
-    if (showReadyAreaCheckbox) {
-        showReadyAreaCheckbox.checked = true;
-        toggleShowReadyArea();
-    }
-
-    const pauseCheckbox = document.getElementById('pauseGame');
-    if (pauseCheckbox) {
-        pauseCheckbox.checked = false;
-        togglePauseGame();
-    }
-
-    const fullscreenCheckbox = document.getElementById('fullscreenMode');
-    if (fullscreenCheckbox) {
-        fullscreenCheckbox.checked = false;
-        toggleFullscreen();
-    }
-
-    const iconSizeSlider = document.getElementById('iconSizeSlider');
-    if (iconSizeSlider) {
-        iconSizeSlider.value = 0.8;
-        updateIconSize(0.8);
-    }
-
-    const uiSizeSlider = document.getElementById('uiSizeSlider');
-    if (uiSizeSlider) {
-        uiSizeSlider.value = 1;
-        updateUISize(1);
-    }
-
-    gameSpeed = 1;
-    updateGameSpeed(1);
-
+    saveOptionsConfig();
+    syncAllQuickSettingsBtns();
     showConfigToast('已重置为默认配置');
 }
 
@@ -7527,97 +7455,64 @@ function saveOptionsConfig() {
     }
 }
 
+const OPTIONS_LOAD_CONFIG = [
+    { key: 'autoAddRandomEnabled', checkboxId: 'autoAddRandom', set: v => { autoAddRandomEnabled = v; }, afterLoad: () => {
+        const input = document.getElementById('autoAddCount');
+        if (input) input.disabled = !autoAddRandomEnabled;
+    }},
+    { key: 'autoAddCount', inputId: 'autoAddCount', set: v => { autoAddCount = v; } },
+    { key: 'autoDeployEnabled', checkboxId: 'autoDeploy', set: v => { autoDeployEnabled = v; } },
+    { key: 'autoDeployMode', selectId: 'autoDeployMode', set: v => { autoDeployMode = v; } },
+    { key: 'autoDeployCount', inputId: 'autoDeployCount', set: v => { autoDeployCount = v; }, afterLoad: () => updateAutoDeployControlsDisabled() }
+];
+
+const SHOW_PANEL_CONFIG = [
+    { key: 'showBattleInfo', oldKey: 'hideBattleInfo', toggleFn: toggleShowBattleInfo, set: v => { showBattleInfo = v; }, checkboxId: 'showBattleInfo' },
+    { key: 'showStats', oldKey: 'hideStats', toggleFn: toggleShowStats, set: v => { showStats = v; }, checkboxId: 'showStats' },
+    { key: 'showReadyArea', oldKey: 'hideReadyArea', toggleFn: toggleShowReadyArea, set: v => { showReadyArea = v; }, checkboxId: 'showReadyArea' }
+];
+
+const SLIDER_KEYS = ['gameSpeed', 'iconSize', 'uiSize', 'uiOpacity', 'readyIconSize'];
+
 function loadOptionsConfig() {
     try {
         const savedOptions = localStorage.getItem('iconBattle_options');
         if (savedOptions) {
             const options = JSON.parse(savedOptions);
 
-            if (options.autoAddRandomEnabled !== undefined) {
-                autoAddRandomEnabled = options.autoAddRandomEnabled;
-                const autoAddCheckbox = document.getElementById('autoAddRandom');
-                if (autoAddCheckbox) autoAddCheckbox.checked = options.autoAddRandomEnabled;
-            }
+            OPTIONS_LOAD_CONFIG.forEach(cfg => {
+                if (options[cfg.key] !== undefined) {
+                    cfg.set(options[cfg.key]);
+                    if (cfg.checkboxId) {
+                        const el = document.getElementById(cfg.checkboxId);
+                        if (el) el.checked = options[cfg.key];
+                    } else if (cfg.inputId) {
+                        const el = document.getElementById(cfg.inputId);
+                        if (el) el.value = options[cfg.key];
+                    } else if (cfg.selectId) {
+                        const el = document.getElementById(cfg.selectId);
+                        if (el) el.value = options[cfg.key];
+                    }
+                    if (cfg.afterLoad) cfg.afterLoad();
+                }
+            });
 
-            if (options.autoAddCount !== undefined) {
-                autoAddCount = options.autoAddCount;
-                const autoAddCountInput = document.getElementById('autoAddCount');
-                if (autoAddCountInput) autoAddCountInput.value = options.autoAddCount;
-            }
-            const autoAddCountInput = document.getElementById('autoAddCount');
-            if (autoAddCountInput) autoAddCountInput.disabled = !autoAddRandomEnabled;
+            SHOW_PANEL_CONFIG.forEach(cfg => {
+                const saved = options[cfg.key] !== undefined ? options[cfg.key] :
+                    (options[cfg.oldKey] !== undefined ? !options[cfg.oldKey] : true);
+                cfg.set(saved);
+                const checkbox = document.getElementById(cfg.checkboxId);
+                if (checkbox) {
+                    checkbox.checked = saved;
+                    cfg.toggleFn();
+                }
+            });
 
-            if (options.autoDeployEnabled !== undefined) {
-                autoDeployEnabled = options.autoDeployEnabled;
-                const autoDeployCheckbox = document.getElementById('autoDeploy');
-                if (autoDeployCheckbox) autoDeployCheckbox.checked = options.autoDeployEnabled;
-            }
-
-            if (options.autoDeployMode !== undefined) {
-                autoDeployMode = options.autoDeployMode;
-                const autoDeployModeSelect = document.getElementById('autoDeployMode');
-                if (autoDeployModeSelect) autoDeployModeSelect.value = options.autoDeployMode;
-            }
-
-            if (options.autoDeployCount !== undefined) {
-                autoDeployCount = options.autoDeployCount;
-                const autoDeployCountInput = document.getElementById('autoDeployCount');
-                if (autoDeployCountInput) autoDeployCountInput.value = options.autoDeployCount;
-            }
-            updateAutoDeployControlsDisabled();
-
-            // 显示面板：新字段 showBattleInfo/showStats/showReadyArea，兼容旧字段 hideBattleInfo/hideStats/hideReadyArea
-            const savedShowBattleInfo = options.showBattleInfo !== undefined ? options.showBattleInfo : (options.hideBattleInfo !== undefined ? !options.hideBattleInfo : true);
-            showBattleInfo = savedShowBattleInfo;
-            const showBattleInfoCheckbox = document.getElementById('showBattleInfo');
-            if (showBattleInfoCheckbox) {
-                showBattleInfoCheckbox.checked = savedShowBattleInfo;
-                toggleShowBattleInfo();
-            }
-
-            const savedShowStats = options.showStats !== undefined ? options.showStats : (options.hideStats !== undefined ? !options.hideStats : true);
-            showStats = savedShowStats;
-            const showStatsCheckbox = document.getElementById('showStats');
-            if (showStatsCheckbox) {
-                showStatsCheckbox.checked = savedShowStats;
-                toggleShowStats();
-            }
-
-            const savedShowReadyArea = options.showReadyArea !== undefined ? options.showReadyArea : (options.hideReadyArea !== undefined ? !options.hideReadyArea : true);
-            showReadyArea = savedShowReadyArea;
-            const showReadyAreaCheckbox = document.getElementById('showReadyArea');
-            if (showReadyAreaCheckbox) {
-                showReadyAreaCheckbox.checked = savedShowReadyArea;
-                toggleShowReadyArea();
-            }
-
-            if (options.gameSpeed !== undefined) {
-                gameSpeed = options.gameSpeed;
-                const gameSpeedSlider = document.getElementById('gameSpeedSlider');
-                if (gameSpeedSlider) gameSpeedSlider.value = gameSpeed;
-                const gameSpeedValue = document.getElementById('gameSpeedValue');
-                if (gameSpeedValue) gameSpeedValue.textContent = `${gameSpeed}x`;
-            }
-
-            if (options.iconSize !== undefined) {
-                iconSize = options.iconSize;
-                updateIconSize(iconSize);
-            }
-
-            if (options.uiSize !== undefined) {
-                uiSize = options.uiSize;
-                updateUISize(uiSize);
-            }
-
-            if (options.uiOpacity !== undefined) {
-                uiOpacity = options.uiOpacity;
-                updateUIOpacity(uiOpacity);
-            }
-
-            if (options.readyIconSize !== undefined) {
-                readyIconSize = options.readyIconSize;
-                updateReadyIconSize(readyIconSize);
-            }
+            SLIDER_KEYS.forEach(key => {
+                if (options[key] !== undefined) {
+                    updateSliderValue(key, options[key]);
+                }
+            });
         }
     } catch (e) {
         console.warn('加载选项配置失败:', e);
