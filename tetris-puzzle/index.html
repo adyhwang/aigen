@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
@@ -107,6 +107,79 @@
             z-index: 1;
         }
 
+        .force-landscape {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            max-width: none !important;
+            max-height: none !important;
+            transform-origin: center center !important;
+            transform: translate(-50%, -50%) rotate(90deg) !important;
+            z-index: 9999 !important;
+            padding: 12px !important;
+            margin: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+        }
+
+        .force-portrait {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            max-width: none !important;
+            max-height: none !important;
+            transform-origin: center center !important;
+            transform: translate(-50%, -50%) rotate(-90deg) !important;
+            z-index: 9999 !important;
+            padding: 12px !important;
+            margin: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+        }
+
+        /* 面板内容跟随旋转，遮罩保持不动（参考游戏区域的旋转方式） */
+        .panel-force-landscape .tutorial-content,
+        .panel-force-landscape .settings-content {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform-origin: center center !important;
+            transform: translate(-50%, -50%) rotate(90deg) !important;
+            width: 100vh !important;
+            max-width: 100vh !important;
+            height: 100vw !important;
+            max-height: 100vw !important;
+            margin: 0 !important;
+        }
+
+        .panel-force-portrait .tutorial-content,
+        .panel-force-portrait .settings-content {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform-origin: center center !important;
+            transform: translate(-50%, -50%) rotate(-90deg) !important;
+            width: 100vh !important;
+            max-width: 100vh !important;
+            height: 100vw !important;
+            max-height: 100vw !important;
+            margin: 0 !important;
+        }
+
+        .force-landscape .game-header,
+        .force-portrait .game-header {
+            flex-shrink: 0 !important;
+        }
+
+        .force-landscape .game-main-area,
+        .force-portrait .game-main-area {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            min-width: 0 !important;
+        }
+
         .game-header {
             width: 100%;
             z-index: 50;
@@ -150,6 +223,14 @@
         .portrait .center-container {
             width: 100%;
             max-height: 45vh;
+        }
+
+        /* 强制旋转模式下，vh 对应的是旋转前的视口高度（不正确），
+           旋转后容器的内部高度对应的是 vw（= window.innerWidth），
+           因此需要用 vw 替代 vh */
+        .force-portrait .portrait .pieces-container,
+        .force-portrait .portrait .center-container {
+            max-height: 45vw !important;
         }
 
         * {
@@ -325,7 +406,7 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.5s ease-in-out;
-            z-index: 150;
+            z-index: 10000;
         }
 
         #tutorial-message.show {
@@ -443,7 +524,7 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease-in-out;
-            z-index: 200;
+            z-index: 10001;
         }
 
         #settings-message.show {
@@ -711,7 +792,7 @@
                             class="p-0 grid grid-cols-16 gap-0 relative piece-container h-[calc(100%-32px)]"></div>
                         <div id="success-message"
                             class="absolute inset-0 bg-game-bg/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4 rounded-xl opacity-0 pointer-events-none transition-opacity duration-500 z-100">
-                            <div class="text-4xl font-bold success-animation text-game-hint">🎉 通关!</div>
+                            <div class="text-4xl font-bold success-animation text-game-hint">🎉You Clear!</div>
                             <p class="text-lg">太棒了，准备好挑战下一关了吗？</p>
                             <button id="success-next-btn"
                                 class="btn-primary text-sm md:text-base">
@@ -1130,6 +1211,27 @@
             const resizeObserver = new ResizeObserver(entries => handleResize());
             resizeObserver.observe(document.body);
 
+            window.addEventListener('resize', handleResize);
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => {
+                    if (gameState.forcedOrientation) {
+                        applyOrientation(gameState.forcedOrientation);
+                    }
+                    handleResize();
+                }, 300);
+            });
+
+            if (screen.orientation) {
+                screen.orientation.addEventListener('change', () => {
+                    setTimeout(() => {
+                        if (gameState.forcedOrientation) {
+                            applyOrientation(gameState.forcedOrientation);
+                        }
+                        handleResize();
+                    }, 200);
+                });
+            }
+
             ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'msfullscreenchange']
                 .forEach(event => document.addEventListener(event, handleFullscreenChange));
 
@@ -1140,16 +1242,28 @@
         function calculateGridSize() {
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
-            const forcedOrientation = gameState.forcedOrientation;
-            const effectiveIsPortrait = forcedOrientation
-                ? forcedOrientation === 'portrait'
-                : windowHeight > windowWidth;
+            const effectiveOrientation = getEffectiveOrientation();
+            const effectiveIsPortrait = effectiveOrientation === 'portrait';
+
+            let effectiveWidth, effectiveHeight;
+            const windowIsPortrait = windowHeight > windowWidth;
+
+            // 当窗口实际方向与有效方向不一致时（即应用了CSS旋转），需要交换尺寸
+            // 这样旋转后的容器内部坐标系与有效方向一致
+            if (windowIsPortrait !== effectiveIsPortrait) {
+                effectiveWidth = windowHeight;
+                effectiveHeight = windowWidth;
+            } else {
+                effectiveWidth = windowWidth;
+                effectiveHeight = windowHeight;
+            }
+
             const header = document.querySelector('.game-header');
             const headerHeight = header ? header.offsetHeight : 50;
             const padding = 20;
             const gap = 10;
-            const availableHeight = windowHeight - headerHeight - padding;
-            const availableWidth = windowWidth - padding;
+            const availableHeight = effectiveHeight - headerHeight - padding;
+            const availableWidth = effectiveWidth - padding;
 
             let widthBasedSize, heightBasedSize;
 
@@ -1233,6 +1347,33 @@
             return title ? title.offsetHeight : 0;
         }
 
+        // 获取当前窗口方向（基于实际可视区域，最可靠，不依赖 screen.orientation）
+        function getDeviceNaturalOrientation() {
+            return window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+        }
+
+        // 获取有效方向（考虑强制旋转）
+        function getEffectiveOrientation() {
+            if (gameState.forcedOrientation) {
+                return gameState.forcedOrientation;
+            }
+            return getDeviceNaturalOrientation();
+        }
+
+        // 获取旋转角度（基于窗口实际方向与目标方向的差异）
+        function getRotationAngle(targetOrientation) {
+            const windowIsPortrait = window.innerHeight > window.innerWidth;
+            const targetIsPortrait = targetOrientation === 'portrait';
+
+            // 窗口方向与目标方向一致，无需旋转
+            if (windowIsPortrait === targetIsPortrait) return 0;
+            // 窗口竖屏，目标横屏 → 顺时针旋转90°
+            if (windowIsPortrait && !targetIsPortrait) return 90;
+            // 窗口横屏，目标竖屏 → 逆时针旋转90°
+            if (!windowIsPortrait && targetIsPortrait) return -90;
+            return 0;
+        }
+
         // 处理全屏变化
         function handleFullscreenChange() {
             gameState.isFullscreen = !!document.fullscreenElement ||
@@ -1244,13 +1385,193 @@
                 elements.fullscreenIcon.className = 'fa fa-compress';
                 elements.fullscreenBtn.title = '退出全屏';
                 document.body.classList.add('fullscreen-active');
+                
+                setTimeout(() => {
+                    if (gameState.forcedOrientation) {
+                        applyOrientation(gameState.forcedOrientation);
+                    } else {
+                        clearForcedOrientation();
+                    }
+                    handleResize();
+                }, 300);
             } else {
                 elements.fullscreenIcon.className = 'fa fa-expand';
                 elements.fullscreenBtn.title = '全屏';
                 document.body.classList.remove('fullscreen-active');
+                
+                if (gameState.forcedOrientation) {
+                    applyOrientation(gameState.forcedOrientation);
+                }
+                handleResize();
+            }
+        }
+
+        // 更新旋转容器的精确尺寸（使用真实可视区域，避免 100vh/100vw 在移动端不可靠）
+        function updateRotatedDimensions() {
+            const wrapper = document.querySelector('.game-wrapper');
+            if (!wrapper) return;
+
+            if (wrapper.classList.contains('force-landscape') || wrapper.classList.contains('force-portrait')) {
+                // 旋转90°后，容器的宽高需要互换以铺满屏幕
+                wrapper.style.width = window.innerHeight + 'px';
+                wrapper.style.height = window.innerWidth + 'px';
+            } else {
+                wrapper.style.width = '';
+                wrapper.style.height = '';
             }
 
-            handleResize();
+            // 同步更新面板内容的尺寸（参考游戏区域的旋转方式）
+            const panelLandscape = document.body.classList.contains('panel-force-landscape');
+            const panelPortrait = document.body.classList.contains('panel-force-portrait');
+            const tutorialContent = document.querySelector('.tutorial-content');
+            const settingsContent = document.querySelector('.settings-content');
+
+            if (panelLandscape || panelPortrait) {
+                const w = window.innerHeight + 'px';
+                const h = window.innerWidth + 'px';
+                [tutorialContent, settingsContent].forEach(el => {
+                    if (!el) return;
+                    el.style.position = 'fixed';
+                    el.style.top = '50%';
+                    el.style.left = '50%';
+                    el.style.width = w;
+                    el.style.maxWidth = w;
+                    el.style.height = h;
+                    el.style.maxHeight = h;
+                    el.style.margin = '0';
+                    el.style.transformOrigin = 'center center';
+                });
+                if (tutorialContent) {
+                    const angle = panelLandscape ? '90deg' : '-90deg';
+                    tutorialContent.style.transform = `translate(-50%, -50%) rotate(${angle})`;
+                }
+                if (settingsContent) {
+                    const angle = panelLandscape ? '90deg' : '-90deg';
+                    settingsContent.style.transform = `translate(-50%, -50%) rotate(${angle})`;
+                }
+            } else {
+                [tutorialContent, settingsContent].forEach(el => {
+                    if (!el) return;
+                    el.style.position = '';
+                    el.style.top = '';
+                    el.style.left = '';
+                    el.style.width = '';
+                    el.style.maxWidth = '';
+                    el.style.height = '';
+                    el.style.maxHeight = '';
+                    el.style.margin = '';
+                    el.style.transform = '';
+                    el.style.transformOrigin = '';
+                });
+            }
+        }
+
+        // 获取当前旋转角度（度数）
+        function getCurrentRotation() {
+            const wrapper = document.querySelector('.game-wrapper');
+            if (!wrapper) return 0;
+            if (wrapper.classList.contains('force-landscape')) return 90;
+            if (wrapper.classList.contains('force-portrait')) return -90;
+            return 0;
+        }
+
+        // 屏幕坐标 → wrapper 内部坐标（逆旋转）
+        function screenToWrapper(clientX, clientY) {
+            const rotation = getCurrentRotation();
+            if (rotation === 0) return { x: clientX, y: clientY };
+
+            const wrapper = document.querySelector('.game-wrapper');
+            if (!wrapper) return { x: clientX, y: clientY };
+
+            const rect = wrapper.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const dx = clientX - cx;
+            const dy = clientY - cy;
+            const rad = -rotation * Math.PI / 180;
+            const cos = Math.cos(rad);
+            const sin = Math.sin(rad);
+            const rx = dx * cos - dy * sin;
+            const ry = dx * sin + dy * cos;
+
+            const wrapperW = wrapper.offsetWidth;
+            const wrapperH = wrapper.offsetHeight;
+
+            return {
+                x: wrapperW / 2 + rx,
+                y: wrapperH / 2 + ry
+            };
+        }
+
+        // wrapper 内部坐标 → 屏幕坐标（正旋转）
+        function wrapperToScreen(x, y) {
+            const rotation = getCurrentRotation();
+            if (rotation === 0) return { x, y };
+
+            const wrapper = document.querySelector('.game-wrapper');
+            if (!wrapper) return { x, y };
+
+            const rect = wrapper.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const wrapperW = wrapper.offsetWidth;
+            const wrapperH = wrapper.offsetHeight;
+            const dx = x - wrapperW / 2;
+            const dy = y - wrapperH / 2;
+            const rad = rotation * Math.PI / 180;
+            const cos = Math.cos(rad);
+            const sin = Math.sin(rad);
+            const rx = dx * cos - dy * sin;
+            const ry = dx * sin + dy * cos;
+
+            return {
+                x: cx + rx,
+                y: cy + ry
+            };
+        }
+
+        // 获取元素相对于 game-wrapper 的偏移（内部坐标系，不受旋转影响）
+        function getOffsetInWrapper(element) {
+            const wrapper = document.querySelector('.game-wrapper');
+            if (!wrapper) return { x: 0, y: 0 };
+
+            let x = 0, y = 0;
+            let el = element;
+            while (el && el !== wrapper) {
+                x += el.offsetLeft || 0;
+                y += el.offsetTop || 0;
+                el = el.offsetParent;
+            }
+            return { x, y };
+        }
+
+        // 应用方向（添加旋转类）
+        function applyOrientation(orientation) {
+            const wrapper = document.querySelector('.game-wrapper');
+            const angle = getRotationAngle(orientation);
+            
+            wrapper.classList.remove('force-landscape', 'force-portrait');
+            document.body.classList.remove('panel-force-landscape', 'panel-force-portrait');
+            
+            if (angle === 90) {
+                wrapper.classList.add('force-landscape');
+                document.body.classList.add('panel-force-landscape');
+            } else if (angle === -90) {
+                wrapper.classList.add('force-portrait');
+                document.body.classList.add('panel-force-portrait');
+            }
+
+            updateRotatedDimensions();
+        }
+
+        // 清除强制方向
+        function clearForcedOrientation() {
+            const wrapper = document.querySelector('.game-wrapper');
+            wrapper.classList.remove('force-landscape', 'force-portrait');
+            document.body.classList.remove('panel-force-landscape', 'panel-force-portrait');
+            wrapper.style.width = '';
+            wrapper.style.height = '';
+            gameState.forcedOrientation = null;
         }
 
         // 切换全屏
@@ -1281,8 +1602,8 @@
         // 切换屏幕方向
         function toggleOrientation() {
             soundManager.playPlaceSound();
-            const currentOrientation = gameState.forcedOrientation
-                || (window.innerHeight > window.innerWidth ? 'portrait' : 'landscape');
+            const naturalOrientation = getDeviceNaturalOrientation();
+            const currentOrientation = gameState.forcedOrientation || naturalOrientation;
 
             if (currentOrientation === 'portrait') {
                 gameState.forcedOrientation = 'landscape';
@@ -1294,17 +1615,19 @@
                 elements.rotateBtn.title = '切换到横屏';
             }
 
+            applyOrientation(gameState.forcedOrientation);
             handleResize();
         }
 
         // 处理窗口大小变化
         function handleResize() {
+            // 同步旋转容器的精确尺寸（窗口变化时及时更新）
+            updateRotatedDimensions();
+
             const oldSize = gameState.gridSize;
             const oldOrientation = gameState.isPortrait;
 
-            gameState.isPortrait = gameState.forcedOrientation
-                ? gameState.forcedOrientation === 'portrait'
-                : window.innerHeight > window.innerWidth;
+            gameState.isPortrait = getEffectiveOrientation() === 'portrait';
             gameState.gridSize = calculateGridSize();
 
             if (Math.abs(gameState.gridSize - oldSize) > 0 || gameState.isPortrait !== oldOrientation) {
@@ -1545,19 +1868,33 @@
             gameState.isDragging = true;
             gameState.draggedPiece = piece;
 
-            const rect = piece.element.getBoundingClientRect();
-            gameState.dragOffset.x = e.clientX - rect.left;
-            gameState.dragOffset.y = e.clientY - rect.top;
+            const wrapper = document.querySelector('.game-wrapper');
+            const rotation = getCurrentRotation();
+
+            // 获取方块在 wrapper 内部的偏移（左上角）
+            const pieceOffset = getOffsetInWrapper(piece.element);
+            const pieceW = piece.element.offsetWidth;
+            const pieceH = piece.element.offsetHeight;
+
+            // 鼠标的 wrapper 内部坐标
+            const wrapperMouse = screenToWrapper(e.clientX, e.clientY);
+
+            // 鼠标相对于方块左上角的偏移（wrapper 内部坐标系）
+            gameState.dragOffset.x = wrapperMouse.x - pieceOffset.x;
+            gameState.dragOffset.y = wrapperMouse.y - pieceOffset.y;
 
             piece.element.classList.add('z-20', 'scale-110', 'shadow-tetris-hover');
             piece.element.style.transition = 'none';
+            piece.element.style.zIndex = '100';
 
-            document.body.appendChild(piece.element);
-            piece.element.style.position = 'fixed';
-            piece.element.style.left = '0';
-            piece.element.style.top = '0';
-            piece.element.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
-            piece.element.style.willChange = 'transform';
+            // 把方块移到 wrapper 内，用 absolute 定位
+            // 这样方块会和 wrapper 一起旋转，视觉保持一致
+            wrapper.appendChild(piece.element);
+            piece.element.style.position = 'absolute';
+            piece.element.style.left = `${pieceOffset.x}px`;
+            piece.element.style.top = `${pieceOffset.y}px`;
+            piece.element.style.transform = 'none';
+            piece.element.style.willChange = 'left, top';
 
             document.addEventListener('mousemove', dragMove);
             document.addEventListener('mouseup', stopDrag);
@@ -1589,10 +1926,13 @@
 
             const piece = gameState.draggedPiece;
 
-            const x = e.clientX - gameState.dragOffset.x;
-            const y = e.clientY - gameState.dragOffset.y;
+            // 把屏幕坐标转为 wrapper 内部坐标
+            const wrapperMouse = screenToWrapper(e.clientX, e.clientY);
+            const x = wrapperMouse.x - gameState.dragOffset.x;
+            const y = wrapperMouse.y - gameState.dragOffset.y;
 
-            piece.element.style.transform = `translate(${x}px, ${y}px)`;
+            piece.element.style.left = `${x}px`;
+            piece.element.style.top = `${y}px`;
         }
 
         // 停止拖动
@@ -1605,17 +1945,25 @@
             piece.element.classList.remove('z-20', 'scale-110', 'shadow-tetris-hover');
             if (gameState.hintActive) piece.element.classList.add('z-30');
 
-            const clientX = e ? e.clientX : (piece.element.offsetLeft + gameState.dragOffset.x);
-            const clientY = e ? e.clientY : (piece.element.offsetTop + gameState.dragOffset.y);
+            piece.element.style.zIndex = '';
+            piece.element.style.willChange = '';
 
-            const targetRect = elements.targetGrid.getBoundingClientRect();
-            const piecesRect = elements.piecesGrid.getBoundingClientRect();
+            // 方块当前在 wrapper 内，左上角位置就是 offsetLeft/offsetTop
+            const pieceLeftX = piece.element.offsetLeft;
+            const pieceTopY = piece.element.offsetTop;
 
-            const isOverTarget = clientX >= targetRect.left && clientX <= targetRect.right &&
-                clientY >= targetRect.top && clientY <= targetRect.bottom;
+            // 判断在哪个容器上（使用 wrapper 内部坐标 + 容器偏移）
+            const targetOffset = getOffsetInWrapper(elements.targetGrid);
+            const piecesOffset = getOffsetInWrapper(elements.piecesGrid);
 
-            const isOverPieces = clientX >= piecesRect.left && clientX <= piecesRect.right &&
-                clientY >= piecesRect.top && clientY <= piecesRect.bottom;
+            const containerW = COLS * gridSize;
+            const containerH = ROWS * gridSize;
+
+            const isOverTarget = pieceLeftX >= targetOffset.x && pieceLeftX <= targetOffset.x + containerW &&
+                pieceTopY >= targetOffset.y && pieceTopY <= targetOffset.y + containerH;
+
+            const isOverPieces = pieceLeftX >= piecesOffset.x && pieceLeftX <= piecesOffset.x + containerW &&
+                pieceTopY >= piecesOffset.y && pieceTopY <= piecesOffset.y + containerH;
 
             if (isOverTarget) {
                 piece.container = 'target';
@@ -1624,15 +1972,15 @@
             }
 
             const container = piece.container === 'pieces' ? elements.piecesGrid : elements.targetGrid;
-            const containerRect = container.getBoundingClientRect();
+            const containerOffset = piece.container === 'pieces' ? piecesOffset : targetOffset;
 
             const shapes = gameState.mode === 'classic' ? classicShapes : newShapes;
             const shape = shapes[piece.type][piece.rotation];
             const maxDc = Math.max(...shape.map(([_, dc]) => dc));
             const maxDr = Math.max(...shape.map(([dr, _]) => dr));
 
-            let col = Math.round((clientX - gameState.dragOffset.x - containerRect.left) / gridSize);
-            let row = Math.round((clientY - gameState.dragOffset.y - containerRect.top) / gridSize);
+            let col = Math.round((pieceLeftX - containerOffset.x) / gridSize);
+            let row = Math.round((pieceTopY - containerOffset.y) / gridSize);
 
             const maxCol = COLS - maxDc - 1;
             const maxRow = ROWS - maxDr - 1;
@@ -1640,12 +1988,11 @@
             piece.col = Math.max(0, Math.min(col, maxCol));
             piece.row = Math.max(0, Math.min(row, maxRow));
 
-            piece.element.style.transform = 'none';
-            piece.element.style.willChange = '';
             piece.element.style.position = 'absolute';
-            container.appendChild(piece.element);
             piece.element.style.left = `${piece.col * gridSize}px`;
             piece.element.style.top = `${piece.row * gridSize}px`;
+            piece.element.style.transform = 'none';
+            container.appendChild(piece.element);
 
             requestAnimationFrame(() => {
                 piece.element.style.transition = '';
